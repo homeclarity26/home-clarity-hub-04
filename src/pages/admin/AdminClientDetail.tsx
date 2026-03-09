@@ -258,26 +258,6 @@ const AdminClientDetail = () => {
     );
   }
 
-  // Shared project form fields
-  const ProjectFormFields = () => (
-    <div className="space-y-4">
-      <div><Label className="font-sans">Title</Label><Input value={projectForm.title} onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })} /></div>
-      <div><Label className="font-sans">Status</Label>
-        <Select value={projectForm.status} onValueChange={(v) => setProjectForm({ ...projectForm, status: v })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="planned">Planned</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="complete">Complete</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div><Label className="font-sans">Approved Tier</Label><Input value={projectForm.approved_tier} onChange={(e) => setProjectForm({ ...projectForm, approved_tier: e.target.value })} placeholder="e.g. Enhanced" /></div>
-      <div><Label className="font-sans">Notes</Label><Textarea value={projectForm.notes} onChange={(e) => setProjectForm({ ...projectForm, notes: e.target.value })} /></div>
-    </div>
-  );
-
   const InvoiceFormFields = () => (
     <div className="space-y-4">
       <div><Label className="font-sans">Description</Label><Input value={invoiceForm.description} onChange={(e) => setInvoiceForm({ ...invoiceForm, description: e.target.value })} /></div>
