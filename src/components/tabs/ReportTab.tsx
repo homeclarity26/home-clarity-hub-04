@@ -311,7 +311,7 @@ const ReportTab = ({
                   <h3 className="font-display text-xl text-foreground leading-snug">
                     {card.title}
                   </h3>
-                  <p className="font-sans text-sm text-muted-foreground leading-relaxed">
+                  <p className="font-sans text-sm text-muted-foreground leading-relaxed line-clamp-2">
                     {card.subtitle}
                   </p>
                   {/* Condition rating badges */}
