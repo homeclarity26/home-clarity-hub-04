@@ -52,6 +52,47 @@ export type Database = {
           },
         ]
       }
+      client_files: {
+        Row: {
+          category: string
+          created_at: string
+          file_name: string
+          file_size: string | null
+          file_type: string | null
+          id: string
+          property_id: string
+          storage_path: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          file_name: string
+          file_size?: string | null
+          file_type?: string | null
+          id?: string
+          property_id: string
+          storage_path: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          file_name?: string
+          file_size?: string | null
+          file_type?: string | null
+          id?: string
+          property_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_files_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number

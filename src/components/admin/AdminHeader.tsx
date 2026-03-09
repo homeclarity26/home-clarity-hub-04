@@ -3,7 +3,7 @@ import { Search, Bell, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { mockStats } from "@/data/adminMockData";
+import { useAdminStats } from "@/hooks/useAdminData";
 
 interface AdminHeaderProps {
   breadcrumbs: { label: string; path?: string }[];
