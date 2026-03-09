@@ -48,9 +48,15 @@ const ContactsTab = ({ creator, onTabChange }: ContactsTabProps) => {
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Your HBC Team</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className={`${cardBase} border-l-[3px] border-l-accent cursor-default`}>
-              <User className="w-5 h-5 text-accent" />
-              <h2 className="font-display text-xl text-foreground mb-1">{creatorName}</h2>
-              <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Founder & Lead Advisor</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-foreground text-background flex items-center justify-center font-display text-sm flex-shrink-0">
+                  {creator?.initials || "AK"}
+                </div>
+                <div>
+                  <h2 className="font-display text-xl text-foreground mb-0.5">{creatorName}</h2>
+                  <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Founder & Lead Advisor</p>
+                </div>
+              </div>
               {creatorEmail && (
                 <a href={`mailto:${creatorEmail}`} className="font-sans text-sm text-muted-foreground hover:text-accent transition-colors no-underline">
                   {creatorEmail}
@@ -65,9 +71,15 @@ const ContactsTab = ({ creator, onTabChange }: ContactsTabProps) => {
             </div>
 
             <div className={`${cardBase} cursor-default`}>
-              <Headset className="w-5 h-5 text-accent" />
-              <h2 className="font-display text-xl text-foreground mb-1">HBC Support Team</h2>
-              <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Client Services</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-foreground text-background flex items-center justify-center font-display text-sm flex-shrink-0">
+                  CS
+                </div>
+                <div>
+                  <h2 className="font-display text-xl text-foreground mb-0.5">HBC Support Team</h2>
+                  <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Client Services</p>
+                </div>
+              </div>
               <a href="mailto:support@hbc.com" className="font-sans text-sm text-muted-foreground hover:text-accent transition-colors no-underline">
                 support@hbc.com
               </a>

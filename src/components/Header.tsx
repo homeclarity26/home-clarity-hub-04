@@ -35,7 +35,7 @@ const Header = ({ activeTab, onTabChange }: HeaderProps) => {
       </button>
 
       {/* Desktop Navigation */}
-      <nav className="hidden md:flex gap-10">
+      <nav className="hidden md:flex gap-10 flex-shrink-0 flex-shrink-0">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -63,7 +63,7 @@ const Header = ({ activeTab, onTabChange }: HeaderProps) => {
       </button>
 
       {/* User Section */}
-      <div className="hidden md:flex items-center gap-4">
+      <div className="hidden md:flex item ml-6 flex-shrink-0s-center gap-4">
         {isCreator && (
           <button
             onClick={toggleEditMode}
