@@ -152,18 +152,30 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
         }
 
         // Create the page
-        const insertData = {
+        const insertData: {
+          report_id: string;
+          page_key: string;
+          title: string;
+          group_name: string;
+          condition_rating: string | null;
+          narrative: Json;
+          health_bar: Json | null;
+          specs: Json;
+          tiers: Json | null;
+          timing: string | null;
+          recommendations: Json;
+        } = {
           report_id: reportIdToUse,
           page_key: pageKey,
           title: pageData.title,
           group_name: pageData.group,
           condition_rating: pageData.conditionRating || null,
-          narrative: pageData.narrative as unknown as Record<string, unknown>,
-          health_bar: pageData.healthBar as unknown as Record<string, unknown> || null,
-          specs: (pageData.specs || []) as unknown as Record<string, unknown>,
-          tiers: pageData.tiers as unknown as Record<string, unknown> || null,
+          narrative: pageData.narrative as unknown as Json,
+          health_bar: pageData.healthBar as unknown as Json || null,
+          specs: (pageData.specs || []) as unknown as Json,
+          tiers: pageData.tiers as unknown as Json || null,
           timing: pageData.timing || null,
-          recommendations: (pageData.recommendations || []) as unknown as Record<string, unknown>,
+          recommendations: (pageData.recommendations || []) as unknown as Json,
         };
         
         const { data: newPage, error: pageError } = await supabase
