@@ -18,12 +18,12 @@ export interface ExtendedPageData extends ReportPageData {
   creator_notes?: string;
 }
 
-export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
+export function useReportPage(pageKey: string, fallbackData: ReportPageData, reportId?: string) {
   const { user, isCreator } = useAuth();
   const [pageData, setPageData] = useState<ExtendedPageData>(fallbackData);
   const [blockConfig, setBlockConfig] = useState<BlockConfig | null>(null);
   const [pageId, setPageId] = useState<string | null>(null);
-  const [reportId, setReportId] = useState<string | null>(null);
+  const [dbReportId, setDbReportId] = useState<string | null>(reportId || null);
   const [status, setStatus] = useState<"draft" | "complete" | "needs_review">("draft");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [isLoading, setIsLoading] = useState(true);
@@ -40,18 +40,24 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
       }
 
       try {
-        const { data: pages, error } = await supabase
+        let query = supabase
           .from("report_pages")
           .select("*")
-          .eq("page_key", pageKey)
-          .limit(1);
+          .eq("page_key", pageKey);
+
+        // Scope to specific report if provided
+        if (reportId) {
+          query = query.eq("report_id", reportId);
+        }
+
+        const { data: pages, error } = await query.limit(1);
 
         if (error) throw error;
 
         if (pages && pages.length > 0) {
           const row = pages[0];
           setPageId(row.id);
-          setReportId(row.report_id);
+          setDbReportId(row.report_id);
           setStatus(row.status as "draft" | "complete" | "needs_review");
           setBlockConfig((row.block_config as unknown as BlockConfig) || null);
           
@@ -74,6 +80,7 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
             creator_notes: row.creator_notes || undefined,
           });
         }
+        // If no page found, just use fallback data — no auto-creation
       } catch (err) {
         console.error("Error loading report page:", err);
       } finally {
@@ -82,7 +89,7 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
     }
 
     loadPage();
-  }, [pageKey, user, fallbackData]);
+  }, [pageKey, user, fallbackData, reportId]);
 
   // Debounced save function
   const saveToDatabase = useCallback(async (updates: Partial<ExtendedPageData>) => {
@@ -91,60 +98,17 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
     setSaveStatus("saving");
 
     try {
-      if (!pageId) {
-        // Create page if needed (same logic as before)
-        let reportIdToUse = reportId;
-        
-        if (!reportIdToUse) {
-          const { data: existingReports } = await supabase
-            .from("reports")
-            .select("id")
-            .limit(1);
+      // If no page exists and no reportId, we can't save — skip silently
+      if (!pageId && !dbReportId) {
+        console.warn("Cannot save: no page or report context");
+        setSaveStatus("idle");
+        return;
+      }
 
-          if (existingReports && existingReports.length > 0) {
-            reportIdToUse = existingReports[0].id;
-          } else {
-            const { data: properties } = await supabase
-              .from("properties")
-              .select("id")
-              .limit(1);
-
-            let propertyId: string;
-            if (properties && properties.length > 0) {
-              propertyId = properties[0].id;
-            } else {
-              const { data: newProperty, error: propError } = await supabase
-                .from("properties")
-                .insert({
-                  address: "742 Evergreen Terrace",
-                  client_user_id: user.id,
-                  property_name: "The Johnson Residence",
-                })
-                .select()
-                .single();
-
-              if (propError) throw propError;
-              propertyId = newProperty.id;
-            }
-
-            const { data: newReport, error: reportError } = await supabase
-              .from("reports")
-              .insert({
-                property_id: propertyId,
-                title: "Home Clarity Report",
-                created_by: user.id,
-              })
-              .select()
-              .single();
-
-            if (reportError) throw reportError;
-            reportIdToUse = newReport.id;
-          }
-          setReportId(reportIdToUse);
-        }
-
+      if (!pageId && dbReportId) {
+        // Create a new page in the existing report
         const insertData = {
-          report_id: reportIdToUse,
+          report_id: dbReportId,
           page_key: pageKey,
           title: pageData.title,
           group_name: pageData.group,
@@ -238,7 +202,7 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
       setSaveStatus("error");
       toast.error("Failed to save changes");
     }
-  }, [isCreator, user, pageId, reportId, pageKey, pageData]);
+  }, [isCreator, user, pageId, dbReportId, pageKey, pageData, blockConfig, status]);
 
   // Update page data with debounced save
   const updatePageData = useCallback((updates: Partial<ExtendedPageData>) => {

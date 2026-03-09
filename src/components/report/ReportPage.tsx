@@ -13,11 +13,12 @@ interface ReportPageProps {
   dbPageId?: string;
   images?: string[];
   pdfData?: PDFReportData;
+  reportId?: string;
 }
 
-const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData }: ReportPageProps) => {
+const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, reportId }: ReportPageProps) => {
   const { canEdit } = useEditMode();
-  const { pageData, blockConfig, status, saveStatus, updatePageData, updateStatus, isLoading } = useReportPage(page.id, page);
+  const { pageData, blockConfig, status, saveStatus, updatePageData, updateStatus, isLoading } = useReportPage(page.id, page, reportId);
 
   const handleUpdate = (updates: Partial<PageContent>) => {
     updatePageData(updates as Partial<ReportPageData>);

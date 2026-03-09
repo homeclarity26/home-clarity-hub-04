@@ -41,6 +41,7 @@ interface ReportTabProps {
   propertyName?: string;
   propertyAddress?: string;
   pdfData?: PDFReportData;
+  reportId?: string;
 }
 
 const conditionColor: Record<string, string> = {
@@ -86,6 +87,7 @@ const ReportTab = ({
   propertyName = "The Johnson Residence",
   propertyAddress = "",
   pdfData,
+  reportId,
 }: ReportTabProps) => {
   const reportGroups = groups || staticGroups;
   const reportPages = pages || staticPages;
@@ -130,7 +132,7 @@ const ReportTab = ({
             </BreadcrumbList>
           </Breadcrumb>
         </div>
-        <ReportPage page={page} onNavigate={onNavigate} dbPageId={dbPageId} images={images} pdfData={pdfData} />
+        <ReportPage page={page} onNavigate={onNavigate} dbPageId={dbPageId} images={images} pdfData={pdfData} reportId={reportId} />
         {images.length > 0 && (
           <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-16">
             <h3 className="font-display text-2xl text-foreground mb-6">Photos</h3>

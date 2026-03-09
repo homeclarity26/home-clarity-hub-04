@@ -84,6 +84,22 @@ const Index = () => {
     );
   }
 
+  if (!portal.property) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-6">
+        <div className="text-center space-y-4">
+          <h1 className="font-display text-2xl text-foreground">Your Portal is Being Prepared</h1>
+          <p className="font-sans text-sm text-muted-foreground max-w-md">
+            Your HBC advisor is setting up your home stewardship portal. You'll receive an email once it's ready.
+          </p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+            Questions? Contact your advisor directly.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header
@@ -118,6 +134,7 @@ const Index = () => {
               propertyName={propertyName}
               propertyAddress={portal.property?.address || ""}
               pdfData={pdfData}
+              reportId={portal.report?.id}
             />
           )}
         </div>
