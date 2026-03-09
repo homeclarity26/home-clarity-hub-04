@@ -73,51 +73,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user, fetchProfile, fetchRoles]);
 
   useEffect(() => {
-    let initialLoadDone = false;
-
-    // Set up auth state listener first
+    // Auth state listener — fires immediately with INITIAL_SESSION for existing sessions
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          // Use setTimeout to avoid Supabase deadlocks when querying inside auth listener
+          // Use setTimeout to avoid Supabase deadlocks when querying inside auth listener.
+          // setIsLoading(false) MUST be inside here, after roles are fetched —
+          // otherwise CreatorRoute evaluates before isCreator is true.
           setTimeout(async () => {
             await Promise.all([
               fetchProfile(newSession.user.id),
               fetchRoles(newSession.user.id),
             ]);
-            // Only set loading false from here if getSession hasn't already done it
-            if (!initialLoadDone) {
-              initialLoadDone = true;
-              setIsLoading(false);
-            }
+            setIsLoading(false);
           }, 0);
         } else {
           setProfile(null);
           setRoles([]);
-          if (!initialLoadDone) {
-            initialLoadDone = true;
-            setIsLoading(false);
-          }
+          setIsLoading(false);
         }
       }
     );
 
-    // Then check for existing session
+    // Fallback: if no session exists and onAuthStateChange doesn't set loading=false
     supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
-      if (existingSession?.user) {
-        // Roles will be loaded by onAuthStateChange handler above
-        // which fires synchronously for an existing session
-      } else {
-        // No session — mark loading done if onAuthStateChange hasn't
-        setTimeout(() => {
-          if (!initialLoadDone) {
-            initialLoadDone = true;
-            setIsLoading(false);
-          }
-        }, 100);
+      if (!existingSession) {
+        setIsLoading(false);
       }
     });
 
