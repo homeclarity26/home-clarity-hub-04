@@ -55,78 +55,20 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect, groups, pages }: H
       {/* Desktop Navigation */}
       <nav className="hidden md:flex gap-10">
         {tabs.map((tab) => (
-          <div
+          <button
             key={tab.id}
-            className="relative"
-            onMouseEnter={tab.id === "report" ? handleReportHoverEnter : undefined}
-            onMouseLeave={tab.id === "report" ? handleReportHoverLeave : undefined}
+            onClick={() => onTabChange(tab.id)}
+            className={`font-mono text-[11px] uppercase tracking-[0.15em] py-2 border-none bg-transparent cursor-pointer transition-colors relative ${
+              activeTab === tab.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
           >
-            <button
-              onClick={() => {
-                onTabChange(tab.id);
-                if (tab.id !== "report") setHoveredGroup(null);
-              }}
-              onMouseEnter={tab.id === "report" && reportGroups.length > 0 ? () => setHoveredGroup(reportGroups[0].id) : undefined}
-              className={`font-mono text-[11px] uppercase tracking-[0.15em] py-2 border-none bg-transparent cursor-pointer transition-colors relative ${
-                activeTab === tab.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+            {tab.label}
+            <span
+              className={`absolute bottom-0 left-0 h-0.5 bg-accent transition-all duration-300 ${
+                activeTab === tab.id ? "w-full" : "w-0"
               }`}
-            >
-              {tab.label}
-              <span
-                className={`absolute bottom-0 left-0 h-0.5 bg-accent transition-all duration-300 ${
-                  activeTab === tab.id ? "w-full" : "w-0"
-                }`}
-              />
-            </button>
-
-            {/* Cascade Dropdown for Report */}
-            {tab.id === "report" && hoveredGroup !== null && (
-              <div
-                className="absolute top-[72px] left-1/2 -translate-x-1/2 flex z-[200] opacity-100 transition-opacity duration-200"
-                onMouseEnter={handleReportHoverEnter}
-                onMouseLeave={handleReportHoverLeave}
-              >
-                <div className="w-[320px] bg-card shadow-hbc-lg rounded-lg py-4">
-                  {reportGroups.map((group) => (
-                    <div
-                      key={group.id}
-                      onMouseEnter={() => setHoveredGroup(group.id)}
-                      className={`px-6 py-4 cursor-pointer border-b border-border last:border-b-0 transition-all ${
-                        hoveredGroup === group.id ? "border-l-[3px] border-l-accent pl-[21px]" : ""
-                      }`}
-                    >
-                      <h3 className="font-display text-lg text-foreground">{group.title}</h3>
-                    </div>
-                  ))}
-                </div>
-
-                {hoveredGroup && (
-                  <div className="w-[280px] ml-2 bg-card shadow-hbc-lg rounded-lg p-6">
-                    <ul className="list-none p-0 m-0">
-                      {reportGroups
-                        .find((g) => g.id === hoveredGroup)
-                        ?.pages.map((pageId) => {
-                          const page = reportPages[pageId];
-                          return (
-                            <li key={pageId}>
-                              <button
-                                onClick={() => {
-                                  onReportPageSelect(pageId);
-                                  setHoveredGroup(null);
-                                }}
-                                className="block w-full text-left font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground bg-transparent border-none cursor-pointer py-3 transition-all hover:text-foreground hover:pl-3"
-                              >
-                                {page?.title || pageId}
-                              </button>
-                            </li>
-                          );
-                        })}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+            />
+          </button>
         ))}
       </nav>
 
