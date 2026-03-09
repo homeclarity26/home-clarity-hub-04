@@ -101,7 +101,7 @@ export function useClientPortal(propertyId?: string) {
         // 3. Fetch creator name
         const { data: creatorProfile } = await supabase
           .from("profiles")
-          .select("full_name")
+          .select("full_name, email, phone")
           .eq("user_id", rpt.created_by)
           .limit(1);
 
