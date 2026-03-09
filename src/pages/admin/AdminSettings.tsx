@@ -92,9 +92,11 @@ const AdminSettings = () => {
           <h3 className="text-base font-sans font-semibold text-foreground">Default Region</h3>
           <div className="space-y-1.5">
             <Label className="text-xs font-sans">Service Area</Label>
-            <Input defaultValue="Summit County, OH" className="font-sans" />
+            <Input value={region} onChange={(e) => setRegion(e.target.value)} className="font-sans" />
           </div>
-          <Button size="sm" className="font-sans">Update</Button>
+          <Button size="sm" className="font-sans" onClick={handleRegionSave} disabled={savingRegion}>
+            {savingRegion ? "Saving..." : "Update"}
+          </Button>
         </Card>
       </div>
     </div>
