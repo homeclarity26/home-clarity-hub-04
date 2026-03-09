@@ -42,8 +42,39 @@ const ReportTab = ({
   if (page) {
     const dbPageId = pageKeyToDbId[activePageId!];
     const images = pageImages[activePageId!] || [];
+    const group = reportGroups.find(g => g.pages.includes(activePageId!));
     return (
       <div>
+        <div className="max-w-[800px] mx-auto px-6 md:px-20 pt-8">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  className="cursor-pointer font-mono text-[11px] uppercase tracking-[0.15em]"
+                  onClick={() => onNavigate?.("")}
+                >
+                  Report
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              {group && (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+                      {group.title}
+                    </span>
+                  </BreadcrumbItem>
+                </>
+              )}
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="font-mono text-[11px] uppercase tracking-[0.15em]">
+                  {page.title}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
         <ReportPage page={page} onNavigate={onNavigate} dbPageId={dbPageId} pdfData={pdfData} />
         {images.length > 0 && (
           <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-16">
