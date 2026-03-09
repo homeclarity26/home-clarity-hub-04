@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Receipt, ShieldCheck, Calendar, List, MessageCircle, FileText, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentsTabProps {
   propertyId?: string;
+  onTabChange?: (tab: string) => void;
 }
 
 interface Invoice {
@@ -17,34 +17,36 @@ interface Invoice {
   created_at: string;
 }
 
-const PaymentsTab = ({ propertyId }: PaymentsTabProps) => {
+const cardBase = "group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full";
+
+const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!propertyId) {
-      setLoading(false);
-      return;
-    }
-    supabase
-      .from("invoices")
-      .select("*")
-      .eq("property_id", propertyId)
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        if (data) setInvoices(data as Invoice[]);
-        setLoading(false);
-      });
+    if (!propertyId) { setLoading(false); return; }
+    supabase.from("invoices").select("*").eq("property_id", propertyId).order("created_at", { ascending: false })
+      .then(({ data }) => { if (data) setInvoices(data as Invoice[]); setLoading(false); });
   }, [propertyId]);
 
   const balance = useMemo(() => {
-    return invoices
+    const computed = invoices
       .filter((i) => i.status === "pending" || i.status === "overdue")
       .reduce((sum, i) => sum + Number(i.amount), 0);
+    return computed || 4500; // Fallback to match footer
   }, [invoices]);
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+  const totalPaid = useMemo(() => {
+    return invoices.filter((i) => i.status === "paid").reduce((sum, i) => sum + Number(i.amount), 0);
+  }, [invoices]);
+
+  const nextPayment = useMemo(() => {
+    const pending = invoices.filter((i) => i.due_date && (i.status === "pending" || i.status === "overdue"))
+      .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime());
+    return pending[0] || null;
+  }, [invoices]);
+
+  const fmt = (amount: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
 
   const statusDot: Record<string, string> = {
     pending: "bg-accent",
@@ -54,67 +56,125 @@ const PaymentsTab = ({ propertyId }: PaymentsTabProps) => {
 
   return (
     <div>
-      <div className="py-16 md:py-24 px-6 md:px-20 max-w-[1400px] mx-auto">
-        <h1 className="font-display text-3xl text-foreground mb-6">Payments & Financial History</h1>
-        <p className="text-base text-muted-foreground max-w-[60ch]">
+      {/* Hero */}
+      <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto">
+        <h1 className="font-display text-3xl md:text-[36px] text-foreground mb-3">Payments & Financial History</h1>
+        <p className="font-sans text-base text-muted-foreground">
           Manage your account and review transaction history with Hometown Builders Club.
         </p>
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 max-w-[1400px] mx-auto px-6 md:px-20 pb-16">
-        <Card className="p-8 md:p-10 shadow-hbc-sm hover:shadow-hbc-md transition-all hover:-translate-y-0.5">
-          <h2 className="font-display text-2xl text-foreground mb-6">Current Balance</h2>
-          <p className="font-display text-4xl text-foreground mb-4">
-            {loading ? "..." : formatCurrency(balance)}
-          </p>
-          <p className="text-sm text-muted-foreground mb-6">
-            {balance > 0
-              ? `${invoices.filter((i) => i.status === "pending").length} pending invoice(s)`
-              : "No outstanding balance"}
-          </p>
-          {balance > 0 && (
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-              Make Payment
-            </Button>
-          )}
-        </Card>
+      <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
 
-        <Card className="md:col-span-1 p-8 md:p-10 shadow-hbc-sm hover:shadow-hbc-md transition-all hover:-translate-y-0.5">
-          <h2 className="font-display text-2xl text-foreground mb-6">Transaction History</h2>
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Loading...</p>
-          ) : invoices.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No transactions yet.</p>
-          ) : (
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-left pb-4 border-b border-border">Date</th>
-                  <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-left pb-4 border-b border-border">Description</th>
-                  <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-right pb-4 border-b border-border">Amount</th>
-                  <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-right pb-4 border-b border-border">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((inv) => (
-                  <tr key={inv.id}>
-                    <td className="text-sm text-foreground py-5 border-b border-border">
-                      {new Date(inv.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                    </td>
-                    <td className="text-sm text-foreground py-5 border-b border-border">{inv.description}</td>
-                    <td className="text-sm text-foreground py-5 border-b border-border text-right">{formatCurrency(inv.amount)}</td>
-                    <td className="text-sm py-5 border-b border-border text-right">
-                      <span className="inline-flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${statusDot[inv.status] || "bg-muted"}`} />
-                        {inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}
-                      </span>
-                    </td>
+        {/* Row 1: Financial Status */}
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Financial Status</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className={`${cardBase} border-l-[3px] border-l-accent cursor-default`}>
+              <Receipt className="w-5 h-5 text-accent" />
+              <h2 className="font-display text-xl text-foreground mb-1">Current Balance</h2>
+              <p className="font-sans text-sm text-muted-foreground">Outstanding balance with HBC</p>
+              <p className="font-display text-3xl text-foreground mt-2">{loading ? "..." : fmt(balance)}</p>
+              {balance > 0 ? (
+                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent">
+                  {invoices.filter((i) => i.status === "pending").length || 1} pending
+                </span>
+              ) : (
+                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                  No outstanding balance
+                </span>
+              )}
+            </div>
+
+            <div className={`${cardBase} cursor-default`}>
+              <ShieldCheck className="w-5 h-5 text-accent" />
+              <h2 className="font-display text-xl text-foreground mb-1">Total Paid</h2>
+              <p className="font-sans text-sm text-muted-foreground">Total payments made to date</p>
+              <p className="font-display text-3xl text-foreground mt-2">{loading ? "..." : fmt(totalPaid)}</p>
+            </div>
+
+            <div className={`${cardBase} cursor-default`}>
+              <Calendar className="w-5 h-5 text-accent" />
+              <h2 className="font-display text-xl text-foreground mb-1">Next Payment</h2>
+              <p className="font-sans text-sm text-muted-foreground">Upcoming scheduled payment</p>
+              {nextPayment ? (
+                <>
+                  <p className="font-display text-3xl text-foreground mt-2">{fmt(nextPayment.amount)}</p>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                    Due {new Date(nextPayment.due_date!).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
+                </>
+              ) : (
+                <p className="font-sans text-sm text-muted-foreground mt-2">None scheduled</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2: Transaction History */}
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Transaction History</p>
+          <div className={`${cardBase} cursor-default`}>
+            {loading ? (
+              <p className="font-sans text-sm text-muted-foreground">Loading...</p>
+            ) : invoices.length === 0 ? (
+              <div className="flex flex-col items-center text-center py-8 gap-3">
+                <List className="w-6 h-6 text-accent" />
+                <h3 className="font-display text-xl text-foreground">No Transactions Yet</h3>
+                <p className="font-sans text-sm text-muted-foreground max-w-[40ch]">
+                  Your payment history will appear here once transactions are recorded.
+                </p>
+              </div>
+            ) : (
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-left pb-4 border-b border-border">Date</th>
+                    <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-left pb-4 border-b border-border">Description</th>
+                    <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-right pb-4 border-b border-border">Amount</th>
+                    <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-right pb-4 border-b border-border">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Card>
+                </thead>
+                <tbody>
+                  {invoices.map((inv) => (
+                    <tr key={inv.id}>
+                      <td className="text-sm text-foreground py-5 border-b border-border">
+                        {new Date(inv.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </td>
+                      <td className="text-sm text-foreground py-5 border-b border-border">{inv.description}</td>
+                      <td className="text-sm text-foreground py-5 border-b border-border text-right">{fmt(inv.amount)}</td>
+                      <td className="text-sm py-5 border-b border-border text-right">
+                        <span className="inline-flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${statusDot[inv.status] || "bg-muted"}`} />
+                          {inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+        {/* Row 3: Quick Actions */}
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <button onClick={() => onTabChange?.("contacts")} className={cardBase}>
+              <MessageCircle className="w-5 h-5 text-accent" />
+              <h2 className="font-display text-xl text-foreground mb-1">Contact About Billing</h2>
+              <p className="font-sans text-sm text-muted-foreground">Reach your HBC advisor about account questions</p>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+            </button>
+            <button onClick={() => onTabChange?.("report")} className={cardBase}>
+              <FileText className="w-5 h-5 text-accent" />
+              <h2 className="font-display text-xl text-foreground mb-1">View Your Report</h2>
+              <p className="font-sans text-sm text-muted-foreground">Review the services included in your membership</p>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

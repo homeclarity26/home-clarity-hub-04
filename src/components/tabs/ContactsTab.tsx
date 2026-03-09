@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/card";
+import { User, Headset, Hammer, Thermometer, Zap, TreePine, Phone, MessageCircle, ChevronRight } from "lucide-react";
 
 interface CreatorInfo {
   name: string;
@@ -9,96 +9,110 @@ interface CreatorInfo {
 
 interface ContactsTabProps {
   creator?: CreatorInfo;
+  onTabChange?: (tab: string) => void;
 }
 
-const ContactsTab = ({ creator }: ContactsTabProps) => {
-  const creatorName = creator?.name || "Your HBC Team";
-  const creatorInitials = creator?.initials || "HB";
+const cardBase = "group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full";
+
+const vendorPlaceholders = [
+  { title: "General Contractor", icon: Hammer },
+  { title: "HVAC Specialist", icon: Thermometer },
+  { title: "Electrician", icon: Zap },
+  { title: "Landscaper", icon: TreePine },
+];
+
+const ContactsTab = ({ creator, onTabChange }: ContactsTabProps) => {
+  const creatorName = creator?.name || "Adam Kinney";
   const creatorEmail = creator?.email || "support@hbc.com";
   const creatorPhone = creator?.phone || "";
 
+  const handleAskQuestion = () => {
+    const input = document.querySelector<HTMLInputElement>('footer input[type="text"]');
+    if (input) { input.focus(); input.scrollIntoView({ behavior: "smooth" }); }
+  };
+
   return (
     <div>
-      <div className="py-16 md:py-24 px-6 md:px-20 max-w-[1400px] mx-auto">
-        <h1 className="font-display text-3xl text-foreground mb-6">Your Home Team</h1>
-        <p className="text-base text-muted-foreground max-w-[60ch]">
+      {/* Hero */}
+      <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto">
+        <h1 className="font-display text-3xl md:text-[36px] text-foreground mb-3">Your Home Team</h1>
+        <p className="font-sans text-base text-muted-foreground">
           Direct contact information for Hometown Builders Club and approved vendor partners.
         </p>
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 max-w-[1400px] mx-auto px-6 md:px-20 pb-16">
-        <Card className="md:col-span-2 p-8 md:p-10 shadow-hbc-sm hover:shadow-hbc-md transition-all hover:-translate-y-0.5">
-          <h2 className="font-display text-2xl text-foreground mb-8">Hometown Builders Club</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            <div className="flex items-start gap-6">
-              <div className="w-[60px] h-[60px] rounded-full bg-primary flex items-center justify-center font-display text-xl text-primary-foreground flex-shrink-0">
-                {creatorInitials}
-              </div>
-              <div>
-                <h3 className="font-display text-xl text-foreground mb-2">{creatorName}</h3>
-                <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground mb-4">
-                  Lead Advisor
-                </p>
-                {creatorEmail && (
-                  <a href={`mailto:${creatorEmail}`} className="text-sm text-foreground no-underline block mb-2 hover:text-accent transition-colors">
-                    {creatorEmail}
-                  </a>
-                )}
-                {creatorPhone && (
-                  <a href={`tel:${creatorPhone.replace(/\D/g, "")}`} className="text-sm text-foreground no-underline block hover:text-accent transition-colors">
-                    {creatorPhone}
-                  </a>
-                )}
-              </div>
-            </div>
-            <div className="flex items-start gap-6">
-              <div className="w-[60px] h-[60px] rounded-full bg-primary flex items-center justify-center font-display text-xl text-primary-foreground flex-shrink-0">
-                HB
-              </div>
-              <div>
-                <h3 className="font-display text-xl text-foreground mb-2">HBC Support</h3>
-                <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground mb-4">
-                  Client Services
-                </p>
-                <a href="mailto:support@hbc.com" className="text-sm text-foreground no-underline block mb-2 hover:text-accent transition-colors">
-                  support@hbc.com
+      <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
+
+        {/* Row 1: HBC Team */}
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Your HBC Team</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className={`${cardBase} border-l-[3px] border-l-accent cursor-default`}>
+              <User className="w-5 h-5 text-accent" />
+              <h2 className="font-display text-xl text-foreground mb-1">{creatorName}</h2>
+              <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Founder & Lead Advisor</p>
+              {creatorEmail && (
+                <a href={`mailto:${creatorEmail}`} className="font-sans text-sm text-muted-foreground hover:text-accent transition-colors no-underline">
+                  {creatorEmail}
                 </a>
-              </div>
+              )}
+              {creatorPhone && (
+                <a href={`tel:${creatorPhone.replace(/\D/g, "")}`} className="font-sans text-sm text-muted-foreground hover:text-accent transition-colors no-underline">
+                  {creatorPhone}
+                </a>
+              )}
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 self-end transition-colors" />
             </div>
-          </div>
-        </Card>
 
-        <Card className="md:col-span-2 p-8 md:p-10 shadow-hbc-sm hover:shadow-hbc-md transition-all hover:-translate-y-0.5">
-          <h2 className="font-display text-2xl text-foreground mb-8">Approved Vendor Partners</h2>
-          <p className="text-base text-foreground mb-8">
-            Your Home Clarity Report will recommend specific vendors for each project phase. Once
-            approved, their contact information will appear here.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            <div className="flex items-start gap-6 opacity-50">
-              <div className="w-[60px] h-[60px] rounded-full bg-muted flex items-center justify-center font-display text-xl text-muted-foreground flex-shrink-0">
-                GC
-              </div>
-              <div>
-                <h3 className="font-display text-xl text-foreground mb-2">General Contractor</h3>
-                <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-                  To be assigned
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-6 opacity-50">
-              <div className="w-[60px] h-[60px] rounded-full bg-muted flex items-center justify-center font-display text-xl text-muted-foreground flex-shrink-0">
-                HV
-              </div>
-              <div>
-                <h3 className="font-display text-xl text-foreground mb-2">HVAC Specialist</h3>
-                <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-                  To be assigned
-                </p>
-              </div>
+            <div className={`${cardBase} cursor-default`}>
+              <Headset className="w-5 h-5 text-accent" />
+              <h2 className="font-display text-xl text-foreground mb-1">HBC Support Team</h2>
+              <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Client Services</p>
+              <a href="mailto:support@hbc.com" className="font-sans text-sm text-muted-foreground hover:text-accent transition-colors no-underline">
+                support@hbc.com
+              </a>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 self-end transition-colors" />
             </div>
           </div>
-        </Card>
+        </div>
+
+        {/* Row 2: Approved Vendor Partners */}
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Approved Vendor Partners</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {vendorPlaceholders.map((vendor) => (
+              <div key={vendor.title} className={`${cardBase} opacity-60 cursor-default`}>
+                <div className="flex items-start justify-between w-full">
+                  <vendor.icon className="w-5 h-5 text-accent" />
+                  <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                    To be assigned
+                  </span>
+                </div>
+                <h3 className="font-display text-xl text-foreground">{vendor.title}</h3>
+                <p className="font-sans text-sm text-muted-foreground">Contact details will appear once assigned</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Row 3: Quick Actions */}
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <button onClick={() => onTabChange?.("schedule")} className={cardBase}>
+              <Phone className="w-5 h-5 text-accent" />
+              <h2 className="font-display text-xl text-foreground mb-1">Schedule a Call</h2>
+              <p className="font-sans text-sm text-muted-foreground">Book time with your HBC advisor</p>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+            </button>
+            <button onClick={handleAskQuestion} className={cardBase}>
+              <MessageCircle className="w-5 h-5 text-accent" />
+              <h2 className="font-display text-xl text-foreground mb-1">Ask a Question</h2>
+              <p className="font-sans text-sm text-muted-foreground">AI-powered answers about your home</p>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

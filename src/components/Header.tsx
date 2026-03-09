@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, X, Settings } from "lucide-react";
+import { Menu, X, Settings, Pencil } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { Switch } from "@/components/ui/switch";
@@ -65,12 +65,15 @@ const Header = ({ activeTab, onTabChange }: HeaderProps) => {
       {/* User Section */}
       <div className="hidden md:flex items-center gap-4">
         {isCreator && (
-          <div className="flex items-center gap-2 mr-4 border-r border-border pr-4">
-            <span className={`font-mono text-[10px] uppercase tracking-[0.15em] ${editMode ? "text-accent" : "text-muted-foreground"}`}>
-              Edit
-            </span>
-            <Switch checked={editMode} onCheckedChange={toggleEditMode} className="data-[state=checked]:bg-accent" />
-          </div>
+          <button
+            onClick={toggleEditMode}
+            className={`p-2 rounded-md transition-colors border-none cursor-pointer ${
+              editMode ? "bg-accent/20 text-accent" : "bg-transparent text-muted-foreground hover:text-foreground"
+            }`}
+            title={editMode ? "Exit edit mode" : "Enter edit mode"}
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
         )}
         {isCreator && (
           <button
