@@ -132,7 +132,7 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages }: ProjectsTab
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <button onClick={() => onTabChange?.("report") || onNavigate("report")} className={cardBase}>
+            <button onClick={() => { if (onTabChange) onTabChange("report"); else onNavigate("report"); }} className={cardBase}>
               <FileText className="w-5 h-5 text-accent" />
               <h2 className="font-display text-xl text-foreground mb-1">Review Report Recommendations</h2>
               <p className="font-sans text-sm text-muted-foreground">See what your Home Clarity Report recommends</p>
