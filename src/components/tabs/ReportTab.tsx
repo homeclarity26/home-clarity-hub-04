@@ -41,6 +41,7 @@ interface ReportTabProps {
   propertyName?: string;
   propertyAddress?: string;
   pdfData?: PDFReportData;
+  reportId?: string;
 }
 
 const conditionColor: Record<string, string> = {
