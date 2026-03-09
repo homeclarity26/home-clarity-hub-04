@@ -177,7 +177,7 @@ const AdminClientDetail = () => {
         {/* Tab content */}
         {activeTab === "overview" && <ClientOverview client={client} />}
         {activeTab === "report" && <ReportPageManager propertyId={client.propertyId} reportId={client.reportId} />}
-        {activeTab === "files" && <FileManager />}
+        {activeTab === "files" && <FileManager propertyId={client.propertyId} />}
         {activeTab === "comments" && <CommentsManager clientId={client.id} />}
 
         {activeTab === "projects" && (
