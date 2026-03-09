@@ -74,7 +74,7 @@ const Index = () => {
         </div>
       </main>
 
-      <Footer activeTab={activeTab} onNavigate={handleNavigate} />
+      <Footer activeTab={activeTab} onNavigate={handleNavigate} reportContext={Object.values(reportPages).map(p => ({ title: p.title, conditionRating: p.conditionRating, narrative: p.narrative, specs: p.specs, tiers: p.tiers, timing: p.timing, recommendations: p.recommendations }))} />
     </div>
   );
 };
