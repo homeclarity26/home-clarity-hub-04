@@ -221,12 +221,6 @@ const AdminClientDetail = () => {
     setEditInvoiceOpen(true);
   };
 
-  const openEditInvoice = (inv: typeof invoices extends (infer T)[] | undefined ? T : never) => {
-    if (!inv) return;
-    setEditId(inv.id);
-    setInvoiceForm({ description: inv.description, amount: String(inv.amount), due_date: inv.due_date || "", status: inv.status });
-    setEditInvoiceOpen(true);
-  };
 
   const openEditEvent = (ev: typeof events extends (infer T)[] | undefined ? T : never) => {
     if (!ev) return;
