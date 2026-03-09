@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Sparkles, CheckCircle, Loader2, ArrowLeft, ArrowRight } from "lucide-react";
+import { Upload, Sparkles, CheckCircle, Loader2, ArrowLeft, ArrowRight, Mail, Copy, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -30,6 +30,13 @@ const NewReportWizard = () => {
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [published, setPublished] = useState(false);
+  const [publishResult, setPublishResult] = useState<{
+    portalUrl: string;
+    isExisting: boolean;
+    magicLinkSent: boolean;
+  } | null>(null);
   const [createdPropertyId, setCreatedPropertyId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -60,14 +67,12 @@ const NewReportWizard = () => {
 
     setSaving(true);
     try {
-      // Create property with creator as temporary client_user_id
-      // In production, this would create a real client user account
       const { data: property, error: propErr } = await supabase
         .from("properties")
         .insert({
           address: form.address,
           property_name: form.propertyName || form.address,
-          client_user_id: user.id, // temporary — will be reassigned when client account is created
+          client_user_id: user.id,
           metadata: {
             year_built: form.yearBuilt ? parseInt(form.yearBuilt) : null,
             sqft: form.sqft ? parseInt(form.sqft) : null,
@@ -84,7 +89,6 @@ const NewReportWizard = () => {
 
       if (propErr) throw propErr;
 
-      // Create report
       const { data: report, error: repErr } = await supabase
         .from("reports")
         .insert({
@@ -98,7 +102,6 @@ const NewReportWizard = () => {
 
       if (repErr) throw repErr;
 
-      // Seed default report pages
       const defaultPages = [
         { group_name: "Major Systems", pages: [
           { page_key: "hvac", title: "HVAC System" },
@@ -151,6 +154,64 @@ const NewReportWizard = () => {
     }
   };
 
+  const handlePublish = async () => {
+    if (!createdPropertyId || !form.email) {
+      toast({
+        title: "Email required",
+        description: "A client email is needed to create their account and send login credentials.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPublishing(true);
+    try {
+      // Update report status to published
+      const { data: reports } = await supabase
+        .from("reports")
+        .select("id")
+        .eq("property_id", createdPropertyId)
+        .single();
+
+      if (reports) {
+        await supabase
+          .from("reports")
+          .update({ status: "published" })
+          .eq("id", reports.id);
+      }
+
+      // Call edge function to create client account
+      const { data, error } = await supabase.functions.invoke("create-client-account", {
+        body: {
+          email: form.email,
+          fullName: form.fullName,
+          propertyId: createdPropertyId,
+        },
+      });
+
+      if (error) throw error;
+
+      setPublishResult({
+        portalUrl: data.portalUrl,
+        isExisting: data.isExisting,
+        magicLinkSent: data.magicLinkSent,
+      });
+      setPublished(true);
+
+      toast({
+        title: "Published!",
+        description: data.isExisting
+          ? `Property assigned to existing account (${form.email}).`
+          : `Client account created and invite sent to ${form.email}.`,
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to publish";
+      toast({ title: "Publish failed", description: message, variant: "destructive" });
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   const handleNext = async () => {
     if (currentStep === 0) {
       const success = await handleCreateClient();
@@ -165,6 +226,12 @@ const NewReportWizard = () => {
       setGenerating(false);
       setGenerated(true);
     }, 3000);
+  };
+
+  const copyPortalLink = () => {
+    const url = `${window.location.origin}/portal/${createdPropertyId}`;
+    navigator.clipboard.writeText(url);
+    toast({ title: "Copied!", description: "Portal link copied to clipboard." });
   };
 
   return (
@@ -198,8 +265,9 @@ const NewReportWizard = () => {
               <Input placeholder="Sarah & Michael Johnson" className="font-sans" value={form.fullName} onChange={(e) => updateForm("fullName", e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-sans">Email</Label>
+              <Label className="text-xs font-sans">Email *</Label>
               <Input type="email" placeholder="client@email.com" className="font-sans" value={form.email} onChange={(e) => updateForm("email", e.target.value)} />
+              <p className="text-[10px] font-sans text-muted-foreground">Required — used to create client login</p>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-sans">Phone</Label>
@@ -306,18 +374,77 @@ const NewReportWizard = () => {
       {currentStep === 3 && (
         <Card className="p-6 space-y-5">
           <h3 className="text-base font-sans font-semibold text-foreground">Review & Publish</h3>
-          <p className="text-sm font-sans text-muted-foreground">
-            Review the generated content in the portal before publishing. Publishing will create the client account and send login credentials.
-          </p>
-          <div className="flex gap-3">
-            <Button variant="outline" className="gap-1.5 font-sans" onClick={() => window.open(`/portal/${createdPropertyId || ""}?edit=true`, "_blank")}>
-              Open in Portal to Review
-            </Button>
-            <Button className="gap-1.5 font-sans">
-              <CheckCircle className="w-4 h-4" />
-              Publish v1
-            </Button>
-          </div>
+
+          {!published ? (
+            <>
+              <p className="text-sm font-sans text-muted-foreground">
+                Review the generated content in the portal before publishing. Publishing will create a client account for <strong className="text-foreground">{form.email || "—"}</strong> and send them a magic link to access their portal.
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="gap-1.5 font-sans"
+                  onClick={() => window.open(`/portal/${createdPropertyId || ""}?edit=true`, "_blank")}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open in Portal to Review
+                </Button>
+                <Button
+                  className="gap-1.5 font-sans"
+                  onClick={handlePublish}
+                  disabled={publishing || !form.email}
+                >
+                  {publishing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Mail className="w-4 h-4" />
+                  )}
+                  {publishing ? "Creating account..." : "Publish & Send Invite"}
+                </Button>
+              </div>
+              {!form.email && (
+                <p className="text-xs font-sans text-destructive">
+                  Go back to Step 1 and add a client email to enable publishing.
+                </p>
+              )}
+            </>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-accent/10 border border-accent/20">
+                <CheckCircle className="w-6 h-6 text-accent shrink-0" />
+                <div>
+                  <p className="text-sm font-sans font-medium text-foreground">
+                    {publishResult?.isExisting
+                      ? "Property assigned to existing client account"
+                      : "Client account created & invite sent"}
+                  </p>
+                  <p className="text-xs font-sans text-muted-foreground mt-0.5">
+                    {publishResult?.magicLinkSent
+                      ? `A magic link was sent to ${form.email}`
+                      : `Client can sign in at ${form.email}`}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button variant="outline" className="gap-1.5 font-sans" onClick={copyPortalLink}>
+                  <Copy className="w-4 h-4" />
+                  Copy Portal Link
+                </Button>
+                <Button
+                  variant="outline"
+                  className="gap-1.5 font-sans"
+                  onClick={() => window.open(`/portal/${createdPropertyId}`, "_blank")}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  View Portal
+                </Button>
+                <Button className="gap-1.5 font-sans" onClick={() => navigate("/admin/clients")}>
+                  Back to Clients
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       )}
 
