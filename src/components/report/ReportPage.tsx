@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { ReportPageData } from "@/data/reportContent";
+import type { PDFReportData } from "@/features/pdf/PDFReport";
 import HealthBar from "./HealthBar";
 import PricingTiers from "./PricingTiers";
 import EditableSection from "@/components/editor/EditableSection";
@@ -17,6 +18,7 @@ interface ReportPageProps {
   page: ReportPageData;
   onNavigate?: (pageId: string) => void;
   dbPageId?: string;
+  pdfData?: PDFReportData;
 }
 
 const conditionOptions = ["Excellent", "Good", "Fair", "Poor", "Critical"];
@@ -29,7 +31,7 @@ const conditionColors: Record<string, string> = {
   Critical: "text-destructive",
 };
 
-const ReportPage = ({ page, onNavigate, dbPageId }: ReportPageProps) => {
+const ReportPage = ({ page, onNavigate, dbPageId, pdfData }: ReportPageProps) => {
   const { canEdit } = useEditMode();
   const { pageData, status, saveStatus, updatePageData, updateStatus, isLoading } = useReportPage(page.id, page);
   
@@ -95,6 +97,7 @@ const ReportPage = ({ page, onNavigate, dbPageId }: ReportPageProps) => {
           saveStatus={saveStatus}
           currentPageId={page.id}
           onNavigate={(pageId) => onNavigate?.(pageId)}
+          pdfData={pdfData}
         />
       )}
 

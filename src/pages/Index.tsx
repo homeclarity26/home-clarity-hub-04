@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -9,6 +9,7 @@ import PaymentsTab from "@/components/tabs/PaymentsTab";
 import ContactsTab from "@/components/tabs/ContactsTab";
 import ScheduleTab from "@/components/tabs/ScheduleTab";
 import { useClientPortal } from "@/hooks/useClientPortal";
+import type { PDFReportData } from "@/features/pdf/PDFReport";
 
 const Index = () => {
   const { propertyId } = useParams<{ propertyId?: string }>();
@@ -36,6 +37,25 @@ const Index = () => {
     }
   }, [handleTabChange, handleReportPageSelect]);
 
+  const propertyName = portal.property?.property_name || "Your Home";
+
+  const pdfData: PDFReportData | undefined = useMemo(() => {
+    if (!portal.hasDbData && Object.keys(portal.pages).length === 0) return undefined;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    return {
+      propertyName,
+      address: portal.property?.address || "",
+      date: dateStr,
+      creatorName: portal.creatorName,
+      creatorEmail: portal.creatorProfile?.email,
+      creatorPhone: portal.creatorProfile?.phone,
+      groups: portal.groups,
+      pages: portal.pages,
+      pageImages: portal.pageImages,
+    };
+  }, [propertyName, portal]);
+
   if (portal.isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -45,8 +65,6 @@ const Index = () => {
       </div>
     );
   }
-
-  const propertyName = portal.property?.property_name || "Your Home";
 
   return (
     <div className="min-h-screen bg-background">
@@ -79,6 +97,7 @@ const Index = () => {
               pageKeyToDbId={portal.pageKeyToDbId}
               pageImages={portal.pageImages}
               propertyName={propertyName}
+              pdfData={pdfData}
             />
           )}
         </div>

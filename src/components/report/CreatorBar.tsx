@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ArrowLeft, Download } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -12,6 +12,8 @@ import type { SaveStatus } from "@/hooks/useReportPage";
 import { reportGroups } from "@/data/reportContent";
 import { useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import type { PDFReportData } from "@/features/pdf/PDFReport";
+import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 
 interface CreatorBarProps {
   status: "draft" | "complete" | "needs_review";
@@ -19,6 +21,7 @@ interface CreatorBarProps {
   saveStatus: SaveStatus;
   currentPageId: string;
   onNavigate: (pageId: string) => void;
+  pdfData?: PDFReportData;
 }
 
 const statusLabels: Record<string, string> = {
@@ -39,6 +42,7 @@ const CreatorBar = ({
   saveStatus,
   currentPageId,
   onNavigate,
+  pdfData,
 }: CreatorBarProps) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -108,15 +112,15 @@ const CreatorBar = ({
       {/* Right: save indicator + PDF */}
       <div className="flex items-center gap-2">
         <SaveIndicator status={saveStatus} />
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-primary-foreground hover:bg-primary-foreground/10 text-xs font-sans gap-1 no-print"
-          onClick={() => window.print()}
-        >
-          <Download className="h-3.5 w-3.5" />
-          PDF
-        </Button>
+        {pdfData && (
+          <PDFDownloadButton
+            data={pdfData}
+            variant="ghost"
+            size="sm"
+            className="h-7 text-primary-foreground hover:bg-primary-foreground/10 text-xs no-print"
+            label="PDF"
+          />
+        )}
       </div>
     </div>
   );
