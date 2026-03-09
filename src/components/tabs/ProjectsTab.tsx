@@ -138,7 +138,7 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages }: ProjectsTab
               <p className="font-sans text-sm text-muted-foreground">See what your Home Clarity Report recommends</p>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
-            <button onClick={() => onTabChange?.("contacts") || onNavigate("contacts")} className={cardBase}>
+            <button onClick={() => { if (onTabChange) onTabChange("contacts"); else onNavigate("contacts"); }} className={cardBase}>
               <Phone className="w-5 h-5 text-accent" />
               <h2 className="font-display text-xl text-foreground mb-1">Contact Your Advisor</h2>
               <p className="font-sans text-sm text-muted-foreground">Adam Kinney — Founder & Lead Advisor</p>
