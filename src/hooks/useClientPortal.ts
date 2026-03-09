@@ -213,6 +213,7 @@ export function useClientPortal(propertyId?: string) {
     pageImages,
     completionPercent,
     creatorName,
+    creatorProfile,
     hasDbData,
     isLoading,
   };
