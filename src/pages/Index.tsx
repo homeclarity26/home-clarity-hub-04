@@ -16,6 +16,8 @@ import type { PDFReportData } from "@/features/pdf/PDFReport";
 const Index = () => {
   const { propertyId } = useParams<{ propertyId?: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const isEditLink = searchParams.get("edit") === "true";
   const portal = useClientPortal(propertyId);
   const [activeTab, setActiveTab] = useState("home");
   const [reportPageId, setReportPageId] = useState<string | null>(null);
