@@ -1,16 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Sparkles, CheckCircle, Loader2, ArrowLeft, ArrowRight, Mail, Copy, ExternalLink } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Upload, Sparkles, CheckCircle, Loader2, ArrowLeft, ArrowRight, Mail, Copy, ExternalLink, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
-const steps = ["Client Info", "Upload Data", "AI Generation", "Review & Publish"];
+const steps = ["Client Info", "Select Pages", "Upload Data", "AI Generation", "Review & Publish"];
 
 interface ClientFormData {
   fullName: string;
@@ -24,6 +26,55 @@ interface ClientFormData {
   bathrooms: string;
   notes: string;
 }
+
+interface PageTemplate {
+  id: string;
+  name: string;
+  slug: string;
+  group_name: string;
+  sub_group: string | null;
+  default_order: number;
+  icon: string | null;
+  block_config: unknown;
+  default_content: unknown;
+}
+
+const groupLabels: Record<string, string> = {
+  information: "📋 Information",
+  exterior: "🏠 Exterior",
+  interior: "🏡 Interior",
+  systems: "⚙️ Systems",
+  strategy: "📈 Strategy",
+};
+
+const subGroupLabels: Record<string, string> = {
+  "overview": "Overview",
+  "roof-envelope": "Roof & Envelope",
+  "cladding": "Cladding & Siding",
+  "openings": "Doors & Windows",
+  "structure": "Foundation & Structure",
+  "site": "Site & Drainage",
+  "hardscape": "Hardscape",
+  "structures": "Decks & Porches",
+  "landscape": "Landscape",
+  "amenities": "Amenities",
+  "kitchen-dining": "Kitchen & Dining",
+  "primary-suite": "Primary Suite",
+  "bedrooms": "Bedrooms",
+  "bathrooms": "Bathrooms",
+  "living-spaces": "Living Spaces",
+  "flex-spaces": "Flex Spaces",
+  "entertainment": "Entertainment",
+  "basement": "Basement",
+  "utility": "Utility",
+  "circulation": "Circulation",
+  "storage": "Storage",
+  "hvac": "HVAC",
+  "plumbing": "Plumbing",
+  "electrical": "Electrical",
+  "safety": "Safety",
+  "planning": "Planning",
+};
 
 const NewReportWizard = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -41,6 +92,11 @@ const NewReportWizard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // Template state
+  const [templates, setTemplates] = useState<PageTemplate[]>([]);
+  const [selectedTemplates, setSelectedTemplates] = useState<Set<string>>(new Set());
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
+
   const [form, setForm] = useState<ClientFormData>({
     fullName: "",
     email: "",
@@ -54,9 +110,87 @@ const NewReportWizard = () => {
     notes: "",
   });
 
+  // Load templates on mount
+  useEffect(() => {
+    async function loadTemplates() {
+      try {
+        const { data, error } = await supabase
+          .from("page_templates")
+          .select("*")
+          .order("group_name")
+          .order("default_order");
+
+        if (error) throw error;
+        setTemplates(data || []);
+        
+        // Auto-select common templates by default
+        const defaultSelections = new Set<string>();
+        const defaultSlugs = [
+          "executive-summary", "property-overview", 
+          "roof-system", "windows", "siding",
+          "kitchen", "primary-bedroom", "primary-bathroom",
+          "furnace", "air-conditioning", "water-heater", "electrical-panel",
+          "financial-roadmap", "maintenance-calendar"
+        ];
+        data?.forEach(t => {
+          if (defaultSlugs.includes(t.slug)) {
+            defaultSelections.add(t.id);
+          }
+        });
+        setSelectedTemplates(defaultSelections);
+      } catch (err) {
+        console.error("Error loading templates:", err);
+        toast({ title: "Error", description: "Failed to load page templates", variant: "destructive" });
+      } finally {
+        setLoadingTemplates(false);
+      }
+    }
+    loadTemplates();
+  }, []);
+
   const updateForm = (field: keyof ClientFormData, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
+
+  const toggleTemplate = (templateId: string) => {
+    setSelectedTemplates(prev => {
+      const next = new Set(prev);
+      if (next.has(templateId)) {
+        next.delete(templateId);
+      } else {
+        next.add(templateId);
+      }
+      return next;
+    });
+  };
+
+  const selectAllInGroup = (groupName: string) => {
+    const groupTemplates = templates.filter(t => t.group_name === groupName);
+    setSelectedTemplates(prev => {
+      const next = new Set(prev);
+      groupTemplates.forEach(t => next.add(t.id));
+      return next;
+    });
+  };
+
+  const deselectAllInGroup = (groupName: string) => {
+    const groupTemplates = templates.filter(t => t.group_name === groupName);
+    setSelectedTemplates(prev => {
+      const next = new Set(prev);
+      groupTemplates.forEach(t => next.delete(t.id));
+      return next;
+    });
+  };
+
+  // Group templates by group_name and sub_group
+  const groupedTemplates = templates.reduce((acc, template) => {
+    const group = template.group_name;
+    const subGroup = template.sub_group || "general";
+    if (!acc[group]) acc[group] = {};
+    if (!acc[group][subGroup]) acc[group][subGroup] = [];
+    acc[group][subGroup].push(template);
+    return acc;
+  }, {} as Record<string, Record<string, PageTemplate[]>>);
 
   const handleCreateClient = async () => {
     if (!form.fullName || !form.address) {
@@ -64,6 +198,10 @@ const NewReportWizard = () => {
       return false;
     }
     if (!user) return false;
+    if (selectedTemplates.size === 0) {
+      toast({ title: "No pages selected", description: "Please select at least one page template.", variant: "destructive" });
+      return false;
+    }
 
     setSaving(true);
     try {
@@ -102,45 +240,27 @@ const NewReportWizard = () => {
 
       if (repErr) throw repErr;
 
-      const defaultPages = [
-        { group_name: "Major Systems", pages: [
-          { page_key: "hvac", title: "HVAC System" },
-          { page_key: "electrical", title: "Electrical" },
-          { page_key: "plumbing", title: "Plumbing" },
-          { page_key: "roofing", title: "Roofing" },
-        ]},
-        { group_name: "Structure & Envelope", pages: [
-          { page_key: "foundation", title: "Foundation" },
-          { page_key: "insulation", title: "Insulation & Envelope" },
-          { page_key: "windows-doors", title: "Windows & Doors" },
-        ]},
-        { group_name: "Interior", pages: [
-          { page_key: "kitchen", title: "Kitchen" },
-          { page_key: "bathrooms", title: "Bathrooms" },
-          { page_key: "flooring", title: "Flooring" },
-        ]},
-        { group_name: "Exterior & Site", pages: [
-          { page_key: "siding", title: "Siding & Exterior" },
-          { page_key: "landscaping", title: "Landscaping & Drainage" },
-          { page_key: "garage", title: "Garage & Driveway" },
-        ]},
-      ];
-
-      let sortOrder = 0;
-      const pageInserts = defaultPages.flatMap((group) =>
-        group.pages.map((p) => ({
+      // Create pages from selected templates
+      const selectedTemplatesList = templates.filter(t => selectedTemplates.has(t.id));
+      const pageInserts = selectedTemplatesList.map((template, index) => {
+        const defaultContent = (template.default_content || {}) as Record<string, unknown>;
+        return {
           report_id: report.id,
-          group_name: group.group_name,
-          page_key: p.page_key,
-          title: p.title,
-          narrative: [] as string[],
-          sort_order: sortOrder++,
+          template_id: template.id,
+          group_name: template.group_name,
+          page_key: template.slug,
+          title: template.name,
+          narrative: (defaultContent.narrative ? [defaultContent.narrative as string] : []),
+          sort_order: index,
           status: "draft",
-        }))
-      );
+        };
+      });
 
       const { error: pagesErr } = await supabase.from("report_pages").insert(pageInserts);
-      if (pagesErr) console.error("Failed to seed pages:", pagesErr);
+      if (pagesErr) {
+        console.error("Failed to seed pages:", pagesErr);
+        throw pagesErr;
+      }
 
       setCreatedPropertyId(property.id);
       toast({ title: "Client created", description: `Property and report with ${pageInserts.length} pages created for ${form.fullName}.` });
@@ -166,7 +286,6 @@ const NewReportWizard = () => {
 
     setPublishing(true);
     try {
-      // Update report status to published
       const { data: reports } = await supabase
         .from("reports")
         .select("id")
@@ -180,7 +299,6 @@ const NewReportWizard = () => {
           .eq("id", reports.id);
       }
 
-      // Call edge function to create client account
       const { data, error } = await supabase.functions.invoke("create-client-account", {
         body: {
           email: form.email,
@@ -213,7 +331,8 @@ const NewReportWizard = () => {
   };
 
   const handleNext = async () => {
-    if (currentStep === 0) {
+    if (currentStep === 1) {
+      // After page selection, create the client and report
       const success = await handleCreateClient();
       if (!success) return;
     }
@@ -237,9 +356,9 @@ const NewReportWizard = () => {
   return (
     <div className="space-y-6">
       {/* Step indicator */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2">
         {steps.map((step, i) => (
-          <div key={step} className="flex items-center gap-2">
+          <div key={step} className="flex items-center gap-2 shrink-0">
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-sans transition-colors ${
               i === currentStep ? "bg-primary text-primary-foreground font-medium" :
               i < currentStep ? "bg-primary/10 text-foreground" :
@@ -255,7 +374,7 @@ const NewReportWizard = () => {
         ))}
       </div>
 
-      {/* Step content */}
+      {/* Step 0: Client Info */}
       {currentStep === 0 && (
         <Card className="p-6 space-y-5">
           <h3 className="text-base font-sans font-semibold text-foreground">Client Information</h3>
@@ -312,7 +431,108 @@ const NewReportWizard = () => {
         </Card>
       )}
 
+      {/* Step 1: Select Pages */}
       {currentStep === 1 && (
+        <Card className="p-6 space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-sans font-semibold text-foreground">Select Report Pages</h3>
+              <p className="text-xs text-muted-foreground mt-1">Choose which pages to include in this report</p>
+            </div>
+            <Badge variant="outline" className="text-sm font-mono">
+              <FileText className="w-3 h-3 mr-1" />
+              {selectedTemplates.size} of {templates.length} pages
+            </Badge>
+          </div>
+
+          {loadingTemplates ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <Accordion type="multiple" defaultValue={["information", "exterior", "interior", "systems", "strategy"]} className="space-y-2">
+              {Object.entries(groupedTemplates).map(([groupName, subGroups]) => {
+                const groupTemplateIds = templates.filter(t => t.group_name === groupName).map(t => t.id);
+                const selectedInGroup = groupTemplateIds.filter(id => selectedTemplates.has(id)).length;
+                
+                return (
+                  <AccordionItem key={groupName} value={groupName} className="border rounded-lg px-4">
+                    <AccordionTrigger className="hover:no-underline py-3">
+                      <div className="flex items-center justify-between w-full pr-4">
+                        <span className="font-medium text-sm">
+                          {groupLabels[groupName] || groupName}
+                        </span>
+                        <div className="flex items-center gap-3">
+                          <Badge variant="secondary" className="text-xs">
+                            {selectedInGroup}/{groupTemplateIds.length}
+                          </Badge>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 text-xs px-2"
+                              onClick={(e) => { e.stopPropagation(); selectAllInGroup(groupName); }}
+                            >
+                              All
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 text-xs px-2"
+                              onClick={(e) => { e.stopPropagation(); deselectAllInGroup(groupName); }}
+                            >
+                              None
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-4">
+                      <div className="space-y-4">
+                        {Object.entries(subGroups).map(([subGroup, subTemplates]) => (
+                          <div key={subGroup}>
+                            {subGroup !== "general" && (
+                              <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
+                                {subGroupLabels[subGroup] || subGroup}
+                              </p>
+                            )}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {subTemplates.map((template) => (
+                                <div
+                                  key={template.id}
+                                  className={`flex items-center justify-between p-3 rounded-md border cursor-pointer transition-colors ${
+                                    selectedTemplates.has(template.id)
+                                      ? "bg-primary/5 border-primary/30"
+                                      : "bg-card border-border hover:bg-muted/50"
+                                  }`}
+                                  onClick={() => toggleTemplate(template.id)}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-base">{template.icon || "📄"}</span>
+                                    <span className="text-sm font-sans">{template.name}</span>
+                                  </div>
+                                  <Switch
+                                    checked={selectedTemplates.has(template.id)}
+                                    onCheckedChange={() => toggleTemplate(template.id)}
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+          )}
+        </Card>
+      )}
+
+      {/* Step 2: Upload Data */}
+      {currentStep === 2 && (
         <Card className="p-6 space-y-5">
           <h3 className="text-base font-sans font-semibold text-foreground">Upload Data</h3>
           {["Discovery Call Recording", "Walkthrough Transcript", "Exterior Photos", "Interior Photos", "Serial Plate Photos", "hover.to Files", "External Reports"].map((category) => (
@@ -329,7 +549,8 @@ const NewReportWizard = () => {
         </Card>
       )}
 
-      {currentStep === 2 && (
+      {/* Step 3: AI Generation */}
+      {currentStep === 3 && (
         <Card className="p-6 space-y-5">
           <h3 className="text-base font-sans font-semibold text-foreground">AI Report Generation</h3>
           {!generating && !generated && (
@@ -362,16 +583,16 @@ const NewReportWizard = () => {
               <CheckCircle className="w-12 h-12 text-foreground mx-auto mb-4" />
               <p className="text-sm font-sans text-foreground mb-2">Report content generated!</p>
               <div className="flex items-center justify-center gap-4 mt-4">
-                <Badge className="bg-primary/10 text-foreground text-xs font-sans border-none">18 pages generated</Badge>
+                <Badge className="bg-primary/10 text-foreground text-xs font-sans border-none">{selectedTemplates.size} pages generated</Badge>
                 <Badge className="bg-accent/20 text-accent-foreground text-xs font-sans border-none">4 flagged for review</Badge>
-                <Badge className="bg-muted text-muted-foreground text-xs font-sans border-none">2 inactive</Badge>
               </div>
             </div>
           )}
         </Card>
       )}
 
-      {currentStep === 3 && (
+      {/* Step 4: Review & Publish */}
+      {currentStep === 4 && (
         <Card className="p-6 space-y-5">
           <h3 className="text-base font-sans font-semibold text-foreground">Review & Publish</h3>
 
@@ -455,9 +676,9 @@ const NewReportWizard = () => {
           {currentStep === 0 ? "Cancel" : "Back"}
         </Button>
         {currentStep < steps.length - 1 && (
-          <Button onClick={handleNext} disabled={saving} className="gap-1.5 font-sans">
+          <Button onClick={handleNext} disabled={saving || (currentStep === 1 && selectedTemplates.size === 0)} className="gap-1.5 font-sans">
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {currentStep === 0 ? "Save & Continue" : "Next"}
+            {currentStep === 1 ? "Create Report" : "Next"}
             <ArrowRight className="w-4 h-4" />
           </Button>
         )}
