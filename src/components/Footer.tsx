@@ -1,5 +1,6 @@
 import { Home, Search } from "lucide-react";
 import { Button } from "./ui/button";
+import { useEditMode } from "@/contexts/EditModeContext";
 
 interface FooterProps {
   activeTab: string;
@@ -17,6 +18,7 @@ const contextualInfo: Record<string, { primary: string; secondary: string }> = {
 
 const Footer = ({ activeTab, onNavigate }: FooterProps) => {
   const info = contextualInfo[activeTab] || contextualInfo.home;
+  const { editMode } = useEditMode();
 
   return (
     <>
@@ -24,6 +26,7 @@ const Footer = ({ activeTab, onNavigate }: FooterProps) => {
         <div className="flex flex-col gap-1">
           <div className="font-mono text-[11px] uppercase tracking-[0.15em] text-foreground">
             {info.primary}
+            {editMode && <span className="ml-2 text-accent">• Edit Mode</span>}
           </div>
           <div className="text-sm text-muted-foreground">
             {info.secondary}

@@ -1,6 +1,9 @@
 import { useState, useRef } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Settings } from "lucide-react";
 import { reportGroups, reportPages } from "@/data/reportContent";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEditMode } from "@/contexts/EditModeContext";
+import { Switch } from "@/components/ui/switch";
 
 interface HeaderProps {
   activeTab: string;
@@ -13,6 +16,9 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   const [expandedMobileGroup, setExpandedMobileGroup] = useState<string | null>(null);
   const cascadeTimeout = useRef<ReturnType<typeof setTimeout>>();
+  
+  const { profile, isCreator, signOut } = useAuth();
+  const { editMode, toggleEditMode } = useEditMode();
 
   const tabs = [
     { id: "home", label: "Home" },
@@ -134,10 +140,34 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
 
       {/* User Section */}
       <div className="hidden md:flex items-center gap-4">
+        {/* Edit Mode Toggle - Only for creators */}
+        {isCreator && (
+          <div className="flex items-center gap-2 mr-4 border-r border-border pr-4">
+            <span className={`font-mono text-[10px] uppercase tracking-[0.15em] ${editMode ? "text-accent" : "text-muted-foreground"}`}>
+              Edit
+            </span>
+            <Switch
+              checked={editMode}
+              onCheckedChange={toggleEditMode}
+              className="data-[state=checked]:bg-accent"
+            />
+          </div>
+        )}
+        
+        {/* Admin icon for creators */}
+        {isCreator && (
+          <button className="p-2 text-muted-foreground hover:text-foreground transition-colors bg-transparent border-none cursor-pointer">
+            <Settings className="w-5 h-5" />
+          </button>
+        )}
+
         <div className="w-10 h-10 rounded-full border border-foreground flex items-center justify-center font-display text-sm text-foreground">
-          JS
+          {profile?.avatar_initials || "??"}
         </div>
-        <button className="font-mono text-[11px] text-muted-foreground bg-transparent border-none cursor-pointer">
+        <button
+          onClick={signOut}
+          className="font-mono text-[11px] text-muted-foreground bg-transparent border-none cursor-pointer hover:text-foreground"
+        >
           Logout
         </button>
       </div>
@@ -150,7 +180,7 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
         style={{ transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)" }}
       >
         <div className="flex justify-between items-center p-6 border-b border-border">
-          <h2 className="font-display text-2xl text-foreground">The Report</h2>
+          <h2 className="font-display text-2xl text-foreground">Menu</h2>
           <button
             onClick={() => setMobileMenuOpen(false)}
             className="text-2xl text-foreground bg-transparent border-none cursor-pointer"
@@ -158,6 +188,20 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
             ×
           </button>
         </div>
+
+        {/* Edit Mode Toggle for mobile */}
+        {isCreator && (
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+            <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+              Edit Mode
+            </span>
+            <Switch
+              checked={editMode}
+              onCheckedChange={toggleEditMode}
+              className="data-[state=checked]:bg-accent"
+            />
+          </div>
+        )}
 
         <div className="flex-1 p-6">
           {/* Main tabs */}
@@ -177,13 +221,14 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
           <div className="h-px bg-border my-6" />
 
           {/* Report sections */}
+          <h3 className="font-display text-xl text-foreground mb-4">Report</h3>
           {reportGroups.map((group) => (
-            <div key={group.id} className="mb-10">
+            <div key={group.id} className="mb-8">
               <button
                 onClick={() =>
                   setExpandedMobileGroup(expandedMobileGroup === group.id ? null : group.id)
                 }
-                className="font-display text-2xl text-foreground mb-4 bg-transparent border-none cursor-pointer block w-full text-left"
+                className="font-display text-lg text-foreground mb-2 bg-transparent border-none cursor-pointer block w-full text-left"
               >
                 {group.title}
               </button>
@@ -197,7 +242,7 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
                         onReportPageSelect(pageId);
                         setMobileMenuOpen(false);
                       }}
-                      className="block w-full text-left font-mono text-xs uppercase tracking-[0.15em] text-muted-foreground leading-[48px] bg-transparent border-none cursor-pointer hover:text-foreground"
+                      className="block w-full text-left font-mono text-xs uppercase tracking-[0.15em] text-muted-foreground leading-[40px] bg-transparent border-none cursor-pointer hover:text-foreground pl-4"
                     >
                       {page?.title || pageId}
                     </button>
@@ -207,7 +252,7 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
           ))}
         </div>
 
-        <div className="p-6 border-t border-border">
+        <div className="p-6 border-t border-border flex justify-between items-center">
           <button
             onClick={() => {
               onTabChange("home");
@@ -216,6 +261,15 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
             className="font-mono text-[11px] text-foreground bg-transparent border-none cursor-pointer"
           >
             ← Back to Portal
+          </button>
+          <button
+            onClick={() => {
+              signOut();
+              setMobileMenuOpen(false);
+            }}
+            className="font-mono text-[11px] text-muted-foreground bg-transparent border-none cursor-pointer"
+          >
+            Logout
           </button>
         </div>
       </div>
