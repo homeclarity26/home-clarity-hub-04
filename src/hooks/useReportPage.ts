@@ -67,9 +67,9 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
             group: row.group_name,
             conditionRating: row.condition_rating as ReportPageData["conditionRating"],
             narrative: (row.narrative as unknown as string[]) || [],
-            healthBar: row.health_bar as ReportPageData["healthBar"],
+            healthBar: row.health_bar as unknown as ReportPageData["healthBar"],
             specs: (row.specs as unknown as { label: string; value: string }[]) || undefined,
-            tiers: row.tiers as ReportPageData["tiers"],
+            tiers: row.tiers as unknown as ReportPageData["tiers"],
             timing: row.timing || undefined,
             recommendations: (row.recommendations as unknown as string[]) || undefined,
           });
