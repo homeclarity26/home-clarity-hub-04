@@ -91,7 +91,7 @@ const AdminClientDetail = () => {
       } as ReportPageData;
 
       // Attach extended fields for PDF
-      const extended = pagesMap[p.page_key] as Record<string, unknown>;
+      const extended = pagesMap[p.page_key] as unknown as Record<string, unknown>;
       extended.key_observations = (p.key_observations as string[]) || undefined;
       extended.risks = (p.risks as string[]) || undefined;
       extended.dependencies = p.dependencies || undefined;
