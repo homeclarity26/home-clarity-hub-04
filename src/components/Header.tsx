@@ -35,7 +35,7 @@ const Header = ({ activeTab, onTabChange }: HeaderProps) => {
       </button>
 
       {/* Desktop Navigation */}
-      <nav className="hidden md:flex gap-10">
+      <nav className="hidden md:flex gap-10 flex-shrink-0">
         {tabs.map((tab) => (
           <button
             key={tab.id}
