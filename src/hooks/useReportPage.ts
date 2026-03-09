@@ -151,21 +151,23 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
         }
 
         // Create the page
+        const insertData = {
+          report_id: reportIdToUse,
+          page_key: pageKey,
+          title: pageData.title,
+          group_name: pageData.group,
+          condition_rating: pageData.conditionRating || null,
+          narrative: pageData.narrative as unknown as Record<string, unknown>,
+          health_bar: pageData.healthBar as unknown as Record<string, unknown> || null,
+          specs: (pageData.specs || []) as unknown as Record<string, unknown>,
+          tiers: pageData.tiers as unknown as Record<string, unknown> || null,
+          timing: pageData.timing || null,
+          recommendations: (pageData.recommendations || []) as unknown as Record<string, unknown>,
+        };
+        
         const { data: newPage, error: pageError } = await supabase
           .from("report_pages")
-          .insert({
-            report_id: reportIdToUse,
-            page_key: pageKey,
-            title: pageData.title,
-            group_name: pageData.group,
-            condition_rating: pageData.conditionRating || null,
-            narrative: pageData.narrative,
-            health_bar: pageData.healthBar || null,
-            specs: pageData.specs || [],
-            tiers: pageData.tiers || null,
-            timing: pageData.timing || null,
-            recommendations: pageData.recommendations || [],
-          })
+          .insert(insertData)
           .select()
           .single();
 

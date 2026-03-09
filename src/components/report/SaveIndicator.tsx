@@ -15,7 +15,7 @@ const SaveIndicator = ({ status, className }: SaveIndicatorProps) => {
       className={cn(
         "flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.15em]",
         status === "saving" && "text-muted-foreground",
-        status === "saved" && "text-green-600",
+        status === "saved" && "text-accent",
         status === "error" && "text-destructive",
         className
       )}
