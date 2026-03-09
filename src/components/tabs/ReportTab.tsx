@@ -36,7 +36,7 @@ const ReportTab = ({
     const images = pageImages[activePageId!] || [];
     return (
       <div>
-        <ReportPage page={page} onNavigate={onNavigate} dbPageId={dbPageId} />
+        <ReportPage page={page} onNavigate={onNavigate} dbPageId={dbPageId} pdfData={pdfData} />
         {images.length > 0 && (
           <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-16">
             <h3 className="font-display text-2xl text-foreground mb-6">Photos</h3>
