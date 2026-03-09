@@ -45,13 +45,20 @@ const ReportTab = ({
 
   return (
     <div>
-      <div className="bg-primary text-primary-foreground py-16 md:py-24 px-6 md:px-20 text-center">
+      <div className="bg-primary text-primary-foreground py-16 md:py-24 px-6 md:px-20 text-center relative">
         <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">
           {propertyName}
         </p>
         <h1 className="font-display text-3xl md:text-[48px] text-primary-foreground">
           Home Clarity Report
         </h1>
+        <button
+          onClick={() => window.print()}
+          className="no-print absolute top-6 right-6 flex items-center gap-2 px-4 py-2 rounded-md bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground text-xs font-mono uppercase tracking-wider transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+          Download PDF
+        </button>
       </div>
       <div className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-24">
         <h2 className="font-display text-3xl text-foreground mb-10">
