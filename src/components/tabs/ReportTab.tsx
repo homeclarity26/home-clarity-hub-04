@@ -344,11 +344,11 @@ const ReportTab = ({
               href="https://hometownbuildersclub.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="group bg-card rounded-lg p-6 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-2 border border-border"
+              className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border"
             >
               <Award className="w-5 h-5 text-accent" />
-              <h3 className="font-display text-lg text-foreground">Your HBC Membership</h3>
-              <p className="font-sans text-sm text-muted-foreground">Lifetime access & advisory services</p>
+              <h3 className="font-display text-xl text-foreground">Your HBC Membership</h3>
+              <p className="font-sans text-sm text-muted-foreground line-clamp-2">Lifetime access & advisory services</p>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors mt-auto" />
             </a>
 
