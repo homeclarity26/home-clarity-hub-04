@@ -88,12 +88,15 @@ const AdminClientDetail = () => {
         tiers: p.tiers as unknown as ReportPageData["tiers"],
         timing: p.timing || undefined,
         recommendations: (p.recommendations as string[]) || undefined,
-        key_observations: (p.key_observations as string[]) || undefined,
-        risks: (p.risks as string[]) || undefined,
-        dependencies: p.dependencies as unknown as { pageKey: string; title: string; type: "before" | "after" }[] || undefined,
-        maintenance: p.maintenance as unknown as { frequency?: string; tasks: string[] } || undefined,
-        creator_notes: p.creator_notes || undefined,
-      };
+      } as ReportPageData;
+
+      // Attach extended fields for PDF
+      const extended = pagesMap[p.page_key] as Record<string, unknown>;
+      extended.key_observations = (p.key_observations as string[]) || undefined;
+      extended.risks = (p.risks as string[]) || undefined;
+      extended.dependencies = p.dependencies || undefined;
+      extended.maintenance = p.maintenance || undefined;
+      extended.creator_notes = p.creator_notes || undefined;
 
       if (p.images && Array.isArray(p.images) && (p.images as string[]).length > 0) {
         imagesMap[p.page_key] = p.images as string[];

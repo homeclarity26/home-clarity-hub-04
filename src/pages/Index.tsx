@@ -134,7 +134,7 @@ const Index = () => {
               propertyName={propertyName}
               propertyAddress={portal.property?.address || ""}
               pdfData={pdfData}
-              reportId={portal.reportId}
+              reportId={portal.report?.id}
             />
           )}
         </div>
