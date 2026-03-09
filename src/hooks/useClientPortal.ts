@@ -38,6 +38,12 @@ interface DbPage {
   images: unknown;
   status: string;
   sort_order: number;
+  block_config: unknown;
+  key_observations: unknown;
+  risks: unknown;
+  dependencies: unknown;
+  maintenance: unknown;
+  creator_notes: string | null;
 }
 
 export function useClientPortal(propertyId?: string) {
