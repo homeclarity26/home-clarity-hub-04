@@ -102,9 +102,7 @@ const HomeTab = ({
               <Receipt className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">Payments</h2>
-                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Account & transaction history</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+                <p className="font-sans text-sm text-muted-foreground line-clamp-2      <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
 
             <button
@@ -114,9 +112,7 @@ const HomeTab = ({
               <Calendar className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">Schedule & Timeline</h2>
-     line-clamp-2            < line-clamp-2p className=" line-clamp-2font-sans tex line-clamp-2t-sm text-mut line-clamp-2ed-foreground">Appointments & reminders</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+     line-clamp-2            < line-clamp-2p className=" line-clamp-2f<p className="font-sans text-sm text-muted-foreground line-clamp-2 <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
 
             <button
