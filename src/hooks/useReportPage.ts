@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import type { ReportPageData } from "@/data/reportContent";
+import type { Json } from "@/integrations/supabase/types";
 
 interface ReportPageRow {
   id: string;
