@@ -167,7 +167,7 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
         
         const { data: newPage, error: pageError } = await supabase
           .from("report_pages")
-          .insert(insertData)
+          .insert([insertData])
           .select()
           .single();
 
