@@ -1,11 +1,48 @@
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import AdminHeader from "@/components/admin/AdminHeader";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const AdminSettings = () => {
+  const { user, profile } = useAuth();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name || "");
+      setEmail(profile.email || user?.email || "");
+      setPhone(profile.phone || "");
+    }
+  }, [profile, user]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ full_name: fullName, email, phone })
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      toast.success("Settings saved");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save settings");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div>
       <AdminHeader breadcrumbs={[{ label: "Settings" }]} />
@@ -16,22 +53,20 @@ const AdminSettings = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs font-sans">Full Name</Label>
-              <Input defaultValue="Alex Rivera" className="font-sans" />
+              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} className="font-sans" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-sans">Email</Label>
-              <Input defaultValue="alex@homebuildingclarity.com" className="font-sans" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-sans">Company</Label>
-              <Input defaultValue="Home Building Clarity" className="font-sans" />
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} className="font-sans" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-sans">Phone</Label>
-              <Input defaultValue="(330) 555-0100" className="font-sans" />
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} className="font-sans" />
             </div>
           </div>
-          <Button size="sm" className="font-sans">Save Changes</Button>
+          <Button size="sm" className="font-sans" onClick={handleSave} disabled={saving}>
+            {saving ? "Saving..." : "Save Changes"}
+          </Button>
         </Card>
 
         {/* Notifications */}

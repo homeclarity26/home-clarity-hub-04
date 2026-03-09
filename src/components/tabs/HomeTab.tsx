@@ -3,14 +3,17 @@ import { ArrowRight } from "lucide-react";
 
 interface HomeTabProps {
   onNavigate: (tab: string, pageId?: string) => void;
+  propertyName?: string;
+  completionPercent?: number;
+  creatorName?: string;
 }
 
-const HomeTab = ({ onNavigate }: HomeTabProps) => {
+const HomeTab = ({ onNavigate, propertyName = "Your Home", completionPercent = 0, creatorName = "Your HBC Team" }: HomeTabProps) => {
   return (
     <div>
       <section className="text-center py-16 md:py-24 px-6 md:px-20 max-w-4xl mx-auto">
         <h1 className="font-display text-3xl md:text-[32px] text-foreground mb-6">
-          The Johnson Residence
+          {propertyName}
         </h1>
         <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
           Home Operating System
@@ -72,13 +75,13 @@ const HomeTab = ({ onNavigate }: HomeTabProps) => {
             Report Completion
           </h2>
           <p className="text-base text-foreground mb-6">
-            Your Home Clarity Report is currently being assembled by Adam Kinney and the HBC team.
+            Your Home Clarity Report is currently being assembled by {creatorName}.
           </p>
           <div className="w-full h-0.5 bg-border relative mt-6">
-            <div className="h-full bg-accent w-[65%]" />
+            <div className="h-full bg-accent" style={{ width: `${completionPercent}%` }} />
           </div>
           <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground mt-3">
-            65% Complete
+            {completionPercent}% Complete
           </p>
         </Card>
 

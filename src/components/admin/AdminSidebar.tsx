@@ -1,6 +1,8 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, BookOpen, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const navItems = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
@@ -9,7 +11,7 @@ const navItems = [
   { label: "Settings", path: "/admin/settings", icon: Settings },
 ];
 
-const AdminSidebar = () => {
+const SidebarContent = ({ onNavClick }: { onNavClick?: () => void }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
@@ -20,7 +22,7 @@ const AdminSidebar = () => {
   };
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-60 bg-muted/50 border-r border-border flex flex-col z-40">
+    <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="h-16 flex flex-col justify-center px-6 border-b border-border">
         <span className="font-sans text-lg font-bold text-foreground tracking-tight">HBC</span>
@@ -32,7 +34,10 @@ const AdminSidebar = () => {
         {navItems.map((item) => (
           <button
             key={item.path}
-            onClick={() => navigate(item.path)}
+            onClick={() => {
+              navigate(item.path);
+              onNavClick?.();
+            }}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-sans transition-colors border-none cursor-pointer ${
               isActive(item.path)
                 ? "bg-primary text-primary-foreground font-medium"
@@ -66,7 +71,35 @@ const AdminSidebar = () => {
           Sign out
         </button>
       </div>
-    </aside>
+    </div>
+  );
+};
+
+const AdminSidebar = () => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-60 bg-muted/50 border-r border-border flex-col z-40">
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile hamburger */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b border-border z-40 flex items-center px-4">
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            <button className="p-2 bg-transparent border-none cursor-pointer text-foreground">
+              <Menu className="w-5 h-5" />
+            </button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-60 p-0">
+            <SidebarContent onNavClick={() => setOpen(false)} />
+          </SheetContent>
+        </Sheet>
+        <span className="font-sans text-sm font-bold text-foreground ml-3">HBC Creator</span>
+      </div>
+    </>
   );
 };
 

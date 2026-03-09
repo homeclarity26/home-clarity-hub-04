@@ -9,6 +9,8 @@ interface Profile {
   user_id: string;
   full_name: string | null;
   avatar_initials: string | null;
+  email: string | null;
+  phone: string | null;
 }
 
 interface AuthContextType {
