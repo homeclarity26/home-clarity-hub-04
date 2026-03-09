@@ -102,7 +102,7 @@ const HomeTab = ({
               <Receipt className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">Payments</h2>
-                <p className="font-sans text-sm text-muted-foreground line-clamp-2 line-clamp-2 line-clamp-2">Account & transaction history</p>
+                <p className="font-sans text-sm text-muted-foreground line-clamp-2 line-clamp-2 line-clamp-2 line-clamp-2">Account & transaction history</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
@@ -114,7 +114,7 @@ const HomeTab = ({
               <Calendar className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">Schedule & Timeline</h2>
-                <p className="font-sans tex line-clamp-2t-sm text-mut line-clamp-2ed-foreground">Appointments & reminders</p>
+                <p className=" line-clamp-2font-sans tex line-clamp-2t-sm text-mut line-clamp-2ed-foreground">Appointments & reminders</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
@@ -126,7 +126,7 @@ const HomeTab = ({
               <Users className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">Your Home Team</h2>
-                <p className="font-sans tex line-clamp-2t-sm text-muted-foreground">Advisors & vendor partners</p>
+                < line-clamp-2p className="font-sans tex line-clamp-2t-sm text-muted-foreground">Advisors & vendor partners</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
@@ -145,7 +145,7 @@ const HomeTab = ({
               <FileText className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">View Your Report</h2>
-                <p className="font-sans text-sm text-muted-foreground">Read your complete Home Clarity assessment</p>
+                <p className=" line-clamp-2font-sans text-sm text-muted-foreground">Read your complete Home Clarity assessment</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
