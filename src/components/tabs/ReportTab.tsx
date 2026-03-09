@@ -3,13 +3,14 @@ import ReportPage from "@/components/report/ReportPage";
 
 interface ReportTabProps {
   activePageId: string | null;
+  onNavigate?: (pageId: string) => void;
 }
 
-const ReportTab = ({ activePageId }: ReportTabProps) => {
+const ReportTab = ({ activePageId, onNavigate }: ReportTabProps) => {
   const page = activePageId ? reportPages[activePageId] : null;
 
   if (page) {
-    return <ReportPage page={page} />;
+    return <ReportPage page={page} onNavigate={onNavigate} />;
   }
 
   return (

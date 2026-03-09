@@ -46,7 +46,7 @@ const EditableSection = ({
     <div
       className={cn(
         "relative group",
-        canEdit && "cursor-pointer hover:outline hover:outline-2 hover:outline-primary/30 hover:outline-offset-4 rounded-lg transition-all",
+        canEdit && "cursor-text border border-dashed border-transparent hover:border-accent hover:bg-accent/5 rounded-lg transition-all p-2 -m-2",
         className
       )}
       onClick={canEdit ? () => setIsEditing(true) : undefined}

@@ -49,7 +49,7 @@ const Index = () => {
         <div
           className={`transition-opacity duration-300 ${activeTab === "report" ? "opacity-100" : "opacity-0 hidden"}`}
         >
-          {activeTab === "report" && <ReportTab activePageId={reportPageId} />}
+          {activeTab === "report" && <ReportTab activePageId={reportPageId} onNavigate={handleReportPageSelect} />}
         </div>
         <div
           className={`transition-opacity duration-300 ${activeTab === "projects" ? "opacity-100" : "opacity-0 hidden"}`}
