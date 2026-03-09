@@ -175,15 +175,19 @@ const Index = () => {
         activeTab={activeTab}
         onNavigate={handleNavigate}
         invoiceBalance={portal.invoiceBalance}
-        reportContext={Object.values(portal.pages).map((p) => ({
-          title: p.title,
-          conditionRating: p.conditionRating,
-          narrative: p.narrative,
-          specs: p.specs,
-          tiers: p.tiers,
-          timing: p.timing,
-          recommendations: p.recommendations,
-        }))}
+        reportContext={{
+          propertyAddress: portal.property?.address || "Unknown address",
+          reportCompletionPercent: portal.completionPercent ?? 0,
+          pages: Object.values(portal.pages).map((p) => ({
+            title: p.title,
+            conditionRating: p.conditionRating,
+            narrative: p.narrative,
+            specs: p.specs,
+            tiers: p.tiers,
+            timing: p.timing,
+            recommendations: p.recommendations,
+          })),
+        }}
       />
     </div>
   );
