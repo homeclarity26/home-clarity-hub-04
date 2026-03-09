@@ -112,15 +112,15 @@ const CreatorBar = ({
       {/* Right: save indicator + PDF */}
       <div className="flex items-center gap-2">
         <SaveIndicator status={saveStatus} />
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-primary-foreground hover:bg-primary-foreground/10 text-xs font-sans gap-1 no-print"
-          onClick={() => window.print()}
-        >
-          <Download className="h-3.5 w-3.5" />
-          PDF
-        </Button>
+        {pdfData && (
+          <PDFDownloadButton
+            data={pdfData}
+            variant="ghost"
+            size="sm"
+            className="h-7 text-primary-foreground hover:bg-primary-foreground/10 text-xs no-print"
+            label="PDF"
+          />
+        )}
       </div>
     </div>
   );
