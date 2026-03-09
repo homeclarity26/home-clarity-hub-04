@@ -35,7 +35,7 @@ interface PageTemplate {
   sub_group: string | null;
   default_order: number;
   icon: string | null;
-  block_config: Record<string, unknown>;
+  block_config: unknown;
   default_content: Record<string, unknown>;
 }
 
