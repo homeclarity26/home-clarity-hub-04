@@ -33,7 +33,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
     const computed = invoices
       .filter((i) => i.status === "pending" || i.status === "overdue")
       .reduce((sum, i) => sum + Number(i.amount), 0);
-    return computed || 4500; // Fallback to match footer
+    return computed;
   }, [invoices]);
 
   const totalPaid = useMemo(() => {

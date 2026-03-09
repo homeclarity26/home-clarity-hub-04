@@ -71,9 +71,15 @@ const ContactsTab = ({ creator, onTabChange }: ContactsTabProps) => {
             </div>
 
             <div className={`${cardBase} cursor-default`}>
-              <Headset className="w-5 h-5 text-accent" />
-              <h2 className="font-display text-xl text-foreground mb-1">HBC Support Team</h2>
-              <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Client Services</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-foreground text-background flex items-center justify-center font-display text-sm flex-shrink-0">
+                  CS
+                </div>
+                <div>
+                  <h2 className="font-display text-xl text-foreground mb-0.5">HBC Support Team</h2>
+                  <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Client Services</p>
+                </div>
+              </div>
               <a href="mailto:support@hbc.com" className="font-sans text-sm text-muted-foreground hover:text-accent transition-colors no-underline">
                 support@hbc.com
               </a>

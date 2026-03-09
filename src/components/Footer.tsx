@@ -22,7 +22,7 @@ const Footer = ({ activeTab, onNavigate, reportContext, invoiceBalance = 0 }: Fo
     projects: { primary: "Project Management", secondary: "No active projects" },
     payments: { primary: "Financial History", secondary: balanceStr },
     contacts: { primary: "Your Home Team", secondary: "2 HBC contacts • 0 vendors assigned" },
-    schedule: { primary: "Schedule & Timeline", secondary: "3 upcoming appointments" },
+    schedule: { primary: "Schedule & Timeline", secondary: "View your schedule & timeline" },
   };
 
   const info = contextualInfo[activeTab] || contextualInfo.home;
