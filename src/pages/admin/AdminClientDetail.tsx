@@ -369,7 +369,22 @@ const AdminClientDetail = () => {
         </div>
 
         {activeTab === "overview" && <ClientOverview client={client} />}
-        {activeTab === "report" && <ReportPageManager propertyId={client.propertyId} reportId={client.reportId} />}
+        {activeTab === "report" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-end">
+              {pdfData && (
+                <PDFDownloadButton
+                  data={pdfData}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  label="Generate PDF"
+                />
+              )}
+            </div>
+            <ReportPageManager propertyId={client.propertyId} reportId={client.reportId} />
+          </div>
+        )}
         {activeTab === "files" && <FileManager propertyId={client.propertyId} />}
         {activeTab === "comments" && <CommentsManager clientId={client.id} />}
 
