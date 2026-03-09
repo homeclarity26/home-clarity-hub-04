@@ -107,6 +107,12 @@ export function useClientPortal(propertyId?: string) {
 
         if (creatorProfile && creatorProfile.length > 0 && creatorProfile[0].full_name) {
           setCreatorName(creatorProfile[0].full_name);
+          setCreatorProfile({
+            name: creatorProfile[0].full_name,
+            email: creatorProfile[0].email || undefined,
+            phone: creatorProfile[0].phone || undefined,
+            initials: (creatorProfile[0].full_name || "HB").slice(0, 2).toUpperCase(),
+          });
         }
 
         // 4. Fetch all report pages
