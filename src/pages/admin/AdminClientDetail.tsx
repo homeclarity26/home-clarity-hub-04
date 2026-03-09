@@ -328,6 +328,7 @@ const AdminClientDetail = () => {
                     <TableHead className="font-sans text-xs">Amount</TableHead>
                     <TableHead className="font-sans text-xs">Due Date</TableHead>
                     <TableHead className="font-sans text-xs">Status</TableHead>
+                    <TableHead className="font-sans text-xs w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -337,7 +338,21 @@ const AdminClientDetail = () => {
                       <TableCell className="font-sans text-sm font-medium">${Number(invoice.amount).toLocaleString()}</TableCell>
                       <TableCell className="font-sans text-sm text-muted-foreground">{invoice.due_date ? format(new Date(invoice.due_date), "MMM d, yyyy") : "—"}</TableCell>
                       <TableCell>
-                        <Badge className={`${invoiceStatusStyles[invoice.status] || "bg-muted text-muted-foreground"} text-[11px] font-sans border-none capitalize`}>{invoice.status}</Badge>
+                        <Select value={invoice.status} onValueChange={(v) => updateInvoiceStatus(invoice.id, v)}>
+                          <SelectTrigger className="h-7 w-[100px] text-[11px] font-sans">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="paid">Paid</SelectItem>
+                            <SelectItem value="overdue">Overdue</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={() => deleteInvoice(invoice.id)}>
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
