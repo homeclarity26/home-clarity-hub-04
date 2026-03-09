@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, ExternalLink, Plus, Loader2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Plus, Loader2, Trash2 } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import ClientOverview from "@/components/admin/ClientOverview";
 import ReportPageManager from "@/components/admin/ReportPageManager";
@@ -113,6 +113,39 @@ const AdminClientDetail = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-schedule-events", clientId] });
   };
 
+  const deleteProject = async (id: string) => {
+    const { error } = await supabase.from("projects").delete().eq("id", id);
+    if (error) { toast.error("Failed to delete"); return; }
+    toast.success("Project deleted");
+    queryClient.invalidateQueries({ queryKey: ["admin-projects", clientId] });
+  };
+
+  const updateProjectStatus = async (id: string, status: string) => {
+    const { error } = await supabase.from("projects").update({ status }).eq("id", id);
+    if (error) { toast.error("Failed to update"); return; }
+    queryClient.invalidateQueries({ queryKey: ["admin-projects", clientId] });
+  };
+
+  const deleteInvoice = async (id: string) => {
+    const { error } = await supabase.from("invoices").delete().eq("id", id);
+    if (error) { toast.error("Failed to delete"); return; }
+    toast.success("Invoice deleted");
+    queryClient.invalidateQueries({ queryKey: ["admin-invoices", clientId] });
+  };
+
+  const updateInvoiceStatus = async (id: string, status: string) => {
+    const { error } = await supabase.from("invoices").update({ status }).eq("id", id);
+    if (error) { toast.error("Failed to update"); return; }
+    queryClient.invalidateQueries({ queryKey: ["admin-invoices", clientId] });
+  };
+
+  const deleteEvent = async (id: string) => {
+    const { error } = await supabase.from("schedule_events").delete().eq("id", id);
+    if (error) { toast.error("Failed to delete"); return; }
+    toast.success("Event deleted");
+    queryClient.invalidateQueries({ queryKey: ["admin-schedule-events", clientId] });
+  };
+
   if (isLoading) {
     return (
       <div>
@@ -177,7 +210,7 @@ const AdminClientDetail = () => {
         {/* Tab content */}
         {activeTab === "overview" && <ClientOverview client={client} />}
         {activeTab === "report" && <ReportPageManager propertyId={client.propertyId} reportId={client.reportId} />}
-        {activeTab === "files" && <FileManager />}
+        {activeTab === "files" && <FileManager propertyId={client.propertyId} />}
         {activeTab === "comments" && <CommentsManager clientId={client.id} />}
 
         {activeTab === "projects" && (
@@ -218,6 +251,7 @@ const AdminClientDetail = () => {
                     <TableHead className="font-sans text-xs">Tier</TableHead>
                     <TableHead className="font-sans text-xs">Notes</TableHead>
                     <TableHead className="font-sans text-xs">Created</TableHead>
+                    <TableHead className="font-sans text-xs w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -225,13 +259,26 @@ const AdminClientDetail = () => {
                     <TableRow key={project.id}>
                       <TableCell className="font-sans text-sm font-medium">{project.title}</TableCell>
                       <TableCell>
-                        <Badge className={`${statusStyles[project.status] || "bg-muted text-muted-foreground"} text-[11px] font-sans border-none capitalize`}>
-                          {project.status.replace("_", " ")}
-                        </Badge>
+                        <Select value={project.status} onValueChange={(v) => updateProjectStatus(project.id, v)}>
+                          <SelectTrigger className="h-7 w-[120px] text-[11px] font-sans">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="planned">Planned</SelectItem>
+                            <SelectItem value="approved">Approved</SelectItem>
+                            <SelectItem value="in_progress">In Progress</SelectItem>
+                            <SelectItem value="complete">Complete</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="font-sans text-sm text-muted-foreground">{project.approved_tier || "—"}</TableCell>
                       <TableCell className="font-sans text-sm text-muted-foreground max-w-[200px] truncate">{project.notes || "—"}</TableCell>
                       <TableCell className="font-sans text-sm text-muted-foreground">{format(new Date(project.created_at), "MMM d, yyyy")}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={() => deleteProject(project.id)}>
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -281,6 +328,7 @@ const AdminClientDetail = () => {
                     <TableHead className="font-sans text-xs">Amount</TableHead>
                     <TableHead className="font-sans text-xs">Due Date</TableHead>
                     <TableHead className="font-sans text-xs">Status</TableHead>
+                    <TableHead className="font-sans text-xs w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -290,7 +338,21 @@ const AdminClientDetail = () => {
                       <TableCell className="font-sans text-sm font-medium">${Number(invoice.amount).toLocaleString()}</TableCell>
                       <TableCell className="font-sans text-sm text-muted-foreground">{invoice.due_date ? format(new Date(invoice.due_date), "MMM d, yyyy") : "—"}</TableCell>
                       <TableCell>
-                        <Badge className={`${invoiceStatusStyles[invoice.status] || "bg-muted text-muted-foreground"} text-[11px] font-sans border-none capitalize`}>{invoice.status}</Badge>
+                        <Select value={invoice.status} onValueChange={(v) => updateInvoiceStatus(invoice.id, v)}>
+                          <SelectTrigger className="h-7 w-[100px] text-[11px] font-sans">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="paid">Paid</SelectItem>
+                            <SelectItem value="overdue">Overdue</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={() => deleteInvoice(invoice.id)}>
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -342,7 +404,12 @@ const AdminClientDetail = () => {
                         <p className="text-sm font-sans text-foreground">{event.title}</p>
                         <p className="text-xs font-sans text-muted-foreground">{event.event_type} · {event.status}</p>
                       </div>
-                      <span className="text-xs font-sans text-muted-foreground">{format(new Date(event.event_date), "MMM d, yyyy h:mm a")}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-sans text-muted-foreground">{format(new Date(event.event_date), "MMM d, yyyy h:mm a")}</span>
+                        <Button variant="ghost" size="sm" onClick={() => deleteEvent(event.id)}>
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>

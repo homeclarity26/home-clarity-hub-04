@@ -3,7 +3,7 @@ import { Search, Bell, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { mockStats } from "@/data/adminMockData";
+import { useAdminStats } from "@/hooks/useAdminData";
 
 interface AdminHeaderProps {
   breadcrumbs: { label: string; path?: string }[];
@@ -11,6 +11,7 @@ interface AdminHeaderProps {
 
 const AdminHeader = ({ breadcrumbs }: AdminHeaderProps) => {
   const navigate = useNavigate();
+  const { data: stats } = useAdminStats();
 
   return (
     <header className="h-16 border-b border-border bg-card flex items-center justify-between px-6 gap-4">
@@ -45,9 +46,9 @@ const AdminHeader = ({ breadcrumbs }: AdminHeaderProps) => {
 
         <button className="relative p-2 rounded-md hover:bg-muted transition-colors bg-transparent border-none cursor-pointer">
           <Bell className="w-5 h-5 text-muted-foreground" />
-          {mockStats.unansweredQuestions > 0 && (
+          {(stats?.unansweredQuestions ?? 0) > 0 && (
             <Badge className="absolute -top-0.5 -right-0.5 h-5 min-w-5 flex items-center justify-center text-[10px] bg-accent text-accent-foreground border-none px-1">
-              {mockStats.unansweredQuestions}
+              {stats?.unansweredQuestions}
             </Badge>
           )}
         </button>
