@@ -118,38 +118,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Send invite email using inviteUserByEmail for new users
-    let inviteSent = false;
-    if (!existingUser) {
-      try {
-        const { error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(email, {
-          redirectTo: `${req.headers.get("origin") || supabaseUrl}/portal/${propertyId}`,
-        });
-        inviteSent = !inviteErr;
-        if (inviteErr) {
-          console.error("Invite email error:", inviteErr);
-        }
-      } catch (e) {
-        console.error("Failed to send invite:", e);
-      }
-    }
-
     // Log activity
     await adminClient.from("activity_log").insert({
       user_id: caller.id,
       property_id: propertyId,
       action_type: "publish",
-      message: `Client account created and invite sent to ${email}`,
+      message: `Client account created for ${email}`,
       metadata: { client_user_id: clientUserId },
     });
+
+    // Build portal URL
+    const origin = req.headers.get("origin") || supabaseUrl;
+    const portalUrl = `${origin}/portal/${propertyId}`;
 
     return new Response(
       JSON.stringify({
         success: true,
         clientUserId,
         isExisting: !!existingUser,
-        portalUrl: `/portal/${propertyId}`,
-        magicLinkSent: inviteSent,
+        portalUrl,
         tempPassword: tempPassword,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

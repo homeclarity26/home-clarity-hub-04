@@ -167,14 +167,6 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/signup"
-        element={
-          <PublicRoute>
-            <Signup />
-          </PublicRoute>
-        }
-      />
-      <Route
         path="/forgot-password"
         element={
           <PublicRoute>

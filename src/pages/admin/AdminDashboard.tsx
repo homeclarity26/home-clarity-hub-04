@@ -61,7 +61,7 @@ const AdminDashboard = () => {
                 <BookOpen className="w-4 h-4" />
                 View Knowledge Base
               </Button>
-              <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans">
+              <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => navigate("/admin/clients?status=review")}>
                 <AlertTriangle className="w-4 h-4 text-accent" />
                 Review Flagged Items
                 <span className="ml-auto text-xs text-accent font-medium">{stats?.unansweredQuestions ?? 0}</span>

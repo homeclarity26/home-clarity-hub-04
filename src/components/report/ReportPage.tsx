@@ -13,6 +13,7 @@ interface ReportPageProps {
   dbPageId?: string;
   images?: string[];
   pdfData?: PDFReportData;
+  reportId?: string;
 }
 
 const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData }: ReportPageProps) => {

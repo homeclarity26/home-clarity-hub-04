@@ -71,44 +71,20 @@ const AdminSettings = () => {
 
         {/* Notifications */}
         <Card className="p-6 space-y-5">
-          <h3 className="text-base font-sans font-semibold text-foreground">Notifications</h3>
-          <div className="space-y-4">
-            {[
-              { label: "Client comments & questions", desc: "Get notified when clients leave comments" },
-              { label: "Report published", desc: "Confirmation when a report goes live" },
-              { label: "File uploads", desc: "When new files are uploaded to a client" },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-sans text-foreground">{item.label}</p>
-                  <p className="text-xs font-sans text-muted-foreground">{item.desc}</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-            ))}
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-sans font-semibold text-foreground">Notifications</h3>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded">Coming Soon</span>
           </div>
+          <p className="text-sm font-sans text-muted-foreground">Email and push notification preferences will be available here.</p>
         </Card>
 
         {/* Integrations */}
         <Card className="p-6 space-y-5">
-          <h3 className="text-base font-sans font-semibold text-foreground">Integrations</h3>
-          <div className="space-y-4">
-            {[
-              { label: "Google Calendar", desc: "Sync appointments and reminders", connected: false },
-              { label: "Stripe", desc: "Payment processing for invoices", connected: false },
-              { label: "hover.to", desc: "3D property measurement data", connected: true },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                <div>
-                  <p className="text-sm font-sans text-foreground">{item.label}</p>
-                  <p className="text-xs font-sans text-muted-foreground">{item.desc}</p>
-                </div>
-                <Button variant={item.connected ? "outline" : "default"} size="sm" className="text-xs font-sans">
-                  {item.connected ? "Connected" : "Connect"}
-                </Button>
-              </div>
-            ))}
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-sans font-semibold text-foreground">Integrations</h3>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded">Coming Soon</span>
           </div>
+          <p className="text-sm font-sans text-muted-foreground">Connect Google Calendar, Stripe, and hover.to to streamline your workflow.</p>
         </Card>
 
         {/* Region */}
