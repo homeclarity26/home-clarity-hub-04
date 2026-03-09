@@ -98,8 +98,49 @@ const NewReportWizard = () => {
 
       if (repErr) throw repErr;
 
+      // Seed default report pages
+      const defaultPages = [
+        { group_name: "Major Systems", pages: [
+          { page_key: "hvac", title: "HVAC System" },
+          { page_key: "electrical", title: "Electrical" },
+          { page_key: "plumbing", title: "Plumbing" },
+          { page_key: "roofing", title: "Roofing" },
+        ]},
+        { group_name: "Structure & Envelope", pages: [
+          { page_key: "foundation", title: "Foundation" },
+          { page_key: "insulation", title: "Insulation & Envelope" },
+          { page_key: "windows-doors", title: "Windows & Doors" },
+        ]},
+        { group_name: "Interior", pages: [
+          { page_key: "kitchen", title: "Kitchen" },
+          { page_key: "bathrooms", title: "Bathrooms" },
+          { page_key: "flooring", title: "Flooring" },
+        ]},
+        { group_name: "Exterior & Site", pages: [
+          { page_key: "siding", title: "Siding & Exterior" },
+          { page_key: "landscaping", title: "Landscaping & Drainage" },
+          { page_key: "garage", title: "Garage & Driveway" },
+        ]},
+      ];
+
+      let sortOrder = 0;
+      const pageInserts = defaultPages.flatMap((group) =>
+        group.pages.map((p) => ({
+          report_id: report.id,
+          group_name: group.group_name,
+          page_key: p.page_key,
+          title: p.title,
+          narrative: [] as string[],
+          sort_order: sortOrder++,
+          status: "draft",
+        }))
+      );
+
+      const { error: pagesErr } = await supabase.from("report_pages").insert(pageInserts);
+      if (pagesErr) console.error("Failed to seed pages:", pagesErr);
+
       setCreatedPropertyId(property.id);
-      toast({ title: "Client created", description: `Property record created for ${form.fullName}.` });
+      toast({ title: "Client created", description: `Property and report with ${pageInserts.length} pages created for ${form.fullName}.` });
       return true;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to create client";

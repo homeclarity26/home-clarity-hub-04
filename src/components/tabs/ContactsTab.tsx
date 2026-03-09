@@ -1,6 +1,22 @@
 import { Card } from "@/components/ui/card";
 
-const ContactsTab = () => {
+interface CreatorInfo {
+  name: string;
+  email?: string;
+  phone?: string;
+  initials: string;
+}
+
+interface ContactsTabProps {
+  creator?: CreatorInfo;
+}
+
+const ContactsTab = ({ creator }: ContactsTabProps) => {
+  const creatorName = creator?.name || "Your HBC Team";
+  const creatorInitials = creator?.initials || "HB";
+  const creatorEmail = creator?.email || "support@hbc.com";
+  const creatorPhone = creator?.phone || "";
+
   return (
     <div>
       <div className="py-16 md:py-24 px-6 md:px-20 max-w-[1400px] mx-auto">
@@ -16,19 +32,23 @@ const ContactsTab = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="flex items-start gap-6">
               <div className="w-[60px] h-[60px] rounded-full bg-primary flex items-center justify-center font-display text-xl text-primary-foreground flex-shrink-0">
-                AK
+                {creatorInitials}
               </div>
               <div>
-                <h3 className="font-display text-xl text-foreground mb-2">Adam Kinney</h3>
+                <h3 className="font-display text-xl text-foreground mb-2">{creatorName}</h3>
                 <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground mb-4">
-                  Founder & Lead Advisor
+                  Lead Advisor
                 </p>
-                <a href="mailto:adam@hbc.com" className="text-sm text-foreground no-underline block mb-2 hover:text-accent transition-colors">
-                  adam@hbc.com
-                </a>
-                <a href="tel:5550123456" className="text-sm text-foreground no-underline block hover:text-accent transition-colors">
-                  (555) 012-3456
-                </a>
+                {creatorEmail && (
+                  <a href={`mailto:${creatorEmail}`} className="text-sm text-foreground no-underline block mb-2 hover:text-accent transition-colors">
+                    {creatorEmail}
+                  </a>
+                )}
+                {creatorPhone && (
+                  <a href={`tel:${creatorPhone.replace(/\D/g, "")}`} className="text-sm text-foreground no-underline block hover:text-accent transition-colors">
+                    {creatorPhone}
+                  </a>
+                )}
               </div>
             </div>
             <div className="flex items-start gap-6">
@@ -42,9 +62,6 @@ const ContactsTab = () => {
                 </p>
                 <a href="mailto:support@hbc.com" className="text-sm text-foreground no-underline block mb-2 hover:text-accent transition-colors">
                   support@hbc.com
-                </a>
-                <a href="tel:5550199999" className="text-sm text-foreground no-underline block hover:text-accent transition-colors">
-                  (555) 019-9999
                 </a>
               </div>
             </div>

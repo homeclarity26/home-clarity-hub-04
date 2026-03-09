@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          due_date: string | null
+          id: string
+          paid_date: string | null
+          property_id: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          due_date?: string | null
+          id?: string
+          paid_date?: string | null
+          property_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          paid_date?: string | null
+          property_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_initials: string | null
@@ -46,6 +87,57 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      projects: {
+        Row: {
+          approved_tier: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          property_id: string
+          report_page_id: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approved_tier?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          property_id: string
+          report_page_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          approved_tier?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          property_id?: string
+          report_page_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_report_page_id_fkey"
+            columns: ["report_page_id"]
+            isOneToOne: false
+            referencedRelation: "report_pages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       properties: {
         Row: {
@@ -264,6 +356,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "reports_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_events: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_date: string
+          event_type: string
+          id: string
+          property_id: string
+          status: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_date: string
+          event_type?: string
+          id?: string
+          property_id: string
+          status?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          event_type?: string
+          id?: string
+          property_id?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_events_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"

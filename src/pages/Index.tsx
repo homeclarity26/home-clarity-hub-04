@@ -83,16 +83,16 @@ const Index = () => {
           )}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "projects" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "projects" && <ProjectsTab onNavigate={handleNavigate} />}
+          {activeTab === "projects" && <ProjectsTab onNavigate={handleNavigate} propertyId={portal.property?.id} pages={portal.pages} />}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "payments" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "payments" && <PaymentsTab />}
+          {activeTab === "payments" && <PaymentsTab propertyId={portal.property?.id} />}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "contacts" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "contacts" && <ContactsTab />}
+          {activeTab === "contacts" && <ContactsTab creator={portal.creatorProfile} />}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "schedule" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "schedule" && <ScheduleTab />}
+          {activeTab === "schedule" && <ScheduleTab propertyId={portal.property?.id} />}
         </div>
       </main>
 
