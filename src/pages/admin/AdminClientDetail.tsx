@@ -26,7 +26,7 @@ import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 
-type ClientTab = "overview" | "report" | "files" | "comments" | "projects" | "payments" | "schedule";
+type ClientTab = "overview" | "report" | "files" | "comments" | "projects" | "payments" | "schedule" | "vendors";
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -36,6 +36,7 @@ const tabs: { id: ClientTab; label: string }[] = [
   { id: "projects", label: "Projects" },
   { id: "payments", label: "Payments" },
   { id: "schedule", label: "Schedule" },
+  { id: "vendors", label: "Vendors" },
 ];
 
 const AdminClientDetail = () => {
