@@ -19,7 +19,12 @@ const Index = () => {
 
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab);
-    if (tab !== "report") setReportPageId(null);
+    // Always reset to cover page when clicking "Report" tab
+    if (tab === "report") {
+      setReportPageId(null);
+    } else if (tab !== "report") {
+      setReportPageId(null);
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
