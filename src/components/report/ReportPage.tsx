@@ -1,18 +1,12 @@
 import { useState } from "react";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
-import HealthBar from "./HealthBar";
-import PricingTiers from "./PricingTiers";
-import EditableSection from "@/components/editor/EditableSection";
 import CreatorBar from "./CreatorBar";
-import EditableField from "./EditableField";
-import EditableDropdown from "./EditableDropdown";
-import EditableSpecs from "./EditableSpecs";
-import EditableTiers from "./EditableTiers";
-import CommentsSection from "./CommentsSection";
+import BlockRenderer from "./BlockRenderer";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useReportPage } from "@/hooks/useReportPage";
 import { toast } from "sonner";
+import type { BlockConfig, PageContent } from "@/lib/templateUtils";
 
 interface ReportPageProps {
   page: ReportPageData;
@@ -21,55 +15,39 @@ interface ReportPageProps {
   pdfData?: PDFReportData;
 }
 
-const conditionOptions = ["Excellent", "Good", "Fair", "Poor", "Critical"];
-
-const conditionColors: Record<string, string> = {
-  Excellent: "text-accent",
-  Good: "text-foreground",
-  Fair: "text-muted-foreground",
-  Poor: "text-orange-500",
-  Critical: "text-destructive",
-};
-
 const ReportPage = ({ page, onNavigate, dbPageId, pdfData }: ReportPageProps) => {
   const { canEdit } = useEditMode();
-  const { pageData, status, saveStatus, updatePageData, updateStatus, isLoading } = useReportPage(page.id, page);
+  const { pageData, status, saveStatus, updatePageData, updateStatus, isLoading, blockConfig } = useReportPage(page.id, page);
   
-  // Track images from the DB (stored on pageData but not in ReportPageData type — use separate state)
+  // Track images from the DB
   const [images, setImages] = useState<string[]>([]);
 
-  const narrativeToHtml = (narrative: string[]) => 
-    narrative.map(p => `<p>${p}</p>`).join("");
-  
-  const htmlToNarrative = (html: string) => {
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = html;
-    const paragraphs = tempDiv.querySelectorAll("p");
-    return Array.from(paragraphs).map(p => p.textContent || "").filter(Boolean);
-  };
-
-  const handleNarrativeSave = (content: string, newImages: string[]) => {
-    const newNarrative = htmlToNarrative(content);
-    if (newNarrative.length > 0) {
-      updatePageData({ narrative: newNarrative });
-      toast.success("Content saved");
+  const handleUpdate = (updates: Partial<PageContent>) => {
+    // Handle images separately
+    if ('images' in updates && updates.images) {
+      setImages(updates.images as string[]);
     }
-    if (newImages.length > 0) {
-      setImages(newImages);
-      // Save images to DB via the generic updatePageData path
-      // useReportPage handles arbitrary fields via the update call
-    }
-  };
-
-  const handleRecommendationsSave = (content: string, newImages: string[]) => {
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = content;
-    const listItems = tempDiv.querySelectorAll("li");
-    const recommendations = Array.from(listItems).map(li => li.textContent || "").filter(Boolean);
-    if (recommendations.length > 0) {
-      updatePageData({ recommendations });
-      toast.success("Recommendations saved");
-    }
+    
+    // Map PageContent updates to ReportPageData updates
+    const pageDataUpdates: Partial<ReportPageData> = {};
+    if (updates.title) pageDataUpdates.title = updates.title;
+    if (updates.conditionRating) pageDataUpdates.conditionRating = updates.conditionRating as ReportPageData["conditionRating"];
+    if (updates.narrative) pageDataUpdates.narrative = updates.narrative;
+    if (updates.specs) pageDataUpdates.specs = updates.specs;
+    if (updates.tiers) pageDataUpdates.tiers = updates.tiers as ReportPageData["tiers"];
+    if (updates.timing) pageDataUpdates.timing = updates.timing;
+    
+    // Handle extended fields through updatePageData
+    updatePageData({
+      ...pageDataUpdates,
+      ...(updates.key_observations && { key_observations: updates.key_observations }),
+      ...(updates.risks && { risks: updates.risks }),
+      ...(updates.dependencies && { dependencies: updates.dependencies }),
+      ...(updates.maintenance && { maintenance: updates.maintenance }),
+      ...(updates.creator_notes && { creator_notes: updates.creator_notes }),
+    } as Partial<ReportPageData>);
+    
+    toast.success("Changes saved");
   };
 
   if (isLoading) {
@@ -88,6 +66,16 @@ const ReportPage = ({ page, onNavigate, dbPageId, pdfData }: ReportPageProps) =>
     );
   }
 
+  // Extend pageData with additional fields for BlockRenderer
+  const extendedPageData = {
+    ...pageData,
+    key_observations: (pageData as Record<string, unknown>).key_observations as string[] | undefined,
+    dependencies: (pageData as Record<string, unknown>).dependencies as { pageKey: string; title: string; type: "before" | "after" }[] | undefined,
+    risks: (pageData as Record<string, unknown>).risks as string[] | undefined,
+    maintenance: (pageData as Record<string, unknown>).maintenance as { frequency?: string; tasks: string[] } | undefined,
+    creator_notes: (pageData as Record<string, unknown>).creator_notes as string | undefined,
+  };
+
   return (
     <div>
       {canEdit && (
@@ -102,94 +90,14 @@ const ReportPage = ({ page, onNavigate, dbPageId, pdfData }: ReportPageProps) =>
       )}
 
       <div className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-24">
-        <EditableField
-          value={pageData.title}
-          onSave={(title) => updatePageData({ title })}
-          className="font-display text-3xl md:text-4xl text-foreground mb-4 block"
-          tag="h2"
-        />
-
-        {pageData.conditionRating && (
-          <EditableDropdown
-            value={pageData.conditionRating}
-            options={conditionOptions}
-            onSave={(v) => updatePageData({ conditionRating: v as ReportPageData["conditionRating"] })}
-            className={`font-mono text-[11px] uppercase tracking-[0.15em] mb-10 ${conditionColors[pageData.conditionRating]}`}
-            renderValue={(v) => `Condition: ${v}`}
-          />
-        )}
-
-        <EditableSection
-          content={narrativeToHtml(pageData.narrative)}
+        <BlockRenderer
+          blockConfig={blockConfig as BlockConfig | null}
+          pageData={extendedPageData}
           images={images}
-          onSave={handleNarrativeSave}
-          contentType="narrative"
-        >
-          {pageData.narrative.map((paragraph, i) => (
-            <p key={i} className="text-base text-foreground max-w-[65ch] mb-6 leading-relaxed">
-              {paragraph}
-            </p>
-          ))}
-        </EditableSection>
-
-        {pageData.healthBar && <HealthBar {...pageData.healthBar} />}
-
-        {pageData.specs && pageData.specs.length > 0 && (
-          <div className="mt-12">
-            <h3 className="font-display text-2xl text-foreground mb-6">System Specifications</h3>
-            <EditableSpecs
-              specs={pageData.specs}
-              onSave={(specs) => updatePageData({ specs })}
-            />
-          </div>
-        )}
-
-        {pageData.tiers && (
-          <div className="mt-12">
-            <h3 className="font-display text-2xl text-foreground mb-6">Investment Options</h3>
-            {canEdit ? (
-              <EditableTiers
-                tiers={pageData.tiers}
-                onSave={(tiers) => updatePageData({ tiers })}
-              />
-            ) : (
-              <PricingTiers tiers={pageData.tiers} />
-            )}
-          </div>
-        )}
-
-        {pageData.timing && (
-          <div className="mt-8">
-            <h3 className="font-display text-2xl text-foreground mb-4">Strategic Timing</h3>
-            <EditableField
-              value={pageData.timing}
-              onSave={(timing) => updatePageData({ timing })}
-              className="font-mono text-[11px] uppercase tracking-[0.15em] text-accent"
-              tag="p"
-            />
-          </div>
-        )}
-
-        {pageData.recommendations && pageData.recommendations.length > 0 && (
-          <div className="mt-12">
-            <h3 className="font-display text-2xl text-foreground mb-6">Recommendations</h3>
-            <EditableSection
-              content={`<ul>${pageData.recommendations.map(rec => `<li>${rec}</li>`).join("")}</ul>`}
-              onSave={handleRecommendationsSave}
-              contentType="recommendations"
-            >
-              <ul className="space-y-3">
-                {pageData.recommendations.map((rec, i) => (
-                  <li key={i} className="text-base text-foreground pl-4 border-l-2 border-accent py-1">
-                    {rec}
-                  </li>
-                ))}
-              </ul>
-            </EditableSection>
-          </div>
-        )}
-
-        {dbPageId && <CommentsSection reportPageId={dbPageId} />}
+          dbPageId={dbPageId}
+          onUpdate={handleUpdate}
+          onNavigate={onNavigate}
+        />
       </div>
     </div>
   );
