@@ -4,7 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import type { ReportPageData } from "@/data/reportContent";
 import type { Json } from "@/integrations/supabase/types";
-import type { BlockConfig } from "@/lib/templateUtils";
+import type { BlockConfig, PageContent } from "@/lib/templateUtils";
+import { computePageStatus } from "@/lib/templateUtils";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -205,6 +206,29 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
             new_value: JSON.stringify(value),
           });
         }
+      }
+
+      // Auto-compute status from block config + content
+      const mergedData = { ...pageData, ...updates };
+      const contentForStatus: PageContent = {
+        title: mergedData.title,
+        conditionRating: mergedData.conditionRating,
+        narrative: mergedData.narrative,
+        key_observations: mergedData.key_observations,
+        health_bar: mergedData.healthBar as PageContent["health_bar"],
+        specs: mergedData.specs,
+        tiers: mergedData.tiers as PageContent["tiers"],
+        timing: mergedData.timing,
+        dependencies: mergedData.dependencies,
+        risks: mergedData.risks,
+        images: mergedData.images,
+        maintenance: mergedData.maintenance,
+        creator_notes: mergedData.creator_notes,
+      };
+      const computedStatus = computePageStatus(blockConfig, contentForStatus);
+      if (computedStatus !== status && pageId) {
+        await supabase.from("report_pages").update({ status: computedStatus }).eq("id", pageId);
+        setStatus(computedStatus as "draft" | "complete" | "needs_review");
       }
 
       setSaveStatus("saved");
