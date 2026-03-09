@@ -90,11 +90,13 @@ const Index = () => {
             <ReportTab
               activePageId={reportPageId}
               onNavigate={handleReportPageSelect}
+              onTabChange={handleTabChange}
               groups={portal.groups}
               pages={portal.pages}
               pageKeyToDbId={portal.pageKeyToDbId}
               pageImages={portal.pageImages}
               propertyName={propertyName}
+              propertyAddress={portal.property?.address || ""}
               pdfData={pdfData}
             />
           )}
