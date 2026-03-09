@@ -140,8 +140,8 @@ const HomeTab = ({
             >
               <FileText className="w-5 h-5 text-accent" />
               <div className="flex-1">
-                <h2 className="font-display text line-clamp-2-xl text-foreground mb-1">View Your Rep line-clamp-2ort</h2>
-                <p className=" line-clamp-2font-sans text-sm text-muted-foreground">Read your complete Home Clarity assessment</p>
+                <h2 className="font-display text-xl text-foreground mb-1">View Your Report</h2>
+                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Read your complete Home Clarity assessment</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
