@@ -37,16 +37,6 @@ const Index = () => {
     }
   }, [handleTabChange, handleReportPageSelect]);
 
-  if (portal.isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-          Loading your portal...
-        </div>
-      </div>
-    );
-  }
-
   const propertyName = portal.property?.property_name || "Your Home";
 
   const pdfData: PDFReportData | undefined = useMemo(() => {
@@ -65,6 +55,16 @@ const Index = () => {
       pageImages: portal.pageImages,
     };
   }, [propertyName, portal]);
+
+  if (portal.isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+          Loading your portal...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
