@@ -200,6 +200,7 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
         if (updates.specs !== undefined) updateData.specs = updates.specs;
         if (updates.tiers !== undefined) updateData.tiers = updates.tiers;
         if (updates.timing !== undefined) updateData.timing = updates.timing;
+        if ((updates as Record<string, unknown>).images !== undefined) updateData.images = (updates as Record<string, unknown>).images;
 
         const { error } = await supabase
           .from("report_pages")
