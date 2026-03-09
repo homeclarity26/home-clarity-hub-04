@@ -194,13 +194,6 @@ const AdminClientDetail = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-schedule-events", clientId] });
   };
 
-  const deleteProject = async (id: string) => {
-    const { error } = await supabase.from("projects").delete().eq("id", id);
-    if (error) { toast.error("Failed to delete"); return; }
-    toast.success("Project deleted");
-    queryClient.invalidateQueries({ queryKey: ["admin-projects", clientId] });
-  };
-
   const deleteInvoice = async (id: string) => {
     const { error } = await supabase.from("invoices").delete().eq("id", id);
     if (error) { toast.error("Failed to delete"); return; }
@@ -215,23 +208,17 @@ const AdminClientDetail = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-schedule-events", clientId] });
   };
 
-  const updateProjectStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from("projects").update({ status }).eq("id", id);
-    if (error) { toast.error("Failed to update"); return; }
-    queryClient.invalidateQueries({ queryKey: ["admin-projects", clientId] });
-  };
-
   const updateInvoiceStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("invoices").update({ status }).eq("id", id);
     if (error) { toast.error("Failed to update"); return; }
     queryClient.invalidateQueries({ queryKey: ["admin-invoices", clientId] });
   };
 
-  const openEditProject = (p: typeof projects extends (infer T)[] | undefined ? T : never) => {
-    if (!p) return;
-    setEditId(p.id);
-    setProjectForm({ title: p.title, status: p.status, notes: p.notes || "", approved_tier: p.approved_tier || "" });
-    setEditProjectOpen(true);
+  const openEditInvoice = (inv: typeof invoices extends (infer T)[] | undefined ? T : never) => {
+    if (!inv) return;
+    setEditId(inv.id);
+    setInvoiceForm({ description: inv.description, amount: String(inv.amount), due_date: inv.due_date || "", status: inv.status });
+    setEditInvoiceOpen(true);
   };
 
   const openEditInvoice = (inv: typeof invoices extends (infer T)[] | undefined ? T : never) => {
