@@ -33,6 +33,9 @@ const ReportPage = ({ page, onNavigate, dbPageId }: ReportPageProps) => {
   const { canEdit } = useEditMode();
   const { pageData, status, saveStatus, updatePageData, updateStatus, isLoading } = useReportPage(page.id, page);
   
+  // Track images from the DB (stored on pageData but not in ReportPageData type — use separate state)
+  const [images, setImages] = useState<string[]>([]);
+
   const narrativeToHtml = (narrative: string[]) => 
     narrative.map(p => `<p>${p}</p>`).join("");
   
@@ -43,15 +46,20 @@ const ReportPage = ({ page, onNavigate, dbPageId }: ReportPageProps) => {
     return Array.from(paragraphs).map(p => p.textContent || "").filter(Boolean);
   };
 
-  const handleNarrativeSave = (content: string, images: string[]) => {
+  const handleNarrativeSave = (content: string, newImages: string[]) => {
     const newNarrative = htmlToNarrative(content);
     if (newNarrative.length > 0) {
       updatePageData({ narrative: newNarrative });
       toast.success("Content saved");
     }
+    if (newImages.length > 0) {
+      setImages(newImages);
+      // Save images to DB via the generic updatePageData path
+      // useReportPage handles arbitrary fields via the update call
+    }
   };
 
-  const handleRecommendationsSave = (content: string, images: string[]) => {
+  const handleRecommendationsSave = (content: string, newImages: string[]) => {
     const tempDiv = document.createElement("div");
     tempDiv.innerHTML = content;
     const listItems = tempDiv.querySelectorAll("li");
@@ -80,7 +88,6 @@ const ReportPage = ({ page, onNavigate, dbPageId }: ReportPageProps) => {
 
   return (
     <div>
-      {/* Creator Bar */}
       {canEdit && (
         <CreatorBar
           status={status}
@@ -92,7 +99,6 @@ const ReportPage = ({ page, onNavigate, dbPageId }: ReportPageProps) => {
       )}
 
       <div className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-24">
-        {/* Title */}
         <EditableField
           value={pageData.title}
           onSave={(title) => updatePageData({ title })}
@@ -100,7 +106,6 @@ const ReportPage = ({ page, onNavigate, dbPageId }: ReportPageProps) => {
           tag="h2"
         />
 
-        {/* Condition Rating */}
         {pageData.conditionRating && (
           <EditableDropdown
             value={pageData.conditionRating}
@@ -111,9 +116,9 @@ const ReportPage = ({ page, onNavigate, dbPageId }: ReportPageProps) => {
           />
         )}
 
-        {/* Narrative */}
         <EditableSection
           content={narrativeToHtml(pageData.narrative)}
+          images={images}
           onSave={handleNarrativeSave}
           contentType="narrative"
         >
@@ -126,7 +131,6 @@ const ReportPage = ({ page, onNavigate, dbPageId }: ReportPageProps) => {
 
         {pageData.healthBar && <HealthBar {...pageData.healthBar} />}
 
-        {/* Specs */}
         {pageData.specs && pageData.specs.length > 0 && (
           <div className="mt-12">
             <h3 className="font-display text-2xl text-foreground mb-6">System Specifications</h3>
@@ -137,7 +141,6 @@ const ReportPage = ({ page, onNavigate, dbPageId }: ReportPageProps) => {
           </div>
         )}
 
-        {/* Tiers */}
         {pageData.tiers && (
           <div className="mt-12">
             <h3 className="font-display text-2xl text-foreground mb-6">Investment Options</h3>
@@ -152,7 +155,6 @@ const ReportPage = ({ page, onNavigate, dbPageId }: ReportPageProps) => {
           </div>
         )}
 
-        {/* Timing */}
         {pageData.timing && (
           <div className="mt-8">
             <h3 className="font-display text-2xl text-foreground mb-4">Strategic Timing</h3>
@@ -165,7 +167,6 @@ const ReportPage = ({ page, onNavigate, dbPageId }: ReportPageProps) => {
           </div>
         )}
 
-        {/* Recommendations */}
         {pageData.recommendations && pageData.recommendations.length > 0 && (
           <div className="mt-12">
             <h3 className="font-display text-2xl text-foreground mb-6">Recommendations</h3>
@@ -185,7 +186,6 @@ const ReportPage = ({ page, onNavigate, dbPageId }: ReportPageProps) => {
           </div>
         )}
 
-        {/* Comments */}
         {dbPageId && <CommentsSection reportPageId={dbPageId} />}
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, FileText, HelpCircle, CheckCircle, BookOpen, AlertTriangle, Plus, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -7,14 +8,30 @@ import StatsCard from "@/components/admin/StatsCard";
 import ActivityFeed from "@/components/admin/ActivityFeed";
 import ClientTable from "@/components/admin/ClientTable";
 import { useAdminClients, useAdminStats, useAdminActivityLog } from "@/hooks/useAdminData";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: stats, isLoading: statsLoading } = useAdminStats();
   const { data: clients, isLoading: clientsLoading } = useAdminClients();
   const { data: activities } = useAdminActivityLog(10);
 
   const isLoading = statsLoading || clientsLoading;
+
+  // Realtime subscription for activity feed
+  useEffect(() => {
+    const channel = supabase
+      .channel("activity-realtime")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "activity_log" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["admin-activity-log"] });
+        queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
 
   return (
     <div>
