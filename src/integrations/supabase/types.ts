@@ -223,6 +223,7 @@ export type Database = {
           full_name: string | null
           id: string
           phone: string | null
+          service_region: string | null
           updated_at: string
           user_id: string
         }
@@ -233,6 +234,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
+          service_region?: string | null
           updated_at?: string
           user_id: string
         }
@@ -243,6 +245,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
+          service_region?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -306,6 +309,7 @@ export type Database = {
           created_at: string
           estimated_value: number | null
           id: string
+          iguide_url: string | null
           metadata: Json | null
           property_name: string | null
           updated_at: string
@@ -316,6 +320,7 @@ export type Database = {
           created_at?: string
           estimated_value?: number | null
           id?: string
+          iguide_url?: string | null
           metadata?: Json | null
           property_name?: string | null
           updated_at?: string
@@ -326,6 +331,7 @@ export type Database = {
           created_at?: string
           estimated_value?: number | null
           id?: string
+          iguide_url?: string | null
           metadata?: Json | null
           property_name?: string | null
           updated_at?: string
@@ -609,6 +615,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vendors: {
+        Row: {
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          phone: string | null
+          property_id: string
+          specialty: string
+          title: string
+        }
+        Insert: {
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          phone?: string | null
+          property_id: string
+          specialty?: string
+          title: string
+        }
+        Update: {
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          phone?: string | null
+          property_id?: string
+          specialty?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendors_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
