@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Upload, Sparkles, CheckCircle, Loader2, ArrowLeft, ArrowRight, Mail, Copy, ExternalLink, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
@@ -247,10 +248,21 @@ const NewReportWizard = () => {
         return {
           report_id: report.id,
           template_id: template.id,
+          block_config: template.block_config as Json,
           group_name: template.group_name,
           page_key: template.slug,
           title: template.name,
           narrative: (defaultContent.narrative ? [defaultContent.narrative as string] : []),
+          condition_rating: (defaultContent.condition_rating as string) || null,
+          health_bar: (defaultContent.health_bar || null) as Json,
+          specs: (defaultContent.specs || null) as Json,
+          tiers: (defaultContent.tiers || null) as Json,
+          timing: (defaultContent.timing as string) || null,
+          recommendations: (defaultContent.recommendations || null) as Json,
+          key_observations: (defaultContent.key_observations || null) as Json,
+          risks: (defaultContent.risks || null) as Json,
+          dependencies: (defaultContent.dependencies || null) as Json,
+          maintenance: (defaultContent.maintenance || null) as Json,
           sort_order: index,
           status: "draft",
         };

@@ -4,30 +4,23 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import type { ReportPageData } from "@/data/reportContent";
 import type { Json } from "@/integrations/supabase/types";
-
-interface ReportPageRow {
-  id: string;
-  report_id: string;
-  page_key: string;
-  title: string;
-  group_name: string;
-  condition_rating: string | null;
-  narrative: string[];
-  health_bar: { label: string; current: number; total: number; unit: string } | null;
-  specs: { label: string; value: string }[] | null;
-  tiers: { essential: { price: string; description: string }; enhanced: { price: string; description: string }; signature: { price: string; description: string } } | null;
-  timing: string | null;
-  recommendations: string[] | null;
-  images: string[] | null;
-  status: "draft" | "complete" | "needs_review";
-  updated_at: string;
-}
+import type { BlockConfig } from "@/lib/templateUtils";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
+// Extended page data that includes all DB fields
+export interface ExtendedPageData extends ReportPageData {
+  key_observations?: string[];
+  dependencies?: { pageKey: string; title: string; type: "before" | "after" }[];
+  risks?: string[];
+  maintenance?: { frequency?: string; tasks: string[] };
+  creator_notes?: string;
+}
+
 export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
   const { user, isCreator } = useAuth();
-  const [pageData, setPageData] = useState<ReportPageData>(fallbackData);
+  const [pageData, setPageData] = useState<ExtendedPageData>(fallbackData);
+  const [blockConfig, setBlockConfig] = useState<BlockConfig | null>(null);
   const [pageId, setPageId] = useState<string | null>(null);
   const [reportId, setReportId] = useState<string | null>(null);
   const [status, setStatus] = useState<"draft" | "complete" | "needs_review">("draft");
@@ -35,7 +28,7 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
   const [isLoading, setIsLoading] = useState(true);
   
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const pendingChangesRef = useRef<Partial<ReportPageData> | null>(null);
+  const pendingChangesRef = useRef<Partial<ExtendedPageData> | null>(null);
 
   // Load page data from database
   useEffect(() => {
@@ -46,7 +39,6 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
       }
 
       try {
-        // Get the report page by page_key
         const { data: pages, error } = await supabase
           .from("report_pages")
           .select("*")
@@ -60,8 +52,8 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
           setPageId(row.id);
           setReportId(row.report_id);
           setStatus(row.status as "draft" | "complete" | "needs_review");
+          setBlockConfig((row.block_config as unknown as BlockConfig) || null);
           
-          // Convert DB row to ReportPageData
           setPageData({
             id: row.page_key,
             title: row.title,
@@ -74,12 +66,15 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
             timing: row.timing || undefined,
             recommendations: (row.recommendations as unknown as string[]) || undefined,
             images: (row.images as unknown as string[]) || undefined,
+            key_observations: (row.key_observations as unknown as string[]) || undefined,
+            risks: (row.risks as unknown as string[]) || undefined,
+            dependencies: (row.dependencies as unknown as { pageKey: string; title: string; type: "before" | "after" }[]) || undefined,
+            maintenance: (row.maintenance as unknown as { frequency?: string; tasks: string[] }) || undefined,
+            creator_notes: row.creator_notes || undefined,
           });
         }
-        // If no data in DB, keep using fallbackData
       } catch (err) {
         console.error("Error loading report page:", err);
-        // Keep using fallback data
       } finally {
         setIsLoading(false);
       }
@@ -89,19 +84,17 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
   }, [pageKey, user, fallbackData]);
 
   // Debounced save function
-  const saveToDatabase = useCallback(async (updates: Partial<ReportPageData>) => {
+  const saveToDatabase = useCallback(async (updates: Partial<ExtendedPageData>) => {
     if (!isCreator || !user) return;
 
     setSaveStatus("saving");
 
     try {
-      // If no pageId, we need to create the page (and possibly the report)
       if (!pageId) {
-        // First, get or create a report for the demo property
+        // Create page if needed (same logic as before)
         let reportIdToUse = reportId;
         
         if (!reportIdToUse) {
-          // Check if there's an existing report
           const { data: existingReports } = await supabase
             .from("reports")
             .select("id")
@@ -110,7 +103,6 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
           if (existingReports && existingReports.length > 0) {
             reportIdToUse = existingReports[0].id;
           } else {
-            // Need a property first - check if one exists
             const { data: properties } = await supabase
               .from("properties")
               .select("id")
@@ -120,7 +112,6 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
             if (properties && properties.length > 0) {
               propertyId = properties[0].id;
             } else {
-              // Create a demo property
               const { data: newProperty, error: propError } = await supabase
                 .from("properties")
                 .insert({
@@ -135,7 +126,6 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
               propertyId = newProperty.id;
             }
 
-            // Create the report
             const { data: newReport, error: reportError } = await supabase
               .from("reports")
               .insert({
@@ -152,31 +142,23 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
           setReportId(reportIdToUse);
         }
 
-        // Create the page
-        const insertData: {
-          report_id: string;
-          page_key: string;
-          title: string;
-          group_name: string;
-          condition_rating: string | null;
-          narrative: Json;
-          health_bar: Json | null;
-          specs: Json;
-          tiers: Json | null;
-          timing: string | null;
-          recommendations: Json;
-        } = {
+        const insertData = {
           report_id: reportIdToUse,
           page_key: pageKey,
           title: pageData.title,
           group_name: pageData.group,
           condition_rating: pageData.conditionRating || null,
           narrative: pageData.narrative as unknown as Json,
-          health_bar: pageData.healthBar as unknown as Json || null,
+          health_bar: (pageData.healthBar as unknown as Json) || null,
           specs: (pageData.specs || []) as unknown as Json,
-          tiers: pageData.tiers as unknown as Json || null,
+          tiers: (pageData.tiers as unknown as Json) || null,
           timing: pageData.timing || null,
           recommendations: (pageData.recommendations || []) as unknown as Json,
+          key_observations: (pageData.key_observations || null) as unknown as Json,
+          risks: (pageData.risks || null) as unknown as Json,
+          dependencies: (pageData.dependencies || null) as unknown as Json,
+          maintenance: (pageData.maintenance || null) as unknown as Json,
+          creator_notes: pageData.creator_notes || null,
         };
         
         const { data: newPage, error: pageError } = await supabase
@@ -200,7 +182,12 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
         if (updates.specs !== undefined) updateData.specs = updates.specs;
         if (updates.tiers !== undefined) updateData.tiers = updates.tiers;
         if (updates.timing !== undefined) updateData.timing = updates.timing;
-        if ((updates as Record<string, unknown>).images !== undefined) updateData.images = (updates as Record<string, unknown>).images;
+        if (updates.images !== undefined) updateData.images = updates.images;
+        if (updates.key_observations !== undefined) updateData.key_observations = updates.key_observations;
+        if (updates.risks !== undefined) updateData.risks = updates.risks;
+        if (updates.dependencies !== undefined) updateData.dependencies = updates.dependencies;
+        if (updates.maintenance !== undefined) updateData.maintenance = updates.maintenance;
+        if (updates.creator_notes !== undefined) updateData.creator_notes = updates.creator_notes;
 
         const { error } = await supabase
           .from("report_pages")
@@ -230,22 +217,18 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
   }, [isCreator, user, pageId, reportId, pageKey, pageData]);
 
   // Update page data with debounced save
-  const updatePageData = useCallback((updates: Partial<ReportPageData>) => {
-    // Update local state immediately
+  const updatePageData = useCallback((updates: Partial<ExtendedPageData>) => {
     setPageData(prev => ({ ...prev, ...updates }));
 
-    // Accumulate pending changes
     pendingChangesRef.current = {
       ...pendingChangesRef.current,
       ...updates,
     };
 
-    // Clear existing timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
-    // Set new debounced save (2 seconds)
     saveTimeoutRef.current = setTimeout(() => {
       if (pendingChangesRef.current) {
         saveToDatabase(pendingChangesRef.current);
@@ -278,7 +261,6 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
-        // Save any pending changes immediately
         if (pendingChangesRef.current) {
           saveToDatabase(pendingChangesRef.current);
         }
@@ -288,6 +270,7 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
 
   return {
     pageData,
+    blockConfig,
     pageId,
     status,
     saveStatus,
