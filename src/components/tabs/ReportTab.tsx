@@ -4,6 +4,14 @@ import ImageGrid from "@/components/editor/ImageGrid";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 
 interface ReportTabProps {
   activePageId: string | null;
