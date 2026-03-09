@@ -251,6 +251,7 @@ const AdminClientDetail = () => {
                     <TableHead className="font-sans text-xs">Tier</TableHead>
                     <TableHead className="font-sans text-xs">Notes</TableHead>
                     <TableHead className="font-sans text-xs">Created</TableHead>
+                    <TableHead className="font-sans text-xs w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
