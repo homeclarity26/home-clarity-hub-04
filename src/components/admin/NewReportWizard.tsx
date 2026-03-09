@@ -247,7 +247,7 @@ const NewReportWizard = () => {
         return {
           report_id: report.id,
           template_id: template.id,
-          block_config: template.block_config,
+          block_config: template.block_config as Json,
           group_name: template.group_name,
           page_key: template.slug,
           title: template.name,
