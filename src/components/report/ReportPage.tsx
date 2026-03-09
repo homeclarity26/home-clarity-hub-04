@@ -8,6 +8,7 @@ import EditableField from "./EditableField";
 import EditableDropdown from "./EditableDropdown";
 import EditableSpecs from "./EditableSpecs";
 import EditableTiers from "./EditableTiers";
+import CommentsSection from "./CommentsSection";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useReportPage } from "@/hooks/useReportPage";
 import { toast } from "sonner";
@@ -15,6 +16,7 @@ import { toast } from "sonner";
 interface ReportPageProps {
   page: ReportPageData;
   onNavigate?: (pageId: string) => void;
+  dbPageId?: string;
 }
 
 const conditionOptions = ["Excellent", "Good", "Fair", "Poor", "Critical"];
@@ -27,7 +29,7 @@ const conditionColors: Record<string, string> = {
   Critical: "text-destructive",
 };
 
-const ReportPage = ({ page, onNavigate }: ReportPageProps) => {
+const ReportPage = ({ page, onNavigate, dbPageId }: ReportPageProps) => {
   const { canEdit } = useEditMode();
   const { pageData, status, saveStatus, updatePageData, updateStatus, isLoading } = useReportPage(page.id, page);
   
@@ -113,6 +115,7 @@ const ReportPage = ({ page, onNavigate }: ReportPageProps) => {
         <EditableSection
           content={narrativeToHtml(pageData.narrative)}
           onSave={handleNarrativeSave}
+          contentType="narrative"
         >
           {pageData.narrative.map((paragraph, i) => (
             <p key={i} className="text-base text-foreground max-w-[65ch] mb-6 leading-relaxed">
@@ -169,6 +172,7 @@ const ReportPage = ({ page, onNavigate }: ReportPageProps) => {
             <EditableSection
               content={`<ul>${pageData.recommendations.map(rec => `<li>${rec}</li>`).join("")}</ul>`}
               onSave={handleRecommendationsSave}
+              contentType="recommendations"
             >
               <ul className="space-y-3">
                 {pageData.recommendations.map((rec, i) => (
@@ -180,6 +184,9 @@ const ReportPage = ({ page, onNavigate }: ReportPageProps) => {
             </EditableSection>
           </div>
         )}
+
+        {/* Comments */}
+        {dbPageId && <CommentsSection reportPageId={dbPageId} />}
       </div>
     </div>
   );
