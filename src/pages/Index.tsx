@@ -72,8 +72,6 @@ const Index = () => {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onReportPageSelect={handleReportPageSelect}
-        groups={portal.groups}
-        pages={portal.pages}
       />
 
       <main className="pt-20 pb-48 md:pb-[140px]">

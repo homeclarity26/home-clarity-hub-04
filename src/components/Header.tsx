@@ -110,7 +110,7 @@ const Header = ({ activeTab, onTabChange }: HeaderProps) => {
         )}
 
         <div className="flex-1 p-6">
-          {tabs.filter((t) => t.id !== "report").map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => { onTabChange(tab.id); setMobileMenuOpen(false); }}
@@ -118,33 +118,6 @@ const Header = ({ activeTab, onTabChange }: HeaderProps) => {
             >
               {tab.label}
             </button>
-          ))}
-
-          <div className="h-px bg-border my-6" />
-
-          <h3 className="font-display text-xl text-foreground mb-4">Report</h3>
-          {reportGroups.map((group) => (
-            <div key={group.id} className="mb-8">
-              <button
-                onClick={() => setExpandedMobileGroup(expandedMobileGroup === group.id ? null : group.id)}
-                className="font-display text-lg text-foreground mb-2 bg-transparent border-none cursor-pointer block w-full text-left"
-              >
-                {group.title}
-              </button>
-              {(expandedMobileGroup === group.id || expandedMobileGroup === null) &&
-                group.pages.map((pageId) => {
-                  const page = reportPages[pageId];
-                  return (
-                    <button
-                      key={pageId}
-                      onClick={() => { onReportPageSelect(pageId); setMobileMenuOpen(false); }}
-                      className="block w-full text-left font-mono text-xs uppercase tracking-[0.15em] text-muted-foreground leading-[40px] bg-transparent border-none cursor-pointer hover:text-foreground pl-4"
-                    >
-                      {page?.title || pageId}
-                    </button>
-                  );
-                })}
-            </div>
           ))}
         </div>
 
