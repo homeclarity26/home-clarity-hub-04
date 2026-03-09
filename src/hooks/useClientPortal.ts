@@ -6,7 +6,7 @@ import { reportPages as staticPages, reportGroups as staticGroups, type ReportPa
 export interface PortalGroup {
   id: string;
   title: string;
-  pages: string[]; // page_key values
+  pages: string[];
 }
 
 export interface PortalProperty {
@@ -47,7 +47,7 @@ interface DbPage {
 }
 
 export function useClientPortal(propertyId?: string) {
-  const { user } = useAuth();
+  const { user, isCreator } = useAuth();
   const [property, setProperty] = useState<PortalProperty | null>(null);
   const [report, setReport] = useState<PortalReport | null>(null);
   const [dbPages, setDbPages] = useState<DbPage[]>([]);
@@ -55,6 +55,7 @@ export function useClientPortal(propertyId?: string) {
   const [creatorProfile, setCreatorProfile] = useState<{ name: string; email?: string; phone?: string; initials: string }>({ name: "Your HBC Team", initials: "HB" });
   const [isLoading, setIsLoading] = useState(true);
   const [hasDbData, setHasDbData] = useState(false);
+  const [invoiceBalance, setInvoiceBalance] = useState(0);
 
   useEffect(() => {
     if (!user) {
@@ -64,10 +65,13 @@ export function useClientPortal(propertyId?: string) {
 
     async function load() {
       try {
-        // 1. Fetch property
+        // 1. Fetch property — scope by ownership for clients, allow all for creators
         let propQuery = supabase.from("properties").select("*");
         if (propertyId) {
           propQuery = propQuery.eq("id", propertyId);
+        } else if (!isCreator) {
+          // Clients only see their own properties
+          propQuery = propQuery.eq("client_user_id", user!.id);
         }
         const { data: props } = await propQuery.limit(1);
 
@@ -104,20 +108,20 @@ export function useClientPortal(propertyId?: string) {
           created_by: rpt.created_by,
         });
 
-        // 3. Fetch creator name
-        const { data: creatorProfile } = await supabase
+        // 3. Fetch creator profile
+        const { data: creatorData } = await supabase
           .from("profiles")
           .select("full_name, email, phone")
           .eq("user_id", rpt.created_by)
           .limit(1);
 
-        if (creatorProfile && creatorProfile.length > 0 && creatorProfile[0].full_name) {
-          setCreatorName(creatorProfile[0].full_name);
+        if (creatorData && creatorData.length > 0 && creatorData[0].full_name) {
+          setCreatorName(creatorData[0].full_name);
           setCreatorProfile({
-            name: creatorProfile[0].full_name,
-            email: creatorProfile[0].email || undefined,
-            phone: creatorProfile[0].phone || undefined,
-            initials: (creatorProfile[0].full_name || "HB").slice(0, 2).toUpperCase(),
+            name: creatorData[0].full_name,
+            email: creatorData[0].email || undefined,
+            phone: creatorData[0].phone || undefined,
+            initials: (creatorData[0].full_name || "HB").slice(0, 2).toUpperCase(),
           });
         }
 
@@ -132,6 +136,19 @@ export function useClientPortal(propertyId?: string) {
           setDbPages(pages as unknown as DbPage[]);
           setHasDbData(true);
         }
+
+        // 5. Fetch invoice balance for this property
+        const { data: invoices } = await supabase
+          .from("invoices")
+          .select("amount, status")
+          .eq("property_id", prop.id);
+
+        if (invoices) {
+          const pending = invoices
+            .filter(i => i.status === "pending" || i.status === "overdue")
+            .reduce((sum, i) => sum + Number(i.amount), 0);
+          setInvoiceBalance(pending);
+        }
       } catch (err) {
         console.error("Error loading portal data:", err);
       } finally {
@@ -140,12 +157,10 @@ export function useClientPortal(propertyId?: string) {
     }
 
     load();
-  }, [user, propertyId]);
+  }, [user, propertyId, isCreator]);
 
-  // Build groups from DB pages
   const groups: PortalGroup[] = useMemo(() => {
     if (!hasDbData) return staticGroups;
-
     const groupMap = new Map<string, { pages: { key: string; order: number }[] }>();
     for (const p of dbPages) {
       if (!groupMap.has(p.group_name)) {
@@ -153,7 +168,6 @@ export function useClientPortal(propertyId?: string) {
       }
       groupMap.get(p.group_name)!.pages.push({ key: p.page_key, order: p.sort_order });
     }
-
     return Array.from(groupMap.entries()).map(([name, data]) => ({
       id: name.toLowerCase().replace(/\s+/g, "-"),
       title: name,
@@ -161,10 +175,8 @@ export function useClientPortal(propertyId?: string) {
     }));
   }, [hasDbData, dbPages]);
 
-  // Build pages map from DB
   const pages: Record<string, ReportPageData> = useMemo(() => {
     if (!hasDbData) return staticPages;
-
     const map: Record<string, ReportPageData> = {};
     for (const p of dbPages) {
       map[p.page_key] = {
@@ -188,7 +200,6 @@ export function useClientPortal(propertyId?: string) {
     return map;
   }, [hasDbData, dbPages]);
 
-  // Map page_key → DB uuid
   const pageKeyToDbId: Record<string, string> = useMemo(() => {
     const map: Record<string, string> = {};
     for (const p of dbPages) {
@@ -197,14 +208,12 @@ export function useClientPortal(propertyId?: string) {
     return map;
   }, [dbPages]);
 
-  // Completion percentage
   const completionPercent = useMemo(() => {
     if (dbPages.length === 0) return 0;
     const done = dbPages.filter((p) => p.status === "complete").length;
     return Math.round((done / dbPages.length) * 100);
   }, [dbPages]);
 
-  // Images map: page_key → string[]
   const pageImages: Record<string, string[]> = useMemo(() => {
     const map: Record<string, string[]> = {};
     for (const p of dbPages) {
@@ -227,5 +236,6 @@ export function useClientPortal(propertyId?: string) {
     creatorProfile,
     hasDbData,
     isLoading,
+    invoiceBalance,
   };
 }

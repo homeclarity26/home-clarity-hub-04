@@ -8,18 +8,23 @@ interface FooterProps {
   activeTab: string;
   onNavigate: (tab: string) => void;
   reportContext?: unknown;
+  invoiceBalance?: number;
 }
 
-const contextualInfo: Record<string, { primary: string; secondary: string }> = {
-  home: { primary: "Welcome to the Portal", secondary: "Home Clarity Report in progress" },
-  report: { primary: "Home Clarity Report", secondary: "Navigate sections using the header menu" },
-  projects: { primary: "Project Management", secondary: "No active projects" },
-  payments: { primary: "Financial History", secondary: "Current balance: $4,500" },
-  contacts: { primary: "Your Home Team", secondary: "2 HBC contacts • 0 vendors assigned" },
-  schedule: { primary: "Schedule & Timeline", secondary: "3 upcoming appointments" },
-};
+const Footer = ({ activeTab, onNavigate, reportContext, invoiceBalance = 0 }: FooterProps) => {
+  const balanceStr = invoiceBalance > 0
+    ? `Current balance: $${invoiceBalance.toLocaleString()}`
+    : "No outstanding balance";
 
-const Footer = ({ activeTab, onNavigate, reportContext }: FooterProps) => {
+  const contextualInfo: Record<string, { primary: string; secondary: string }> = {
+    home: { primary: "Welcome to the Portal", secondary: "Home Clarity Report in progress" },
+    report: { primary: "Home Clarity Report", secondary: "Navigate sections using the header menu" },
+    projects: { primary: "Project Management", secondary: "No active projects" },
+    payments: { primary: "Financial History", secondary: balanceStr },
+    contacts: { primary: "Your Home Team", secondary: "2 HBC contacts • 0 vendors assigned" },
+    schedule: { primary: "Schedule & Timeline", secondary: "3 upcoming appointments" },
+  };
+
   const info = contextualInfo[activeTab] || contextualInfo.home;
   const { editMode } = useEditMode();
   const [chatOpen, setChatOpen] = useState(false);

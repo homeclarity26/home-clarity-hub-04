@@ -49,7 +49,7 @@ export function useAdminClients() {
       const userIds = [...new Set(properties.map((p) => p.client_user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("*")
+        .select("user_id, full_name, email, phone, avatar_initials")
         .in("user_id", userIds);
 
       return properties.map((prop) => {
@@ -61,13 +61,18 @@ export function useAdminClients() {
         const completePages = pages.filter((p) => p.status === "complete" || p.status === "published").length;
         const flaggedPages = pages.filter((p) => p.status === "needs_review").length;
 
+        // Use profile data first, fall back to metadata from wizard
+        const clientEmail = profile?.email || (metadata.client_email as string) || "";
+        const clientPhone = profile?.phone || (metadata.client_phone as string) || "";
+        const clientName = profile?.full_name || (metadata.client_name as string) || "Unknown Client";
+
         return {
           id: prop.id,
           propertyId: prop.id,
           propertyName: prop.property_name || prop.address,
-          name: profile?.full_name || "Unknown Client",
-          email: (profile as Record<string, unknown>)?.email as string || "",
-          phone: (profile as Record<string, unknown>)?.phone as string || "",
+          name: clientName,
+          email: clientEmail,
+          phone: clientPhone,
           address: prop.address,
           yearBuilt: (metadata.year_built as number) || null,
           sqft: (metadata.sqft as number) || null,

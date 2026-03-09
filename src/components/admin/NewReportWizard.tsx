@@ -7,13 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Upload, Sparkles, CheckCircle, Loader2, ArrowLeft, ArrowRight, Mail, Copy, ExternalLink, FileText } from "lucide-react";
+import { CheckCircle, Loader2, ArrowLeft, ArrowRight, Mail, Copy, ExternalLink, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
-const steps = ["Client Info", "Select Pages", "Upload Data", "AI Generation", "Review & Publish"];
+const steps = ["Client Info", "Select Pages", "Review & Publish"];
 
 interface ClientFormData {
   fullName: string;
@@ -79,8 +79,6 @@ const subGroupLabels: Record<string, string> = {
 
 const NewReportWizard = () => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [generating, setGenerating] = useState(false);
-  const [generated, setGenerated] = useState(false);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
@@ -88,6 +86,7 @@ const NewReportWizard = () => {
     portalUrl: string;
     isExisting: boolean;
     magicLinkSent: boolean;
+    tempPassword?: string;
   } | null>(null);
   const [createdPropertyId, setCreatedPropertyId] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -124,7 +123,6 @@ const NewReportWizard = () => {
         if (error) throw error;
         setTemplates(data || []);
         
-        // Auto-select common templates by default
         const defaultSelections = new Set<string>();
         const defaultSlugs = [
           "executive-summary", "property-overview", 
@@ -183,7 +181,6 @@ const NewReportWizard = () => {
     });
   };
 
-  // Group templates by group_name and sub_group
   const groupedTemplates = templates.reduce((acc, template) => {
     const group = template.group_name;
     const subGroup = template.sub_group || "general";
@@ -206,6 +203,7 @@ const NewReportWizard = () => {
 
     setSaving(true);
     try {
+      // Use creator's ID as placeholder — publish step reassigns to real client
       const { data: property, error: propErr } = await supabase
         .from("properties")
         .insert({
@@ -241,7 +239,6 @@ const NewReportWizard = () => {
 
       if (repErr) throw repErr;
 
-      // Create pages from selected templates
       const selectedTemplatesList = templates.filter(t => selectedTemplates.has(t.id));
       const pageInserts = selectedTemplatesList.map((template, index) => {
         const defaultContent = (template.default_content || {}) as Record<string, unknown>;
@@ -269,10 +266,7 @@ const NewReportWizard = () => {
       });
 
       const { error: pagesErr } = await supabase.from("report_pages").insert(pageInserts);
-      if (pagesErr) {
-        console.error("Failed to seed pages:", pagesErr);
-        throw pagesErr;
-      }
+      if (pagesErr) throw pagesErr;
 
       setCreatedPropertyId(property.id);
       toast({ title: "Client created", description: `Property and report with ${pageInserts.length} pages created for ${form.fullName}.` });
@@ -325,6 +319,7 @@ const NewReportWizard = () => {
         portalUrl: data.portalUrl,
         isExisting: data.isExisting,
         magicLinkSent: data.magicLinkSent,
+        tempPassword: data.tempPassword,
       });
       setPublished(true);
 
@@ -344,25 +339,23 @@ const NewReportWizard = () => {
 
   const handleNext = async () => {
     if (currentStep === 1) {
-      // After page selection, create the client and report
       const success = await handleCreateClient();
       if (!success) return;
     }
     setCurrentStep(currentStep + 1);
   };
 
-  const handleGenerate = () => {
-    setGenerating(true);
-    setTimeout(() => {
-      setGenerating(false);
-      setGenerated(true);
-    }, 3000);
-  };
-
   const copyPortalLink = () => {
     const url = `${window.location.origin}/portal/${createdPropertyId}`;
     navigator.clipboard.writeText(url);
     toast({ title: "Copied!", description: "Portal link copied to clipboard." });
+  };
+
+  const copyTempPassword = () => {
+    if (publishResult?.tempPassword) {
+      navigator.clipboard.writeText(publishResult.tempPassword);
+      toast({ title: "Copied!", description: "Temporary password copied to clipboard." });
+    }
   };
 
   return (
@@ -543,75 +536,15 @@ const NewReportWizard = () => {
         </Card>
       )}
 
-      {/* Step 2: Upload Data */}
+      {/* Step 2: Review & Publish */}
       {currentStep === 2 && (
-        <Card className="p-6 space-y-5">
-          <h3 className="text-base font-sans font-semibold text-foreground">Upload Data</h3>
-          {["Discovery Call Recording", "Walkthrough Transcript", "Exterior Photos", "Interior Photos", "Serial Plate Photos", "hover.to Files", "External Reports"].map((category) => (
-            <div key={category} className="border border-dashed border-border rounded-lg p-6 text-center hover:border-primary/30 transition-colors cursor-pointer">
-              <Upload className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm font-sans font-medium text-foreground">{category}</p>
-              <p className="text-xs font-sans text-muted-foreground mt-1">Drag & drop or click to upload</p>
-            </div>
-          ))}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-sans">iGuide.com Link</Label>
-            <Input placeholder="https://youriguide.com/..." className="font-sans" />
-          </div>
-        </Card>
-      )}
-
-      {/* Step 3: AI Generation */}
-      {currentStep === 3 && (
-        <Card className="p-6 space-y-5">
-          <h3 className="text-base font-sans font-semibold text-foreground">AI Report Generation</h3>
-          {!generating && !generated && (
-            <div className="text-center py-8">
-              <Sparkles className="w-12 h-12 text-accent mx-auto mb-4" />
-              <p className="text-sm font-sans text-foreground mb-2">AI will analyze your uploaded data and generate initial report content</p>
-              <p className="text-xs font-sans text-muted-foreground mb-6">This typically takes 2-5 minutes depending on the amount of data</p>
-              <Button onClick={handleGenerate} className="gap-2 font-sans">
-                <Sparkles className="w-4 h-4" />
-                Generate Report Content
-              </Button>
-            </div>
-          )}
-          {generating && (
-            <div className="text-center py-8">
-              <Loader2 className="w-12 h-12 text-primary mx-auto mb-4 animate-spin" />
-              <p className="text-sm font-sans text-foreground mb-2">Generating report content...</p>
-              <div className="max-w-sm mx-auto space-y-2 mt-6">
-                {["Analyzing discovery call transcript", "Processing property photos", "Generating room narratives", "Building pricing recommendations"].map((step, i) => (
-                  <div key={step} className="flex items-center gap-2">
-                    {i < 2 ? <CheckCircle className="w-4 h-4 text-foreground shrink-0" /> : <Loader2 className="w-4 h-4 text-muted-foreground animate-spin shrink-0" />}
-                    <span className={`text-xs font-sans ${i < 2 ? "text-foreground" : "text-muted-foreground"}`}>{step}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {generated && (
-            <div className="text-center py-8">
-              <CheckCircle className="w-12 h-12 text-foreground mx-auto mb-4" />
-              <p className="text-sm font-sans text-foreground mb-2">Report content generated!</p>
-              <div className="flex items-center justify-center gap-4 mt-4">
-                <Badge className="bg-primary/10 text-foreground text-xs font-sans border-none">{selectedTemplates.size} pages generated</Badge>
-                <Badge className="bg-accent/20 text-accent-foreground text-xs font-sans border-none">4 flagged for review</Badge>
-              </div>
-            </div>
-          )}
-        </Card>
-      )}
-
-      {/* Step 4: Review & Publish */}
-      {currentStep === 4 && (
         <Card className="p-6 space-y-5">
           <h3 className="text-base font-sans font-semibold text-foreground">Review & Publish</h3>
 
           {!published ? (
             <>
               <p className="text-sm font-sans text-muted-foreground">
-                Review the generated content in the portal before publishing. Publishing will create a client account for <strong className="text-foreground">{form.email || "—"}</strong> and send them a magic link to access their portal.
+                Review the generated content in the portal before publishing. Publishing will create a client account for <strong className="text-foreground">{form.email || "—"}</strong> and send them login credentials.
               </p>
               <div className="flex gap-3">
                 <Button
@@ -653,11 +586,27 @@ const NewReportWizard = () => {
                   </p>
                   <p className="text-xs font-sans text-muted-foreground mt-0.5">
                     {publishResult?.magicLinkSent
-                      ? `A magic link was sent to ${form.email}`
+                      ? `An invite was sent to ${form.email}`
                       : `Client can sign in at ${form.email}`}
                   </p>
                 </div>
               </div>
+
+              {/* Show temp password for new accounts */}
+              {publishResult?.tempPassword && !publishResult?.isExisting && (
+                <div className="p-4 rounded-lg bg-muted/50 border border-border space-y-2">
+                  <p className="text-xs font-sans font-medium text-foreground">Temporary Password (share with client if email doesn't arrive)</p>
+                  <div className="flex items-center gap-2">
+                    <code className="text-sm font-mono bg-background px-3 py-1.5 rounded border border-border">
+                      {publishResult.tempPassword}
+                    </code>
+                    <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={copyTempPassword}>
+                      <Copy className="w-3 h-3" />
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-3">
                 <Button variant="outline" className="gap-1.5 font-sans" onClick={copyPortalLink}>
@@ -672,8 +621,8 @@ const NewReportWizard = () => {
                   <ExternalLink className="w-4 h-4" />
                   View Portal
                 </Button>
-                <Button className="gap-1.5 font-sans" onClick={() => navigate("/admin/clients")}>
-                  Back to Clients
+                <Button className="gap-1.5 font-sans" onClick={() => navigate(`/admin/clients/${createdPropertyId}`)}>
+                  Go to Client Detail
                 </Button>
               </div>
             </div>
