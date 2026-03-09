@@ -169,7 +169,7 @@ const HomeTab = ({
               <Phone className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">Contact Your Advisor</h2>
-     <p className="font-sans text-sm text-muted-foreground line-clamp-2">Adam Kinney — Founder & Lead Advisor</p>
+                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Adam Kinney — Founder & Lead Advisor</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
