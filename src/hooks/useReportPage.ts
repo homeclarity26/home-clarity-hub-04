@@ -73,6 +73,7 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
             tiers: row.tiers as unknown as ReportPageData["tiers"],
             timing: row.timing || undefined,
             recommendations: (row.recommendations as unknown as string[]) || undefined,
+            images: (row.images as unknown as string[]) || undefined,
           });
         }
         // If no data in DB, keep using fallbackData
