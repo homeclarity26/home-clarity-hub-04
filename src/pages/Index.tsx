@@ -49,6 +49,23 @@ const Index = () => {
 
   const propertyName = portal.property?.property_name || "Your Home";
 
+  const pdfData: PDFReportData | undefined = useMemo(() => {
+    if (!portal.hasDbData && Object.keys(portal.pages).length === 0) return undefined;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    return {
+      propertyName,
+      address: portal.property?.address || "",
+      date: dateStr,
+      creatorName: portal.creatorName,
+      creatorEmail: portal.creatorProfile?.email,
+      creatorPhone: portal.creatorProfile?.phone,
+      groups: portal.groups,
+      pages: portal.pages,
+      pageImages: portal.pageImages,
+    };
+  }, [propertyName, portal]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header
