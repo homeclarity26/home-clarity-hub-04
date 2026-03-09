@@ -24,6 +24,7 @@ const ReportTab = ({
   pageKeyToDbId = {},
   pageImages = {},
   propertyName = "The Johnson Residence",
+  pdfData,
 }: ReportTabProps) => {
   const reportGroups = groups || staticGroups;
   const reportPages = pages || staticPages;
