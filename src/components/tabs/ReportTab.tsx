@@ -296,8 +296,8 @@ const ReportTab = ({
                 <button
                   key={card.id}
                   onClick={handleClick}
-                  className={`group text-left bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border ${
-                    card.gold ? "border-accent" : "border-border"
+                  className={`group text-left bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border min-h-[180px] ${
+                    card.gold ? "border-border border-l-[3px] border-l-accent" : "border-border"
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -311,7 +311,7 @@ const ReportTab = ({
                   <h3 className="font-display text-xl text-foreground leading-snug">
                     {card.title}
                   </h3>
-                  <p className="font-sans text-sm text-muted-foreground leading-relaxed">
+                  <p className="font-sans text-sm text-muted-foreground leading-relaxed line-clamp-2">
                     {card.subtitle}
                   </p>
                   {/* Condition rating badges */}
@@ -344,11 +344,11 @@ const ReportTab = ({
               href="https://hometownbuildersclub.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="group bg-card rounded-lg p-6 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-2 border border-border"
+              className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border"
             >
               <Award className="w-5 h-5 text-accent" />
-              <h3 className="font-display text-lg text-foreground">Your HBC Membership</h3>
-              <p className="font-sans text-sm text-muted-foreground">Lifetime access & advisory services</p>
+              <h3 className="font-display text-xl text-foreground">Your HBC Membership</h3>
+              <p className="font-sans text-sm text-muted-foreground line-clamp-2">Lifetime access & advisory services</p>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors mt-auto" />
             </a>
 
@@ -361,21 +361,21 @@ const ReportTab = ({
                   input.scrollIntoView({ behavior: "smooth" });
                 }
               }}
-              className="group text-left bg-card rounded-lg p-6 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-2 border border-border"
+              className="group text-left bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border"
             >
               <MessageCircle className="w-5 h-5 text-accent" />
-              <h3 className="font-display text-lg text-foreground">Ask a Question</h3>
-              <p className="font-sans text-sm text-muted-foreground">AI-powered answers about your home</p>
+              <h3 className="font-display text-xl text-foreground">Ask a Question</h3>
+              <p className="font-sans text-sm text-muted-foreground line-clamp-2">AI-powered answers about your home</p>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors mt-auto" />
             </button>
 
             <button
               onClick={() => onTabChange?.("contacts")}
-              className="group text-left bg-card rounded-lg p-6 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-2 border border-border"
+              className="group text-left bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border"
             >
               <Phone className="w-5 h-5 text-accent" />
-              <h3 className="font-display text-lg text-foreground">Contact Your Advisor</h3>
-              <p className="font-sans text-sm text-muted-foreground">Adam Kinney — Founder & Lead Advisor</p>
+              <h3 className="font-display text-xl text-foreground">Contact Your Advisor</h3>
+              <p className="font-sans text-sm text-muted-foreground line-clamp-2">Adam Kinney — Founder & Lead Advisor</p>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors mt-auto" />
             </button>
           </div>

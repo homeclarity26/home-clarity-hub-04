@@ -102,7 +102,7 @@ const HomeTab = ({
               <Receipt className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">Payments</h2>
-                <p className="font-sans text-sm text-muted-foreground">Account & transaction history</p>
+                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Account & transaction history</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
@@ -114,7 +114,7 @@ const HomeTab = ({
               <Calendar className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">Schedule & Timeline</h2>
-                <p className="font-sans text-sm text-muted-foreground">Appointments & reminders</p>
+                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Appointments & reminders</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
@@ -126,7 +126,7 @@ const HomeTab = ({
               <Users className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">Your Home Team</h2>
-                <p className="font-sans text-sm text-muted-foreground">Advisors & vendor partners</p>
+                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Advisors & vendor partners</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
@@ -145,7 +145,7 @@ const HomeTab = ({
               <FileText className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">View Your Report</h2>
-                <p className="font-sans text-sm text-muted-foreground">Read your complete Home Clarity assessment</p>
+                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Read your complete Home Clarity assessment</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
@@ -157,7 +157,7 @@ const HomeTab = ({
               <MessageCircle className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">Ask a Question</h2>
-                <p className="font-sans text-sm text-muted-foreground">AI-powered answers about your home</p>
+                <p className="font-sans text-sm text-muted-foreground line-clamp-2">AI-powered answers about your home</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
@@ -169,7 +169,7 @@ const HomeTab = ({
               <Phone className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">Contact Your Advisor</h2>
-                <p className="font-sans text-sm text-muted-foreground">Adam Kinney — Founder & Lead Advisor</p>
+                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Adam Kinney — Founder & Lead Advisor</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
