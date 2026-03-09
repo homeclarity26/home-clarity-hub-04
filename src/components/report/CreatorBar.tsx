@@ -21,6 +21,7 @@ interface CreatorBarProps {
   saveStatus: SaveStatus;
   currentPageId: string;
   onNavigate: (pageId: string) => void;
+  pdfData?: PDFReportData;
 }
 
 const statusLabels: Record<string, string> = {
