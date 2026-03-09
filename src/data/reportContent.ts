@@ -14,6 +14,7 @@ export interface ReportPageData {
   tiers?: { essential: TierData; enhanced: TierData; signature: TierData };
   timing?: string;
   recommendations?: string[];
+  images?: string[];
 }
 
 export const reportGroups = [

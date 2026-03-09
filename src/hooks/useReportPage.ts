@@ -73,6 +73,7 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
             tiers: row.tiers as unknown as ReportPageData["tiers"],
             timing: row.timing || undefined,
             recommendations: (row.recommendations as unknown as string[]) || undefined,
+            images: (row.images as unknown as string[]) || undefined,
           });
         }
         // If no data in DB, keep using fallbackData
@@ -199,6 +200,7 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData) {
         if (updates.specs !== undefined) updateData.specs = updates.specs;
         if (updates.tiers !== undefined) updateData.tiers = updates.tiers;
         if (updates.timing !== undefined) updateData.timing = updates.timing;
+        if ((updates as Record<string, unknown>).images !== undefined) updateData.images = (updates as Record<string, unknown>).images;
 
         const { error } = await supabase
           .from("report_pages")
