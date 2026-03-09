@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -9,6 +9,7 @@ import PaymentsTab from "@/components/tabs/PaymentsTab";
 import ContactsTab from "@/components/tabs/ContactsTab";
 import ScheduleTab from "@/components/tabs/ScheduleTab";
 import { useClientPortal } from "@/hooks/useClientPortal";
+import type { PDFReportData } from "@/features/pdf/PDFReport";
 
 const Index = () => {
   const { propertyId } = useParams<{ propertyId?: string }>();
