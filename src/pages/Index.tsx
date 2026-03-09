@@ -77,9 +77,11 @@ const Index = () => {
       <main className="pt-20 pb-48 md:pb-[140px]">
         <div className={`transition-opacity duration-300 ${activeTab === "home" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "home" && (
-            <HomeTab
+          <HomeTab
               onNavigate={handleNavigate}
+              onTabChange={handleTabChange}
               propertyName={propertyName}
+              propertyAddress={portal.property?.address || ""}
               completionPercent={portal.completionPercent}
               creatorName={portal.creatorName}
             />
