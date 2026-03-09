@@ -92,7 +92,7 @@ const Index = () => {
           {activeTab === "contacts" && <ContactsTab creator={portal.creatorProfile} />}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "schedule" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "schedule" && <ScheduleTab />}
+          {activeTab === "schedule" && <ScheduleTab propertyId={portal.property?.id} />}
         </div>
       </main>
 
