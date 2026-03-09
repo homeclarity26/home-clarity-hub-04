@@ -243,19 +243,14 @@ const NewReportWizard = () => {
       // Create pages from selected templates
       const selectedTemplatesList = templates.filter(t => selectedTemplates.has(t.id));
       const pageInserts = selectedTemplatesList.map((template, index) => {
-        const defaultContent = template.default_content as Record<string, unknown>;
+        const defaultContent = (template.default_content || {}) as Record<string, unknown>;
         return {
           report_id: report.id,
           template_id: template.id,
           group_name: template.group_name,
           page_key: template.slug,
           title: template.name,
-          narrative: (defaultContent.narrative ? [defaultContent.narrative as string] : []) as string[],
-          block_config: template.block_config,
-          key_observations: defaultContent.key_observations || null,
-          maintenance: defaultContent.maintenance || null,
-          specs: defaultContent.specs || null,
-          timing: defaultContent.timing || null,
+          narrative: (defaultContent.narrative ? [defaultContent.narrative as string] : []),
           sort_order: index,
           status: "draft",
         };
