@@ -102,7 +102,7 @@ const HomeTab = ({
               <Receipt className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">Payments</h2>
-                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Account & transaction history</p>
+                <p className="font-sans text-sm text-muted-foreground line-clamp-2 line-clamp-2">Account & transaction history</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
@@ -114,7 +114,7 @@ const HomeTab = ({
               <Calendar className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">Schedule & Timeline</h2>
-                <p className="font-sans text-sm text-muted-foreground">Appointments & reminders</p>
+                <p className="font-sans text-sm text-mut line-clamp-2ed-foreground">Appointments & reminders</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
