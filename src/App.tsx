@@ -11,10 +11,17 @@ import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import AdminLayout from "./layouts/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminClients from "./pages/admin/AdminClients";
+import AdminClientDetail from "./pages/admin/AdminClientDetail";
+import AdminNewReport from "./pages/admin/AdminNewReport";
+import AdminKnowledgeBase from "./pages/admin/AdminKnowledgeBase";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 const queryClient = new QueryClient();
 
-// Protected route wrapper
+// Protected route wrapper — requires auth
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
 
@@ -30,6 +37,29 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Creator-only route wrapper
+const CreatorRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isCreator, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="font-sans text-sm text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isCreator) {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
@@ -56,11 +86,41 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Root redirect: creators go to /admin, clients go to portal
+const RootRedirect = () => {
+  const { user, isCreator, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+          Loading...
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (isCreator) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  // Client — go to portal (using a default property for now)
+  return <Navigate to="/portal" replace />;
+};
+
 const AppRoutes = () => {
   return (
     <Routes>
+      {/* Root redirect based on role */}
+      <Route path="/" element={<RootRedirect />} />
+
+      {/* Client Portal */}
       <Route
-        path="/"
+        path="/portal"
         element={
           <ProtectedRoute>
             <EditModeProvider>
@@ -69,6 +129,35 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/portal/:propertyId"
+        element={
+          <ProtectedRoute>
+            <EditModeProvider>
+              <Index />
+            </EditModeProvider>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Admin routes */}
+      <Route
+        path="/admin"
+        element={
+          <CreatorRoute>
+            <AdminLayout />
+          </CreatorRoute>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="clients" element={<AdminClients />} />
+        <Route path="clients/new" element={<AdminNewReport />} />
+        <Route path="clients/:clientId" element={<AdminClientDetail />} />
+        <Route path="knowledge-base" element={<AdminKnowledgeBase />} />
+        <Route path="settings" element={<AdminSettings />} />
+      </Route>
+
+      {/* Auth routes */}
       <Route
         path="/login"
         element={
