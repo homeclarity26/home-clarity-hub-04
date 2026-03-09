@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HomeTab from "@/components/tabs/HomeTab";
@@ -15,6 +16,8 @@ import type { PDFReportData } from "@/features/pdf/PDFReport";
 const Index = () => {
   const { propertyId } = useParams<{ propertyId?: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const isEditLink = searchParams.get("edit") === "true";
   const portal = useClientPortal(propertyId);
   const [activeTab, setActiveTab] = useState("home");
   const [reportPageId, setReportPageId] = useState<string | null>(null);
@@ -102,13 +105,29 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {isEditLink && canEdit && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-primary text-primary-foreground">
+          <div className="max-w-[1200px] mx-auto px-4 py-2 flex items-center justify-between">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.15em] hover:text-accent transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back to Admin
+            </button>
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary-foreground/50">
+              Editing Portal Preview
+            </span>
+          </div>
+        </div>
+      )}
       <Header
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onReportPageSelect={handleReportPageSelect}
       />
 
-      <main className="pt-20 pb-48 md:pb-[140px]">
+      <main className={`${isEditLink && canEdit ? "pt-[calc(2rem+36px)]" : "pt-20"} pb-48 md:pb-[140px]`}>
         <div className={`transition-opacity duration-300 ${activeTab === "home" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "home" && (
           <HomeTab
