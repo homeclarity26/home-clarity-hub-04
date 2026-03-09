@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { ReportPageData } from "@/data/reportContent";
+import type { PDFReportData } from "@/features/pdf/PDFReport";
 import HealthBar from "./HealthBar";
 import PricingTiers from "./PricingTiers";
 import EditableSection from "@/components/editor/EditableSection";
