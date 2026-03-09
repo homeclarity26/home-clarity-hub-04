@@ -404,7 +404,12 @@ const AdminClientDetail = () => {
                         <p className="text-sm font-sans text-foreground">{event.title}</p>
                         <p className="text-xs font-sans text-muted-foreground">{event.event_type} · {event.status}</p>
                       </div>
-                      <span className="text-xs font-sans text-muted-foreground">{format(new Date(event.event_date), "MMM d, yyyy h:mm a")}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-sans text-muted-foreground">{format(new Date(event.event_date), "MMM d, yyyy h:mm a")}</span>
+                        <Button variant="ghost" size="sm" onClick={() => deleteEvent(event.id)}>
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
