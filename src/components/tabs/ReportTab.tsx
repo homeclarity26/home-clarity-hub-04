@@ -2,6 +2,8 @@ import { reportPages as staticPages, reportGroups as staticGroups, type ReportPa
 import ReportPage from "@/components/report/ReportPage";
 import ImageGrid from "@/components/editor/ImageGrid";
 import type { PortalGroup } from "@/hooks/useClientPortal";
+import type { PDFReportData } from "@/features/pdf/PDFReport";
+import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 
 interface ReportTabProps {
   activePageId: string | null;
@@ -11,6 +13,7 @@ interface ReportTabProps {
   pageKeyToDbId?: Record<string, string>;
   pageImages?: Record<string, string[]>;
   propertyName?: string;
+  pdfData?: PDFReportData;
 }
 
 const ReportTab = ({
