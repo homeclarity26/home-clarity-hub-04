@@ -42,6 +42,7 @@ const CreatorBar = ({
   saveStatus,
   currentPageId,
   onNavigate,
+  pdfData,
 }: CreatorBarProps) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
