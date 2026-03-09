@@ -178,20 +178,7 @@ const FileManager = ({ propertyId }: FileManagerProps) => {
       )}
 
       {/* iGuide link */}
-      <Card className="p-5 border-dashed">
-        <div className="flex items-center gap-2 mb-3">
-          <ExternalLink className="w-4 h-4 text-muted-foreground" />
-          <h4 className="text-sm font-sans font-semibold text-foreground">iGuide Link</h4>
-        </div>
-        <div className="flex items-center gap-3">
-          <input
-            type="text"
-            placeholder="https://youriguide.com/..."
-            className="flex-1 h-9 px-3 rounded-md border border-border text-sm font-sans bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          <Button size="sm" className="text-xs font-sans">Save</Button>
-        </div>
-      </Card>
+      <IGuideLink propertyId={propertyId} />
     </div>
   );
 };
