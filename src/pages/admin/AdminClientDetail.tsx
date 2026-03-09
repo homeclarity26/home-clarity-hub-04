@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,9 +17,14 @@ import FileManager from "@/components/admin/FileManager";
 import CommentsManager from "@/components/admin/CommentsManager";
 import { useAdminClient, useAdminProjects, useAdminInvoices, useAdminScheduleEvents } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
+import type { PDFReportData } from "@/features/pdf/PDFReport";
+import type { ReportPageData } from "@/data/reportContent";
+import type { PortalGroup } from "@/hooks/useClientPortal";
 
 type ClientTab = "overview" | "report" | "files" | "comments" | "projects" | "payments" | "schedule";
 
