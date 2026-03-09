@@ -16,6 +16,7 @@ import ReportPageManager from "@/components/admin/ReportPageManager";
 import FileManager from "@/components/admin/FileManager";
 import CommentsManager from "@/components/admin/CommentsManager";
 import VendorManager from "@/components/admin/VendorManager";
+import AdminProjectsSection from "@/components/admin/AdminProjectsSection";
 import { useAdminClient, useAdminProjects, useAdminInvoices, useAdminScheduleEvents } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -126,51 +127,22 @@ const AdminClientDetail = () => {
   }, [client, reportPages, profile]);
 
   // Create dialog states
-  const [projectOpen, setProjectOpen] = useState(false);
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [eventOpen, setEventOpen] = useState(false);
 
   // Edit dialog states
-  const [editProjectOpen, setEditProjectOpen] = useState(false);
   const [editInvoiceOpen, setEditInvoiceOpen] = useState(false);
   const [editEventOpen, setEditEventOpen] = useState(false);
 
   // Form states
-  const [projectForm, setProjectForm] = useState({ title: "", status: "planned", notes: "", approved_tier: "" });
   const [invoiceForm, setInvoiceForm] = useState({ description: "", amount: "", due_date: "", status: "pending" });
   const [eventForm, setEventForm] = useState({ title: "", description: "", event_date: "", event_type: "appointment" });
 
   // Edit IDs
   const [editId, setEditId] = useState<string | null>(null);
 
-  const resetProjectForm = () => setProjectForm({ title: "", status: "planned", notes: "", approved_tier: "" });
   const resetInvoiceForm = () => setInvoiceForm({ description: "", amount: "", due_date: "", status: "pending" });
   const resetEventForm = () => setEventForm({ title: "", description: "", event_date: "", event_type: "appointment" });
-
-  const createProject = async () => {
-    if (!clientId || !projectForm.title) return;
-    const { error } = await supabase.from("projects").insert({
-      property_id: clientId, title: projectForm.title, status: projectForm.status, notes: projectForm.notes || null, approved_tier: projectForm.approved_tier || null,
-    });
-    if (error) { toast.error("Failed to create project"); return; }
-    toast.success("Project created");
-    setProjectOpen(false);
-    resetProjectForm();
-    queryClient.invalidateQueries({ queryKey: ["admin-projects", clientId] });
-  };
-
-  const updateProject = async () => {
-    if (!editId || !projectForm.title) return;
-    const { error } = await supabase.from("projects").update({
-      title: projectForm.title, status: projectForm.status, notes: projectForm.notes || null, approved_tier: projectForm.approved_tier || null,
-    }).eq("id", editId);
-    if (error) { toast.error("Failed to update project"); return; }
-    toast.success("Project updated");
-    setEditProjectOpen(false);
-    resetProjectForm();
-    setEditId(null);
-    queryClient.invalidateQueries({ queryKey: ["admin-projects", clientId] });
-  };
 
   const createInvoice = async () => {
     if (!clientId || !invoiceForm.description || !invoiceForm.amount) return;
@@ -222,13 +194,6 @@ const AdminClientDetail = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-schedule-events", clientId] });
   };
 
-  const deleteProject = async (id: string) => {
-    const { error } = await supabase.from("projects").delete().eq("id", id);
-    if (error) { toast.error("Failed to delete"); return; }
-    toast.success("Project deleted");
-    queryClient.invalidateQueries({ queryKey: ["admin-projects", clientId] });
-  };
-
   const deleteInvoice = async (id: string) => {
     const { error } = await supabase.from("invoices").delete().eq("id", id);
     if (error) { toast.error("Failed to delete"); return; }
@@ -243,23 +208,10 @@ const AdminClientDetail = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-schedule-events", clientId] });
   };
 
-  const updateProjectStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from("projects").update({ status }).eq("id", id);
-    if (error) { toast.error("Failed to update"); return; }
-    queryClient.invalidateQueries({ queryKey: ["admin-projects", clientId] });
-  };
-
   const updateInvoiceStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("invoices").update({ status }).eq("id", id);
     if (error) { toast.error("Failed to update"); return; }
     queryClient.invalidateQueries({ queryKey: ["admin-invoices", clientId] });
-  };
-
-  const openEditProject = (p: typeof projects extends (infer T)[] | undefined ? T : never) => {
-    if (!p) return;
-    setEditId(p.id);
-    setProjectForm({ title: p.title, status: p.status, notes: p.notes || "", approved_tier: p.approved_tier || "" });
-    setEditProjectOpen(true);
   };
 
   const openEditInvoice = (inv: typeof invoices extends (infer T)[] | undefined ? T : never) => {
@@ -268,6 +220,7 @@ const AdminClientDetail = () => {
     setInvoiceForm({ description: inv.description, amount: String(inv.amount), due_date: inv.due_date || "", status: inv.status });
     setEditInvoiceOpen(true);
   };
+
 
   const openEditEvent = (ev: typeof events extends (infer T)[] | undefined ? T : never) => {
     if (!ev) return;
@@ -298,26 +251,6 @@ const AdminClientDetail = () => {
       </div>
     );
   }
-
-  // Shared project form fields
-  const ProjectFormFields = () => (
-    <div className="space-y-4">
-      <div><Label className="font-sans">Title</Label><Input value={projectForm.title} onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })} /></div>
-      <div><Label className="font-sans">Status</Label>
-        <Select value={projectForm.status} onValueChange={(v) => setProjectForm({ ...projectForm, status: v })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="planned">Planned</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="complete">Complete</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div><Label className="font-sans">Approved Tier</Label><Input value={projectForm.approved_tier} onChange={(e) => setProjectForm({ ...projectForm, approved_tier: e.target.value })} placeholder="e.g. Enhanced" /></div>
-      <div><Label className="font-sans">Notes</Label><Textarea value={projectForm.notes} onChange={(e) => setProjectForm({ ...projectForm, notes: e.target.value })} /></div>
-    </div>
-  );
 
   const InvoiceFormFields = () => (
     <div className="space-y-4">
@@ -401,84 +334,11 @@ const AdminClientDetail = () => {
 
         {/* PROJECTS TAB */}
         {activeTab === "projects" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-sans font-semibold text-foreground">Projects</h3>
-              <Dialog open={projectOpen} onOpenChange={(o) => { setProjectOpen(o); if (!o) resetProjectForm(); }}>
-                <DialogTrigger asChild><Button size="sm" className="gap-1.5 text-xs font-sans"><Plus className="w-3.5 h-3.5" />Create Project</Button></DialogTrigger>
-                <DialogContent>
-                  <DialogHeader><DialogTitle className="font-sans">Create Project</DialogTitle></DialogHeader>
-                  <ProjectFormFields />
-                  <Button onClick={createProject} className="w-full font-sans">Create</Button>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {/* Edit project dialog */}
-            <Dialog open={editProjectOpen} onOpenChange={(o) => { setEditProjectOpen(o); if (!o) { resetProjectForm(); setEditId(null); } }}>
-              <DialogContent>
-                <DialogHeader><DialogTitle className="font-sans">Edit Project</DialogTitle></DialogHeader>
-                <ProjectFormFields />
-                <Button onClick={updateProject} className="w-full font-sans">Save Changes</Button>
-              </DialogContent>
-            </Dialog>
-
-            {projects && projects.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="font-sans text-xs">Project</TableHead>
-                    <TableHead className="font-sans text-xs">Status</TableHead>
-                    <TableHead className="font-sans text-xs">Tier</TableHead>
-                    <TableHead className="font-sans text-xs">Notes</TableHead>
-                    <TableHead className="font-sans text-xs">Created</TableHead>
-                    <TableHead className="font-sans text-xs w-20"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {projects.map((project) => (
-                    <TableRow key={project.id}>
-                      <TableCell className="font-sans text-sm font-medium">{project.title}</TableCell>
-                      <TableCell>
-                        <Select value={project.status} onValueChange={(v) => updateProjectStatus(project.id, v)}>
-                          <SelectTrigger className="h-7 w-[120px] text-[11px] font-sans"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="planned">Planned</SelectItem>
-                            <SelectItem value="approved">Approved</SelectItem>
-                            <SelectItem value="in_progress">In Progress</SelectItem>
-                            <SelectItem value="complete">Complete</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="font-sans text-sm text-muted-foreground">{project.approved_tier || "—"}</TableCell>
-                      <TableCell className="font-sans text-sm text-muted-foreground max-w-[200px] truncate">{project.notes || "—"}</TableCell>
-                      <TableCell className="font-sans text-sm text-muted-foreground">{format(new Date(project.created_at), "MMM d, yyyy")}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-0.5">
-                          <Button variant="ghost" size="sm" onClick={() => openEditProject(project)}><Pencil className="w-3.5 h-3.5" /></Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild><Button variant="ghost" size="sm"><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button></AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle className="font-sans">Delete project?</AlertDialogTitle>
-                                <AlertDialogDescription className="font-sans">This will permanently delete "{project.title}". This action cannot be undone.</AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel className="font-sans">Cancel</AlertDialogCancel>
-                                <AlertDialogAction className="font-sans bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteProject(project.id)}>Delete</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <Card className="p-8 text-center"><p className="text-sm font-sans text-muted-foreground">No projects yet. Create one to track client work.</p></Card>
-            )}
-          </div>
+          <AdminProjectsSection
+            propertyId={client.propertyId}
+            projects={projects}
+            reportPages={reportPages?.map((rp) => ({ id: rp.id, title: rp.title, page_key: rp.page_key }))}
+          />
         )}
 
         {/* PAYMENTS TAB */}

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight, CheckCircle } from "lucide-react";
+import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight, ChevronDown, CheckCircle, Calendar, DollarSign, User, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { ReportPageData } from "@/data/reportContent";
 
@@ -13,61 +14,114 @@ interface ProjectsTabProps {
   pages?: Record<string, ReportPageData>;
 }
 
+interface Milestone {
+  id: string;
+  title: string;
+  due_date: string | null;
+  completed: boolean;
+  sort_order: number;
+}
+
 interface Project {
   id: string;
   title: string;
+  description: string | null;
   status: string;
   approved_tier: string | null;
   notes: string | null;
+  estimated_start_date: string | null;
+  estimated_cost: number | null;
+  contractor_name: string | null;
+  contractor_contact: string | null;
   created_at: string;
   report_page_id: string | null;
 }
 
-const cardBase = "group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full";
+const cardBase = "bg-card rounded-lg shadow-hbc-sm border border-border";
+
+const statusConfig: Record<string, { label: string; cls: string }> = {
+  planned: { label: "Planned", cls: "bg-muted text-muted-foreground" },
+  approved: { label: "Approved", cls: "bg-accent/20 text-accent-foreground" },
+  in_progress: { label: "In Progress", cls: "bg-primary/15 text-primary" },
+  complete: { label: "Complete", cls: "bg-accent/20 text-accent" },
+};
 
 const getUrgencyBadge = (timing: string) => {
   const t = timing.toLowerCase();
   if (t.includes("immediate") || t === "year 1" || t.includes("before")) {
     return { label: "URGENT", cls: "bg-destructive/10 text-destructive" };
   }
-  if (t.includes("year 1") || t.includes("year 2") || t.includes("1–2") || t.includes("2–3") || t.includes("drainage")) {
+  if (t.includes("year 1") || t.includes("year 2") || t.includes("1–2") || t.includes("2–3")) {
     return { label: "SOON", cls: "bg-accent/20 text-accent-foreground" };
   }
   return { label: "FUTURE", cls: "bg-muted text-muted-foreground" };
 };
 
-const tierOptions = ["Essential", "Enhanced", "Signature"];
-
 const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages }: ProjectsTabProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [milestones, setMilestones] = useState<Record<string, Milestone[]>>({});
   const [loading, setLoading] = useState(true);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [approvalOpen, setApprovalOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [archiveOpen, setArchiveOpen] = useState(false);
 
-  const loadProjects = () => {
+  const loadData = async () => {
     if (!propertyId) { setLoading(false); return; }
-    supabase.from("projects").select("*").eq("property_id", propertyId).order("created_at", { ascending: false })
-      .then(({ data }) => { if (data) setProjects(data as Project[]); setLoading(false); });
+    const { data: projData } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("property_id", propertyId)
+      .order("created_at", { ascending: false });
+
+    const projs = (projData || []) as Project[];
+    setProjects(projs);
+
+    if (projs.length > 0) {
+      const ids = projs.map((p) => p.id);
+      const { data: msData } = await supabase
+        .from("milestones")
+        .select("*")
+        .in("project_id", ids)
+        .order("sort_order", { ascending: true });
+
+      const grouped: Record<string, Milestone[]> = {};
+      (msData || []).forEach((m: Milestone & { project_id: string }) => {
+        if (!grouped[m.project_id]) grouped[m.project_id] = [];
+        grouped[m.project_id].push(m);
+      });
+      setMilestones(grouped);
+    }
+    setLoading(false);
   };
 
-  useEffect(() => { loadProjects(); }, [propertyId]);
+  useEffect(() => { loadData(); }, [propertyId]);
 
-  const approveTier = async (tier: string) => {
-    if (!selectedProject) return;
-    const { error } = await supabase.from("projects").update({ approved_tier: tier, status: "approved" }).eq("id", selectedProject.id);
-    if (error) { toast.error("Failed to approve tier"); return; }
-    toast.success(`${tier} tier approved for ${selectedProject.title}`);
-    setApprovalOpen(false);
-    setSelectedProject(null);
-    loadProjects();
+  const toggleMilestone = async (milestone: Milestone) => {
+    const newVal = !milestone.completed;
+    const { error } = await supabase.from("milestones").update({ completed: newVal }).eq("id", milestone.id);
+    if (error) { toast.error("Failed to update milestone"); return; }
+    setMilestones((prev) => {
+      const updated = { ...prev };
+      for (const key of Object.keys(updated)) {
+        updated[key] = updated[key].map((m) => m.id === milestone.id ? { ...m, completed: newVal } : m);
+      }
+      return updated;
+    });
   };
+
+  const activeProjects = projects.filter((p) => p.status !== "complete");
+  const completedProjects = projects.filter((p) => p.status === "complete");
 
   const upcoming = pages
     ? Object.entries(pages).filter(([, p]) => p.timing).map(([key, p]) => ({ key, title: p.title, timing: p.timing! }))
     : [];
 
-  const activeProjects = projects.filter((p) => p.status !== "complete");
-  const completedProjects = projects.filter((p) => p.status === "complete");
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -81,78 +135,184 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages }: ProjectsTab
 
       <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
 
-        {/* Active Projects with Approval */}
+        {/* Active Projects */}
         {activeProjects.length > 0 && (
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Active Projects</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {activeProjects.map((project) => (
-                <div key={project.id} className={`${cardBase} border-l-[3px] border-l-accent cursor-default`}>
-                  <div className="flex items-start justify-between w-full">
-                    <Hammer className="w-5 h-5 text-accent" />
-                    <span className={`font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                      project.status === "approved" ? "bg-accent/20 text-accent" : "bg-muted text-muted-foreground"
-                    }`}>
-                      {project.status.replace("_", " ")}
-                    </span>
-                  </div>
-                  <h3 className="font-display text-xl text-foreground">{project.title}</h3>
-                  {project.approved_tier && (
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle className="w-3.5 h-3.5 text-accent" />
-                      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent">{project.approved_tier} tier approved</span>
+            <div className="grid grid-cols-1 gap-4">
+              {activeProjects.map((project) => {
+                const badge = statusConfig[project.status] || statusConfig.planned;
+                const ms = milestones[project.id] || [];
+                const completedCount = ms.filter((m) => m.completed).length;
+                const isExpanded = expandedId === project.id;
+
+                return (
+                  <Collapsible key={project.id} open={isExpanded} onOpenChange={(o) => setExpandedId(o ? project.id : null)}>
+                    <div className={`${cardBase} overflow-hidden`}>
+                      <CollapsibleTrigger className="w-full text-left p-6 cursor-pointer hover:bg-muted/30 transition-colors">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 mb-2">
+                              <Hammer className="w-5 h-5 text-accent shrink-0" />
+                              <h3 className="font-display text-xl text-foreground truncate">{project.title}</h3>
+                              <span className={`font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 ${badge.cls}`}>
+                                {badge.label}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground font-sans ml-8">
+                              {project.estimated_start_date && (
+                                <span className="flex items-center gap-1.5">
+                                  <Calendar className="w-3.5 h-3.5" />
+                                  {new Date(project.estimated_start_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                                </span>
+                              )}
+                              {project.estimated_cost != null && (
+                                <span className="flex items-center gap-1.5">
+                                  <DollarSign className="w-3.5 h-3.5" />
+                                  ${Number(project.estimated_cost).toLocaleString()}
+                                </span>
+                              )}
+                              {project.contractor_name && (
+                                <span className="flex items-center gap-1.5">
+                                  <User className="w-3.5 h-3.5" />
+                                  {project.contractor_name}
+                                </span>
+                              )}
+                              {ms.length > 0 && (
+                                <span className="flex items-center gap-1.5">
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                  {completedCount}/{ms.length} milestones
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <ChevronDown className={`w-5 h-5 text-muted-foreground shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                        </div>
+                      </CollapsibleTrigger>
+
+                      <CollapsibleContent>
+                        <div className="border-t border-border px-6 py-5 space-y-5">
+                          {/* Milestones */}
+                          {ms.length > 0 && (
+                            <div>
+                              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-3">Milestones</p>
+                              <div className="space-y-2">
+                                {ms.map((m) => (
+                                  <label key={m.id} className="flex items-center gap-3 py-1.5 cursor-pointer group">
+                                    <Checkbox
+                                      checked={m.completed}
+                                      onCheckedChange={() => toggleMilestone(m)}
+                                    />
+                                    <span className={`font-sans text-sm flex-1 ${m.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                                      {m.title}
+                                    </span>
+                                    {m.due_date && (
+                                      <span className="font-sans text-xs text-muted-foreground">
+                                        {new Date(m.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                      </span>
+                                    )}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Notes */}
+                          {project.notes && (
+                            <div>
+                              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-2">Notes</p>
+                              <p className="font-sans text-sm text-muted-foreground">{project.notes}</p>
+                            </div>
+                          )}
+
+                          {/* Description */}
+                          {project.description && (
+                            <div>
+                              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-2">Description</p>
+                              <p className="font-sans text-sm text-muted-foreground">{project.description}</p>
+                            </div>
+                          )}
+
+                          {/* Contractor */}
+                          {project.contractor_name && (
+                            <div>
+                              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-2">Contractor</p>
+                              <p className="font-sans text-sm text-foreground">{project.contractor_name}</p>
+                              {project.contractor_contact && (
+                                <p className="font-sans text-xs text-muted-foreground mt-0.5">{project.contractor_contact}</p>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Approved Tier */}
+                          {project.approved_tier && (
+                            <div className="flex items-center gap-1.5">
+                              <CheckCircle className="w-3.5 h-3.5 text-accent" />
+                              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent">{project.approved_tier} tier approved</span>
+                            </div>
+                          )}
+                        </div>
+                      </CollapsibleContent>
                     </div>
-                  )}
-                  {project.notes && <p className="font-sans text-sm text-muted-foreground">{project.notes}</p>}
-                  {project.status === "planned" && !project.approved_tier && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="font-sans text-xs mt-2 self-start"
-                      onClick={() => { setSelectedProject(project); setApprovalOpen(true); }}
-                    >
-                      Select a Tier
-                    </Button>
-                  )}
-                </div>
-              ))}
+                  </Collapsible>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* Completed Projects */}
-        {completedProjects.length > 0 && (
-          <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Completed</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {completedProjects.map((project) => (
-                <div key={project.id} className={`${cardBase} opacity-70 cursor-default`}>
-                  <Archive className="w-5 h-5 text-muted-foreground" />
-                  <h3 className="font-display text-xl text-foreground">{project.title}</h3>
-                  {project.approved_tier && (
-                    <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{project.approved_tier} tier</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Project Status Cards (when no projects) */}
-        {projects.length === 0 && !loading && (
+        {/* Empty state */}
+        {projects.length === 0 && (
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Project Status</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className={`${cardBase} cursor-default`}>
-                <Hammer className="w-5 h-5 text-accent" />
-                <h2 className="font-display text-xl text-foreground mb-1">No Active Projects</h2>
-                <p className="font-sans text-sm text-muted-foreground">Projects will appear here once your advisor creates them from the report.</p>
-              </div>
+            <div className={`${cardBase} p-8`}>
+              <Hammer className="w-5 h-5 text-accent mb-3" />
+              <h2 className="font-display text-xl text-foreground mb-1">No Active Projects</h2>
+              <p className="font-sans text-sm text-muted-foreground">Projects will appear here once your advisor creates them from the report.</p>
             </div>
           </div>
         )}
 
-        {/* Row 2: Upcoming Considerations */}
+        {/* Project Archive */}
+        {completedProjects.length > 0 && (
+          <div>
+            <Collapsible open={archiveOpen} onOpenChange={setArchiveOpen}>
+              <CollapsibleTrigger className="flex items-center gap-2 cursor-pointer mb-4">
+                <Archive className="w-4 h-4 text-muted-foreground" />
+                <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                  Project Archive ({completedProjects.length})
+                </p>
+                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${archiveOpen ? "rotate-180" : ""}`} />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <ScrollArea className="max-h-[300px]">
+                  <div className="space-y-3">
+                    {completedProjects.map((project) => (
+                      <div key={project.id} className={`${cardBase} p-5 opacity-70`}>
+                        <div className="flex items-center gap-3">
+                          <CheckCircle className="w-4 h-4 text-accent shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-display text-base text-foreground truncate">{project.title}</h3>
+                            <div className="flex items-center gap-3 mt-1">
+                              {project.approved_tier && (
+                                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{project.approved_tier} tier</span>
+                              )}
+                              {project.estimated_cost != null && (
+                                <span className="font-sans text-xs text-muted-foreground">${Number(project.estimated_cost).toLocaleString()}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+        )}
+
+        {/* Upcoming Considerations */}
         {upcoming.length > 0 && (
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Upcoming Considerations</p>
@@ -163,17 +323,17 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages }: ProjectsTab
                   <button
                     key={item.key}
                     onClick={() => onNavigate("report")}
-                    className={cardBase}
+                    className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200`}
                   >
-                    <div className="flex items-start justify-between w-full">
+                    <div className="flex items-start justify-between w-full mb-3">
                       <Wrench className="w-5 h-5 text-accent" />
                       <span className={`font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full ${badge.cls}`}>
                         {badge.label}
                       </span>
                     </div>
-                    <h3 className="font-display text-xl text-foreground">{item.title}</h3>
+                    <h3 className="font-display text-xl text-foreground mb-1">{item.title}</h3>
                     <p className="font-sans text-sm text-muted-foreground">{item.timing}</p>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors mt-2" />
                   </button>
                 );
               })}
@@ -181,51 +341,25 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages }: ProjectsTab
           </div>
         )}
 
-        {/* Row 3: Quick Actions */}
+        {/* Quick Actions */}
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <button onClick={() => { if (onTabChange) onTabChange("report"); else onNavigate("report"); }} className={cardBase}>
-              <FileText className="w-5 h-5 text-accent" />
+            <button onClick={() => { if (onTabChange) onTabChange("report"); else onNavigate("report"); }} className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200`}>
+              <FileText className="w-5 h-5 text-accent mb-3" />
               <h2 className="font-display text-xl text-foreground mb-1">Review Report Recommendations</h2>
               <p className="font-sans text-sm text-muted-foreground">See what your Home Clarity Report recommends</p>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors mt-2" />
             </button>
-            <button onClick={() => { if (onTabChange) onTabChange("contacts"); else onNavigate("contacts"); }} className={cardBase}>
-              <Phone className="w-5 h-5 text-accent" />
+            <button onClick={() => { if (onTabChange) onTabChange("contacts"); else onNavigate("contacts"); }} className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200`}>
+              <Phone className="w-5 h-5 text-accent mb-3" />
               <h2 className="font-display text-xl text-foreground mb-1">Contact Your Advisor</h2>
               <p className="font-sans text-sm text-muted-foreground">Adam Kinney — Founder & Lead Advisor</p>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors mt-2" />
             </button>
           </div>
         </div>
       </div>
-
-      {/* Tier Approval Dialog */}
-      <Dialog open={approvalOpen} onOpenChange={(o) => { setApprovalOpen(o); if (!o) setSelectedProject(null); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="font-sans">Select a Tier for {selectedProject?.title}</DialogTitle>
-          </DialogHeader>
-          <p className="font-sans text-sm text-muted-foreground">Choose the service tier you'd like to approve for this project.</p>
-          <div className="grid grid-cols-1 gap-3 mt-2">
-            {tierOptions.map((tier) => (
-              <button
-                key={tier}
-                onClick={() => approveTier(tier)}
-                className="w-full p-4 rounded-lg border border-border bg-card hover:border-accent hover:bg-accent/5 transition-all text-left"
-              >
-                <h4 className="font-display text-lg text-foreground">{tier}</h4>
-                <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-1">
-                  {tier === "Essential" && "Core repairs and maintenance"}
-                  {tier === "Enhanced" && "Recommended improvements included"}
-                  {tier === "Signature" && "Premium upgrades and full scope"}
-                </p>
-              </button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

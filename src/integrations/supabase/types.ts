@@ -167,6 +167,44 @@ export type Database = {
         }
         Relationships: []
       }
+      milestones: {
+        Row: {
+          completed: boolean
+          created_at: string
+          due_date: string | null
+          id: string
+          project_id: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          project_id: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          project_id?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "milestones_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       page_templates: {
         Row: {
           block_config: Json
@@ -254,7 +292,12 @@ export type Database = {
       projects: {
         Row: {
           approved_tier: string | null
+          contractor_contact: string | null
+          contractor_name: string | null
           created_at: string
+          description: string | null
+          estimated_cost: number | null
+          estimated_start_date: string | null
           id: string
           notes: string | null
           property_id: string
@@ -265,7 +308,12 @@ export type Database = {
         }
         Insert: {
           approved_tier?: string | null
+          contractor_contact?: string | null
+          contractor_name?: string | null
           created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          estimated_start_date?: string | null
           id?: string
           notes?: string | null
           property_id: string
@@ -276,7 +324,12 @@ export type Database = {
         }
         Update: {
           approved_tier?: string | null
+          contractor_contact?: string | null
+          contractor_name?: string | null
           created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          estimated_start_date?: string | null
           id?: string
           notes?: string | null
           property_id?: string
