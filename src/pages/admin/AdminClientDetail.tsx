@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,9 +17,14 @@ import FileManager from "@/components/admin/FileManager";
 import CommentsManager from "@/components/admin/CommentsManager";
 import { useAdminClient, useAdminProjects, useAdminInvoices, useAdminScheduleEvents } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
+import type { PDFReportData } from "@/features/pdf/PDFReport";
+import type { ReportPageData } from "@/data/reportContent";
+import type { PortalGroup } from "@/hooks/useClientPortal";
 
 type ClientTab = "overview" | "report" | "files" | "comments" | "projects" | "payments" | "schedule";
 
@@ -37,11 +42,78 @@ const AdminClientDetail = () => {
   const { clientId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState<ClientTab>("overview");
   const { client, isLoading } = useAdminClient(clientId);
   const { data: projects } = useAdminProjects(clientId);
   const { data: invoices } = useAdminInvoices(clientId);
   const { data: events } = useAdminScheduleEvents(clientId);
+
+  // Fetch report pages for PDF generation
+  const { data: reportPages } = useQuery({
+    queryKey: ["admin-report-pages", client?.reportId],
+    enabled: !!client?.reportId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("report_pages")
+        .select("*")
+        .eq("report_id", client!.reportId!)
+        .order("sort_order", { ascending: true });
+      return data || [];
+    },
+  });
+
+  const pdfData: PDFReportData | undefined = useMemo(() => {
+    if (!client || !reportPages || reportPages.length === 0) return undefined;
+
+    // Build groups and pages from DB data
+    const groupMap = new Map<string, { pages: { key: string; order: number }[] }>();
+    const pagesMap: Record<string, ReportPageData> = {};
+    const imagesMap: Record<string, string[]> = {};
+
+    for (const p of reportPages) {
+      if (!groupMap.has(p.group_name)) {
+        groupMap.set(p.group_name, { pages: [] });
+      }
+      groupMap.get(p.group_name)!.pages.push({ key: p.page_key, order: p.sort_order });
+
+      pagesMap[p.page_key] = {
+        id: p.page_key,
+        title: p.title,
+        group: p.group_name,
+        conditionRating: p.condition_rating as ReportPageData["conditionRating"],
+        narrative: (p.narrative as string[]) || [],
+        healthBar: p.health_bar as ReportPageData["healthBar"],
+        specs: (p.specs as { label: string; value: string }[]) || undefined,
+        tiers: p.tiers as unknown as ReportPageData["tiers"],
+        timing: p.timing || undefined,
+        recommendations: (p.recommendations as string[]) || undefined,
+      };
+
+      if (p.images && Array.isArray(p.images) && (p.images as string[]).length > 0) {
+        imagesMap[p.page_key] = p.images as string[];
+      }
+    }
+
+    const groups: PortalGroup[] = Array.from(groupMap.entries()).map(([name, data]) => ({
+      id: name.toLowerCase().replace(/\s+/g, "-"),
+      title: name,
+      pages: data.pages.sort((a, b) => a.order - b.order).map((p) => p.key),
+    }));
+
+    const now = new Date();
+    return {
+      propertyName: client.propertyName,
+      address: client.address,
+      date: now.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      creatorName: profile?.full_name || "Hometown Builders Club",
+      creatorEmail: profile?.email || undefined,
+      creatorPhone: profile?.phone || undefined,
+      groups,
+      pages: pagesMap,
+      pageImages: imagesMap,
+    };
+  }, [client, reportPages, profile]);
 
   // Create dialog states
   const [projectOpen, setProjectOpen] = useState(false);
@@ -297,7 +369,22 @@ const AdminClientDetail = () => {
         </div>
 
         {activeTab === "overview" && <ClientOverview client={client} />}
-        {activeTab === "report" && <ReportPageManager propertyId={client.propertyId} reportId={client.reportId} />}
+        {activeTab === "report" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-end">
+              {pdfData && (
+                <PDFDownloadButton
+                  data={pdfData}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  label="Generate PDF"
+                />
+              )}
+            </div>
+            <ReportPageManager propertyId={client.propertyId} reportId={client.reportId} />
+          </div>
+        )}
         {activeTab === "files" && <FileManager propertyId={client.propertyId} />}
         {activeTab === "comments" && <CommentsManager clientId={client.id} />}
 
