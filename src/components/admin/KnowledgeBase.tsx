@@ -30,12 +30,12 @@ const KnowledgeBase = () => {
 
   const createTemplate = async () => {
     if (!form.title) return;
-    let parsedContent: Record<string, unknown> = {};
+    let parsedContent: unknown = {};
     try { parsedContent = JSON.parse(form.content); } catch { toast.error("Invalid JSON content"); return; }
     const { error } = await supabase.from("knowledge_templates").insert({
       category: activeTab,
       title: form.title,
-      content: parsedContent,
+      content: parsedContent as import("@/integrations/supabase/types").Json,
       region: form.region || null,
     });
     if (error) { toast.error("Failed to create template"); return; }
