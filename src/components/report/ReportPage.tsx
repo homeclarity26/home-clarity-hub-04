@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import CreatorBar from "./CreatorBar";
@@ -6,47 +5,22 @@ import BlockRenderer from "./BlockRenderer";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useReportPage } from "@/hooks/useReportPage";
 import { toast } from "sonner";
-import type { BlockConfig, PageContent } from "@/lib/templateUtils";
+import type { PageContent } from "@/lib/templateUtils";
 
 interface ReportPageProps {
   page: ReportPageData;
   onNavigate?: (pageId: string) => void;
   dbPageId?: string;
+  images?: string[];
   pdfData?: PDFReportData;
 }
 
-const ReportPage = ({ page, onNavigate, dbPageId, pdfData }: ReportPageProps) => {
+const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData }: ReportPageProps) => {
   const { canEdit } = useEditMode();
-  const { pageData, status, saveStatus, updatePageData, updateStatus, isLoading } = useReportPage(page.id, page);
-  
-  // Track images from the DB
-  const [images, setImages] = useState<string[]>([]);
+  const { pageData, blockConfig, status, saveStatus, updatePageData, updateStatus, isLoading } = useReportPage(page.id, page);
 
   const handleUpdate = (updates: Partial<PageContent>) => {
-    // Handle images separately
-    if ('images' in updates && updates.images) {
-      setImages(updates.images as string[]);
-    }
-    
-    // Map PageContent updates to ReportPageData updates
-    const pageDataUpdates: Partial<ReportPageData> = {};
-    if (updates.title) pageDataUpdates.title = updates.title;
-    if (updates.conditionRating) pageDataUpdates.conditionRating = updates.conditionRating as ReportPageData["conditionRating"];
-    if (updates.narrative) pageDataUpdates.narrative = updates.narrative;
-    if (updates.specs) pageDataUpdates.specs = updates.specs;
-    if (updates.tiers) pageDataUpdates.tiers = updates.tiers as ReportPageData["tiers"];
-    if (updates.timing) pageDataUpdates.timing = updates.timing;
-    
-    // Handle extended fields through updatePageData
-    updatePageData({
-      ...pageDataUpdates,
-      ...(updates.key_observations && { key_observations: updates.key_observations }),
-      ...(updates.risks && { risks: updates.risks }),
-      ...(updates.dependencies && { dependencies: updates.dependencies }),
-      ...(updates.maintenance && { maintenance: updates.maintenance }),
-      ...(updates.creator_notes && { creator_notes: updates.creator_notes }),
-    } as Partial<ReportPageData>);
-    
+    updatePageData(updates as Partial<ReportPageData>);
     toast.success("Changes saved");
   };
 
@@ -66,7 +40,10 @@ const ReportPage = ({ page, onNavigate, dbPageId, pdfData }: ReportPageProps) =>
     );
   }
 
-  // Extend pageData with additional fields for BlockRenderer
+  // Use images from props (portal) or from pageData
+  const resolvedImages = propImages || (pageData as unknown as Record<string, unknown>).images as string[] || [];
+
+  // Build extended page data for BlockRenderer
   const extendedPageData = {
     ...pageData,
     key_observations: (pageData as unknown as Record<string, unknown>).key_observations as string[] | undefined,
@@ -91,9 +68,9 @@ const ReportPage = ({ page, onNavigate, dbPageId, pdfData }: ReportPageProps) =>
 
       <div className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-24">
         <BlockRenderer
-          blockConfig={null}
+          blockConfig={blockConfig}
           pageData={extendedPageData}
-          images={images}
+          images={resolvedImages}
           dbPageId={dbPageId}
           onUpdate={handleUpdate}
           onNavigate={onNavigate}

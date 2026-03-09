@@ -178,7 +178,12 @@ export function useClientPortal(propertyId?: string) {
         tiers: p.tiers as ReportPageData["tiers"],
         timing: p.timing || undefined,
         recommendations: (p.recommendations as string[]) || undefined,
-      };
+        key_observations: (p.key_observations as string[]) || undefined,
+        risks: (p.risks as string[]) || undefined,
+        dependencies: (p.dependencies as { pageKey: string; title: string; type: "before" | "after" }[]) || undefined,
+        maintenance: (p.maintenance as { frequency?: string; tasks: string[] }) || undefined,
+        creator_notes: p.creator_notes || undefined,
+      } as ReportPageData;
     }
     return map;
   }, [hasDbData, dbPages]);
