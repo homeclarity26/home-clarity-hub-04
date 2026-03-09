@@ -92,7 +92,6 @@ const ReportPage = ({ page, onNavigate, dbPageId, pdfData }: ReportPageProps) =>
       <div className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-24">
         <BlockRenderer
           blockConfig={null}
-          blockConfig={blockConfig as BlockConfig | null}
           pageData={extendedPageData}
           images={images}
           dbPageId={dbPageId}
