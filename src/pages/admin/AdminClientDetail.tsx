@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, ExternalLink, Plus, Loader2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Plus, Loader2, Trash2 } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import ClientOverview from "@/components/admin/ClientOverview";
 import ReportPageManager from "@/components/admin/ReportPageManager";
