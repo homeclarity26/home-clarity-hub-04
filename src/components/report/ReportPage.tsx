@@ -1,9 +1,10 @@
-import { useState } from "react";
 import type { ReportPageData } from "@/data/reportContent";
 import HealthBar from "./HealthBar";
 import PricingTiers from "./PricingTiers";
 import EditableSection from "@/components/editor/EditableSection";
+import SaveIndicator from "./SaveIndicator";
 import { useEditMode } from "@/contexts/EditModeContext";
+import { useReportPage } from "@/hooks/useReportPage";
 import { toast } from "sonner";
 
 interface ReportPageProps {
@@ -11,16 +12,16 @@ interface ReportPageProps {
 }
 
 const conditionColors: Record<string, string> = {
-  Excellent: "text-green-600",
+  Excellent: "text-accent",
   Good: "text-foreground",
-  Fair: "text-accent",
-  Poor: "text-orange-600",
+  Fair: "text-muted-foreground",
+  Poor: "text-orange-500",
   Critical: "text-destructive",
 };
 
 const ReportPage = ({ page }: ReportPageProps) => {
   const { canEdit } = useEditMode();
-  const [localPage, setLocalPage] = useState(page);
+  const { pageData, saveStatus, updatePageData, isLoading } = useReportPage(page.id, page);
   
   // Convert narrative array to HTML for editing
   const narrativeToHtml = (narrative: string[]) => 
@@ -36,12 +37,10 @@ const ReportPage = ({ page }: ReportPageProps) => {
 
   const handleNarrativeSave = (content: string, images: string[]) => {
     const newNarrative = htmlToNarrative(content);
-    setLocalPage(prev => ({
-      ...prev,
-      narrative: newNarrative.length > 0 ? newNarrative : prev.narrative,
-      // Store images in page data (would be saved to DB in real implementation)
-    }));
-    toast.success("Content saved successfully");
+    if (newNarrative.length > 0) {
+      updatePageData({ narrative: newNarrative });
+      toast.success("Content saved");
+    }
     console.log("Saved images:", images);
   };
 
@@ -52,42 +51,65 @@ const ReportPage = ({ page }: ReportPageProps) => {
     const recommendations = Array.from(listItems).map(li => li.textContent || "").filter(Boolean);
     
     if (recommendations.length > 0) {
-      setLocalPage(prev => ({ ...prev, recommendations }));
+      updatePageData({ recommendations });
       toast.success("Recommendations saved");
     }
     console.log("Saved images:", images);
   };
 
+  if (isLoading) {
+    return (
+      <div className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-24">
+        <div className="animate-pulse space-y-4">
+          <div className="h-10 bg-muted rounded w-2/3" />
+          <div className="h-4 bg-muted rounded w-1/4" />
+          <div className="space-y-2 mt-10">
+            <div className="h-4 bg-muted rounded" />
+            <div className="h-4 bg-muted rounded" />
+            <div className="h-4 bg-muted rounded w-5/6" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-24">
+      {/* Save indicator */}
+      {canEdit && (
+        <div className="mb-4 flex justify-end">
+          <SaveIndicator status={saveStatus} />
+        </div>
+      )}
+
       <h2 className="font-display text-3xl md:text-4xl text-foreground mb-4">
-        {localPage.title}
+        {pageData.title}
       </h2>
 
-      {localPage.conditionRating && (
-        <p className={`font-mono text-[11px] uppercase tracking-[0.15em] mb-10 ${conditionColors[localPage.conditionRating]}`}>
-          Condition: {localPage.conditionRating}
+      {pageData.conditionRating && (
+        <p className={`font-mono text-[11px] uppercase tracking-[0.15em] mb-10 ${conditionColors[pageData.conditionRating]}`}>
+          Condition: {pageData.conditionRating}
         </p>
       )}
 
       <EditableSection
-        content={narrativeToHtml(localPage.narrative)}
+        content={narrativeToHtml(pageData.narrative)}
         onSave={handleNarrativeSave}
       >
-        {localPage.narrative.map((paragraph, i) => (
+        {pageData.narrative.map((paragraph, i) => (
           <p key={i} className="text-base text-foreground max-w-[65ch] mb-6 leading-relaxed">
             {paragraph}
           </p>
         ))}
       </EditableSection>
 
-      {localPage.healthBar && <HealthBar {...localPage.healthBar} />}
+      {pageData.healthBar && <HealthBar {...pageData.healthBar} />}
 
-      {localPage.specs && localPage.specs.length > 0 && (
+      {pageData.specs && pageData.specs.length > 0 && (
         <div className="mt-12">
           <h3 className="font-display text-2xl text-foreground mb-6">System Specifications</h3>
           <div className="space-y-3">
-            {localPage.specs.map((spec, i) => (
+            {pageData.specs.map((spec, i) => (
               <div key={i} className="flex justify-between border-b border-border py-3">
                 <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
                   {spec.label}
@@ -99,31 +121,31 @@ const ReportPage = ({ page }: ReportPageProps) => {
         </div>
       )}
 
-      {localPage.tiers && (
+      {pageData.tiers && (
         <div className="mt-12">
           <h3 className="font-display text-2xl text-foreground mb-6">Investment Options</h3>
-          <PricingTiers tiers={localPage.tiers} />
+          <PricingTiers tiers={pageData.tiers} />
         </div>
       )}
 
-      {localPage.timing && (
+      {pageData.timing && (
         <div className="mt-8">
           <h3 className="font-display text-2xl text-foreground mb-4">Strategic Timing</h3>
           <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-accent">
-            {localPage.timing}
+            {pageData.timing}
           </p>
         </div>
       )}
 
-      {localPage.recommendations && localPage.recommendations.length > 0 && (
+      {pageData.recommendations && pageData.recommendations.length > 0 && (
         <div className="mt-12">
           <h3 className="font-display text-2xl text-foreground mb-6">Recommendations</h3>
           <EditableSection
-            content={`<ul>${localPage.recommendations.map(rec => `<li>${rec}</li>`).join("")}</ul>`}
+            content={`<ul>${pageData.recommendations.map(rec => `<li>${rec}</li>`).join("")}</ul>`}
             onSave={handleRecommendationsSave}
           >
             <ul className="space-y-3">
-              {localPage.recommendations.map((rec, i) => (
+              {pageData.recommendations.map((rec, i) => (
                 <li key={i} className="text-base text-foreground pl-4 border-l-2 border-accent py-1">
                   {rec}
                 </li>

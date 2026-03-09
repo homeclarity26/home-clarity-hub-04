@@ -74,6 +74,150 @@ export type Database = {
         }
         Relationships: []
       }
+      report_edit_history: {
+        Row: {
+          created_at: string
+          edited_by: string
+          field_name: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          report_page_id: string
+        }
+        Insert: {
+          created_at?: string
+          edited_by: string
+          field_name: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          report_page_id: string
+        }
+        Update: {
+          created_at?: string
+          edited_by?: string
+          field_name?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          report_page_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_edit_history_report_page_id_fkey"
+            columns: ["report_page_id"]
+            isOneToOne: false
+            referencedRelation: "report_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_pages: {
+        Row: {
+          condition_rating: string | null
+          created_at: string
+          group_name: string
+          health_bar: Json | null
+          id: string
+          images: Json | null
+          narrative: Json
+          page_key: string
+          recommendations: Json | null
+          report_id: string
+          sort_order: number
+          specs: Json | null
+          status: string
+          tiers: Json | null
+          timing: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          condition_rating?: string | null
+          created_at?: string
+          group_name: string
+          health_bar?: Json | null
+          id?: string
+          images?: Json | null
+          narrative?: Json
+          page_key: string
+          recommendations?: Json | null
+          report_id: string
+          sort_order?: number
+          specs?: Json | null
+          status?: string
+          tiers?: Json | null
+          timing?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          condition_rating?: string | null
+          created_at?: string
+          group_name?: string
+          health_bar?: Json | null
+          id?: string
+          images?: Json | null
+          narrative?: Json
+          page_key?: string
+          recommendations?: Json | null
+          report_id?: string
+          sort_order?: number
+          specs?: Json | null
+          status?: string
+          tiers?: Json | null
+          timing?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_pages_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          property_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          property_id: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          property_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
