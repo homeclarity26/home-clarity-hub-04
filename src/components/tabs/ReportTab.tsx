@@ -47,15 +47,20 @@ const ReportTab = ({
     );
   }
 
+  // Cover page
   return (
     <div>
-      <div className="bg-primary text-primary-foreground py-16 md:py-24 px-6 md:px-20 text-center relative">
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">
+      {/* Hero */}
+      <div className="bg-primary text-primary-foreground py-20 md:py-32 px-6 md:px-20 text-center relative">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">
           {propertyName}
         </p>
-        <h1 className="font-display text-3xl md:text-[48px] text-primary-foreground">
+        <h1 className="font-display text-4xl md:text-[56px] leading-tight text-primary-foreground mb-6">
           Home Clarity Report
         </h1>
+        <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-primary-foreground/50">
+          Your complete home stewardship guide
+        </p>
         {pdfData && (
           <div className="absolute top-6 right-6">
             <PDFDownloadButton
@@ -68,46 +73,69 @@ const ReportTab = ({
           </div>
         )}
       </div>
-      <div className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-24">
-        <h2 className="font-display text-3xl text-foreground mb-10">
-          Table of Contents
+
+      {/* Welcome section */}
+      <div className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-20 border-b border-border">
+        <h2 className="font-display text-3xl md:text-4xl text-foreground mb-6">
+          Welcome to Your Home Clarity Report
         </h2>
-        <div className="space-y-8">
+        <p className="font-sans text-base text-muted-foreground leading-relaxed mb-4">
+          This report is your family's definitive guide to understanding and stewarding your home. Each section provides a detailed assessment of a key system or area — including condition ratings, recommended maintenance, and investment options.
+        </p>
+        <p className="font-sans text-base text-muted-foreground leading-relaxed">
+          Use the links below to navigate directly to any section of your report.
+        </p>
+      </div>
+
+      {/* Table of Contents */}
+      <div className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-20">
+        <h2 className="font-display text-2xl text-foreground mb-10">
+          Report Sections
+        </h2>
+        <div className="space-y-10">
           {reportGroups.map((group) => (
             <div key={group.id}>
-              <h3 className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground mb-3">
+              <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4 pb-2 border-b border-border">
                 {group.title}
               </h3>
               <div className="space-y-1">
-                {group.pages.map((pageId) => {
+                {group.pages.map((pageId, index) => {
                   const p = reportPages[pageId];
                   if (!p) return null;
                   return (
                     <button
                       key={pageId}
                       onClick={() => onNavigate?.(pageId)}
-                      className="w-full text-left px-4 py-3 rounded-lg hover:bg-muted transition-colors flex items-center justify-between group"
+                      className="w-full text-left px-4 py-4 rounded-lg hover:bg-muted transition-colors flex items-center justify-between group"
                     >
-                      <span className="text-base text-foreground font-sans group-hover:text-accent transition-colors">
-                        {p.title}
-                      </span>
-                      {p.conditionRating && (
-                        <span
-                          className={`font-mono text-[10px] uppercase tracking-wider ${
-                            p.conditionRating === "Excellent"
-                              ? "text-accent"
-                              : p.conditionRating === "Good"
-                              ? "text-foreground"
-                              : p.conditionRating === "Fair"
-                              ? "text-muted-foreground"
-                              : p.conditionRating === "Poor"
-                              ? "text-orange-500"
-                              : "text-destructive"
-                          }`}
-                        >
-                          {p.conditionRating}
+                      <div className="flex items-center gap-4">
+                        <span className="font-mono text-[10px] text-muted-foreground/50 w-5 text-right">
+                          {String(index + 1).padStart(2, "0")}
                         </span>
-                      )}
+                        <span className="text-base text-foreground font-sans group-hover:text-accent transition-colors">
+                          {p.title}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        {p.conditionRating && (
+                          <span
+                            className={`font-mono text-[10px] uppercase tracking-wider ${
+                              p.conditionRating === "Excellent"
+                                ? "text-accent"
+                                : p.conditionRating === "Good"
+                                ? "text-foreground"
+                                : p.conditionRating === "Fair"
+                                ? "text-muted-foreground"
+                                : p.conditionRating === "Poor"
+                                ? "text-orange-500"
+                                : "text-destructive"
+                            }`}
+                          >
+                            {p.conditionRating}
+                          </span>
+                        )}
+                        <span className="font-mono text-[10px] text-muted-foreground/30 group-hover:text-accent transition-colors">→</span>
+                      </div>
                     </button>
                   );
                 })}

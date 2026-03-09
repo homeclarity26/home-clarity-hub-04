@@ -19,7 +19,7 @@ const Index = () => {
 
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab);
-    if (tab !== "report") setReportPageId(null);
+    setReportPageId(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
@@ -72,8 +72,6 @@ const Index = () => {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onReportPageSelect={handleReportPageSelect}
-        groups={portal.groups}
-        pages={portal.pages}
       />
 
       <main className="pt-20 pb-48 md:pb-[140px]">
