@@ -1,15 +1,23 @@
+import { useState } from "react";
 import type { ReportPageData } from "@/data/reportContent";
 import HealthBar from "./HealthBar";
 import PricingTiers from "./PricingTiers";
 import EditableSection from "@/components/editor/EditableSection";
-import SaveIndicator from "./SaveIndicator";
+import CreatorBar from "./CreatorBar";
+import EditableField from "./EditableField";
+import EditableDropdown from "./EditableDropdown";
+import EditableSpecs from "./EditableSpecs";
+import EditableTiers from "./EditableTiers";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useReportPage } from "@/hooks/useReportPage";
 import { toast } from "sonner";
 
 interface ReportPageProps {
   page: ReportPageData;
+  onNavigate?: (pageId: string) => void;
 }
+
+const conditionOptions = ["Excellent", "Good", "Fair", "Poor", "Critical"];
 
 const conditionColors: Record<string, string> = {
   Excellent: "text-accent",
@@ -19,15 +27,13 @@ const conditionColors: Record<string, string> = {
   Critical: "text-destructive",
 };
 
-const ReportPage = ({ page }: ReportPageProps) => {
+const ReportPage = ({ page, onNavigate }: ReportPageProps) => {
   const { canEdit } = useEditMode();
-  const { pageData, saveStatus, updatePageData, isLoading } = useReportPage(page.id, page);
+  const { pageData, status, saveStatus, updatePageData, updateStatus, isLoading } = useReportPage(page.id, page);
   
-  // Convert narrative array to HTML for editing
   const narrativeToHtml = (narrative: string[]) => 
     narrative.map(p => `<p>${p}</p>`).join("");
   
-  // Convert HTML back to narrative array
   const htmlToNarrative = (html: string) => {
     const tempDiv = document.createElement("div");
     tempDiv.innerHTML = html;
@@ -41,7 +47,6 @@ const ReportPage = ({ page }: ReportPageProps) => {
       updatePageData({ narrative: newNarrative });
       toast.success("Content saved");
     }
-    console.log("Saved images:", images);
   };
 
   const handleRecommendationsSave = (content: string, images: string[]) => {
@@ -49,12 +54,10 @@ const ReportPage = ({ page }: ReportPageProps) => {
     tempDiv.innerHTML = content;
     const listItems = tempDiv.querySelectorAll("li");
     const recommendations = Array.from(listItems).map(li => li.textContent || "").filter(Boolean);
-    
     if (recommendations.length > 0) {
       updatePageData({ recommendations });
       toast.success("Recommendations saved");
     }
-    console.log("Saved images:", images);
   };
 
   if (isLoading) {
@@ -74,86 +77,110 @@ const ReportPage = ({ page }: ReportPageProps) => {
   }
 
   return (
-    <div className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-24">
-      {/* Save indicator */}
+    <div>
+      {/* Creator Bar */}
       {canEdit && (
-        <div className="mb-4 flex justify-end">
-          <SaveIndicator status={saveStatus} />
-        </div>
+        <CreatorBar
+          status={status}
+          onStatusChange={updateStatus}
+          saveStatus={saveStatus}
+          currentPageId={page.id}
+          onNavigate={(pageId) => onNavigate?.(pageId)}
+        />
       )}
 
-      <h2 className="font-display text-3xl md:text-4xl text-foreground mb-4">
-        {pageData.title}
-      </h2>
+      <div className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-24">
+        {/* Title */}
+        <EditableField
+          value={pageData.title}
+          onSave={(title) => updatePageData({ title })}
+          className="font-display text-3xl md:text-4xl text-foreground mb-4 block"
+          tag="h2"
+        />
 
-      {pageData.conditionRating && (
-        <p className={`font-mono text-[11px] uppercase tracking-[0.15em] mb-10 ${conditionColors[pageData.conditionRating]}`}>
-          Condition: {pageData.conditionRating}
-        </p>
-      )}
+        {/* Condition Rating */}
+        {pageData.conditionRating && (
+          <EditableDropdown
+            value={pageData.conditionRating}
+            options={conditionOptions}
+            onSave={(v) => updatePageData({ conditionRating: v as ReportPageData["conditionRating"] })}
+            className={`font-mono text-[11px] uppercase tracking-[0.15em] mb-10 ${conditionColors[pageData.conditionRating]}`}
+            renderValue={(v) => `Condition: ${v}`}
+          />
+        )}
 
-      <EditableSection
-        content={narrativeToHtml(pageData.narrative)}
-        onSave={handleNarrativeSave}
-      >
-        {pageData.narrative.map((paragraph, i) => (
-          <p key={i} className="text-base text-foreground max-w-[65ch] mb-6 leading-relaxed">
-            {paragraph}
-          </p>
-        ))}
-      </EditableSection>
+        {/* Narrative */}
+        <EditableSection
+          content={narrativeToHtml(pageData.narrative)}
+          onSave={handleNarrativeSave}
+        >
+          {pageData.narrative.map((paragraph, i) => (
+            <p key={i} className="text-base text-foreground max-w-[65ch] mb-6 leading-relaxed">
+              {paragraph}
+            </p>
+          ))}
+        </EditableSection>
 
-      {pageData.healthBar && <HealthBar {...pageData.healthBar} />}
+        {pageData.healthBar && <HealthBar {...pageData.healthBar} />}
 
-      {pageData.specs && pageData.specs.length > 0 && (
-        <div className="mt-12">
-          <h3 className="font-display text-2xl text-foreground mb-6">System Specifications</h3>
-          <div className="space-y-3">
-            {pageData.specs.map((spec, i) => (
-              <div key={i} className="flex justify-between border-b border-border py-3">
-                <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-                  {spec.label}
-                </span>
-                <span className="text-sm text-foreground">{spec.value}</span>
-              </div>
-            ))}
+        {/* Specs */}
+        {pageData.specs && pageData.specs.length > 0 && (
+          <div className="mt-12">
+            <h3 className="font-display text-2xl text-foreground mb-6">System Specifications</h3>
+            <EditableSpecs
+              specs={pageData.specs}
+              onSave={(specs) => updatePageData({ specs })}
+            />
           </div>
-        </div>
-      )}
+        )}
 
-      {pageData.tiers && (
-        <div className="mt-12">
-          <h3 className="font-display text-2xl text-foreground mb-6">Investment Options</h3>
-          <PricingTiers tiers={pageData.tiers} />
-        </div>
-      )}
+        {/* Tiers */}
+        {pageData.tiers && (
+          <div className="mt-12">
+            <h3 className="font-display text-2xl text-foreground mb-6">Investment Options</h3>
+            {canEdit ? (
+              <EditableTiers
+                tiers={pageData.tiers}
+                onSave={(tiers) => updatePageData({ tiers })}
+              />
+            ) : (
+              <PricingTiers tiers={pageData.tiers} />
+            )}
+          </div>
+        )}
 
-      {pageData.timing && (
-        <div className="mt-8">
-          <h3 className="font-display text-2xl text-foreground mb-4">Strategic Timing</h3>
-          <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-accent">
-            {pageData.timing}
-          </p>
-        </div>
-      )}
+        {/* Timing */}
+        {pageData.timing && (
+          <div className="mt-8">
+            <h3 className="font-display text-2xl text-foreground mb-4">Strategic Timing</h3>
+            <EditableField
+              value={pageData.timing}
+              onSave={(timing) => updatePageData({ timing })}
+              className="font-mono text-[11px] uppercase tracking-[0.15em] text-accent"
+              tag="p"
+            />
+          </div>
+        )}
 
-      {pageData.recommendations && pageData.recommendations.length > 0 && (
-        <div className="mt-12">
-          <h3 className="font-display text-2xl text-foreground mb-6">Recommendations</h3>
-          <EditableSection
-            content={`<ul>${pageData.recommendations.map(rec => `<li>${rec}</li>`).join("")}</ul>`}
-            onSave={handleRecommendationsSave}
-          >
-            <ul className="space-y-3">
-              {pageData.recommendations.map((rec, i) => (
-                <li key={i} className="text-base text-foreground pl-4 border-l-2 border-accent py-1">
-                  {rec}
-                </li>
-              ))}
-            </ul>
-          </EditableSection>
-        </div>
-      )}
+        {/* Recommendations */}
+        {pageData.recommendations && pageData.recommendations.length > 0 && (
+          <div className="mt-12">
+            <h3 className="font-display text-2xl text-foreground mb-6">Recommendations</h3>
+            <EditableSection
+              content={`<ul>${pageData.recommendations.map(rec => `<li>${rec}</li>`).join("")}</ul>`}
+              onSave={handleRecommendationsSave}
+            >
+              <ul className="space-y-3">
+                {pageData.recommendations.map((rec, i) => (
+                  <li key={i} className="text-base text-foreground pl-4 border-l-2 border-accent py-1">
+                    {rec}
+                  </li>
+                ))}
+              </ul>
+            </EditableSection>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
