@@ -126,7 +126,7 @@ const HomeTab = ({
               <Users className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">Your Home Team</h2>
-                <p className="font-sans text-sm text-muted-foreground">HBC advisors and approved vendor partners</p>
+                <p className="font-sans text-sm text-muted-foreground">Advisors & vendor partners</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
