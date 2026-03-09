@@ -127,51 +127,22 @@ const AdminClientDetail = () => {
   }, [client, reportPages, profile]);
 
   // Create dialog states
-  const [projectOpen, setProjectOpen] = useState(false);
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [eventOpen, setEventOpen] = useState(false);
 
   // Edit dialog states
-  const [editProjectOpen, setEditProjectOpen] = useState(false);
   const [editInvoiceOpen, setEditInvoiceOpen] = useState(false);
   const [editEventOpen, setEditEventOpen] = useState(false);
 
   // Form states
-  const [projectForm, setProjectForm] = useState({ title: "", status: "planned", notes: "", approved_tier: "" });
   const [invoiceForm, setInvoiceForm] = useState({ description: "", amount: "", due_date: "", status: "pending" });
   const [eventForm, setEventForm] = useState({ title: "", description: "", event_date: "", event_type: "appointment" });
 
   // Edit IDs
   const [editId, setEditId] = useState<string | null>(null);
 
-  const resetProjectForm = () => setProjectForm({ title: "", status: "planned", notes: "", approved_tier: "" });
   const resetInvoiceForm = () => setInvoiceForm({ description: "", amount: "", due_date: "", status: "pending" });
   const resetEventForm = () => setEventForm({ title: "", description: "", event_date: "", event_type: "appointment" });
-
-  const createProject = async () => {
-    if (!clientId || !projectForm.title) return;
-    const { error } = await supabase.from("projects").insert({
-      property_id: clientId, title: projectForm.title, status: projectForm.status, notes: projectForm.notes || null, approved_tier: projectForm.approved_tier || null,
-    });
-    if (error) { toast.error("Failed to create project"); return; }
-    toast.success("Project created");
-    setProjectOpen(false);
-    resetProjectForm();
-    queryClient.invalidateQueries({ queryKey: ["admin-projects", clientId] });
-  };
-
-  const updateProject = async () => {
-    if (!editId || !projectForm.title) return;
-    const { error } = await supabase.from("projects").update({
-      title: projectForm.title, status: projectForm.status, notes: projectForm.notes || null, approved_tier: projectForm.approved_tier || null,
-    }).eq("id", editId);
-    if (error) { toast.error("Failed to update project"); return; }
-    toast.success("Project updated");
-    setEditProjectOpen(false);
-    resetProjectForm();
-    setEditId(null);
-    queryClient.invalidateQueries({ queryKey: ["admin-projects", clientId] });
-  };
 
   const createInvoice = async () => {
     if (!clientId || !invoiceForm.description || !invoiceForm.amount) return;
