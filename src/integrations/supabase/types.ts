@@ -167,6 +167,54 @@ export type Database = {
         }
         Relationships: []
       }
+      page_templates: {
+        Row: {
+          block_config: Json
+          created_at: string
+          default_content: Json
+          default_order: number
+          group_name: string
+          icon: string | null
+          id: string
+          is_custom: boolean
+          name: string
+          slug: string
+          sub_group: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          block_config?: Json
+          created_at?: string
+          default_content?: Json
+          default_order?: number
+          group_name: string
+          icon?: string | null
+          id?: string
+          is_custom?: boolean
+          name: string
+          slug: string
+          sub_group?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          block_config?: Json
+          created_at?: string
+          default_content?: Json
+          default_order?: number
+          group_name?: string
+          icon?: string | null
+          id?: string
+          is_custom?: boolean
+          name?: string
+          slug?: string
+          sub_group?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_initials: string | null
@@ -371,57 +419,78 @@ export type Database = {
       }
       report_pages: {
         Row: {
+          block_config: Json | null
           condition_rating: string | null
           created_at: string
+          creator_notes: string | null
+          dependencies: Json | null
           group_name: string
           health_bar: Json | null
           id: string
           images: Json | null
+          key_observations: Json | null
+          maintenance: Json | null
           narrative: Json
           page_key: string
           recommendations: Json | null
           report_id: string
+          risks: Json | null
           sort_order: number
           specs: Json | null
           status: string
+          template_id: string | null
           tiers: Json | null
           timing: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          block_config?: Json | null
           condition_rating?: string | null
           created_at?: string
+          creator_notes?: string | null
+          dependencies?: Json | null
           group_name: string
           health_bar?: Json | null
           id?: string
           images?: Json | null
+          key_observations?: Json | null
+          maintenance?: Json | null
           narrative?: Json
           page_key: string
           recommendations?: Json | null
           report_id: string
+          risks?: Json | null
           sort_order?: number
           specs?: Json | null
           status?: string
+          template_id?: string | null
           tiers?: Json | null
           timing?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          block_config?: Json | null
           condition_rating?: string | null
           created_at?: string
+          creator_notes?: string | null
+          dependencies?: Json | null
           group_name?: string
           health_bar?: Json | null
           id?: string
           images?: Json | null
+          key_observations?: Json | null
+          maintenance?: Json | null
           narrative?: Json
           page_key?: string
           recommendations?: Json | null
           report_id?: string
+          risks?: Json | null
           sort_order?: number
           specs?: Json | null
           status?: string
+          template_id?: string | null
           tiers?: Json | null
           timing?: string | null
           title?: string
@@ -433,6 +502,13 @@ export type Database = {
             columns: ["report_id"]
             isOneToOne: false
             referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_pages_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "page_templates"
             referencedColumns: ["id"]
           },
         ]
