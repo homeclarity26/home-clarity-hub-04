@@ -31,7 +31,7 @@ const conditionColors: Record<string, string> = {
   Critical: "text-destructive",
 };
 
-const ReportPage = ({ page, onNavigate, dbPageId }: ReportPageProps) => {
+const ReportPage = ({ page, onNavigate, dbPageId, pdfData }: ReportPageProps) => {
   const { canEdit } = useEditMode();
   const { pageData, status, saveStatus, updatePageData, updateStatus, isLoading } = useReportPage(page.id, page);
   
