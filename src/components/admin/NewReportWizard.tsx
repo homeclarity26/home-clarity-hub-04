@@ -36,7 +36,7 @@ interface PageTemplate {
   default_order: number;
   icon: string | null;
   block_config: unknown;
-  default_content: Record<string, unknown>;
+  default_content: unknown;
 }
 
 const groupLabels: Record<string, string> = {
