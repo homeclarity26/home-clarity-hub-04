@@ -87,6 +87,7 @@ const ReportTab = ({
   propertyName = "The Johnson Residence",
   propertyAddress = "",
   pdfData,
+  reportId,
 }: ReportTabProps) => {
   const reportGroups = groups || staticGroups;
   const reportPages = pages || staticPages;
