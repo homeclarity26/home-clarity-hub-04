@@ -9,6 +9,7 @@ import ProjectsTab from "@/components/tabs/ProjectsTab";
 import PaymentsTab from "@/components/tabs/PaymentsTab";
 import ContactsTab from "@/components/tabs/ContactsTab";
 import ScheduleTab from "@/components/tabs/ScheduleTab";
+import DocumentsTab from "@/components/tabs/DocumentsTab";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { useEditMode } from "@/contexts/EditModeContext";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
