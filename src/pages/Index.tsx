@@ -97,6 +97,7 @@ const Index = () => {
               pageKeyToDbId={portal.pageKeyToDbId}
               pageImages={portal.pageImages}
               propertyName={propertyName}
+              pdfData={pdfData}
             />
           )}
         </div>
