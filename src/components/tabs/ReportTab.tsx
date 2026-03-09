@@ -371,11 +371,11 @@ const ReportTab = ({
 
             <button
               onClick={() => onTabChange?.("contacts")}
-              className="group text-left bg-card rounded-lg p-6 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-2 border border-border"
+              className="group text-left bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border"
             >
               <Phone className="w-5 h-5 text-accent" />
-              <h3 className="font-display text-lg text-foreground">Contact Your Advisor</h3>
-              <p className="font-sans text-sm text-muted-foreground">Adam Kinney — Founder & Lead Advisor</p>
+              <h3 className="font-display text-xl text-foreground">Contact Your Advisor</h3>
+              <p className="font-sans text-sm text-muted-foreground line-clamp-2">Adam Kinney — Founder & Lead Advisor</p>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors mt-auto" />
             </button>
           </div>
