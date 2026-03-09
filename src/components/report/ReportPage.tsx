@@ -97,6 +97,7 @@ const ReportPage = ({ page, onNavigate, dbPageId, pdfData }: ReportPageProps) =>
           saveStatus={saveStatus}
           currentPageId={page.id}
           onNavigate={(pageId) => onNavigate?.(pageId)}
+          pdfData={pdfData}
         />
       )}
 
