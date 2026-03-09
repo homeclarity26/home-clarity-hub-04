@@ -17,7 +17,7 @@ interface ReportPageProps {
 
 const ReportPage = ({ page, onNavigate, dbPageId, pdfData }: ReportPageProps) => {
   const { canEdit } = useEditMode();
-  const { pageData, status, saveStatus, updatePageData, updateStatus, isLoading, blockConfig } = useReportPage(page.id, page);
+  const { pageData, status, saveStatus, updatePageData, updateStatus, isLoading } = useReportPage(page.id, page);
   
   // Track images from the DB
   const [images, setImages] = useState<string[]>([]);
