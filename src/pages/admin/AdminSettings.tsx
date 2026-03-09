@@ -15,14 +15,28 @@ const AdminSettings = () => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
+  const [region, setRegion] = useState("Summit County, OH");
+  const [savingRegion, setSavingRegion] = useState(false);
 
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name || "");
       setEmail(profile.email || user?.email || "");
       setPhone(profile.phone || "");
+      // Load region
+      supabase.from("profiles").select("service_region").eq("user_id", user!.id).single()
+        .then(({ data }) => { if (data?.service_region) setRegion(data.service_region); });
     }
   }, [profile, user]);
+
+  const handleRegionSave = async () => {
+    if (!user) return;
+    setSavingRegion(true);
+    const { error } = await supabase.from("profiles").update({ service_region: region }).eq("user_id", user.id);
+    setSavingRegion(false);
+    if (error) { toast.error("Failed to update region"); return; }
+    toast.success("Region updated");
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -92,9 +106,11 @@ const AdminSettings = () => {
           <h3 className="text-base font-sans font-semibold text-foreground">Default Region</h3>
           <div className="space-y-1.5">
             <Label className="text-xs font-sans">Service Area</Label>
-            <Input defaultValue="Summit County, OH" className="font-sans" />
+            <Input value={region} onChange={(e) => setRegion(e.target.value)} className="font-sans" />
           </div>
-          <Button size="sm" className="font-sans">Update</Button>
+          <Button size="sm" className="font-sans" onClick={handleRegionSave} disabled={savingRegion}>
+            {savingRegion ? "Saving..." : "Update"}
+          </Button>
         </Card>
       </div>
     </div>

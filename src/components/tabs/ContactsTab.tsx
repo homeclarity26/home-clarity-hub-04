@@ -1,4 +1,6 @@
-import { User, Headset, Hammer, Thermometer, Zap, TreePine, Phone, MessageCircle, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Hammer, Thermometer, Zap, TreePine, Phone, MessageCircle, ChevronRight, Wrench } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CreatorInfo {
   name: string;
@@ -7,21 +9,38 @@ interface CreatorInfo {
   initials: string;
 }
 
+interface Vendor {
+  id: string;
+  title: string;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
+  specialty: string;
+}
+
 interface ContactsTabProps {
   creator?: CreatorInfo;
   onTabChange?: (tab: string) => void;
+  propertyId?: string;
 }
 
 const cardBase = "group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full";
 
-const vendorPlaceholders = [
-  { title: "General Contractor", icon: Hammer },
-  { title: "HVAC Specialist", icon: Thermometer },
-  { title: "Electrician", icon: Zap },
-  { title: "Landscaper", icon: TreePine },
-];
+const specialtyIcons: Record<string, typeof Hammer> = {
+  "General Contractor": Hammer,
+  "HVAC Specialist": Thermometer,
+  "Electrician": Zap,
+  "Landscaper": TreePine,
+};
 
-const ContactsTab = ({ creator, onTabChange }: ContactsTabProps) => {
+const ContactsTab = ({ creator, onTabChange, propertyId }: ContactsTabProps) => {
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+
+  useEffect(() => {
+    if (!propertyId) return;
+    supabase.from("vendors").select("*").eq("property_id", propertyId).order("created_at")
+      .then(({ data }) => { if (data) setVendors(data); });
+  }, [propertyId]);
   const creatorName = creator?.name || "Adam Kinney";
   const creatorEmail = creator?.email || "support@hbc.com";
   const creatorPhone = creator?.phone || "";
@@ -92,18 +111,37 @@ const ContactsTab = ({ creator, onTabChange }: ContactsTabProps) => {
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Approved Vendor Partners</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {vendorPlaceholders.map((vendor) => (
-              <div key={vendor.title} className={`${cardBase} opacity-60 cursor-default`}>
-                <div className="flex items-start justify-between w-full">
-                  <vendor.icon className="w-5 h-5 text-accent" />
-                  <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                    To be assigned
-                  </span>
+            {vendors.length > 0 ? vendors.map((vendor) => {
+              const Icon = specialtyIcons[vendor.specialty] || Wrench;
+              return (
+                <div key={vendor.id} className={`${cardBase} cursor-default`}>
+                  <div className="flex items-start justify-between w-full">
+                    <Icon className="w-5 h-5 text-accent" />
+                    <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent/10 text-accent">
+                      {vendor.specialty}
+                    </span>
+                  </div>
+                  <h3 className="font-display text-xl text-foreground">{vendor.title}</h3>
+                  {vendor.contact_name && <p className="font-sans text-sm text-foreground">{vendor.contact_name}</p>}
+                  {vendor.email && (
+                    <a href={`mailto:${vendor.email}`} className="font-sans text-sm text-muted-foreground hover:text-accent transition-colors no-underline">
+                      {vendor.email}
+                    </a>
+                  )}
+                  {vendor.phone && (
+                    <a href={`tel:${vendor.phone.replace(/\D/g, "")}`} className="font-sans text-sm text-muted-foreground hover:text-accent transition-colors no-underline">
+                      {vendor.phone}
+                    </a>
+                  )}
                 </div>
-                <h3 className="font-display text-xl text-foreground">{vendor.title}</h3>
-                <p className="font-sans text-sm text-muted-foreground">Contact details will appear once assigned</p>
+              );
+            }) : (
+              <div className={`${cardBase} opacity-60 cursor-default col-span-full`}>
+                <Wrench className="w-5 h-5 text-muted-foreground" />
+                <h3 className="font-display text-xl text-foreground">No Vendors Assigned Yet</h3>
+                <p className="font-sans text-sm text-muted-foreground">Your HBC advisor will assign approved vendor partners here.</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
 

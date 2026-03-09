@@ -9,6 +9,7 @@ import ProjectsTab from "@/components/tabs/ProjectsTab";
 import PaymentsTab from "@/components/tabs/PaymentsTab";
 import ContactsTab from "@/components/tabs/ContactsTab";
 import ScheduleTab from "@/components/tabs/ScheduleTab";
+import DocumentsTab from "@/components/tabs/DocumentsTab";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { useEditMode } from "@/contexts/EditModeContext";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
@@ -164,7 +165,10 @@ const Index = () => {
           {activeTab === "payments" && <PaymentsTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "contacts" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "contacts" && <ContactsTab creator={portal.creatorProfile} onTabChange={handleTabChange} />}
+          {activeTab === "contacts" && <ContactsTab creator={portal.creatorProfile} onTabChange={handleTabChange} propertyId={portal.property?.id} />}
+        </div>
+        <div className={`transition-opacity duration-300 ${activeTab === "documents" ? "opacity-100" : "opacity-0 hidden"}`}>
+          {activeTab === "documents" && <DocumentsTab propertyId={portal.property?.id} />}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "schedule" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "schedule" && <ScheduleTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}

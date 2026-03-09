@@ -15,6 +15,7 @@ import ClientOverview from "@/components/admin/ClientOverview";
 import ReportPageManager from "@/components/admin/ReportPageManager";
 import FileManager from "@/components/admin/FileManager";
 import CommentsManager from "@/components/admin/CommentsManager";
+import VendorManager from "@/components/admin/VendorManager";
 import { useAdminClient, useAdminProjects, useAdminInvoices, useAdminScheduleEvents } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -26,7 +27,7 @@ import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 
-type ClientTab = "overview" | "report" | "files" | "comments" | "projects" | "payments" | "schedule";
+type ClientTab = "overview" | "report" | "files" | "comments" | "projects" | "payments" | "schedule" | "vendors";
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -36,6 +37,7 @@ const tabs: { id: ClientTab; label: string }[] = [
   { id: "projects", label: "Projects" },
   { id: "payments", label: "Payments" },
   { id: "schedule", label: "Schedule" },
+  { id: "vendors", label: "Vendors" },
 ];
 
 const AdminClientDetail = () => {
@@ -395,6 +397,7 @@ const AdminClientDetail = () => {
         )}
         {activeTab === "files" && <FileManager propertyId={client.propertyId} />}
         {activeTab === "comments" && <CommentsManager clientId={client.id} />}
+        {activeTab === "vendors" && <VendorManager propertyId={client.propertyId} />}
 
         {/* PROJECTS TAB */}
         {activeTab === "projects" && (
