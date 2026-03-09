@@ -153,3 +153,86 @@
     box-shadow: var(--shadow-lg);
   }
 }
+
+/* Print styles for PDF export */
+@media print {
+  /* Hide non-content elements */
+  header, footer, nav,
+  .no-print,
+  [data-radix-popper-content-wrapper],
+  .sonner-toaster {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: hsl(221 47% 20%) !important;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  /* Reset page margins */
+  @page {
+    margin: 0.75in;
+    size: letter;
+  }
+
+  /* Make content full width */
+  main {
+    padding: 0 !important;
+  }
+
+  .max-w-\[800px\] {
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* Ensure images don't break across pages */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  /* Avoid breaking inside key sections */
+  h2, h3 {
+    page-break-after: avoid;
+  }
+
+  .border-l-2 {
+    page-break-inside: avoid;
+  }
+
+  /* Force light backgrounds */
+  * {
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* Keep accent colors for condition ratings */
+  .text-accent {
+    color: hsl(43 41% 59%) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .text-orange-500 {
+    color: #f97316 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .text-destructive {
+    color: hsl(0 84.2% 60.2%) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Health bar should keep colors */
+  [class*="bg-accent"],
+  [class*="bg-orange"],
+  [class*="bg-destructive"] {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
