@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verify the caller is authenticated
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "No authorization header" }), {
@@ -25,7 +24,6 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify caller is a creator using anon client with their token
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -39,7 +37,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check creator role
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: roleCheck } = await adminClient
       .from("user_roles")
@@ -71,19 +68,19 @@ Deno.serve(async (req) => {
     );
 
     let clientUserId: string;
+    let tempPassword: string | null = null;
 
     if (existingUser) {
       clientUserId = existingUser.id;
     } else {
       // Generate a temporary password
-      const tempPassword =
+      tempPassword =
         "Hbc!" +
         Array.from(crypto.getRandomValues(new Uint8Array(12)))
           .map((b) => b.toString(36))
           .join("")
           .slice(0, 12);
 
-      // Create the client user account
       const { data: newUser, error: createErr } =
         await adminClient.auth.admin.createUser({
           email,
@@ -101,8 +98,7 @@ Deno.serve(async (req) => {
 
       clientUserId = newUser.user.id;
 
-      // The handle_new_user trigger auto-creates profile + client role,
-      // but let's also update profile email
+      // Update profile with email
       await adminClient
         .from("profiles")
         .update({ email, full_name: fullName || email })
@@ -122,13 +118,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Generate a magic link for the client to sign in
-    const { data: magicLink, error: linkErr } =
-      await adminClient.auth.admin.generateLink({
-        type: "magiclink",
-        email,
-        options: { redirectTo: `${req.headers.get("origin") || supabaseUrl}/portal/${propertyId}` },
-      });
+    // Send invite email using inviteUserByEmail for new users
+    let inviteSent = false;
+    if (!existingUser) {
+      try {
+        const { error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(email, {
+          redirectTo: `${req.headers.get("origin") || supabaseUrl}/portal/${propertyId}`,
+        });
+        inviteSent = !inviteErr;
+        if (inviteErr) {
+          console.error("Invite email error:", inviteErr);
+        }
+      } catch (e) {
+        console.error("Failed to send invite:", e);
+      }
+    }
 
     // Log activity
     await adminClient.from("activity_log").insert({
@@ -145,7 +149,8 @@ Deno.serve(async (req) => {
         clientUserId,
         isExisting: !!existingUser,
         portalUrl: `/portal/${propertyId}`,
-        magicLinkSent: !linkErr,
+        magicLinkSent: inviteSent,
+        tempPassword: tempPassword,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

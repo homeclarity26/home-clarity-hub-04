@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ExternalLink, Plus, CheckCircle, Edit, AlertTriangle, XCircle, Sparkles, Loader2 } from "lucide-react";
+import { ExternalLink, Plus, CheckCircle, Edit, AlertTriangle, XCircle, Loader2 } from "lucide-react";
 import { useAdminReportPages } from "@/hooks/useAdminData";
 
 const statusConfig: Record<string, { icon: typeof CheckCircle; label: string; className: string }> = {
@@ -42,18 +42,18 @@ const ReportPageManager = ({ propertyId, reportId }: ReportPageManagerProps) => 
 
   const groups = [...new Set(pages.map((p) => p.group_name))];
 
+  const handleEditPage = (pageKey: string) => {
+    window.open(`/portal/${propertyId}?edit=true&page=${pageKey}`, "_blank");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-sans font-semibold text-foreground">Report Pages</h3>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans" onClick={() => window.open(`/portal?from=admin&clientId=${propertyId}`, "_blank")}>
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans" onClick={() => window.open(`/portal/${propertyId}?edit=true`, "_blank")}>
             <ExternalLink className="w-3.5 h-3.5" />
             Open in Portal
-          </Button>
-          <Button size="sm" className="gap-1.5 text-xs font-sans">
-            <Plus className="w-3.5 h-3.5" />
-            Add Page
           </Button>
         </div>
       </div>
@@ -89,7 +89,14 @@ const ReportPageManager = ({ propertyId, reportId }: ReportPageManagerProps) => 
                         {new Date(page.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="text-xs font-sans">Edit</Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs font-sans"
+                          onClick={() => handleEditPage(page.page_key)}
+                        >
+                          Edit
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );

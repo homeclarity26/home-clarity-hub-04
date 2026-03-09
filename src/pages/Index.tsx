@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HomeTab from "@/components/tabs/HomeTab";
@@ -9,13 +9,31 @@ import PaymentsTab from "@/components/tabs/PaymentsTab";
 import ContactsTab from "@/components/tabs/ContactsTab";
 import ScheduleTab from "@/components/tabs/ScheduleTab";
 import { useClientPortal } from "@/hooks/useClientPortal";
+import { useEditMode } from "@/contexts/EditModeContext";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 
 const Index = () => {
   const { propertyId } = useParams<{ propertyId?: string }>();
+  const [searchParams] = useSearchParams();
   const portal = useClientPortal(propertyId);
   const [activeTab, setActiveTab] = useState("home");
   const [reportPageId, setReportPageId] = useState<string | null>(null);
+  const { editMode, toggleEditMode, canEdit } = useEditMode();
+
+  // Read URL query params for edit mode and page navigation
+  useEffect(() => {
+    const editParam = searchParams.get("edit");
+    const pageParam = searchParams.get("page");
+
+    if (editParam === "true" && !editMode) {
+      toggleEditMode();
+    }
+
+    if (pageParam) {
+      setActiveTab("report");
+      setReportPageId(pageParam);
+    }
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab);
@@ -120,6 +138,7 @@ const Index = () => {
       <Footer
         activeTab={activeTab}
         onNavigate={handleNavigate}
+        invoiceBalance={portal.invoiceBalance}
         reportContext={Object.values(portal.pages).map((p) => ({
           title: p.title,
           conditionRating: p.conditionRating,
