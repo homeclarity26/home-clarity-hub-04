@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { CheckCircle, MessageSquare, HelpCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface Comment {
+interface CommentWithMeta {
   id: string;
   report_page_id: string;
   user_id: string;
@@ -18,6 +20,9 @@ interface Comment {
   resolved: boolean;
   created_at: string;
   updated_at: string;
+  pageTitle?: string;
+  commenterName?: string;
+  commenterInitials?: string;
 }
 
 interface CommentsManagerProps {
@@ -26,27 +31,28 @@ interface CommentsManagerProps {
 }
 
 const CommentsManager = ({ clientId, reportId }: CommentsManagerProps) => {
-  const [filter, setFilter] = useState<"all" | "question" | "note">("all");
+  const { user } = useAuth();
+  const [filter, setFilter] = useState<"all" | "unresolved" | "question" | "note">("all");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
-  const [comments, setComments] = useState<(Comment & { pageTitle?: string })[]>([]);
+  const [comments, setComments] = useState<CommentWithMeta[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchComments = async () => {
     setIsLoading(true);
-    let query = supabase.from("report_comments").select("*");
-    
-    // If we have a reportId, filter by pages in that report
+    let rawComments: CommentWithMeta[] = [];
+    let pageMap: Record<string, string> = {};
+
     if (reportId) {
       const { data: pages } = await supabase
         .from("report_pages")
         .select("id, title")
         .eq("report_id", reportId);
-      
+
       if (pages && pages.length > 0) {
+        pageMap = Object.fromEntries(pages.map(p => [p.id, p.title]));
         const pageIds = pages.map(p => p.id);
-        const pageMap = Object.fromEntries(pages.map(p => [p.id, p.title]));
-        
+
         const { data, error } = await supabase
           .from("report_comments")
           .select("*")
@@ -54,22 +60,44 @@ const CommentsManager = ({ clientId, reportId }: CommentsManagerProps) => {
           .order("created_at", { ascending: false });
 
         if (!error && data) {
-          setComments((data as Comment[]).map(c => ({ ...c, pageTitle: pageMap[c.report_page_id] || "Unknown" })));
+          rawComments = (data as CommentWithMeta[]).map(c => ({
+            ...c,
+            pageTitle: pageMap[c.report_page_id] || "Unknown",
+          }));
         }
-      } else {
-        setComments([]);
       }
     } else {
-      // Fetch all comments (for admin-wide view)
       const { data, error } = await supabase
         .from("report_comments")
         .select("*")
         .order("created_at", { ascending: false });
-      
+
       if (!error && data) {
-        setComments(data as (Comment & { pageTitle?: string })[]);
+        rawComments = data as CommentWithMeta[];
       }
     }
+
+    // Batch-fetch profiles for commenter names
+    const userIds = [...new Set(rawComments.map(c => c.user_id))];
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, avatar_initials")
+        .in("user_id", userIds);
+
+      if (profiles) {
+        const profileMap = Object.fromEntries(
+          profiles.map(p => [p.user_id, { name: p.full_name, initials: p.avatar_initials }])
+        );
+        rawComments = rawComments.map(c => ({
+          ...c,
+          commenterName: profileMap[c.user_id]?.name || "Unknown",
+          commenterInitials: profileMap[c.user_id]?.initials || "??",
+        }));
+      }
+    }
+
+    setComments(rawComments);
     setIsLoading(false);
   };
 
@@ -81,7 +109,11 @@ const CommentsManager = ({ clientId, reportId }: CommentsManagerProps) => {
     if (!replyText.trim()) return;
     const { error } = await supabase
       .from("report_comments")
-      .update({ response_text: replyText.trim() })
+      .update({
+        response_text: replyText.trim(),
+        resolved: true,
+        responded_by: user?.id || null,
+      })
       .eq("id", commentId);
 
     if (error) {
@@ -107,7 +139,14 @@ const CommentsManager = ({ clientId, reportId }: CommentsManagerProps) => {
     }
   };
 
-  const filtered = filter === "all" ? comments : comments.filter((c) => c.comment_type === filter);
+  const filtered = comments.filter((c) => {
+    if (filter === "all") return true;
+    if (filter === "unresolved") return !c.resolved;
+    return c.comment_type === filter;
+  });
+
+  const unresolvedCount = comments.filter(c => !c.resolved).length;
+  const questionCount = comments.filter(c => c.comment_type === "question" && !c.resolved).length;
 
   if (isLoading) {
     return (
@@ -121,7 +160,7 @@ const CommentsManager = ({ clientId, reportId }: CommentsManagerProps) => {
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex gap-2">
-        {(["all", "question", "note"] as const).map((f) => (
+        {(["all", "unresolved", "question", "note"] as const).map((f) => (
           <Button
             key={f}
             variant={filter === f ? "default" : "outline"}
@@ -129,10 +168,15 @@ const CommentsManager = ({ clientId, reportId }: CommentsManagerProps) => {
             onClick={() => setFilter(f)}
             className="text-xs font-sans capitalize"
           >
-            {f === "all" ? "All" : f === "question" ? "Questions" : "Notes"}
-            {f === "question" && (
+            {f === "all" ? "All" : f === "unresolved" ? "Unresolved" : f === "question" ? "Questions" : "Notes"}
+            {f === "unresolved" && unresolvedCount > 0 && (
+              <Badge className="ml-1.5 bg-destructive/20 text-destructive text-[10px] border-none">
+                {unresolvedCount}
+              </Badge>
+            )}
+            {f === "question" && questionCount > 0 && (
               <Badge className="ml-1.5 bg-accent/20 text-accent-foreground text-[10px] border-none">
-                {comments.filter((c) => c.comment_type === "question" && !c.resolved).length}
+                {questionCount}
               </Badge>
             )}
           </Button>
@@ -144,22 +188,25 @@ const CommentsManager = ({ clientId, reportId }: CommentsManagerProps) => {
         <Card key={comment.id} className={`p-4 ${comment.resolved ? "opacity-60" : ""}`}>
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 min-w-0">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                comment.comment_type === "question" ? "bg-accent/20" : "bg-muted"
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-bold ${
+                comment.comment_type === "question" ? "bg-accent/20 text-accent" : "bg-muted text-muted-foreground"
               }`}>
-                {comment.comment_type === "question" ? (
-                  <HelpCircle className="w-4 h-4 text-accent" />
+                {comment.commenterInitials || (comment.comment_type === "question" ? (
+                  <HelpCircle className="w-4 h-4" />
                 ) : (
-                  <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                )}
+                  <MessageSquare className="w-4 h-4" />
+                ))}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] font-sans font-medium text-foreground">
+                    {comment.commenterName || "Unknown"}
+                  </span>
                   {comment.pageTitle && (
                     <span className="text-[11px] font-sans text-muted-foreground">on {comment.pageTitle}</span>
                   )}
                   <span className="text-[11px] font-sans text-muted-foreground">
-                    · {new Date(comment.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    · {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                   </span>
                 </div>
                 <p className="text-sm font-sans text-foreground mt-1">{comment.comment_text}</p>
