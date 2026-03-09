@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,6 +11,7 @@ import SaveIndicator from "./SaveIndicator";
 import type { SaveStatus } from "@/hooks/useReportPage";
 import { reportGroups } from "@/data/reportContent";
 import { useMemo } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 interface CreatorBarProps {
   status: "draft" | "complete" | "needs_review";
@@ -39,6 +40,11 @@ const CreatorBar = ({
   currentPageId,
   onNavigate,
 }: CreatorBarProps) => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const fromAdmin = searchParams.get("from") === "admin";
+  const clientId = searchParams.get("clientId");
+
   const allPageIds = useMemo(
     () => reportGroups.flatMap((g) => g.pages),
     []
@@ -51,8 +57,19 @@ const CreatorBar = ({
 
   return (
     <div className="sticky top-0 z-20 h-10 bg-primary/95 backdrop-blur-sm border-b border-border flex items-center justify-between px-4 gap-3">
-      {/* Left: navigation */}
+      {/* Left: back to admin + navigation */}
       <div className="flex items-center gap-1">
+        {fromAdmin && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-primary-foreground hover:bg-primary-foreground/10 text-xs font-sans gap-1 mr-2"
+            onClick={() => navigate(clientId ? `/admin/clients/${clientId}` : "/admin")}
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Admin
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"

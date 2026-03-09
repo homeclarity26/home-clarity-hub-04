@@ -80,6 +80,53 @@ export type Database = {
         }
         Relationships: []
       }
+      report_comments: {
+        Row: {
+          comment_text: string
+          comment_type: string
+          created_at: string
+          id: string
+          report_page_id: string
+          resolved: boolean
+          responded_by: string | null
+          response_text: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment_text: string
+          comment_type?: string
+          created_at?: string
+          id?: string
+          report_page_id: string
+          resolved?: boolean
+          responded_by?: string | null
+          response_text?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment_text?: string
+          comment_type?: string
+          created_at?: string
+          id?: string
+          report_page_id?: string
+          resolved?: boolean
+          responded_by?: string | null
+          response_text?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_comments_report_page_id_fkey"
+            columns: ["report_page_id"]
+            isOneToOne: false
+            referencedRelation: "report_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_edit_history: {
         Row: {
           created_at: string

@@ -47,7 +47,7 @@ const ReportPageManager = ({ propertyId, reportId }: ReportPageManagerProps) => 
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-sans font-semibold text-foreground">Report Pages</h3>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans" onClick={() => window.open(`/portal/${propertyId}?edit=true`, "_blank")}>
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans" onClick={() => window.open(`/portal?from=admin&clientId=${propertyId}`, "_blank")}>
             <ExternalLink className="w-3.5 h-3.5" />
             Open in Portal
           </Button>

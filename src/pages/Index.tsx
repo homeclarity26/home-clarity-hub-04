@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Header from "@/components/Header";
+import { reportPages } from "@/data/reportContent";
 import Footer from "@/components/Footer";
 import HomeTab from "@/components/tabs/HomeTab";
 import ReportTab from "@/components/tabs/ReportTab";
@@ -73,7 +74,7 @@ const Index = () => {
         </div>
       </main>
 
-      <Footer activeTab={activeTab} onNavigate={handleNavigate} />
+      <Footer activeTab={activeTab} onNavigate={handleNavigate} reportContext={Object.values(reportPages).map(p => ({ title: p.title, conditionRating: p.conditionRating, narrative: p.narrative, specs: p.specs, tiers: p.tiers, timing: p.timing, recommendations: p.recommendations }))} />
     </div>
   );
 };

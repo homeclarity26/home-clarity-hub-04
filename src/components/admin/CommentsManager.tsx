@@ -1,25 +1,121 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { CheckCircle, MessageSquare, HelpCircle } from "lucide-react";
-import { mockComments, type MockComment } from "@/data/adminMockData";
+import { CheckCircle, MessageSquare, HelpCircle, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+interface Comment {
+  id: string;
+  report_page_id: string;
+  user_id: string;
+  comment_text: string;
+  comment_type: string;
+  response_text: string | null;
+  responded_by: string | null;
+  resolved: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 interface CommentsManagerProps {
   clientId?: string;
+  reportId?: string | null;
 }
 
-const CommentsManager = ({ clientId }: CommentsManagerProps) => {
+const CommentsManager = ({ clientId, reportId }: CommentsManagerProps) => {
   const [filter, setFilter] = useState<"all" | "question" | "note">("all");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [comments, setComments] = useState<(Comment & { pageTitle?: string })[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const comments = clientId
-    ? mockComments.filter((c) => c.clientId === clientId)
-    : mockComments;
+  const fetchComments = async () => {
+    setIsLoading(true);
+    let query = supabase.from("report_comments").select("*");
+    
+    // If we have a reportId, filter by pages in that report
+    if (reportId) {
+      const { data: pages } = await supabase
+        .from("report_pages")
+        .select("id, title")
+        .eq("report_id", reportId);
+      
+      if (pages && pages.length > 0) {
+        const pageIds = pages.map(p => p.id);
+        const pageMap = Object.fromEntries(pages.map(p => [p.id, p.title]));
+        
+        const { data, error } = await supabase
+          .from("report_comments")
+          .select("*")
+          .in("report_page_id", pageIds)
+          .order("created_at", { ascending: false });
 
-  const filtered = filter === "all" ? comments : comments.filter((c) => c.type === filter);
+        if (!error && data) {
+          setComments((data as Comment[]).map(c => ({ ...c, pageTitle: pageMap[c.report_page_id] || "Unknown" })));
+        }
+      } else {
+        setComments([]);
+      }
+    } else {
+      // Fetch all comments (for admin-wide view)
+      const { data, error } = await supabase
+        .from("report_comments")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (!error && data) {
+        setComments(data as (Comment & { pageTitle?: string })[]);
+      }
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchComments();
+  }, [reportId]);
+
+  const handleReply = async (commentId: string) => {
+    if (!replyText.trim()) return;
+    const { error } = await supabase
+      .from("report_comments")
+      .update({ response_text: replyText.trim() })
+      .eq("id", commentId);
+
+    if (error) {
+      toast.error("Failed to send reply");
+    } else {
+      toast.success("Reply sent");
+      setReplyingTo(null);
+      setReplyText("");
+      fetchComments();
+    }
+  };
+
+  const handleResolve = async (commentId: string) => {
+    const { error } = await supabase
+      .from("report_comments")
+      .update({ resolved: true })
+      .eq("id", commentId);
+
+    if (error) {
+      toast.error("Failed to resolve");
+    } else {
+      fetchComments();
+    }
+  };
+
+  const filtered = filter === "all" ? comments : comments.filter((c) => c.comment_type === filter);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -36,7 +132,7 @@ const CommentsManager = ({ clientId }: CommentsManagerProps) => {
             {f === "all" ? "All" : f === "question" ? "Questions" : "Notes"}
             {f === "question" && (
               <Badge className="ml-1.5 bg-accent/20 text-accent-foreground text-[10px] border-none">
-                {comments.filter((c) => c.type === "question" && !c.resolved).length}
+                {comments.filter((c) => c.comment_type === "question" && !c.resolved).length}
               </Badge>
             )}
           </Button>
@@ -49,9 +145,9 @@ const CommentsManager = ({ clientId }: CommentsManagerProps) => {
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 min-w-0">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                comment.type === "question" ? "bg-accent/20" : "bg-muted"
+                comment.comment_type === "question" ? "bg-accent/20" : "bg-muted"
               }`}>
-                {comment.type === "question" ? (
+                {comment.comment_type === "question" ? (
                   <HelpCircle className="w-4 h-4 text-accent" />
                 ) : (
                   <MessageSquare className="w-4 h-4 text-muted-foreground" />
@@ -59,16 +155,19 @@ const CommentsManager = ({ clientId }: CommentsManagerProps) => {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-sans font-medium text-foreground">{comment.clientName}</span>
-                  <span className="text-[11px] font-sans text-muted-foreground">on {comment.pageTitle}</span>
-                  <span className="text-[11px] font-sans text-muted-foreground">· {comment.date}</span>
+                  {comment.pageTitle && (
+                    <span className="text-[11px] font-sans text-muted-foreground">on {comment.pageTitle}</span>
+                  )}
+                  <span className="text-[11px] font-sans text-muted-foreground">
+                    · {new Date(comment.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
                 </div>
-                <p className="text-sm font-sans text-foreground mt-1">{comment.text}</p>
+                <p className="text-sm font-sans text-foreground mt-1">{comment.comment_text}</p>
 
-                {comment.response && (
+                {comment.response_text && (
                   <div className="mt-3 pl-4 border-l-2 border-primary/20">
                     <p className="text-xs font-sans text-muted-foreground mb-0.5">Your response</p>
-                    <p className="text-sm font-sans text-foreground">{comment.response}</p>
+                    <p className="text-sm font-sans text-foreground">{comment.response_text}</p>
                   </div>
                 )}
 
@@ -77,10 +176,11 @@ const CommentsManager = ({ clientId }: CommentsManagerProps) => {
                     <Input
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleReply(comment.id)}
                       placeholder="Type your response..."
                       className="text-sm font-sans"
                     />
-                    <Button size="sm" className="text-xs font-sans shrink-0">Send</Button>
+                    <Button size="sm" onClick={() => handleReply(comment.id)} className="text-xs font-sans shrink-0">Send</Button>
                     <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)} className="text-xs font-sans shrink-0">Cancel</Button>
                   </div>
                 )}
@@ -98,7 +198,7 @@ const CommentsManager = ({ clientId }: CommentsManagerProps) => {
                   <Button variant="ghost" size="sm" onClick={() => setReplyingTo(comment.id)} className="text-xs font-sans">
                     Reply
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-xs font-sans text-muted-foreground">
+                  <Button variant="ghost" size="sm" onClick={() => handleResolve(comment.id)} className="text-xs font-sans text-muted-foreground">
                     Resolve
                   </Button>
                 </>
