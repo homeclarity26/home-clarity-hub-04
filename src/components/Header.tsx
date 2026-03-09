@@ -1,22 +1,28 @@
 import { useState, useRef } from "react";
 import { Menu, X, Settings } from "lucide-react";
-import { reportGroups, reportPages } from "@/data/reportContent";
+import { reportGroups as staticGroups, reportPages as staticPages, type ReportPageData } from "@/data/reportContent";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { Switch } from "@/components/ui/switch";
+import type { PortalGroup } from "@/hooks/useClientPortal";
 
 interface HeaderProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onReportPageSelect: (pageId: string) => void;
+  groups?: PortalGroup[];
+  pages?: Record<string, ReportPageData>;
 }
 
-const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => {
+const Header = ({ activeTab, onTabChange, onReportPageSelect, groups, pages }: HeaderProps) => {
+  const reportGroups = groups || staticGroups;
+  const reportPages = pages || staticPages;
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   const [expandedMobileGroup, setExpandedMobileGroup] = useState<string | null>(null);
   const cascadeTimeout = useRef<ReturnType<typeof setTimeout>>();
-  
+
   const { profile, isCreator, signOut } = useAuth();
   const { editMode, toggleEditMode } = useEditMode();
 
@@ -60,7 +66,7 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
                 onTabChange(tab.id);
                 if (tab.id !== "report") setHoveredGroup(null);
               }}
-              onMouseEnter={tab.id === "report" ? () => setHoveredGroup(reportGroups[0].id) : undefined}
+              onMouseEnter={tab.id === "report" && reportGroups.length > 0 ? () => setHoveredGroup(reportGroups[0].id) : undefined}
               className={`font-mono text-[11px] uppercase tracking-[0.15em] py-2 border-none bg-transparent cursor-pointer transition-colors relative ${
                 activeTab === tab.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
@@ -80,7 +86,6 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
                 onMouseEnter={handleReportHoverEnter}
                 onMouseLeave={handleReportHoverLeave}
               >
-                {/* Level 1 */}
                 <div className="w-[320px] bg-card shadow-hbc-lg rounded-lg py-4">
                   {reportGroups.map((group) => (
                     <div
@@ -95,7 +100,6 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
                   ))}
                 </div>
 
-                {/* Level 2 */}
                 {hoveredGroup && (
                   <div className="w-[280px] ml-2 bg-card shadow-hbc-lg rounded-lg p-6">
                     <ul className="list-none p-0 m-0">
@@ -131,46 +135,31 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
         className="md:hidden p-2 bg-transparent border-none cursor-pointer"
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
       >
-        {mobileMenuOpen ? (
-          <X className="w-6 h-6 text-foreground" />
-        ) : (
-          <Menu className="w-6 h-6 text-foreground" />
-        )}
+        {mobileMenuOpen ? <X className="w-6 h-6 text-foreground" /> : <Menu className="w-6 h-6 text-foreground" />}
       </button>
 
       {/* User Section */}
       <div className="hidden md:flex items-center gap-4">
-        {/* Edit Mode Toggle - Only for creators */}
         {isCreator && (
           <div className="flex items-center gap-2 mr-4 border-r border-border pr-4">
             <span className={`font-mono text-[10px] uppercase tracking-[0.15em] ${editMode ? "text-accent" : "text-muted-foreground"}`}>
               Edit
             </span>
-            <Switch
-              checked={editMode}
-              onCheckedChange={toggleEditMode}
-              className="data-[state=checked]:bg-accent"
-            />
+            <Switch checked={editMode} onCheckedChange={toggleEditMode} className="data-[state=checked]:bg-accent" />
           </div>
         )}
-        
-        {/* Admin icon for creators */}
         {isCreator && (
-          <button 
-            onClick={() => window.location.href = "/admin"}
+          <button
+            onClick={() => (window.location.href = "/admin")}
             className="p-2 text-muted-foreground hover:text-foreground transition-colors bg-transparent border-none cursor-pointer"
           >
             <Settings className="w-5 h-5" />
           </button>
         )}
-
         <div className="w-10 h-10 rounded-full border border-foreground flex items-center justify-center font-display text-sm text-foreground">
           {profile?.avatar_initials || "??"}
         </div>
-        <button
-          onClick={signOut}
-          className="font-mono text-[11px] text-muted-foreground bg-transparent border-none cursor-pointer hover:text-foreground"
-        >
+        <button onClick={signOut} className="font-mono text-[11px] text-muted-foreground bg-transparent border-none cursor-pointer hover:text-foreground">
           Logout
         </button>
       </div>
@@ -184,37 +173,23 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
       >
         <div className="flex justify-between items-center p-6 border-b border-border">
           <h2 className="font-display text-2xl text-foreground">Menu</h2>
-          <button
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-2xl text-foreground bg-transparent border-none cursor-pointer"
-          >
+          <button onClick={() => setMobileMenuOpen(false)} className="text-2xl text-foreground bg-transparent border-none cursor-pointer">
             ×
           </button>
         </div>
 
-        {/* Edit Mode Toggle for mobile */}
         {isCreator && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-            <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-              Edit Mode
-            </span>
-            <Switch
-              checked={editMode}
-              onCheckedChange={toggleEditMode}
-              className="data-[state=checked]:bg-accent"
-            />
+            <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Edit Mode</span>
+            <Switch checked={editMode} onCheckedChange={toggleEditMode} className="data-[state=checked]:bg-accent" />
           </div>
         )}
 
         <div className="flex-1 p-6">
-          {/* Main tabs */}
-          {tabs.filter(t => t.id !== "report").map((tab) => (
+          {tabs.filter((t) => t.id !== "report").map((tab) => (
             <button
               key={tab.id}
-              onClick={() => {
-                onTabChange(tab.id);
-                setMobileMenuOpen(false);
-              }}
+              onClick={() => { onTabChange(tab.id); setMobileMenuOpen(false); }}
               className="block w-full text-left font-mono text-xs uppercase tracking-[0.15em] text-muted-foreground py-4 bg-transparent border-none cursor-pointer hover:text-foreground"
             >
               {tab.label}
@@ -223,14 +198,11 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
 
           <div className="h-px bg-border my-6" />
 
-          {/* Report sections */}
           <h3 className="font-display text-xl text-foreground mb-4">Report</h3>
           {reportGroups.map((group) => (
             <div key={group.id} className="mb-8">
               <button
-                onClick={() =>
-                  setExpandedMobileGroup(expandedMobileGroup === group.id ? null : group.id)
-                }
+                onClick={() => setExpandedMobileGroup(expandedMobileGroup === group.id ? null : group.id)}
                 className="font-display text-lg text-foreground mb-2 bg-transparent border-none cursor-pointer block w-full text-left"
               >
                 {group.title}
@@ -241,10 +213,7 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
                   return (
                     <button
                       key={pageId}
-                      onClick={() => {
-                        onReportPageSelect(pageId);
-                        setMobileMenuOpen(false);
-                      }}
+                      onClick={() => { onReportPageSelect(pageId); setMobileMenuOpen(false); }}
                       className="block w-full text-left font-mono text-xs uppercase tracking-[0.15em] text-muted-foreground leading-[40px] bg-transparent border-none cursor-pointer hover:text-foreground pl-4"
                     >
                       {page?.title || pageId}
@@ -257,19 +226,13 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
 
         <div className="p-6 border-t border-border flex justify-between items-center">
           <button
-            onClick={() => {
-              onTabChange("home");
-              setMobileMenuOpen(false);
-            }}
+            onClick={() => { onTabChange("home"); setMobileMenuOpen(false); }}
             className="font-mono text-[11px] text-foreground bg-transparent border-none cursor-pointer"
           >
             ← Back to Portal
           </button>
           <button
-            onClick={() => {
-              signOut();
-              setMobileMenuOpen(false);
-            }}
+            onClick={() => { signOut(); setMobileMenuOpen(false); }}
             className="font-mono text-[11px] text-muted-foreground bg-transparent border-none cursor-pointer"
           >
             Logout

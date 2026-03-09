@@ -5,7 +5,8 @@ const AdminLayout = () => {
   return (
     <div className="min-h-screen bg-muted/30 font-sans">
       <AdminSidebar />
-      <div className="ml-60">
+      {/* md:ml-60 for desktop sidebar, mt-14 for mobile topbar */}
+      <div className="md:ml-60 mt-14 md:mt-0">
         <Outlet />
       </div>
     </div>
