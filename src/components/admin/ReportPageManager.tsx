@@ -1,11 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ExternalLink, Plus, CheckCircle, Edit, AlertTriangle, XCircle, Sparkles } from "lucide-react";
-import { mockReportPages } from "@/data/adminMockData";
+import { ExternalLink, Plus, CheckCircle, Edit, AlertTriangle, XCircle, Sparkles, Loader2 } from "lucide-react";
+import { useAdminReportPages } from "@/hooks/useAdminData";
 
 const statusConfig: Record<string, { icon: typeof CheckCircle; label: string; className: string }> = {
   complete: { icon: CheckCircle, label: "Complete", className: "bg-primary/10 text-foreground" },
+  published: { icon: CheckCircle, label: "Published", className: "bg-primary/10 text-foreground" },
   draft: { icon: Edit, label: "Draft", className: "bg-muted text-muted-foreground" },
   needs_review: { icon: AlertTriangle, label: "Needs Review", className: "bg-accent/20 text-accent-foreground" },
   inactive: { icon: XCircle, label: "Inactive", className: "bg-muted/50 text-muted-foreground" },
@@ -13,17 +14,40 @@ const statusConfig: Record<string, { icon: typeof CheckCircle; label: string; cl
 
 interface ReportPageManagerProps {
   propertyId?: string;
+  reportId?: string | null;
 }
 
-const ReportPageManager = ({ propertyId }: ReportPageManagerProps) => {
-  const groups = [...new Set(mockReportPages.map((p) => p.group))];
+const ReportPageManager = ({ propertyId, reportId }: ReportPageManagerProps) => {
+  const { data: pages, isLoading } = useAdminReportPages(reportId);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!pages || pages.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-sm font-sans text-muted-foreground">No report pages yet.</p>
+        <Button variant="outline" size="sm" className="mt-3 gap-1.5 text-xs font-sans" onClick={() => window.open(`/portal/${propertyId}?edit=true`, "_blank")}>
+          <ExternalLink className="w-3.5 h-3.5" />
+          Open in Portal to create pages
+        </Button>
+      </div>
+    );
+  }
+
+  const groups = [...new Set(pages.map((p) => p.group_name))];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-sans font-semibold text-foreground">Report Pages</h3>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans" onClick={() => window.open(`/portal/${propertyId || "prop-1"}?edit=true`, "_blank")}>
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans" onClick={() => window.open(`/portal/${propertyId}?edit=true`, "_blank")}>
             <ExternalLink className="w-3.5 h-3.5" />
             Open in Portal
           </Button>
@@ -42,16 +66,15 @@ const ReportPageManager = ({ propertyId }: ReportPageManagerProps) => {
               <TableRow>
                 <TableHead className="font-sans text-xs">Page</TableHead>
                 <TableHead className="font-sans text-xs">Status</TableHead>
-                <TableHead className="font-sans text-xs">AI</TableHead>
                 <TableHead className="font-sans text-xs">Last Edited</TableHead>
                 <TableHead className="font-sans text-xs text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockReportPages
-                .filter((p) => p.group === group)
+              {pages
+                .filter((p) => p.group_name === group)
                 .map((page) => {
-                  const status = statusConfig[page.status];
+                  const status = statusConfig[page.status] || statusConfig.draft;
                   const StatusIcon = status.icon;
                   return (
                     <TableRow key={page.id}>
@@ -62,16 +85,11 @@ const ReportPageManager = ({ propertyId }: ReportPageManagerProps) => {
                           {status.label}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        {page.aiGenerated && (
-                          <Sparkles className="w-3.5 h-3.5 text-accent" />
-                        )}
+                      <TableCell className="font-sans text-sm text-muted-foreground">
+                        {new Date(page.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                       </TableCell>
-                      <TableCell className="font-sans text-sm text-muted-foreground">{page.lastEdited}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="text-xs font-sans">
-                          Edit
-                        </Button>
+                        <Button variant="ghost" size="sm" className="text-xs font-sans">Edit</Button>
                       </TableCell>
                     </TableRow>
                   );

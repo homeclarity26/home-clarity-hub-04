@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ExternalLink, MessageSquare } from "lucide-react";
-import type { MockClient } from "@/data/adminMockData";
+import type { AdminClient } from "@/hooks/useAdminData";
 
 const statusStyles: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -18,12 +18,20 @@ const statusLabels: Record<string, string> = {
 };
 
 interface ClientTableProps {
-  clients: MockClient[];
+  clients: AdminClient[];
   compact?: boolean;
 }
 
 const ClientTable = ({ clients, compact }: ClientTableProps) => {
   const navigate = useNavigate();
+
+  const formatDate = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    } catch {
+      return dateStr;
+    }
+  };
 
   return (
     <Table>
@@ -44,12 +52,12 @@ const ClientTable = ({ clients, compact }: ClientTableProps) => {
             <TableCell className="font-sans text-sm font-medium">{client.name}</TableCell>
             <TableCell className="font-sans text-sm text-muted-foreground">{client.address}</TableCell>
             <TableCell>
-              <Badge className={`${statusStyles[client.reportStatus]} text-[11px] font-sans font-medium border-none`}>
-                {statusLabels[client.reportStatus]}
+              <Badge className={`${statusStyles[client.reportStatus] || statusStyles.draft} text-[11px] font-sans font-medium border-none`}>
+                {statusLabels[client.reportStatus] || "Draft"}
               </Badge>
             </TableCell>
             <TableCell className="font-sans text-sm text-muted-foreground">{client.reportVersion}</TableCell>
-            {!compact && <TableCell className="font-sans text-sm text-muted-foreground">{client.lastUpdated}</TableCell>}
+            {!compact && <TableCell className="font-sans text-sm text-muted-foreground">{formatDate(client.lastUpdated)}</TableCell>}
             {!compact && (
               <TableCell>
                 {client.unreadComments > 0 ? (
@@ -63,12 +71,7 @@ const ClientTable = ({ clients, compact }: ClientTableProps) => {
               </TableCell>
             )}
             <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(`/portal/${client.propertyId}?edit=true`)}
-                className="gap-1.5 text-xs font-sans"
-              >
+              <Button variant="ghost" size="sm" onClick={() => navigate(`/portal/${client.propertyId}?edit=true`)} className="gap-1.5 text-xs font-sans">
                 <ExternalLink className="w-3.5 h-3.5" />
                 Portal
               </Button>
