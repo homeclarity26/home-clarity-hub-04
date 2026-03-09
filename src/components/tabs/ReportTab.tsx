@@ -296,8 +296,8 @@ const ReportTab = ({
                 <button
                   key={card.id}
                   onClick={handleClick}
-                  className={`group text-left bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border ${
-                    card.gold ? "border-accent" : "border-border"
+                  className={`group text-left bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border min-h-[180px] ${
+                    card.gold ? "border-border border-l-[3px] border-l-accent" : "border-border"
                   }`}
                 >
                   <div className="flex items-start justify-between">
