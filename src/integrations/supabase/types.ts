@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          property_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          property_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          property_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
@@ -54,6 +92,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      knowledge_templates: {
+        Row: {
+          category: string
+          content: Json
+          created_at: string
+          id: string
+          region: string | null
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          category: string
+          content?: Json
+          created_at?: string
+          id?: string
+          region?: string | null
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          category?: string
+          content?: Json
+          created_at?: string
+          id?: string
+          region?: string | null
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
