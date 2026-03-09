@@ -6,13 +6,13 @@ import AdminHeader from "@/components/admin/AdminHeader";
 import StatsCard from "@/components/admin/StatsCard";
 import ActivityFeed from "@/components/admin/ActivityFeed";
 import ClientTable from "@/components/admin/ClientTable";
-import { useAdminClients, useAdminStats } from "@/hooks/useAdminData";
-import { mockActivities } from "@/data/adminMockData";
+import { useAdminClients, useAdminStats, useAdminActivityLog } from "@/hooks/useAdminData";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { data: stats, isLoading: statsLoading } = useAdminStats();
   const { data: clients, isLoading: clientsLoading } = useAdminClients();
+  const { data: activities } = useAdminActivityLog(10);
 
   const isLoading = statsLoading || clientsLoading;
 
@@ -20,7 +20,6 @@ const AdminDashboard = () => {
     <div>
       <AdminHeader breadcrumbs={[{ label: "Dashboard" }]} />
       <div className="p-6 space-y-6 max-w-7xl">
-        {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard label="Active Clients" value={stats?.activeClients ?? 0} icon={Users} />
           <StatsCard label="Reports in Progress" value={stats?.reportsInProgress ?? 0} icon={FileText} />
@@ -29,13 +28,11 @@ const AdminDashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Activity Feed — still mock */}
           <Card className="lg:col-span-2 p-5">
             <h2 className="text-sm font-sans font-semibold text-foreground mb-4">Recent Activity</h2>
-            <ActivityFeed activities={mockActivities} limit={6} />
+            <ActivityFeed activities={activities || []} limit={6} />
           </Card>
 
-          {/* Quick Actions */}
           <Card className="p-5">
             <h2 className="text-sm font-sans font-semibold text-foreground mb-4">Quick Actions</h2>
             <div className="space-y-2">
@@ -50,26 +47,19 @@ const AdminDashboard = () => {
               <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans">
                 <AlertTriangle className="w-4 h-4 text-accent" />
                 Review Flagged Items
-                <span className="ml-auto text-xs text-accent font-medium">
-                  {stats?.unansweredQuestions ?? 0}
-                </span>
+                <span className="ml-auto text-xs text-accent font-medium">{stats?.unansweredQuestions ?? 0}</span>
               </Button>
             </div>
           </Card>
         </div>
 
-        {/* Recent Clients */}
         <Card className="p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-sans font-semibold text-foreground">Recent Clients</h2>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/admin/clients")} className="text-xs font-sans">
-              View All →
-            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/admin/clients")} className="text-xs font-sans">View All →</Button>
           </div>
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-            </div>
+            <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
           ) : clients && clients.length > 0 ? (
             <ClientTable clients={clients.slice(0, 5)} compact />
           ) : (

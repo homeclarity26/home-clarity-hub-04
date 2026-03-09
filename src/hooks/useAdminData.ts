@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface AdminClient {
-  id: string; // property id
+  id: string;
   propertyId: string;
   propertyName: string;
   name: string;
@@ -29,7 +29,6 @@ export function useAdminClients() {
   return useQuery({
     queryKey: ["admin-clients"],
     queryFn: async (): Promise<AdminClient[]> => {
-      // Fetch properties with their reports
       const { data: properties, error: propErr } = await supabase
         .from("properties")
         .select("*")
@@ -38,18 +37,15 @@ export function useAdminClients() {
       if (propErr) throw propErr;
       if (!properties || properties.length === 0) return [];
 
-      // Fetch all reports
       const { data: reports } = await supabase
         .from("reports")
         .select("*")
         .order("created_at", { ascending: false });
 
-      // Fetch all report pages
       const { data: reportPages } = await supabase
         .from("report_pages")
         .select("*");
 
-      // Fetch profiles
       const userIds = [...new Set(properties.map((p) => p.client_user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
@@ -109,13 +105,19 @@ export function useAdminStats() {
 
       const { data: reports } = await supabase.from("reports").select("status");
 
+      const { count: unansweredQuestions } = await supabase
+        .from("report_comments")
+        .select("*", { count: "exact", head: true })
+        .eq("resolved", false)
+        .eq("comment_type", "question");
+
       const inProgress = reports?.filter((r) => r.status === "draft" || r.status === "review").length || 0;
       const published = reports?.filter((r) => r.status === "published").length || 0;
 
       return {
         activeClients: totalProperties || 0,
         reportsInProgress: inProgress,
-        unansweredQuestions: 0,
+        unansweredQuestions: unansweredQuestions || 0,
         publishedReports: published,
       };
     },
@@ -133,6 +135,86 @@ export function useAdminReportPages(reportId: string | null | undefined) {
         .eq("report_id", reportId!)
         .order("sort_order", { ascending: true });
 
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
+export function useAdminProjects(propertyId: string | undefined) {
+  return useQuery({
+    queryKey: ["admin-projects", propertyId],
+    enabled: !!propertyId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("property_id", propertyId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
+export function useAdminInvoices(propertyId: string | undefined) {
+  return useQuery({
+    queryKey: ["admin-invoices", propertyId],
+    enabled: !!propertyId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("*")
+        .eq("property_id", propertyId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
+export function useAdminScheduleEvents(propertyId: string | undefined) {
+  return useQuery({
+    queryKey: ["admin-schedule-events", propertyId],
+    enabled: !!propertyId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("schedule_events")
+        .select("*")
+        .eq("property_id", propertyId!)
+        .order("event_date", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
+export function useAdminActivityLog(limit?: number) {
+  return useQuery({
+    queryKey: ["admin-activity-log", limit],
+    queryFn: async () => {
+      let query = supabase
+        .from("activity_log")
+        .select("*, properties(id, property_name, address)")
+        .order("created_at", { ascending: false });
+      if (limit) query = query.limit(limit);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
+export function useKnowledgeTemplates(category?: string) {
+  return useQuery({
+    queryKey: ["knowledge-templates", category],
+    queryFn: async () => {
+      let query = supabase
+        .from("knowledge_templates")
+        .select("*")
+        .order("title", { ascending: true });
+      if (category) query = query.eq("category", category);
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
