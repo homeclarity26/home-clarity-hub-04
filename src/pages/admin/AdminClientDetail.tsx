@@ -15,6 +15,7 @@ import ClientOverview from "@/components/admin/ClientOverview";
 import ReportPageManager from "@/components/admin/ReportPageManager";
 import FileManager from "@/components/admin/FileManager";
 import CommentsManager from "@/components/admin/CommentsManager";
+import VendorManager from "@/components/admin/VendorManager";
 import { useAdminClient, useAdminProjects, useAdminInvoices, useAdminScheduleEvents } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
