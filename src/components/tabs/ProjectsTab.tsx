@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ReportPageData } from "@/data/reportContent";
 
 interface ProjectsTabProps {
   onNavigate: (tab: string) => void;
+  onTabChange?: (tab: string) => void;
   propertyId?: string;
   pages?: Record<string, ReportPageData>;
 }
@@ -20,38 +19,31 @@ interface Project {
   created_at: string;
 }
 
-const statusColors: Record<string, string> = {
-  planned: "bg-muted text-muted-foreground",
-  approved: "bg-accent/20 text-accent-foreground",
-  in_progress: "bg-primary/10 text-foreground",
-  complete: "bg-foreground text-background",
+const cardBase = "group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full";
+
+const getUrgencyBadge = (timing: string) => {
+  const t = timing.toLowerCase();
+  if (t.includes("immediate") || t === "year 1" || t.includes("before")) {
+    return { label: "URGENT", cls: "bg-destructive/10 text-destructive" };
+  }
+  if (t.includes("year 1") || t.includes("year 2") || t.includes("1–2") || t.includes("2–3") || t.includes("drainage")) {
+    return { label: "SOON", cls: "bg-accent/20 text-accent-foreground" };
+  }
+  return { label: "FUTURE", cls: "bg-muted text-muted-foreground" };
 };
 
-const ProjectsTab = ({ onNavigate, propertyId, pages }: ProjectsTabProps) => {
+const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages }: ProjectsTabProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!propertyId) {
-      setLoading(false);
-      return;
-    }
-    supabase
-      .from("projects")
-      .select("*")
-      .eq("property_id", propertyId)
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        if (data) setProjects(data as Project[]);
-        setLoading(false);
-      });
+    if (!propertyId) { setLoading(false); return; }
+    supabase.from("projects").select("*").eq("property_id", propertyId).order("created_at", { ascending: false })
+      .then(({ data }) => { if (data) setProjects(data as Project[]); setLoading(false); });
   }, [propertyId]);
 
-  // Build upcoming considerations from report pages that have timing
   const upcoming = pages
-    ? Object.entries(pages)
-        .filter(([, p]) => p.timing)
-        .map(([key, p]) => ({ key, title: p.title, timing: p.timing! }))
+    ? Object.entries(pages).filter(([, p]) => p.timing).map(([key, p]) => ({ key, title: p.title, timing: p.timing! }))
     : [];
 
   const activeProjects = projects.filter((p) => p.status !== "complete");
@@ -59,94 +51,101 @@ const ProjectsTab = ({ onNavigate, propertyId, pages }: ProjectsTabProps) => {
 
   return (
     <div>
-      <div className="py-16 md:py-24 px-6 md:px-20 max-w-[1400px] mx-auto">
-        <h1 className="font-display text-3xl text-foreground mb-6">Project Management</h1>
-        <p className="text-base text-muted-foreground max-w-[60ch]">
-          Track active and planned home improvement projects based on your Home Clarity Report recommendations.
+      {/* Hero */}
+      <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto">
+        <h1 className="font-display text-3xl md:text-[36px] text-foreground mb-3">Project Management</h1>
+        <p className="font-sans text-base text-muted-foreground">
+          Track active and planned improvements from your Home Clarity Report.
         </p>
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 max-w-[1400px] mx-auto px-6 md:px-20 pb-16">
-        {/* Active Projects */}
-        <Card className="md:col-span-2 p-8 md:p-10 shadow-hbc-sm hover:shadow-hbc-md transition-all hover:-translate-y-0.5">
-          <h2 className="font-display text-2xl text-foreground mb-6">
-            {activeProjects.length > 0 ? "Active Projects" : "No Active Projects"}
-          </h2>
-          {activeProjects.length > 0 ? (
-            <div className="flex flex-col gap-4">
-              {activeProjects.map((project) => (
-                <div key={project.id} className="flex items-center justify-between py-4 border-b border-border last:border-b-0">
-                  <div>
-                    <p className="text-base text-foreground font-medium">{project.title}</p>
-                    {project.approved_tier && (
-                      <p className="font-mono text-[11px] text-muted-foreground mt-1">Tier: {project.approved_tier}</p>
-                    )}
-                    {project.notes && (
-                      <p className="text-sm text-muted-foreground mt-1">{project.notes}</p>
-                    )}
-                  </div>
-                  <Badge className={`${statusColors[project.status] || statusColors.planned} text-xs font-mono uppercase border-none`}>
-                    {project.status.replace("_", " ")}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <>
-              <p className="text-base text-foreground mb-6">
-                Your project dashboard awaits its first milestone. Once you approve work from your
-                Home Clarity Report, this space will display project timelines and progress tracking.
-              </p>
-              <button
-                onClick={() => onNavigate("report")}
-                className="font-mono text-[11px] text-foreground bg-transparent border-none underline cursor-pointer"
-              >
-                Review Report Recommendations
-              </button>
-            </>
-          )}
-        </Card>
+      <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
 
-        {/* Upcoming Considerations */}
-        <Card className="p-8 md:p-10 shadow-hbc-sm hover:shadow-hbc-md transition-all hover:-translate-y-0.5">
-          <h2 className="font-display text-2xl text-foreground mb-6">Upcoming Considerations</h2>
-          {upcoming.length > 0 ? (
-            <div className="flex flex-col gap-4">
-              {upcoming.map((item) => (
-                <button
-                  key={item.key}
-                  onClick={() => onNavigate("report")}
-                  className="py-3 border-b border-border font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground hover:pl-3 transition-all cursor-pointer bg-transparent border-none text-left w-full"
-                >
-                  {item.title} ({item.timing})
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p className="text-base text-foreground">
-              Recommendations will appear here once your report is complete.
-            </p>
-          )}
-        </Card>
+        {/* Row 1: Project Status */}
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Project Status</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <button onClick={() => {}} className={`${cardBase} border-l-[3px] border-l-accent`}>
+              <Hammer className="w-5 h-5 text-accent" />
+              <h2 className="font-display text-xl text-foreground mb-1">Active Projects</h2>
+              <p className="font-sans text-sm text-muted-foreground">Ongoing home improvement work</p>
+              {activeProjects.length > 0 ? (
+                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent mt-1">
+                  {activeProjects.length} active
+                </span>
+              ) : (
+                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-1">
+                  No active projects
+                </span>
+              )}
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+            </button>
 
-        {/* Project Archive */}
-        <Card className="p-8 md:p-10 shadow-hbc-sm hover:shadow-hbc-md transition-all hover:-translate-y-0.5">
-          <h2 className="font-display text-2xl text-foreground mb-6">Project Archive</h2>
-          {completedProjects.length > 0 ? (
-            <div className="flex flex-col gap-4">
-              {completedProjects.map((project) => (
-                <div key={project.id} className="py-3 border-b border-border last:border-b-0">
-                  <p className="text-sm text-foreground">{project.title}</p>
-                  <p className="font-mono text-[11px] text-muted-foreground mt-1">
-                    Completed {new Date(project.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-              ))}
+            <button onClick={() => {}} className={cardBase}>
+              <Archive className="w-5 h-5 text-accent" />
+              <h2 className="font-display text-xl text-foreground mb-1">Project Archive</h2>
+              <p className="font-sans text-sm text-muted-foreground">Completed projects and finished milestones</p>
+              {completedProjects.length > 0 ? (
+                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent mt-1">
+                  {completedProjects.length} completed
+                </span>
+              ) : (
+                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-1">
+                  No completed projects yet
+                </span>
+              )}
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+            </button>
+          </div>
+        </div>
+
+        {/* Row 2: Upcoming Considerations */}
+        {upcoming.length > 0 && (
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Upcoming Considerations</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {upcoming.map((item) => {
+                const badge = getUrgencyBadge(item.timing);
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => onNavigate("report")}
+                    className={cardBase}
+                  >
+                    <div className="flex items-start justify-between w-full">
+                      <Wrench className="w-5 h-5 text-accent" />
+                      <span className={`font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full ${badge.cls}`}>
+                        {badge.label}
+                      </span>
+                    </div>
+                    <h3 className="font-display text-xl text-foreground">{item.title}</h3>
+                    <p className="font-sans text-sm text-muted-foreground">{item.timing}</p>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+                  </button>
+                );
+              })}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No completed projects yet.</p>
-          )}
-        </Card>
+          </div>
+        )}
+
+        {/* Row 3: Quick Actions */}
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <button onClick={() => onTabChange?.("report") || onNavigate("report")} className={cardBase}>
+              <FileText className="w-5 h-5 text-accent" />
+              <h2 className="font-display text-xl text-foreground mb-1">Review Report Recommendations</h2>
+              <p className="font-sans text-sm text-muted-foreground">See what your Home Clarity Report recommends</p>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+            </button>
+            <button onClick={() => onTabChange?.("contacts") || onNavigate("contacts")} className={cardBase}>
+              <Phone className="w-5 h-5 text-accent" />
+              <h2 className="font-display text-xl text-foreground mb-1">Contact Your Advisor</h2>
+              <p className="font-sans text-sm text-muted-foreground">Adam Kinney — Founder & Lead Advisor</p>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

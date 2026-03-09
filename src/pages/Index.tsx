@@ -104,16 +104,16 @@ const Index = () => {
           )}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "projects" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "projects" && <ProjectsTab onNavigate={handleNavigate} propertyId={portal.property?.id} pages={portal.pages} />}
+          {activeTab === "projects" && <ProjectsTab onNavigate={handleNavigate} onTabChange={handleTabChange} propertyId={portal.property?.id} pages={portal.pages} />}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "payments" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "payments" && <PaymentsTab propertyId={portal.property?.id} />}
+          {activeTab === "payments" && <PaymentsTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "contacts" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "contacts" && <ContactsTab creator={portal.creatorProfile} />}
+          {activeTab === "contacts" && <ContactsTab creator={portal.creatorProfile} onTabChange={handleTabChange} />}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "schedule" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "schedule" && <ScheduleTab propertyId={portal.property?.id} />}
+          {activeTab === "schedule" && <ScheduleTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}
         </div>
       </main>
 
