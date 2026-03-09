@@ -156,7 +156,10 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect }: HeaderProps) => 
         
         {/* Admin icon for creators */}
         {isCreator && (
-          <button className="p-2 text-muted-foreground hover:text-foreground transition-colors bg-transparent border-none cursor-pointer">
+          <button 
+            onClick={() => window.location.href = "/admin"}
+            className="p-2 text-muted-foreground hover:text-foreground transition-colors bg-transparent border-none cursor-pointer"
+          >
             <Settings className="w-5 h-5" />
           </button>
         )}

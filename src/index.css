@@ -45,6 +45,16 @@
     
     --radius: 0.5rem;
     
+    /* Sidebar tokens */
+    --sidebar-background: 30 11% 95%;
+    --sidebar-foreground: 221 47% 20%;
+    --sidebar-primary: 221 47% 20%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 43 41% 59%;
+    --sidebar-accent-foreground: 221 47% 20%;
+    --sidebar-border: 221 47% 20% / 0.05;
+    --sidebar-ring: 221 47% 20%;
+    
     /* HBC Shadows */
     --shadow-sm: 0 2px 8px hsl(221 47% 20% / 0.04);
     --shadow-md: 0 4px 12px hsl(221 47% 20% / 0.08);
