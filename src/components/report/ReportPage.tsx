@@ -69,11 +69,11 @@ const ReportPage = ({ page, onNavigate, dbPageId, pdfData }: ReportPageProps) =>
   // Extend pageData with additional fields for BlockRenderer
   const extendedPageData = {
     ...pageData,
-    key_observations: (pageData as Record<string, unknown>).key_observations as string[] | undefined,
-    dependencies: (pageData as Record<string, unknown>).dependencies as { pageKey: string; title: string; type: "before" | "after" }[] | undefined,
-    risks: (pageData as Record<string, unknown>).risks as string[] | undefined,
-    maintenance: (pageData as Record<string, unknown>).maintenance as { frequency?: string; tasks: string[] } | undefined,
-    creator_notes: (pageData as Record<string, unknown>).creator_notes as string | undefined,
+    key_observations: (pageData as unknown as Record<string, unknown>).key_observations as string[] | undefined,
+    dependencies: (pageData as unknown as Record<string, unknown>).dependencies as { pageKey: string; title: string; type: "before" | "after" }[] | undefined,
+    risks: (pageData as unknown as Record<string, unknown>).risks as string[] | undefined,
+    maintenance: (pageData as unknown as Record<string, unknown>).maintenance as { frequency?: string; tasks: string[] } | undefined,
+    creator_notes: (pageData as unknown as Record<string, unknown>).creator_notes as string | undefined,
   };
 
   return (
