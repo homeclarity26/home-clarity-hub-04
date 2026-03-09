@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, Image, Music, Archive, ExternalLink, Trash2, Loader2 } from "lucide-react";
@@ -6,6 +6,45 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+const IGuideLink = ({ propertyId }: { propertyId: string }) => {
+  const [url, setUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    supabase.from("properties").select("iguide_url").eq("id", propertyId).single()
+      .then(({ data }) => { if (data?.iguide_url) setUrl(data.iguide_url); });
+  }, [propertyId]);
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("properties").update({ iguide_url: url || null }).eq("id", propertyId);
+    setSaving(false);
+    if (error) { toast.error("Failed to save iGuide link"); return; }
+    toast.success("iGuide link saved");
+  };
+
+  return (
+    <Card className="p-5 border-dashed">
+      <div className="flex items-center gap-2 mb-3">
+        <ExternalLink className="w-4 h-4 text-muted-foreground" />
+        <h4 className="text-sm font-sans font-semibold text-foreground">iGuide Link</h4>
+      </div>
+      <div className="flex items-center gap-3">
+        <input
+          type="text"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://youriguide.com/..."
+          className="flex-1 h-9 px-3 rounded-md border border-border text-sm font-sans bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+        <Button size="sm" className="text-xs font-sans" onClick={save} disabled={saving}>
+          {saving ? "Saving..." : "Save"}
+        </Button>
+      </div>
+    </Card>
+  );
+};
 
 const categoryIcons: Record<string, typeof FileText> = {
   "Discovery Call": Music,

@@ -111,18 +111,37 @@ const ContactsTab = ({ creator, onTabChange, propertyId }: ContactsTabProps) => 
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Approved Vendor Partners</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {vendorPlaceholders.map((vendor) => (
-              <div key={vendor.title} className={`${cardBase} opacity-60 cursor-default`}>
-                <div className="flex items-start justify-between w-full">
-                  <vendor.icon className="w-5 h-5 text-accent" />
-                  <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                    To be assigned
-                  </span>
+            {vendors.length > 0 ? vendors.map((vendor) => {
+              const Icon = specialtyIcons[vendor.specialty] || Wrench;
+              return (
+                <div key={vendor.id} className={`${cardBase} cursor-default`}>
+                  <div className="flex items-start justify-between w-full">
+                    <Icon className="w-5 h-5 text-accent" />
+                    <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent/10 text-accent">
+                      {vendor.specialty}
+                    </span>
+                  </div>
+                  <h3 className="font-display text-xl text-foreground">{vendor.title}</h3>
+                  {vendor.contact_name && <p className="font-sans text-sm text-foreground">{vendor.contact_name}</p>}
+                  {vendor.email && (
+                    <a href={`mailto:${vendor.email}`} className="font-sans text-sm text-muted-foreground hover:text-accent transition-colors no-underline">
+                      {vendor.email}
+                    </a>
+                  )}
+                  {vendor.phone && (
+                    <a href={`tel:${vendor.phone.replace(/\D/g, "")}`} className="font-sans text-sm text-muted-foreground hover:text-accent transition-colors no-underline">
+                      {vendor.phone}
+                    </a>
+                  )}
                 </div>
-                <h3 className="font-display text-xl text-foreground">{vendor.title}</h3>
-                <p className="font-sans text-sm text-muted-foreground">Contact details will appear once assigned</p>
+              );
+            }) : (
+              <div className={`${cardBase} opacity-60 cursor-default col-span-full`}>
+                <Wrench className="w-5 h-5 text-muted-foreground" />
+                <h3 className="font-display text-xl text-foreground">No Vendors Assigned Yet</h3>
+                <p className="font-sans text-sm text-muted-foreground">Your HBC advisor will assign approved vendor partners here.</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
 

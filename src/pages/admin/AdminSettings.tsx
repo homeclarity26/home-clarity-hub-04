@@ -15,14 +15,28 @@ const AdminSettings = () => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
+  const [region, setRegion] = useState("Summit County, OH");
+  const [savingRegion, setSavingRegion] = useState(false);
 
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name || "");
       setEmail(profile.email || user?.email || "");
       setPhone(profile.phone || "");
+      // Load region
+      supabase.from("profiles").select("service_region").eq("user_id", user!.id).single()
+        .then(({ data }) => { if (data?.service_region) setRegion(data.service_region); });
     }
   }, [profile, user]);
+
+  const handleRegionSave = async () => {
+    if (!user) return;
+    setSavingRegion(true);
+    const { error } = await supabase.from("profiles").update({ service_region: region }).eq("user_id", user.id);
+    setSavingRegion(false);
+    if (error) { toast.error("Failed to update region"); return; }
+    toast.success("Region updated");
+  };
 
   const handleSave = async () => {
     if (!user) return;
