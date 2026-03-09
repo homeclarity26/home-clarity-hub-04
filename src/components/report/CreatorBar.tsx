@@ -12,6 +12,8 @@ import type { SaveStatus } from "@/hooks/useReportPage";
 import { reportGroups } from "@/data/reportContent";
 import { useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import type { PDFReportData } from "@/features/pdf/PDFReport";
+import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 
 interface CreatorBarProps {
   status: "draft" | "complete" | "needs_review";
