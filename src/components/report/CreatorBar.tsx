@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
