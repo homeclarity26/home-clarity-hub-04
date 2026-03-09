@@ -18,6 +18,7 @@ interface ReportPageProps {
   page: ReportPageData;
   onNavigate?: (pageId: string) => void;
   dbPageId?: string;
+  pdfData?: PDFReportData;
 }
 
 const conditionOptions = ["Excellent", "Good", "Fair", "Poor", "Critical"];
