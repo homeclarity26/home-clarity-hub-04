@@ -258,13 +258,26 @@ const AdminClientDetail = () => {
                     <TableRow key={project.id}>
                       <TableCell className="font-sans text-sm font-medium">{project.title}</TableCell>
                       <TableCell>
-                        <Badge className={`${statusStyles[project.status] || "bg-muted text-muted-foreground"} text-[11px] font-sans border-none capitalize`}>
-                          {project.status.replace("_", " ")}
-                        </Badge>
+                        <Select value={project.status} onValueChange={(v) => updateProjectStatus(project.id, v)}>
+                          <SelectTrigger className="h-7 w-[120px] text-[11px] font-sans">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="planned">Planned</SelectItem>
+                            <SelectItem value="approved">Approved</SelectItem>
+                            <SelectItem value="in_progress">In Progress</SelectItem>
+                            <SelectItem value="complete">Complete</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="font-sans text-sm text-muted-foreground">{project.approved_tier || "—"}</TableCell>
                       <TableCell className="font-sans text-sm text-muted-foreground max-w-[200px] truncate">{project.notes || "—"}</TableCell>
                       <TableCell className="font-sans text-sm text-muted-foreground">{format(new Date(project.created_at), "MMM d, yyyy")}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={() => deleteProject(project.id)}>
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
