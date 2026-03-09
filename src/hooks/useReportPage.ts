@@ -4,7 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import type { ReportPageData } from "@/data/reportContent";
 import type { Json } from "@/integrations/supabase/types";
-import type { BlockConfig } from "@/lib/templateUtils";
+import type { BlockConfig, PageContent } from "@/lib/templateUtils";
+import { computePageStatus } from "@/lib/templateUtils";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
