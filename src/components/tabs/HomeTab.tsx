@@ -97,7 +97,7 @@ const HomeTab = ({
 
             <button
               onClick={() => onNavigate("payments")}
-              className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full"
+              className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full min-h-[180px]"
             >
               <Receipt className="w-5 h-5 text-accent" />
               <div className="flex-1">
