@@ -3,26 +3,15 @@ import { Menu, X, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { Switch } from "@/components/ui/switch";
-import type { PortalGroup } from "@/hooks/useClientPortal";
-import type { ReportPageData } from "@/data/reportContent";
-
 
 interface HeaderProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onReportPageSelect: (pageId: string) => void;
-  groups?: PortalGroup[];
-  pages?: Record<string, ReportPageData>;
 }
 
-const Header = ({ activeTab, onTabChange, onReportPageSelect, groups, pages }: HeaderProps) => {
-  const reportGroups = groups || staticGroups;
-  const reportPages = pages || staticPages;
-
+const Header = ({ activeTab, onTabChange }: HeaderProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
-  const [expandedMobileGroup, setExpandedMobileGroup] = useState<string | null>(null);
-  const cascadeTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const { profile, isCreator, signOut } = useAuth();
   const { editMode, toggleEditMode } = useEditMode();
@@ -35,14 +24,6 @@ const Header = ({ activeTab, onTabChange, onReportPageSelect, groups, pages }: H
     { id: "contacts", label: "Contacts" },
     { id: "schedule", label: "Schedule" },
   ];
-
-  const handleReportHoverEnter = () => {
-    clearTimeout(cascadeTimeout.current);
-  };
-
-  const handleReportHoverLeave = () => {
-    cascadeTimeout.current = setTimeout(() => setHoveredGroup(null), 200);
-  };
 
   return (
     <header className="fixed top-0 left-0 right-0 h-20 bg-card shadow-hbc-sm z-50 flex items-center justify-between px-6 md:px-20">
