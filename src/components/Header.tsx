@@ -1,10 +1,11 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Menu, X, Settings } from "lucide-react";
-import { reportGroups as staticGroups, reportPages as staticPages, type ReportPageData } from "@/data/reportContent";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { Switch } from "@/components/ui/switch";
 import type { PortalGroup } from "@/hooks/useClientPortal";
+import type { ReportPageData } from "@/data/reportContent";
+
 
 interface HeaderProps {
   activeTab: string;
