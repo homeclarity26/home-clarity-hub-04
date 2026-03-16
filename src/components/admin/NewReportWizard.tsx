@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import AddressAutocomplete from "./AddressAutocomplete";
+import AddressAutocomplete, { type PropertyData } from "./AddressAutocomplete";
 import ClientIntelligenceCard from "./ClientIntelligenceCard";
 import DigitalAssetsStep from "./DigitalAssetsStep";
 
@@ -608,6 +608,23 @@ const NewReportWizard = () => {
                 zip: parsed.zip,
                 county: parsed.county,
               }));
+            }}
+            onPropertyDataFetched={(data: PropertyData) => {
+              setForm((prev) => ({
+                ...prev,
+                yearBuilt: data.yearBuilt ? String(data.yearBuilt) : prev.yearBuilt,
+                sqft: data.sqft ? String(data.sqft) : prev.sqft,
+                bedrooms: data.bedrooms ? String(data.bedrooms) : prev.bedrooms,
+                bathrooms: data.bathrooms ? String(data.bathrooms) : prev.bathrooms,
+                propertyType: data.propertyType
+                  ? (data.propertyType.toLowerCase().includes("single") ? "single_family"
+                    : data.propertyType.toLowerCase().includes("multi") ? "multi_family"
+                    : data.propertyType.toLowerCase().includes("condo") ? "condo"
+                    : data.propertyType.toLowerCase().includes("town") ? "townhome"
+                    : prev.propertyType)
+                  : prev.propertyType,
+              }));
+              toast({ title: "Fields populated", description: "Year built, sq ft, beds/baths and property type filled in from public records." });
             }}
           />
 
