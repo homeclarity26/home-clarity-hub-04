@@ -48,7 +48,7 @@ const AdminClientDetail = () => {
   const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState<ClientTab>("overview");
   const { client, isLoading } = useAdminClient(clientId);
-  const { data: projects } = useAdminProjects(clientId);
+  const { data: projects, isLoading: projectsLoading } = useAdminProjects(clientId);
   const { data: invoices } = useAdminInvoices(clientId);
   const { data: events } = useAdminScheduleEvents(clientId);
 
@@ -334,11 +334,17 @@ const AdminClientDetail = () => {
 
         {/* PROJECTS TAB */}
         {activeTab === "projects" && (
-          <AdminProjectsSection
-            propertyId={client.propertyId}
-            projects={projects}
-            reportPages={reportPages?.map((rp) => ({ id: rp.id, title: rp.title, page_key: rp.page_key }))}
-          />
+          projectsLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <AdminProjectsSection
+              propertyId={client.propertyId}
+              projects={projects}
+              reportPages={reportPages?.map((rp) => ({ id: rp.id, title: rp.title, page_key: rp.page_key }))}
+            />
+          )
         )}
 
         {/* PAYMENTS TAB */}

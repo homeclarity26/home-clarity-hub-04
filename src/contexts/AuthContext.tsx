@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -42,6 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data: profileData } = await supabase
@@ -73,6 +74,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user, fetchProfile, fetchRoles]);
 
   useEffect(() => {
+    // Safety timeout: if auth doesn't resolve within 8s (e.g. network failure),
+    // stop the loading spinner so users aren't stuck indefinitely.
+    loadingTimeoutRef.current = setTimeout(() => {
+      setIsLoading(false);
+    }, 8000);
+
     // Auth state listener — fires immediately with INITIAL_SESSION for existing sessions
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
@@ -88,11 +95,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               fetchProfile(newSession.user.id),
               fetchRoles(newSession.user.id),
             ]);
+            if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
             setIsLoading(false);
           }, 0);
         } else {
           setProfile(null);
           setRoles([]);
+          if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
           setIsLoading(false);
         }
       }
@@ -101,11 +110,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Fallback: if no session exists and onAuthStateChange doesn't set loading=false
     supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       if (!existingSession) {
+        if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
         setIsLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+    };
   }, [fetchProfile, fetchRoles]);
 
   const signIn = async (email: string, password: string) => {

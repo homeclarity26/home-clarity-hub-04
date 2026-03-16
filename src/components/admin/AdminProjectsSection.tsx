@@ -58,7 +58,7 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
   const [form, setForm] = useState(defaultForm);
   const [milestones, setMilestones] = useState<Record<string, Milestone[]>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [newMilestone, setNewMilestone] = useState({ title: "", due_date: "" });
+  const [newMilestones, setNewMilestones] = useState<Record<string, { title: string; due_date: string }>>({});
 
   const resetForm = () => setForm(defaultForm);
 
@@ -67,7 +67,8 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
     if (!projects || projects.length === 0) return;
     const ids = projects.map((p) => p.id);
     supabase.from("milestones").select("*").in("project_id", ids).order("sort_order", { ascending: true })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) { toast.error("Failed to load milestones"); return; }
         const grouped: Record<string, Milestone[]> = {};
         (data || []).forEach((m: Milestone) => {
           if (!grouped[m.project_id]) grouped[m.project_id] = [];
@@ -153,14 +154,19 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
     setEditOpen(true);
   };
 
+  const getMilestoneInput = (projectId: string) => newMilestones[projectId] ?? { title: "", due_date: "" };
+  const setMilestoneInput = (projectId: string, patch: Partial<{ title: string; due_date: string }>) =>
+    setNewMilestones((prev) => ({ ...prev, [projectId]: { ...getMilestoneInput(projectId), ...patch } }));
+
   // Milestone CRUD
   const addMilestone = async (projectId: string) => {
-    if (!newMilestone.title) return;
+    const input = getMilestoneInput(projectId);
+    if (!input.title) return;
     const order = (milestones[projectId]?.length || 0);
     const { data, error } = await supabase.from("milestones").insert({
       project_id: projectId,
-      title: newMilestone.title,
-      due_date: newMilestone.due_date || null,
+      title: input.title,
+      due_date: input.due_date || null,
       sort_order: order,
     }).select().single();
     if (error) { toast.error("Failed to add milestone"); return; }
@@ -168,7 +174,7 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
       ...prev,
       [projectId]: [...(prev[projectId] || []), data as Milestone],
     }));
-    setNewMilestone({ title: "", due_date: "" });
+    setMilestoneInput(projectId, { title: "", due_date: "" });
   };
 
   const toggleMilestone = async (m: Milestone) => {
@@ -336,15 +342,15 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
                             <div className="flex items-center gap-2 pt-1">
                               <Input
                                 placeholder="Milestone name"
-                                value={newMilestone.title}
-                                onChange={(e) => setNewMilestone({ ...newMilestone, title: e.target.value })}
+                                value={getMilestoneInput(project.id).title}
+                                onChange={(e) => setMilestoneInput(project.id, { title: e.target.value })}
                                 className="h-8 text-sm flex-1"
                                 onKeyDown={(e) => { if (e.key === "Enter") addMilestone(project.id); }}
                               />
                               <Input
                                 type="date"
-                                value={newMilestone.due_date}
-                                onChange={(e) => setNewMilestone({ ...newMilestone, due_date: e.target.value })}
+                                value={getMilestoneInput(project.id).due_date}
+                                onChange={(e) => setMilestoneInput(project.id, { due_date: e.target.value })}
                                 className="h-8 text-sm w-[140px]"
                               />
                               <Button size="sm" variant="outline" className="h-8 text-xs font-sans" onClick={() => addMilestone(project.id)}>

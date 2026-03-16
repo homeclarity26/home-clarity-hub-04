@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { humanizeAuthError } from "@/lib/utils";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -22,33 +23,40 @@ const Login = () => {
     const { error } = await signIn(email, password);
 
     if (error) {
-      toast.error(error.message);
+      toast.error(humanizeAuthError(error.message));
       setIsLoading(false);
     } else {
-      // Check role to determine redirect
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: roles } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id);
+      try {
+        // Check role to determine redirect
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: roles, error: rolesError } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id);
 
-        const isCreator = roles?.some((r) => r.role === "creator");
-        toast.success("Welcome back!");
+          if (rolesError) throw rolesError;
 
-        if (isCreator) {
-          navigate("/admin");
-        } else {
-          // For clients, navigate to portal
-          const { data: property } = await supabase
-            .from("properties")
-            .select("id")
-            .eq("client_user_id", user.id)
-            .limit(1)
-            .single();
+          const isCreator = roles?.some((r) => r.role === "creator");
+          toast.success("Welcome back!");
 
-          navigate(property ? `/portal/${property.id}` : "/portal");
+          if (isCreator) {
+            navigate("/admin");
+          } else {
+            // For clients, navigate to portal
+            const { data: property } = await supabase
+              .from("properties")
+              .select("id")
+              .eq("client_user_id", user.id)
+              .limit(1)
+              .single();
+
+            navigate(property ? `/portal/${property.id}` : "/portal");
+          }
         }
+      } catch {
+        toast.error("Signed in, but couldn't load your account. Please refresh.");
+        setIsLoading(false);
       }
     }
   };

@@ -4,7 +4,6 @@ import CreatorBar from "./CreatorBar";
 import BlockRenderer from "./BlockRenderer";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useReportPage } from "@/hooks/useReportPage";
-import { toast } from "sonner";
 import type { PageContent } from "@/lib/templateUtils";
 
 interface ReportPageProps {
@@ -22,7 +21,6 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
 
   const handleUpdate = (updates: Partial<PageContent>) => {
     updatePageData(updates as Partial<ReportPageData>);
-    toast.success("Changes saved");
   };
 
   if (isLoading) {
