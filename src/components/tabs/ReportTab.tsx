@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { reportPages as staticPages, reportGroups as staticGroups, type ReportPageData } from "@/data/reportContent";
 import ReportPage from "@/components/report/ReportPage";
+import FinancialRoadmapPage from "@/components/report/FinancialRoadmapPage";
+import ActionPlanPage from "@/components/report/ActionPlanPage";
 import ImageGrid from "@/components/editor/ImageGrid";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
@@ -153,12 +155,20 @@ const ReportTab = ({
             </BreadcrumbList>
           </Breadcrumb>
         </div>
-        <ReportPage page={page} onNavigate={onNavigate} dbPageId={dbPageId} images={images} pdfData={pdfData} reportId={reportId} propertyAddress={propertyAddress} propertyContext={propertyContext} />
-        {images.length > 0 && (
-          <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-16">
-            <h3 className="font-display text-2xl text-foreground mb-6">Photos</h3>
-            <ImageGrid images={images} />
-          </div>
+        {activePageId === "financial-roadmap" ? (
+          <FinancialRoadmapPage reportId={reportId} />
+        ) : activePageId === "action-plan" ? (
+          <ActionPlanPage reportId={reportId} />
+        ) : (
+          <>
+            <ReportPage page={page} onNavigate={onNavigate} dbPageId={dbPageId} images={images} pdfData={pdfData} reportId={reportId} propertyAddress={propertyAddress} propertyContext={propertyContext} />
+            {images.length > 0 && (
+              <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-16">
+                <h3 className="font-display text-2xl text-foreground mb-6">Photos</h3>
+                <ImageGrid images={images} />
+              </div>
+            )}
+          </>
         )}
 
         {/* Prev / Next Navigation */}
