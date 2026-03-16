@@ -41,13 +41,13 @@ const ContactsTab = ({ creator, onTabChange, propertyId }: ContactsTabProps) => 
     supabase.from("vendors").select("*").eq("property_id", propertyId).order("created_at")
       .then(({ data }) => { if (data) setVendors(data); });
   }, [propertyId]);
-  const creatorName = creator?.name || "Adam Kinney";
-  const creatorEmail = creator?.email || "support@hbc.com";
+  const creatorName = creator?.name || "Adam Kilgore";
+  const creatorEmail = creator?.email || "adam@homeclarityhub.com";
   const creatorPhone = creator?.phone || "";
 
   const handleAskQuestion = () => {
-    const input = document.querySelector<HTMLInputElement>('footer input[type="text"]');
-    if (input) { input.focus(); input.scrollIntoView({ behavior: "smooth" }); }
+    const fab = document.querySelector<HTMLButtonElement>('[aria-label="Open assistant"]');
+    if (fab) fab.click();
   };
 
   return (
@@ -56,7 +56,7 @@ const ContactsTab = ({ creator, onTabChange, propertyId }: ContactsTabProps) => 
       <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto">
         <h1 className="font-display text-3xl md:text-[36px] text-foreground mb-3">Your Home Team</h1>
         <p className="font-sans text-base text-muted-foreground">
-          Direct contact information for Hometown Builders Club and approved vendor partners.
+          Direct contact information for Home Clarity Hub and approved vendor partners.
         </p>
       </section>
 

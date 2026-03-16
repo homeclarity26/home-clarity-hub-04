@@ -95,11 +95,20 @@ const ReportTab = ({
 
   const page = activePageId ? reportPages[activePageId] : null;
 
-  // --- Individual report page view (unchanged) ---
+  // --- Individual report page view ---
   if (page) {
     const dbPageId = pageKeyToDbId[activePageId!];
     const images = pageImages[activePageId!] || [];
     const group = reportGroups.find(g => g.pages.includes(activePageId!));
+
+    // Build flat ordered list of all page IDs for prev/next navigation
+    const allPageIds = reportGroups.flatMap(g => g.pages);
+    const currentIndex = allPageIds.indexOf(activePageId!);
+    const prevPageId = currentIndex > 0 ? allPageIds[currentIndex - 1] : null;
+    const nextPageId = currentIndex < allPageIds.length - 1 ? allPageIds[currentIndex + 1] : null;
+    const prevPage = prevPageId ? reportPages[prevPageId] : null;
+    const nextPage = nextPageId ? reportPages[nextPageId] : null;
+
     return (
       <div>
         <div className="max-w-[800px] mx-auto px-6 md:px-20 pt-8">
@@ -139,6 +148,36 @@ const ReportTab = ({
             <ImageGrid images={images} />
           </div>
         )}
+
+        {/* Prev / Next Navigation */}
+        <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-16">
+          <div className="border-t border-border pt-8 flex items-center justify-between gap-4">
+            {prevPage ? (
+              <button
+                onClick={() => onNavigate?.(prevPageId!)}
+                className="group flex items-center gap-3 text-left hover:text-accent transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
+                <div>
+                  <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground mb-0.5">Previous</p>
+                  <p className="font-sans text-sm text-foreground group-hover:text-accent transition-colors">{prevPage.title}</p>
+                </div>
+              </button>
+            ) : <div />}
+            {nextPage ? (
+              <button
+                onClick={() => onNavigate?.(nextPageId!)}
+                className="group flex items-center gap-3 text-right hover:text-accent transition-colors"
+              >
+                <div>
+                  <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground mb-0.5">Next</p>
+                  <p className="font-sans text-sm text-foreground group-hover:text-accent transition-colors">{nextPage.title}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
+              </button>
+            ) : <div />}
+          </div>
+        </div>
       </div>
     );
   }
@@ -254,22 +293,23 @@ const ReportTab = ({
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {digitalAssets.map((asset) => (
-              <a
+              <div
                 key={asset.title}
-                href={asset.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group bg-primary rounded-lg p-6 border-l-[3px] border-accent hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 flex flex-col gap-3"
+                className="group bg-primary rounded-lg p-6 border-l-[3px] border-accent flex flex-col gap-3 relative overflow-hidden"
               >
-                <asset.icon className="w-6 h-6 text-accent" />
+                <div className="flex items-start justify-between">
+                  <asset.icon className="w-6 h-6 text-accent" />
+                  <span className="font-mono text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary-foreground/10 text-primary-foreground/50">
+                    Coming Soon
+                  </span>
+                </div>
                 <h3 className="font-display text-lg text-primary-foreground leading-snug">
                   {asset.title}
                 </h3>
                 <p className="font-sans text-sm text-primary-foreground/60 leading-relaxed">
                   {asset.subtitle}
                 </p>
-                <ChevronRight className="w-4 h-4 text-accent mt-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-              </a>
+              </div>
             ))}
           </div>
         </section>
@@ -354,12 +394,8 @@ const ReportTab = ({
 
             <button
               onClick={() => {
-                // Focus the footer search input to trigger chat
-                const input = document.querySelector('footer input[type="text"]') as HTMLInputElement | null;
-                if (input) {
-                  input.focus();
-                  input.scrollIntoView({ behavior: "smooth" });
-                }
+                const fab = document.querySelector<HTMLButtonElement>('[aria-label="Open assistant"]');
+                if (fab) fab.click();
               }}
               className="group text-left bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border"
             >
@@ -375,7 +411,7 @@ const ReportTab = ({
             >
               <Phone className="w-5 h-5 text-accent" />
               <h3 className="font-display text-xl text-foreground">Contact Your Advisor</h3>
-              <p className="font-sans text-sm text-muted-foreground line-clamp-2">Adam Kinney — Founder & Lead Advisor</p>
+              <p className="font-sans text-sm text-muted-foreground line-clamp-2">Adam Kilgore — Founder & Lead Advisor</p>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors mt-auto" />
             </button>
           </div>

@@ -128,7 +128,7 @@ const Index = () => {
         onReportPageSelect={handleReportPageSelect}
       />
 
-      <main className={`${isEditLink && canEdit ? "pt-[calc(2rem+36px)]" : "pt-20"} pb-48 md:pb-[140px]`}>
+      <main className={`${isEditLink && canEdit ? "pt-[calc(2rem+36px)]" : "pt-20"} pb-16`}>
         <div className={`transition-opacity duration-300 ${activeTab === "home" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "home" && (
           <HomeTab

@@ -32,6 +32,22 @@ const ScheduleTab = ({ propertyId, onTabChange }: ScheduleTabProps) => {
 
   useEffect(() => {
     if (!propertyId) { setLoading(false); return; }
+
+    // Demo data for dev bypass
+    if (propertyId.startsWith("mock-")) {
+      const today = new Date();
+      const thisWeekDate = new Date(today); thisWeekDate.setDate(today.getDate() + 2);
+      const nextMonth = new Date(today); nextMonth.setMonth(today.getMonth() + 1);
+      const twoMonths = new Date(today); twoMonths.setMonth(today.getMonth() + 2);
+      setEvents([
+        { id: "evt-1", title: "Furnace replacement consultation call", description: "Review vendor bids for furnace replacement", event_date: thisWeekDate.toISOString(), event_type: "appointment", status: "scheduled" },
+        { id: "evt-2", title: "Electrical panel inspection", description: "Licensed electrician evaluating panel upgrade options", event_date: nextMonth.toISOString(), event_type: "appointment", status: "scheduled" },
+        { id: "evt-3", title: "Spring exterior walkthrough", description: "Seasonal assessment of roof, gutters, landscaping", event_date: twoMonths.toISOString(), event_type: "milestone", status: "scheduled" },
+      ]);
+      setLoading(false);
+      return;
+    }
+
     supabase.from("schedule_events").select("*").eq("property_id", propertyId).order("event_date", { ascending: true })
       .then(({ data }) => { if (data) setEvents(data as ScheduleEvent[]); setLoading(false); });
   }, [propertyId]);
@@ -115,8 +131,8 @@ const ScheduleTab = ({ propertyId, onTabChange }: ScheduleTabProps) => {
               <div key={card.title} className={`${cardBase} cursor-default`}>
                 <div className="flex items-start justify-between w-full">
                   <card.icon className="w-5 h-5 text-accent" />
-                  <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                    Report in progress
+                  <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent/10 text-accent">
+                    View Tasks
                   </span>
                 </div>
                 <h3 className="font-display text-xl text-foreground">{card.title}</h3>
@@ -133,7 +149,7 @@ const ScheduleTab = ({ propertyId, onTabChange }: ScheduleTabProps) => {
             <button onClick={() => onTabChange?.("contacts")} className={cardBase}>
               <Phone className="w-5 h-5 text-accent" />
               <h2 className="font-display text-xl text-foreground mb-1">Contact Your Advisor</h2>
-              <p className="font-sans text-sm text-muted-foreground">Schedule a consultation with Adam Kinney</p>
+              <p className="font-sans text-sm text-muted-foreground">Schedule a consultation with Adam Kilgore</p>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
             <button onClick={() => onTabChange?.("projects")} className={cardBase}>
