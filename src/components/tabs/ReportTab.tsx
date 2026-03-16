@@ -30,6 +30,16 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
+export interface PropertyContext {
+  yearBuilt?: number;
+  sqft?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  propertyType?: string;
+  relationshipType?: string;
+  clientIntelligenceSummary?: string;
+}
+
 interface ReportTabProps {
   activePageId: string | null;
   onNavigate?: (pageId: string) => void;
@@ -42,6 +52,7 @@ interface ReportTabProps {
   propertyAddress?: string;
   pdfData?: PDFReportData;
   reportId?: string;
+  propertyContext?: PropertyContext;
 }
 
 const conditionColor: Record<string, string> = {
@@ -88,6 +99,7 @@ const ReportTab = ({
   propertyAddress = "",
   pdfData,
   reportId,
+  propertyContext,
 }: ReportTabProps) => {
   const reportGroups = groups || staticGroups;
   const reportPages = pages || staticPages;
@@ -141,7 +153,7 @@ const ReportTab = ({
             </BreadcrumbList>
           </Breadcrumb>
         </div>
-        <ReportPage page={page} onNavigate={onNavigate} dbPageId={dbPageId} images={images} pdfData={pdfData} reportId={reportId} />
+        <ReportPage page={page} onNavigate={onNavigate} dbPageId={dbPageId} images={images} pdfData={pdfData} reportId={reportId} propertyAddress={propertyAddress} propertyContext={propertyContext} />
         {images.length > 0 && (
           <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-16">
             <h3 className="font-display text-2xl text-foreground mb-6">Photos</h3>

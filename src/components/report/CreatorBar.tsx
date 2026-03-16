@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -22,6 +22,8 @@ interface CreatorBarProps {
   currentPageId: string;
   onNavigate: (pageId: string) => void;
   pdfData?: PDFReportData;
+  onDraftNarrative?: () => void;
+  isDrafting?: boolean;
 }
 
 const statusLabels: Record<string, string> = {
@@ -43,6 +45,8 @@ const CreatorBar = ({
   currentPageId,
   onNavigate,
   pdfData,
+  onDraftNarrative,
+  isDrafting,
 }: CreatorBarProps) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -109,8 +113,24 @@ const CreatorBar = ({
         </SelectContent>
       </Select>
 
-      {/* Right: save indicator + PDF */}
+      {/* Right: draft + save indicator + PDF */}
       <div className="flex items-center gap-2">
+        {onDraftNarrative && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-primary-foreground hover:bg-primary-foreground/10 text-xs font-mono gap-1"
+            onClick={onDraftNarrative}
+            disabled={isDrafting}
+          >
+            {isDrafting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5" />
+            )}
+            {isDrafting ? "Drafting..." : "Draft"}
+          </Button>
+        )}
         <SaveIndicator status={saveStatus} />
         {pdfData && (
           <PDFDownloadButton

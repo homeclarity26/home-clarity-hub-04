@@ -7,25 +7,42 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckCircle, Loader2, ArrowLeft, ArrowRight, Mail, Copy, ExternalLink, FileText } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CheckCircle, Loader2, ArrowLeft, ArrowRight, Mail, Copy, ExternalLink, FileText, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import AddressAutocomplete from "./AddressAutocomplete";
+import ClientIntelligenceCard from "./ClientIntelligenceCard";
+import DigitalAssetsStep from "./DigitalAssetsStep";
 
-const steps = ["Client Info", "Select Pages", "Review & Publish"];
+const steps = ["Client & Property", "Digital Assets", "Select Pages", "Review & Publish"];
 
 interface ClientFormData {
   fullName: string;
   email: string;
   phone: string;
   address: string;
+  city: string;
+  state: string;
+  zip: string;
+  county: string;
   propertyName: string;
+  propertyType: string;
+  relationshipType: string;
   yearBuilt: string;
   sqft: string;
   bedrooms: string;
   bathrooms: string;
-  notes: string;
+  discoveryNotes: string;
+}
+
+interface DigitalAssetsData {
+  hoverUrl: string;
+  hoverPdfUrl: string;
+  iguideUrl: string;
+  iguidePdfUrl: string;
 }
 
 interface PageTemplate {
@@ -77,6 +94,20 @@ const subGroupLabels: Record<string, string> = {
   "planning": "Planning",
 };
 
+const propertyTypes = [
+  { value: "single_family", label: "Single-Family" },
+  { value: "multi_family", label: "Multi-Family" },
+  { value: "condo", label: "Condo" },
+  { value: "townhome", label: "Townhome" },
+];
+
+const relationshipTypes = [
+  { value: "owner_occupied", label: "Owner-Occupied" },
+  { value: "recently_purchased", label: "Recently Purchased" },
+  { value: "pre_purchase", label: "Pre-Purchase Inspection" },
+  { value: "investment", label: "Investment Property" },
+];
+
 const NewReportWizard = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -89,6 +120,10 @@ const NewReportWizard = () => {
     tempPassword?: string;
   } | null>(null);
   const [createdPropertyId, setCreatedPropertyId] = useState<string | null>(null);
+  const [clientIntelligenceSummary, setClientIntelligenceSummary] = useState<string | null>(null);
+  const [aiRecommendedSlugs, setAiRecommendedSlugs] = useState<Set<string>>(new Set());
+  const [aiRecommendReasoning, setAiRecommendReasoning] = useState<string | null>(null);
+  const [isRecommending, setIsRecommending] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -102,12 +137,25 @@ const NewReportWizard = () => {
     email: "",
     phone: "",
     address: "",
+    city: "",
+    state: "",
+    zip: "",
+    county: "",
     propertyName: "",
+    propertyType: "",
+    relationshipType: "",
     yearBuilt: "",
     sqft: "",
     bedrooms: "",
     bathrooms: "",
-    notes: "",
+    discoveryNotes: "",
+  });
+
+  const [digitalAssets, setDigitalAssets] = useState<DigitalAssetsData>({
+    hoverUrl: "",
+    hoverPdfUrl: "",
+    iguideUrl: "",
+    iguidePdfUrl: "",
   });
 
   // Load templates on mount
@@ -121,17 +169,46 @@ const NewReportWizard = () => {
           .order("default_order");
 
         if (error) throw error;
-        setTemplates(data || []);
-        
+
+        // ── DEV FALLBACK: seed local templates if DB is empty ──────
+        let loadedTemplates = data || [];
+        if (loadedTemplates.length === 0) {
+          console.warn("[Dev] page_templates table is empty — using hardcoded fallbacks");
+          loadedTemplates = [
+            { id: "t-exec-summary", slug: "executive-summary", name: "Executive Summary", group_name: "information", sub_group: "overview", default_order: 1, icon: "FileText", block_config: {}, default_content: { narrative: "A comprehensive overview of your home's current condition, key findings, and recommended priorities.", condition_rating: "good", health_bar: 75 }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-prop-overview", slug: "property-overview", name: "Property Overview", group_name: "information", sub_group: "overview", default_order: 2, icon: "Home", block_config: {}, default_content: { narrative: "Detailed property specifications, construction details, and general characteristics.", condition_rating: "good", health_bar: 80 }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-roof", slug: "roof-system", name: "Roof System", group_name: "exterior", sub_group: "roof-envelope", default_order: 1, icon: "Shield", block_config: {}, default_content: { narrative: "Assessment of roofing materials, condition, and estimated remaining lifespan.", condition_rating: "fair", health_bar: 60, specs: { material: "Asphalt Shingle", age: "12 years", estimated_life: "20-25 years" }, tiers: [{ label: "Repair", cost: "$500-$1,500" }, { label: "Partial Replace", cost: "$3,000-$6,000" }, { label: "Full Replace", cost: "$8,000-$15,000" }] }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-windows", slug: "windows", name: "Windows", group_name: "exterior", sub_group: "openings", default_order: 2, icon: "Square", block_config: {}, default_content: { narrative: "Window condition, energy efficiency, and operation assessment.", condition_rating: "fair", health_bar: 55 }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-siding", slug: "siding", name: "Siding & Cladding", group_name: "exterior", sub_group: "cladding", default_order: 3, icon: "Layers", block_config: {}, default_content: { narrative: "Exterior cladding materials, condition, and maintenance needs.", condition_rating: "good", health_bar: 70 }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-foundation", slug: "foundation", name: "Foundation", group_name: "exterior", sub_group: "structure", default_order: 4, icon: "Building", block_config: {}, default_content: { narrative: "Foundation type, condition, and any signs of settlement or water intrusion.", condition_rating: "good", health_bar: 75 }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-garage", slug: "garage", name: "Garage", group_name: "exterior", sub_group: "structures", default_order: 5, icon: "Car", block_config: {}, default_content: { narrative: "Garage structure, door operation, and storage capacity.", condition_rating: "good", health_bar: 70 }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-kitchen", slug: "kitchen", name: "Kitchen", group_name: "interior", sub_group: "kitchen-dining", default_order: 1, icon: "Utensils", block_config: {}, default_content: { narrative: "Kitchen layout, appliances, countertops, cabinetry, and overall functionality.", condition_rating: "fair", health_bar: 55, tiers: [{ label: "Refresh", cost: "$5,000-$10,000" }, { label: "Remodel", cost: "$25,000-$45,000" }, { label: "Full Gut", cost: "$50,000-$80,000" }] }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-primary-bed", slug: "primary-bedroom", name: "Primary Bedroom", group_name: "interior", sub_group: "primary-suite", default_order: 2, icon: "Bed", block_config: {}, default_content: { narrative: "Primary bedroom size, condition, closet space, and comfort features.", condition_rating: "good", health_bar: 75 }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-primary-bath", slug: "primary-bathroom", name: "Primary Bathroom", group_name: "interior", sub_group: "primary-suite", default_order: 3, icon: "Bath", block_config: {}, default_content: { narrative: "Primary bathroom fixtures, plumbing, ventilation, and finish condition.", condition_rating: "fair", health_bar: 60, tiers: [{ label: "Refresh", cost: "$3,000-$6,000" }, { label: "Remodel", cost: "$12,000-$20,000" }, { label: "Full Gut", cost: "$25,000-$40,000" }] }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-basement", slug: "basement", name: "Basement", group_name: "interior", sub_group: "basement", default_order: 4, icon: "ArrowDown", block_config: {}, default_content: { narrative: "Basement condition, moisture levels, and finishing potential.", condition_rating: "fair", health_bar: 50, tiers: [{ label: "Waterproof", cost: "$3,000-$8,000" }, { label: "Partial Finish", cost: "$15,000-$25,000" }, { label: "Full Finish", cost: "$30,000-$50,000" }] }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-living", slug: "living-room", name: "Living Room", group_name: "interior", sub_group: "living-spaces", default_order: 5, icon: "Sofa", block_config: {}, default_content: { narrative: "Living room layout, flooring, lighting, and overall condition.", condition_rating: "good", health_bar: 75 }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-furnace", slug: "furnace", name: "Furnace / Heating", group_name: "systems", sub_group: "hvac", default_order: 1, icon: "Flame", block_config: {}, default_content: { narrative: "Heating system type, age, efficiency rating, and maintenance history.", condition_rating: "fair", health_bar: 50, specs: { type: "Gas Forced Air", brand: "Carrier", age: "14 years", efficiency: "80% AFUE" }, tiers: [{ label: "Service", cost: "$150-$300" }, { label: "Repair", cost: "$500-$2,000" }, { label: "Replace", cost: "$4,000-$8,000" }] }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-ac", slug: "air-conditioning", name: "Air Conditioning", group_name: "systems", sub_group: "hvac", default_order: 2, icon: "Wind", block_config: {}, default_content: { narrative: "AC system type, capacity, age, and cooling performance.", condition_rating: "fair", health_bar: 55 }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-water-heater", slug: "water-heater", name: "Water Heater", group_name: "systems", sub_group: "plumbing", default_order: 3, icon: "Droplets", block_config: {}, default_content: { narrative: "Water heater type, capacity, age, and condition assessment.", condition_rating: "good", health_bar: 65 }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-electrical", slug: "electrical-panel", name: "Electrical Panel", group_name: "systems", sub_group: "electrical", default_order: 4, icon: "Zap", block_config: {}, default_content: { narrative: "Main panel capacity, breaker condition, grounding, and code compliance.", condition_rating: "good", health_bar: 70 }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-roadmap", slug: "financial-roadmap", name: "Financial Roadmap", group_name: "strategy", sub_group: "planning", default_order: 1, icon: "DollarSign", block_config: {}, default_content: { narrative: "Prioritized investment timeline with estimated costs for all recommended improvements." }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-calendar", slug: "maintenance-calendar", name: "Maintenance Calendar", group_name: "strategy", sub_group: "planning", default_order: 2, icon: "Calendar", block_config: {}, default_content: { narrative: "Seasonal maintenance schedule to protect your investment and prevent costly repairs." }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+            { id: "t-laundry", slug: "laundry", name: "Laundry Room", group_name: "interior", sub_group: "utility", default_order: 6, icon: "Shirt", block_config: {}, default_content: { narrative: "Laundry room layout, hookups, ventilation, and condition.", condition_rating: "good", health_bar: 70 }, is_custom: false, version: 1, created_at: "", updated_at: "" },
+          ] as any;
+        }
+        // ────────────────────────────────────────────────────────────
+
+        setTemplates(loadedTemplates);
+
         const defaultSelections = new Set<string>();
         const defaultSlugs = [
-          "executive-summary", "property-overview", 
+          "executive-summary", "property-overview",
           "roof-system", "windows", "siding",
           "kitchen", "primary-bedroom", "primary-bathroom",
           "furnace", "air-conditioning", "water-heater", "electrical-panel",
           "financial-roadmap", "maintenance-calendar"
         ];
-        data?.forEach(t => {
+        loadedTemplates.forEach((t: any) => {
           if (defaultSlugs.includes(t.slug)) {
             defaultSelections.add(t.id);
           }
@@ -190,6 +267,64 @@ const NewReportWizard = () => {
     return acc;
   }, {} as Record<string, Record<string, PageTemplate[]>>);
 
+  // Compute digital assets status
+  function getDigitalAssetsStatus(): "not_started" | "partial" | "complete" {
+    const hasHover = !!(digitalAssets.hoverUrl || digitalAssets.hoverPdfUrl);
+    const hasIguide = !!(digitalAssets.iguideUrl || digitalAssets.iguidePdfUrl);
+    if (hasHover && hasIguide) return "complete";
+    if (hasHover || hasIguide) return "partial";
+    return "not_started";
+  }
+
+  const handleAiRecommendPages = async () => {
+    if (!clientIntelligenceSummary) {
+      toast({ title: "Run analysis first", description: "Accept the Client Intelligence Summary before recommending pages.", variant: "destructive" });
+      return;
+    }
+
+    setIsRecommending(true);
+    try {
+      const parsed = (() => { try { return JSON.parse(clientIntelligenceSummary); } catch { return null; } })();
+      const availablePages = templates.map((t) => ({
+        slug: t.slug,
+        name: t.name,
+        group: t.group_name,
+      }));
+
+      const { data, error } = await supabase.functions.invoke("recommend-report-pages", {
+        body: {
+          intelligenceSummary: parsed?.summary || clientIntelligenceSummary,
+          goals: parsed?.goals || [],
+          priorities: parsed?.priorities || [],
+          constraints: parsed?.constraints || [],
+          propertyType: form.propertyType,
+          relationshipType: form.relationshipType,
+          yearBuilt: form.yearBuilt,
+          sqft: form.sqft,
+          availablePages,
+        },
+      });
+
+      if (error) throw error;
+
+      const recommended: string[] = data.recommended || [];
+      const newSelected = new Set<string>();
+      templates.forEach((t) => {
+        if (recommended.includes(t.slug)) newSelected.add(t.id);
+      });
+      setSelectedTemplates(newSelected);
+      setAiRecommendedSlugs(new Set(recommended));
+      setAiRecommendReasoning(data.reasoning || null);
+
+      toast({ title: "Pages recommended", description: `AI selected ${newSelected.size} pages based on client context.` });
+    } catch (err) {
+      console.error("AI page recommendation failed:", err);
+      toast({ title: "Recommendation failed", description: "Could not get AI recommendations. You can select pages manually.", variant: "destructive" });
+    } finally {
+      setIsRecommending(false);
+    }
+  };
+
   const handleCreateClient = async () => {
     if (!form.fullName || !form.address) {
       toast({ title: "Required fields", description: "Name and address are required.", variant: "destructive" });
@@ -201,15 +336,39 @@ const NewReportWizard = () => {
       return false;
     }
 
+    // ── DEV BYPASS: skip Supabase writes when using mock auth ──────
+    if (user.id === "00000000-0000-0000-0000-000000000000") {
+      console.warn("[Dev] Bypassing Supabase writes — using mock property ID");
+      const mockPropertyId = "mock-property-" + Date.now();
+      setCreatedPropertyId(mockPropertyId);
+      const pageCount = selectedTemplates.size;
+      toast({ title: "Client created (dev mode)", description: `Mock property and report with ${pageCount} pages created for ${form.fullName}.` });
+      return true;
+    }
+    // ────────────────────────────────────────────────────────────────
+
     setSaving(true);
     try {
-      // Use creator's ID as placeholder — publish step reassigns to real client
       const { data: property, error: propErr } = await supabase
         .from("properties")
         .insert({
           address: form.address,
           property_name: form.propertyName || form.address,
           client_user_id: user.id,
+          city: form.city || null,
+          state: form.state || null,
+          zip: form.zip || null,
+          county: form.county || null,
+          property_type: form.propertyType || null,
+          relationship_type: form.relationshipType || null,
+          discovery_notes: form.discoveryNotes || null,
+          client_intelligence_summary: clientIntelligenceSummary || null,
+          hover_url: digitalAssets.hoverUrl || null,
+          hover_pdf_url: digitalAssets.hoverPdfUrl || null,
+          iguide_url: digitalAssets.iguideUrl || null,
+          iguide_pdf_url: digitalAssets.iguidePdfUrl || null,
+          intake_status: "complete",
+          digital_assets_status: getDigitalAssetsStatus(),
           metadata: {
             year_built: form.yearBuilt ? parseInt(form.yearBuilt) : null,
             sqft: form.sqft ? parseInt(form.sqft) : null,
@@ -218,7 +377,6 @@ const NewReportWizard = () => {
             client_name: form.fullName,
             client_email: form.email,
             client_phone: form.phone,
-            notes: form.notes,
           },
         })
         .select()
@@ -290,6 +448,21 @@ const NewReportWizard = () => {
       return;
     }
 
+    // ── DEV BYPASS: skip Supabase publish when using mock auth ─────
+    if (user?.id === "00000000-0000-0000-0000-000000000000") {
+      console.warn("[Dev] Bypassing publish — mock mode");
+      setPublishResult({
+        portalUrl: `/portal/${createdPropertyId}`,
+        isExisting: false,
+        magicLinkSent: false,
+        tempPassword: "dev-temp-pass-123",
+      });
+      setPublished(true);
+      toast({ title: "Published! (dev mode)", description: `Mock client account created for ${form.email}.` });
+      return;
+    }
+    // ────────────────────────────────────────────────────────────────
+
     setPublishing(true);
     try {
       const { data: reports } = await supabase
@@ -338,7 +511,15 @@ const NewReportWizard = () => {
   };
 
   const handleNext = async () => {
-    if (currentStep === 1) {
+    // Validate Step 0 before advancing
+    if (currentStep === 0) {
+      if (!form.fullName || !form.address) {
+        toast({ title: "Required fields", description: "Name and address are required.", variant: "destructive" });
+        return;
+      }
+    }
+    // Create report when leaving Select Pages (step 2)
+    if (currentStep === 2) {
       const success = await handleCreateClient();
       if (!success) return;
     }
@@ -379,10 +560,12 @@ const NewReportWizard = () => {
         ))}
       </div>
 
-      {/* Step 0: Client Info */}
+      {/* Step 0: Client & Property */}
       {currentStep === 0 && (
         <Card className="p-6 space-y-5">
-          <h3 className="text-base font-sans font-semibold text-foreground">Client Information</h3>
+          <h3 className="text-base font-sans font-semibold text-foreground">Client & Property Setup</h3>
+
+          {/* Client info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs font-sans">Full Name *</Label>
@@ -398,15 +581,76 @@ const NewReportWizard = () => {
               <Input placeholder="(330) 555-0142" className="font-sans" value={form.phone} onChange={(e) => updateForm("phone", e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-sans">Property Address *</Label>
-              <Input placeholder="445 Elm Street, Hudson, OH 44236" className="font-sans" value={form.address} onChange={(e) => updateForm("address", e.target.value)} />
+              <Label className="text-xs font-sans">Relationship Type</Label>
+              <Select value={form.relationshipType} onValueChange={(v) => updateForm("relationshipType", v)}>
+                <SelectTrigger className="font-sans text-xs">
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {relationshipTypes.map((t) => (
+                    <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
+
+          {/* Address with autocomplete */}
+          <AddressAutocomplete
+            value={form.address}
+            onChange={(v) => updateForm("address", v)}
+            onAddressParsed={(parsed) => {
+              setForm((prev) => ({
+                ...prev,
+                address: parsed.address,
+                city: parsed.city,
+                state: parsed.state,
+                zip: parsed.zip,
+                county: parsed.county,
+              }));
+            }}
+          />
+
+          {/* City / State / Zip / County */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-sans">City</Label>
+              <Input placeholder="Hudson" className="font-sans" value={form.city} onChange={(e) => updateForm("city", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-sans">State</Label>
+              <Input placeholder="OH" className="font-sans" value={form.state} onChange={(e) => updateForm("state", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-sans">ZIP</Label>
+              <Input placeholder="44236" className="font-sans" value={form.zip} onChange={(e) => updateForm("zip", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-sans">County</Label>
+              <Input placeholder="Summit" className="font-sans" value={form.county} onChange={(e) => updateForm("county", e.target.value)} />
+            </div>
+          </div>
+
+          {/* Property details */}
           <div className="space-y-1.5">
             <Label className="text-xs font-sans">Property Name</Label>
             <Input placeholder="Johnson Residence (optional)" className="font-sans" value={form.propertyName} onChange={(e) => updateForm("propertyName", e.target.value)} />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-sans">Property Type</Label>
+              <Select value={form.propertyType} onValueChange={(v) => updateForm("propertyType", v)}>
+                <SelectTrigger className="font-sans text-xs">
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {propertyTypes.map((t) => (
+                    <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-sans">Year Built</Label>
               <Input type="number" placeholder="1998" className="font-sans" value={form.yearBuilt} onChange={(e) => updateForm("yearBuilt", e.target.value)} />
@@ -424,30 +668,76 @@ const NewReportWizard = () => {
               <Input type="number" placeholder="3" className="font-sans" value={form.bathrooms} onChange={(e) => updateForm("bathrooms", e.target.value)} />
             </div>
           </div>
+
+          {/* Discovery notes */}
           <div className="space-y-1.5">
             <Label className="text-xs font-sans">Discovery Call Notes</Label>
+            <p className="text-[10px] font-sans text-muted-foreground">
+              Paste everything from the discovery call — goals, concerns, wish list, budget, family context, timeline
+            </p>
             <textarea
-              placeholder="Key notes from the initial consultation..."
-              className="w-full h-24 px-3 py-2 rounded-md border border-border text-sm font-sans bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-              value={form.notes}
-              onChange={(e) => updateForm("notes", e.target.value)}
+              placeholder="Client wants to address water damage in the basement, plan for a kitchen renovation in the next 2 years, and understand the remaining life of their roof. Budget is flexible but wants to prioritize safety issues first..."
+              className="w-full h-36 px-3 py-2 rounded-md border border-border text-sm font-sans bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+              value={form.discoveryNotes}
+              onChange={(e) => updateForm("discoveryNotes", e.target.value)}
             />
           </div>
+
+          {/* AI Intelligence Card */}
+          <ClientIntelligenceCard
+            discoveryNotes={form.discoveryNotes}
+            clientName={form.fullName}
+            address={form.address}
+            onAccept={(summary) => setClientIntelligenceSummary(summary)}
+          />
         </Card>
       )}
 
-      {/* Step 1: Select Pages */}
+      {/* Step 1: Digital Assets */}
       {currentStep === 1 && (
+        <Card className="p-6">
+          <DigitalAssetsStep
+            data={digitalAssets}
+            onChange={setDigitalAssets}
+          />
+        </Card>
+      )}
+
+      {/* Step 2: Select Pages */}
+      {currentStep === 2 && (
         <Card className="p-6 space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
               <h3 className="text-base font-sans font-semibold text-foreground">Select Report Pages</h3>
               <p className="text-xs text-muted-foreground mt-1">Choose which pages to include in this report</p>
+              {aiRecommendReasoning && (
+                <p className="text-xs text-muted-foreground mt-2 flex items-start gap-1.5 bg-primary/5 border border-primary/10 rounded-md px-3 py-2">
+                  <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                  {aiRecommendReasoning}
+                </p>
+              )}
             </div>
-            <Badge variant="outline" className="text-sm font-mono">
-              <FileText className="w-3 h-3 mr-1" />
-              {selectedTemplates.size} of {templates.length} pages
-            </Badge>
+            <div className="flex items-center gap-2 shrink-0">
+              <Badge variant="outline" className="text-sm font-mono">
+                <FileText className="w-3 h-3 mr-1" />
+                {selectedTemplates.size} of {templates.length} pages
+              </Badge>
+              <Button
+                size="sm"
+                variant="outline"
+                className="font-mono text-[11px] gap-1.5 border-primary/30 text-primary hover:bg-primary/5"
+                onClick={handleAiRecommendPages}
+                disabled={isRecommending || !clientIntelligenceSummary}
+                title={!clientIntelligenceSummary ? "Accept the Client Intelligence Summary first" : ""}
+              >
+                {isRecommending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                {isRecommending ? "Recommending..." : "AI Recommend"}
+              </Button>
+            </div>
           </div>
 
           {loadingTemplates ? (
@@ -459,7 +749,7 @@ const NewReportWizard = () => {
               {Object.entries(groupedTemplates).map(([groupName, subGroups]) => {
                 const groupTemplateIds = templates.filter(t => t.group_name === groupName).map(t => t.id);
                 const selectedInGroup = groupTemplateIds.filter(id => selectedTemplates.has(id)).length;
-                
+
                 return (
                   <AccordionItem key={groupName} value={groupName} className="border rounded-lg px-4">
                     <AccordionTrigger className="hover:no-underline py-3">
@@ -502,27 +792,37 @@ const NewReportWizard = () => {
                               </p>
                             )}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {subTemplates.map((template) => (
-                                <div
-                                  key={template.id}
-                                  className={`flex items-center justify-between p-3 rounded-md border cursor-pointer transition-colors ${
-                                    selectedTemplates.has(template.id)
-                                      ? "bg-primary/5 border-primary/30"
-                                      : "bg-card border-border hover:bg-muted/50"
-                                  }`}
-                                  onClick={() => toggleTemplate(template.id)}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-base">{template.icon || "📄"}</span>
-                                    <span className="text-sm font-sans">{template.name}</span>
+                              {subTemplates.map((template) => {
+                                const isSelected = selectedTemplates.has(template.id);
+                                const isAiPicked = aiRecommendedSlugs.has(template.slug);
+                                return (
+                                  <div
+                                    key={template.id}
+                                    className={`flex items-center justify-between p-3 rounded-md border cursor-pointer transition-colors ${
+                                      isSelected
+                                        ? "bg-primary/5 border-primary/30"
+                                        : "bg-card border-border hover:bg-muted/50"
+                                    }`}
+                                    onClick={() => toggleTemplate(template.id)}
+                                  >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <span className="text-base shrink-0">{template.icon || "📄"}</span>
+                                      <span className="text-sm font-sans truncate">{template.name}</span>
+                                      {isAiPicked && (
+                                        <span className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+                                          <Sparkles className="w-2.5 h-2.5" />
+                                          AI
+                                        </span>
+                                      )}
+                                    </div>
+                                    <Switch
+                                      checked={isSelected}
+                                      onCheckedChange={() => toggleTemplate(template.id)}
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
                                   </div>
-                                  <Switch
-                                    checked={selectedTemplates.has(template.id)}
-                                    onCheckedChange={() => toggleTemplate(template.id)}
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         ))}
@@ -536,8 +836,8 @@ const NewReportWizard = () => {
         </Card>
       )}
 
-      {/* Step 2: Review & Publish */}
-      {currentStep === 2 && (
+      {/* Step 3: Review & Publish */}
+      {currentStep === 3 && (
         <Card className="p-6 space-y-5">
           <h3 className="text-base font-sans font-semibold text-foreground">Review & Publish</h3>
 
@@ -592,7 +892,6 @@ const NewReportWizard = () => {
                 </div>
               </div>
 
-              {/* Show temp password for new accounts */}
               {publishResult?.tempPassword && !publishResult?.isExisting && (
                 <div className="p-4 rounded-lg bg-muted/50 border border-border space-y-2">
                   <p className="text-xs font-sans font-medium text-foreground">Temporary Password (share with client if email doesn't arrive)</p>
@@ -637,9 +936,9 @@ const NewReportWizard = () => {
           {currentStep === 0 ? "Cancel" : "Back"}
         </Button>
         {currentStep < steps.length - 1 && (
-          <Button onClick={handleNext} disabled={saving || (currentStep === 1 && selectedTemplates.size === 0)} className="gap-1.5 font-sans">
+          <Button onClick={handleNext} disabled={saving || (currentStep === 2 && selectedTemplates.size === 0)} className="gap-1.5 font-sans">
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {currentStep === 1 ? "Create Report" : "Next"}
+            {currentStep === 2 ? "Create Report" : "Next"}
             <ArrowRight className="w-4 h-4" />
           </Button>
         )}

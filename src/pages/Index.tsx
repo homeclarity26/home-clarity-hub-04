@@ -155,6 +155,15 @@ const Index = () => {
               propertyAddress={portal.property?.address || ""}
               pdfData={pdfData}
               reportId={portal.report?.id}
+              propertyContext={portal.property ? {
+                yearBuilt: portal.property.year_built ?? undefined,
+                sqft: portal.property.sqft ?? undefined,
+                bedrooms: portal.property.bedrooms ?? undefined,
+                bathrooms: portal.property.bathrooms ?? undefined,
+                propertyType: portal.property.property_type ?? undefined,
+                relationshipType: portal.property.relationship_type ?? undefined,
+                clientIntelligenceSummary: portal.property.client_intelligence_summary ?? undefined,
+              } : undefined}
             />
           )}
         </div>

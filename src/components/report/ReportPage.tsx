@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import CreatorBar from "./CreatorBar";
@@ -5,6 +6,9 @@ import BlockRenderer from "./BlockRenderer";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useReportPage } from "@/hooks/useReportPage";
 import type { PageContent } from "@/lib/templateUtils";
+import type { PropertyContext } from "@/components/tabs/ReportTab";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ReportPageProps {
   page: ReportPageData;
@@ -13,14 +17,59 @@ interface ReportPageProps {
   images?: string[];
   pdfData?: PDFReportData;
   reportId?: string;
+  propertyAddress?: string;
+  propertyContext?: PropertyContext;
 }
 
-const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, reportId }: ReportPageProps) => {
+const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, reportId, propertyAddress, propertyContext }: ReportPageProps) => {
   const { canEdit } = useEditMode();
   const { pageData, blockConfig, status, saveStatus, updatePageData, updateStatus, isLoading } = useReportPage(page.id, page, reportId);
+  const [isDrafting, setIsDrafting] = useState(false);
 
   const handleUpdate = (updates: Partial<PageContent>) => {
     updatePageData(updates as Partial<ReportPageData>);
+  };
+
+  const handleDraftNarrative = async () => {
+    setIsDrafting(true);
+    try {
+      const intelligenceParsed = (() => {
+        try { return JSON.parse(propertyContext?.clientIntelligenceSummary || ""); } catch { return null; }
+      })();
+
+      const { data, error } = await supabase.functions.invoke("draft-page-narrative", {
+        body: {
+          pageSlug: page.id,
+          pageName: page.title,
+          propertyAddress: propertyAddress || "",
+          yearBuilt: propertyContext?.yearBuilt,
+          sqft: propertyContext?.sqft,
+          bedrooms: propertyContext?.bedrooms,
+          bathrooms: propertyContext?.bathrooms,
+          propertyType: propertyContext?.propertyType,
+          relationshipType: propertyContext?.relationshipType,
+          clientIntelligenceSummary: intelligenceParsed?.summary || propertyContext?.clientIntelligenceSummary || "",
+          clientGoals: intelligenceParsed?.goals || [],
+          clientPriorities: intelligenceParsed?.priorities || [],
+          existingConditionRating: pageData.conditionRating,
+          existingSpecs: pageData.specs as Record<string, unknown> | undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      const updates: Partial<ReportPageData> = {};
+      if (data.narrative?.length) updates.narrative = data.narrative;
+      if (data.key_observations?.length) (updates as Record<string, unknown>).key_observations = data.key_observations;
+
+      updatePageData(updates);
+      toast.success("Draft generated — review and edit as needed.");
+    } catch (err) {
+      console.error("Draft narrative failed:", err);
+      toast.error("Could not generate draft. Check that the edge function is deployed.");
+    } finally {
+      setIsDrafting(false);
+    }
   };
 
   if (isLoading) {
@@ -62,6 +111,8 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
           currentPageId={page.id}
           onNavigate={(pageId) => onNavigate?.(pageId)}
           pdfData={pdfData}
+          onDraftNarrative={handleDraftNarrative}
+          isDrafting={isDrafting}
         />
       )}
 
