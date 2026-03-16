@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, Loader2, ArrowLeft, ArrowRight, Mail, Copy, ExternalLink, FileText, Sparkles } from "lucide-react";
+import { CheckCircle, Loader2, ArrowLeft, ArrowRight, Mail, Copy, ExternalLink, FileText, Sparkles, ShieldCheck, AlertTriangle, Info, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -124,6 +124,10 @@ const NewReportWizard = () => {
   const [aiRecommendedSlugs, setAiRecommendedSlugs] = useState<Set<string>>(new Set());
   const [aiRecommendReasoning, setAiRecommendReasoning] = useState<string | null>(null);
   const [isRecommending, setIsRecommending] = useState(false);
+  const [qaIssues, setQaIssues] = useState<{ severity: "error" | "warning" | "info"; page: string; message: string }[] | null>(null);
+  const [qaScore, setQaScore] = useState<number | null>(null);
+  const [qaSummary, setQaSummary] = useState<string | null>(null);
+  const [isRunningQa, setIsRunningQa] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -322,6 +326,63 @@ const NewReportWizard = () => {
       toast({ title: "Recommendation failed", description: "Could not get AI recommendations. You can select pages manually.", variant: "destructive" });
     } finally {
       setIsRecommending(false);
+    }
+  };
+
+  const handleRunQa = async () => {
+    if (!createdPropertyId) {
+      toast({ title: "No report yet", description: "The report hasn't been created yet.", variant: "destructive" });
+      return;
+    }
+    setIsRunningQa(true);
+    setQaIssues(null);
+    setQaScore(null);
+    setQaSummary(null);
+    try {
+      // Build pages array from selected templates with their default content
+      const selectedTemplatesList = templates.filter((t) => selectedTemplates.has(t.id));
+      const pages = selectedTemplatesList.map((t) => {
+        const dc = (t.default_content || {}) as Record<string, unknown>;
+        return {
+          title: t.name,
+          group: t.group_name,
+          conditionRating: (dc.condition_rating as string) || undefined,
+          narrative: Array.isArray(dc.narrative) ? dc.narrative as string[] : (dc.narrative ? [dc.narrative as string] : []),
+          specs: (dc.specs as Record<string, unknown>) || undefined,
+          tiers: (dc.tiers as { label: string; cost: string }[]) || undefined,
+          recommendations: (dc.recommendations as string[]) || undefined,
+          key_observations: (dc.key_observations as string[]) || undefined,
+          status: "draft",
+        };
+      });
+
+      const { data, error } = await supabase.functions.invoke("qa-report", {
+        body: {
+          pages,
+          propertyName: form.propertyName || form.fullName,
+          propertyAddress: form.address,
+          reportCompletionPercent: 0,
+        },
+      });
+
+      if (error) throw error;
+
+      setQaIssues(data.issues || []);
+      setQaScore(typeof data.overallScore === "number" ? data.overallScore : null);
+      setQaSummary(data.summary || null);
+
+      const errors = (data.issues as { severity: string }[]).filter((i) => i.severity === "error").length;
+      const warnings = (data.issues as { severity: string }[]).filter((i) => i.severity === "warning").length;
+      toast({
+        title: errors > 0 ? `QA: ${errors} issue${errors !== 1 ? "s" : ""} to fix` : "QA passed!",
+        description: errors > 0 ? `${errors} error${errors !== 1 ? "s" : ""}, ${warnings} warning${warnings !== 1 ? "s" : ""} found.` : `${warnings} warning${warnings !== 1 ? "s" : ""}. Report looks good.`,
+        variant: errors > 0 ? "destructive" : "default",
+      });
+    } catch (err) {
+      console.error("QA check failed:", err);
+      toast({ title: "QA check failed", description: "Could not run quality check. You can still publish manually.", variant: "destructive" });
+    } finally {
+      setIsRunningQa(false);
     }
   };
 
@@ -863,7 +924,88 @@ const NewReportWizard = () => {
               <p className="text-sm font-sans text-muted-foreground">
                 Review the generated content in the portal before publishing. Publishing will create a client account for <strong className="text-foreground">{form.email || "—"}</strong> and send them login credentials.
               </p>
-              <div className="flex gap-3">
+
+              {/* QA Panel */}
+              <div className="border border-border rounded-lg overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b border-border">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-sans font-medium">Report QA Check</span>
+                    {qaScore !== null && (
+                      <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
+                        qaScore >= 80 ? "bg-accent/20 text-accent" :
+                        qaScore >= 60 ? "bg-orange-500/20 text-orange-500" :
+                        "bg-destructive/20 text-destructive"
+                      }`}>
+                        {qaScore}/100
+                      </span>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="font-mono text-[11px] gap-1.5 h-8"
+                    onClick={handleRunQa}
+                    disabled={isRunningQa}
+                  >
+                    {isRunningQa ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5" />
+                    )}
+                    {isRunningQa ? "Checking..." : qaIssues ? "Re-run QA" : "Run QA Check"}
+                  </Button>
+                </div>
+
+                {qaIssues === null && !isRunningQa && (
+                  <div className="px-4 py-6 text-center">
+                    <p className="text-xs font-sans text-muted-foreground">
+                      Run a quality check to review the report for any issues before sending to the client.
+                    </p>
+                  </div>
+                )}
+
+                {isRunningQa && (
+                  <div className="px-4 py-6 flex items-center justify-center gap-3">
+                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                    <p className="text-xs font-sans text-muted-foreground">Reviewing report quality...</p>
+                  </div>
+                )}
+
+                {qaIssues !== null && !isRunningQa && (
+                  <div className="divide-y divide-border">
+                    {qaSummary && (
+                      <div className="px-4 py-3 bg-muted/20">
+                        <p className="text-xs font-sans text-muted-foreground italic">{qaSummary}</p>
+                      </div>
+                    )}
+                    {qaIssues.length === 0 ? (
+                      <div className="px-4 py-5 flex items-center gap-3">
+                        <CheckCircle className="w-5 h-5 text-accent shrink-0" />
+                        <p className="text-sm font-sans text-foreground font-medium">All checks passed — report is ready to publish!</p>
+                      </div>
+                    ) : (
+                      qaIssues.map((issue, i) => (
+                        <div key={i} className="flex items-start gap-3 px-4 py-3">
+                          {issue.severity === "error" ? (
+                            <XCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                          ) : issue.severity === "warning" ? (
+                            <AlertTriangle className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                          ) : (
+                            <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-xs font-sans font-medium text-foreground">{issue.page}</p>
+                            <p className="text-xs font-sans text-muted-foreground mt-0.5">{issue.message}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 flex-wrap">
                 <Button
                   variant="outline"
                   className="gap-1.5 font-sans"

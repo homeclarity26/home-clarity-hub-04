@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import type { ReportPageData } from "@/data/reportContent";
 import { useEditMode } from "@/contexts/EditModeContext";
 import type { BlockConfig, PageContent } from "@/lib/templateUtils";
@@ -15,6 +16,9 @@ import MaintenanceNotes from "./MaintenanceNotes";
 import CreatorNotes from "./CreatorNotes";
 import CommentsSection from "./CommentsSection";
 import ImageGrid from "@/components/editor/ImageGrid";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { ScanLine, Loader2 } from "lucide-react";
 
 const conditionOptions = ["Excellent", "Good", "Fair", "Poor", "Critical", "N/A"];
 
@@ -35,6 +39,7 @@ interface BlockRendererProps {
     risks?: string[];
     maintenance?: { frequency?: string; tasks: string[] };
     creator_notes?: string;
+    pageSlug?: string;
   };
   images?: string[];
   dbPageId?: string;
@@ -51,6 +56,78 @@ const BlockRenderer = ({
   onNavigate,
 }: BlockRendererProps) => {
   const { canEdit } = useEditMode();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isScanning, setIsScanning] = useState(false);
+
+  const handleScanSerialPlate = async (file: File) => {
+    setIsScanning(true);
+    try {
+      // Convert file to base64
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = "";
+      bytes.forEach((b) => (binary += String.fromCharCode(b)));
+      const base64 = btoa(binary);
+
+      const { data, error } = await supabase.functions.invoke("extract-serial-plate", {
+        body: {
+          imageBase64: base64,
+          mimeType: file.type || "image/jpeg",
+          pageSlug: pageData.pageSlug || pageData.title?.toLowerCase().replace(/\s+/g, "-"),
+        },
+      });
+
+      if (error) throw error;
+
+      // Map extracted data to specs format
+      const existingSpecs = Array.isArray(pageData.specs) ? pageData.specs : [];
+      const specKeyMap: Record<string, string> = {
+        brand: "Brand",
+        model: "Model",
+        serial: "Serial Number",
+        manufactured: "Manufactured",
+        efficiency: "Efficiency",
+        capacity: "Capacity",
+        voltage: "Voltage",
+        refrigerant: "Refrigerant",
+        weight: "Weight",
+        country: "Country of Origin",
+        certifications: "Certifications",
+        notes: "Notes",
+      };
+
+      const newSpecs = [...existingSpecs];
+      Object.entries(specKeyMap).forEach(([key, label]) => {
+        if (data[key]) {
+          const existingIndex = newSpecs.findIndex(
+            (s: { key: string }) => s.key?.toLowerCase() === label.toLowerCase()
+          );
+          if (existingIndex >= 0) {
+            newSpecs[existingIndex] = { ...newSpecs[existingIndex], value: data[key] };
+          } else {
+            newSpecs.push({ key: label, value: data[key] });
+          }
+        }
+      });
+
+      onUpdate({ specs: newSpecs });
+      const fields = Object.keys(specKeyMap).filter((k) => data[k]).length;
+      toast({
+        title: "Serial plate scanned",
+        description: `${fields} field${fields !== 1 ? "s" : ""} extracted and added to specs.`,
+      });
+    } catch (err) {
+      console.error("Serial plate scan failed:", err);
+      toast({
+        title: "Scan failed",
+        description: "Could not read the equipment label. Try a clearer photo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsScanning(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   // Helper to check if a block should be rendered
   const shouldRender = (blockName: keyof BlockConfig): boolean => {
@@ -155,9 +232,39 @@ const BlockRenderer = ({
       {/* Specs Block */}
       {shouldRender("specs") && pageData.specs && pageData.specs.length > 0 && (
         <div className="mt-12">
-          <h3 className="font-display text-2xl text-foreground mb-6">
-            System Specifications
-          </h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-display text-2xl text-foreground">
+              System Specifications
+            </h3>
+            {canEdit && (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleScanSerialPlate(file);
+                  }}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isScanning}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card hover:bg-muted/50 text-xs font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Take a photo of the equipment label to auto-populate specs"
+                >
+                  {isScanning ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <ScanLine className="w-3.5 h-3.5" />
+                  )}
+                  {isScanning ? "Scanning..." : "Scan Label"}
+                </button>
+              </>
+            )}
+          </div>
           <EditableSpecs
             specs={pageData.specs}
             onSave={(specs) => onUpdate({ specs })}

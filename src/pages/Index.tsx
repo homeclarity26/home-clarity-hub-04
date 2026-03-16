@@ -189,10 +189,13 @@ const Index = () => {
         onNavigate={handleNavigate}
         invoiceBalance={portal.invoiceBalance}
         reportContext={{
+          propertyName,
           propertyAddress: portal.property?.address || "Unknown address",
           reportCompletionPercent: portal.completionPercent ?? 0,
+          invoiceBalance: portal.invoiceBalance,
           pages: Object.values(portal.pages).map((p) => ({
             title: p.title,
+            group: p.group,
             conditionRating: p.conditionRating,
             narrative: p.narrative,
             specs: p.specs,
