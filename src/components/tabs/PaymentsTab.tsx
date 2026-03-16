@@ -141,28 +141,39 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
               <table className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-left pb-4 border-b border-border">Date</th>
                     <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-left pb-4 border-b border-border">Description</th>
+                    <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-left pb-4 border-b border-border hidden sm:table-cell">Due Date</th>
                     <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-right pb-4 border-b border-border">Amount</th>
                     <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-right pb-4 border-b border-border">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {invoices.map((inv) => (
-                    <tr key={inv.id}>
-                      <td className="text-sm text-foreground py-5 border-b border-border">
-                        {new Date(inv.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                      </td>
-                      <td className="text-sm text-foreground py-5 border-b border-border">{inv.description}</td>
-                      <td className="text-sm text-foreground py-5 border-b border-border text-right">{fmt(inv.amount)}</td>
-                      <td className="text-sm py-5 border-b border-border text-right">
-                        <span className="inline-flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${statusDot[inv.status] || "bg-muted"}`} />
-                          {inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {invoices.map((inv) => {
+                    const isOverdue = inv.status === "overdue";
+                    return (
+                      <tr key={inv.id} className={isOverdue ? "bg-destructive/5" : ""}>
+                        <td className={`text-sm py-5 border-b border-border ${isOverdue ? "text-destructive font-medium" : "text-foreground"}`}>
+                          {inv.description}
+                        </td>
+                        <td className="text-sm text-muted-foreground py-5 border-b border-border hidden sm:table-cell">
+                          {inv.due_date
+                            ? new Date(inv.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                            : inv.status === "paid" && inv.paid_date
+                            ? `Paid ${new Date(inv.paid_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+                            : "—"}
+                        </td>
+                        <td className={`text-sm py-5 border-b border-border text-right ${isOverdue ? "text-destructive font-medium" : "text-foreground"}`}>
+                          {fmt(inv.amount)}
+                        </td>
+                        <td className="text-sm py-5 border-b border-border text-right">
+                          <span className="inline-flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${statusDot[inv.status] || "bg-muted"}`} />
+                            {inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
