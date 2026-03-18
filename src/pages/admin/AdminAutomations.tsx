@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Zap, Clock, AlertTriangle, MessageSquare, Calendar, Heart, FileText } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
+import OnboardingWorkflowBuilder from "@/components/admin/OnboardingWorkflowBuilder";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -84,6 +86,13 @@ const AdminAutomations = () => {
     <div>
       <AdminHeader breadcrumbs={[{ label: "Settings", path: "/admin/settings" }, { label: "Automations" }]} />
       <div className="p-6 max-w-4xl space-y-6">
+        <Tabs defaultValue="rules" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="rules" className="font-sans text-xs">Automation Rules</TabsTrigger>
+            <TabsTrigger value="onboarding" className="font-sans text-xs">Onboarding Workflows</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="rules" className="space-y-6">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Smart Automations</h2>
           <p className="text-sm text-muted-foreground">Configure automatic task creation and notifications based on client activity.</p>
@@ -155,6 +164,12 @@ const AdminAutomations = () => {
             </Card>
           </div>
         )}
+          </TabsContent>
+
+          <TabsContent value="onboarding">
+            <OnboardingWorkflowBuilder />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

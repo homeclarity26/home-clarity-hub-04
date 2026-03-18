@@ -61,6 +61,8 @@ import AITranscriptSummarizer from "@/components/admin/AITranscriptSummarizer";
 import ClientTimelineTab from "@/components/admin/ClientTimelineTab";
 import ClientEngagementTab from "@/components/admin/ClientEngagementTab";
 import ReportVersionHistory from "@/components/admin/ReportVersionHistory";
+import HealthScoreTrend from "@/components/admin/HealthScoreTrend";
+import SignatureRequestManager from "@/components/admin/SignatureRequestManager";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
@@ -403,9 +405,11 @@ const AdminClientDetail = () => {
         {activeTab === "overview" && (
           <div className="space-y-6">
             <AIClientInsightsCard propertyId={client.propertyId} clientData={{ name: client.name, address: client.address, propertyType: client.propertyType, yearBuilt: client.yearBuilt }} />
+            <HealthScoreTrend clientId={client.propertyId} />
             <ClientHealthCard client={client} />
             <AIFollowUpSuggestions propertyId={client.propertyId} clientName={client.name} />
             <ConditionForecast propertyId={client.propertyId} />
+            <OnboardingTracker client={client} />
             <ClientStickyNotes propertyId={client.propertyId} />
             <PortalEngagementCard clientUserId={client.clientUserId || ""} />
             <ClientOverview client={client} />
@@ -469,6 +473,7 @@ const AdminClientDetail = () => {
         )}
         {activeTab === "files" && (
           <div className="space-y-4">
+            <SignatureRequestManager clientId={client.propertyId} propertyId={client.propertyId} />
             <AITranscriptSummarizer propertyId={client.propertyId} />
             <FileManager propertyId={client.propertyId} />
           </div>
