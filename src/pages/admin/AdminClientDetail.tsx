@@ -29,6 +29,8 @@ import AdminValuationCard from "@/components/admin/AdminValuationCard";
 import ClientHealthCard from "@/components/admin/ClientHealthCard";
 import AdminInvoicesSection from "@/components/admin/AdminInvoicesSection";
 import ClientActivityTimeline from "@/components/admin/ClientActivityTimeline";
+import SmartScheduleDialog from "@/components/admin/SmartScheduleDialog";
+import FollowUpSequence from "@/components/admin/FollowUpSequence";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
