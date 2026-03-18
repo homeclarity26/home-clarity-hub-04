@@ -24,7 +24,7 @@ export function useVendorProjects(vendorId: string | undefined) {
     queryFn: async () => {
       // Get tasks assigned to this vendor → get unique project IDs
       const { data: tasks } = await (supabase.from("project_tasks") as any).select("project_id").eq("assigned_vendor_id", vendorId);
-      const projectIds = [...new Set((tasks || []).map((t: any) => t.project_id))];
+      const projectIds = [...new Set((tasks || []).map((t: any) => t.project_id))] as string[];
       if (projectIds.length === 0) return [];
       const { data: projects } = await supabase.from("projects").select("*").in("id", projectIds).order("created_at", { ascending: false });
       return projects || [];
