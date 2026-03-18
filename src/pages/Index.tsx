@@ -203,6 +203,7 @@ const Index = () => {
               propertyId={portal.property?.id}
               creatorName={portal.creatorName}
               creatorInitials={portal.creatorProfile?.initials}
+              initialMessage={pendingMessage || undefined}
             />
           )}
         </div>
