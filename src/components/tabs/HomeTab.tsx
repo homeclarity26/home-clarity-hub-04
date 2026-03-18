@@ -4,7 +4,9 @@ import FeedbackWidget from "@/components/FeedbackWidget";
 import HomeValueTracker from "@/components/HomeValueTracker";
 import MembershipBanner from "@/components/MembershipBanner";
 import ValuationModal from "@/components/ValuationModal";
+import HomeHealthDiagram from "@/components/HomeHealthDiagram";
 import { usePropertyValuation } from "@/hooks/usePropertyValuation";
+import type { ReportPageData } from "@/data/reportContent";
 
 interface HomeTabProps {
   onNavigate: (tab: string, pageId?: string) => void;
@@ -16,6 +18,7 @@ interface HomeTabProps {
   estimatedValue?: number | null;
   propertyId?: string;
   membershipEndDate?: string | null;
+  reportPages?: Record<string, ReportPageData>;
 }
 
 const HomeTab = ({
