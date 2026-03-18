@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
-import { FileText, Image, Music, ExternalLink, FolderOpen, Loader2 } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { FileText, Image, Music, ExternalLink, FolderOpen, Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DocumentsTabProps {
   propertyId?: string;
