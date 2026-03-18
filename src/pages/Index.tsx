@@ -277,6 +277,7 @@ const Index = () => {
               iguideUrl={portal.property?.iguide_url}
               iguidePdfUrl={portal.property?.iguide_pdf_url}
               estimatedValue={portal.property?.estimated_value}
+              blocksJson={portal.blocksJson}
             />
           )}
         </div>

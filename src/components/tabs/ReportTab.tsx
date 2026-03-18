@@ -60,9 +60,34 @@ interface ReportTabProps {
   iguidePdfUrl?: string | null;
   completionPercent?: number;
   estimatedValue?: number | null;
+  blocksJson?: unknown[];
 }
 
 const ReportTab = ({
+  activePageId,
+  onNavigate,
+  onTabChange,
+  onSendMessage,
+  groups,
+  pages,
+  pageKeyToDbId = {},
+  pageImages = {},
+  propertyName = "Your Home",
+  propertyAddress = "",
+  propertyId,
+  pdfData,
+  reportId,
+  propertyContext,
+  hoverUrl,
+  hoverPdfUrl,
+  iguideUrl,
+  iguidePdfUrl,
+  completionPercent = 0,
+  estimatedValue,
+  blocksJson,
+}: ReportTabProps) => {
+  // If blocks_json has content, render using the WYSIWYG block viewer
+  const hasBlocks = blocksJson && Array.isArray(blocksJson) && blocksJson.length > 0;
   activePageId,
   onNavigate,
   onTabChange,
