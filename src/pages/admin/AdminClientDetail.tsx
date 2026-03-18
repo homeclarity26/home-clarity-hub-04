@@ -26,6 +26,7 @@ import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import AdminMessagesSection from "@/components/admin/AdminMessagesSection";
 import AdminValuationCard from "@/components/admin/AdminValuationCard";
+import ClientHealthCard from "@/components/admin/ClientHealthCard";
 import AdminInvoicesSection from "@/components/admin/AdminInvoicesSection";
 import ClientActivityTimeline from "@/components/admin/ClientActivityTimeline";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
@@ -346,6 +347,7 @@ const AdminClientDetail = () => {
 
         {activeTab === "overview" && (
           <div className="space-y-6">
+            <ClientHealthCard client={client} />
             <ClientOverview client={client} />
             <AdminValuationCard propertyId={client.propertyId} address={client.address} />
           </div>

@@ -4,7 +4,10 @@ import FeedbackWidget from "@/components/FeedbackWidget";
 import HomeValueTracker from "@/components/HomeValueTracker";
 import MembershipBanner from "@/components/MembershipBanner";
 import ValuationModal from "@/components/ValuationModal";
+import HomeHealthDiagram from "@/components/HomeHealthDiagram";
+import AnnualReportCard from "@/components/AnnualReportCard";
 import { usePropertyValuation } from "@/hooks/usePropertyValuation";
+import type { ReportPageData } from "@/data/reportContent";
 
 interface HomeTabProps {
   onNavigate: (tab: string, pageId?: string) => void;
@@ -16,6 +19,7 @@ interface HomeTabProps {
   estimatedValue?: number | null;
   propertyId?: string;
   membershipEndDate?: string | null;
+  reportPages?: Record<string, ReportPageData>;
 }
 
 const HomeTab = ({
@@ -28,6 +32,7 @@ const HomeTab = ({
   estimatedValue,
   propertyId,
   membershipEndDate,
+  reportPages,
 }: HomeTabProps) => {
   const [valuationOpen, setValuationOpen] = useState(false);
   const { valuation, isLoading: valLoading, fetchValuation } = usePropertyValuation(propertyId, propertyAddress);
@@ -117,9 +122,15 @@ const HomeTab = ({
       {/* Card Grid */}
       <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
 
+        {/* Home Health Diagram */}
+        {reportPages && <HomeHealthDiagram pages={reportPages} onNavigate={onNavigate} />}
+
         {/* Home Value Tracker */}
         {propertyId && (
           <HomeValueTracker propertyId={propertyId} estimatedValue={estimatedValue} />
+        )}
+        {propertyId && !propertyId.startsWith("mock-") && (
+          <AnnualReportCard propertyId={propertyId} />
         )}
 
         {/* Row 1: Portal Status */}

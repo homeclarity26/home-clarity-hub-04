@@ -24,6 +24,7 @@ interface CreatorBarProps {
   pdfData?: PDFReportData;
   onDraftNarrative?: () => void;
   isDrafting?: boolean;
+  qaCoachSlot?: React.ReactNode;
 }
 
 const statusLabels: Record<string, string> = {
@@ -47,6 +48,7 @@ const CreatorBar = ({
   pdfData,
   onDraftNarrative,
   isDrafting,
+  qaCoachSlot,
 }: CreatorBarProps) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -115,6 +117,7 @@ const CreatorBar = ({
 
       {/* Right: draft + save indicator + PDF */}
       <div className="flex items-center gap-2">
+        {qaCoachSlot}
         {onDraftNarrative && (
           <Button
             variant="ghost"

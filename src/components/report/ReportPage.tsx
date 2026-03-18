@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import CreatorBar from "./CreatorBar";
+import QACoachPanel from "@/components/admin/QACoachPanel";
 import BlockRenderer from "./BlockRenderer";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useReportPage } from "@/hooks/useReportPage";
@@ -114,6 +115,7 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
           pdfData={pdfData}
           onDraftNarrative={handleDraftNarrative}
           isDrafting={isDrafting}
+          qaCoachSlot={dbPageId ? <QACoachPanel page={{ id: dbPageId, title: page.title, condition_rating: pageData.conditionRating, narrative: pageData.narrative, specs: pageData.specs, tiers: pageData.tiers, findings: (pageData as unknown as Record<string, unknown>).findings, key_observations: extendedPageData.key_observations, images: resolvedImages }} /> : undefined}
         />
       )}
 
