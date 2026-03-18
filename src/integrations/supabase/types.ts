@@ -178,6 +178,38 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_priority_cards: {
+        Row: {
+          client_id: string
+          generated_at: string
+          id: string
+          priorities_json: Json
+          property_id: string | null
+        }
+        Insert: {
+          client_id: string
+          generated_at?: string
+          id?: string
+          priorities_json?: Json
+          property_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          generated_at?: string
+          id?: string
+          priorities_json?: Json
+          property_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_priority_cards_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_score_explanations: {
         Row: {
           client_id: string
@@ -444,6 +476,50 @@ export type Database = {
           last_used_at?: string | null
         }
         Relationships: []
+      }
+      appointment_requests: {
+        Row: {
+          client_id: string
+          confirmed_slot: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          preferred_slots_json: Json
+          property_id: string | null
+          status: string
+          topic: string
+        }
+        Insert: {
+          client_id: string
+          confirmed_slot?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          preferred_slots_json?: Json
+          property_id?: string | null
+          status?: string
+          topic: string
+        }
+        Update: {
+          client_id?: string
+          confirmed_slot?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          preferred_slots_json?: Json
+          property_id?: string | null
+          status?: string
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_requests_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_log: {
         Row: {
@@ -789,6 +865,33 @@ export type Database = {
         }
         Relationships: []
       }
+      client_satisfaction_scores: {
+        Row: {
+          client_id: string
+          comment: string | null
+          id: string
+          report_id: string | null
+          score: number
+          submitted_at: string
+        }
+        Insert: {
+          client_id: string
+          comment?: string | null
+          id?: string
+          report_id?: string | null
+          score: number
+          submitted_at?: string
+        }
+        Update: {
+          client_id?: string
+          comment?: string | null
+          id?: string
+          report_id?: string | null
+          score?: number
+          submitted_at?: string
+        }
+        Relationships: []
+      }
       client_sessions: {
         Row: {
           client_id: string
@@ -1115,6 +1218,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      glossary_terms: {
+        Row: {
+          category: string
+          created_at: string
+          definition: string
+          id: string
+          related_terms: string[] | null
+          term: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          definition: string
+          id?: string
+          related_terms?: string[] | null
+          term: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          definition?: string
+          id?: string
+          related_terms?: string[] | null
+          term?: string
+        }
+        Relationships: []
       }
       health_score_history: {
         Row: {
@@ -3126,6 +3256,39 @@ export type Database = {
           triggered_at?: string
           variance_minutes?: number | null
           was_met?: boolean | null
+        }
+        Relationships: []
+      }
+      sms_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          is_verified: boolean
+          opted_in_events_json: Json
+          phone_number: string
+          user_id: string
+          user_type: string
+          verification_code: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_verified?: boolean
+          opted_in_events_json?: Json
+          phone_number: string
+          user_id: string
+          user_type?: string
+          verification_code?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_verified?: boolean
+          opted_in_events_json?: Json
+          phone_number?: string
+          user_id?: string
+          user_type?: string
+          verification_code?: string | null
         }
         Relationships: []
       }
