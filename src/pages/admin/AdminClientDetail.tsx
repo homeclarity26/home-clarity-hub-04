@@ -390,6 +390,9 @@ const AdminClientDetail = () => {
         {activeTab === "report" && (
           <div className="space-y-4">
             <div className="flex items-center justify-end gap-2">
+              {client.reportId && (
+                <ReportCloneDialog sourceReportId={client.reportId} sourcePropertyName={client.propertyName} />
+              )}
               {pdfData && (
                 <PDFDownloadButton
                   data={pdfData}
@@ -400,6 +403,10 @@ const AdminClientDetail = () => {
                 />
               )}
             </div>
+            {client.reportId && <TemplateVersioning reportId={client.reportId} />}
+            {reportPages && reportPages.length > 0 && (
+              <ReportProgressKanban pages={reportPages} propertyId={client.propertyId} />
+            )}
             <VoiceAndPhotoTools reportId={client.reportId || ""} propertyId={client.propertyId} />
             <ReportAITools
               reportId={client.reportId || ""}
