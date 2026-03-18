@@ -19,8 +19,11 @@ const STATUS_COLORS: Record<string, string> = { dreaming: "bg-muted text-muted-f
 
 const AdminGoalsDashboard = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newGoal, setNewGoal] = useState({ title: "", description: "", status: "dreaming", target_year: "", estimated_budget: "" });
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-all-goals"],
