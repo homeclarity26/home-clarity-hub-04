@@ -1,4 +1,4 @@
-import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home } from "lucide-react";
+import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle } from "lucide-react";
 
 interface HomeTabProps {
   onNavigate: (tab: string, pageId?: string) => void;
