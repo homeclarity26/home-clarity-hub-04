@@ -194,6 +194,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         profile,
         roles,
         isCreator,
+        isTradePartner,
         isLoading,
         signIn,
         signUp,
