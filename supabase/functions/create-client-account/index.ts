@@ -98,6 +98,12 @@ Deno.serve(async (req) => {
 
       clientUserId = newUser.user.id;
 
+      // Assign client role
+      await adminClient.from("user_roles").upsert(
+        { user_id: clientUserId, role: "client" },
+        { onConflict: "user_id,role" }
+      );
+
       // Update profile with email
       await adminClient
         .from("profiles")
