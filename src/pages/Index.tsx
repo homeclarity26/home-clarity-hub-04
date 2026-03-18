@@ -190,6 +190,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Tutorial onboarding modal for first-time clients */}
+      {showTutorialModal && !isCreator && (
+        <ClientOnboardingModal
+          onComplete={(navigateTo) => {
+            setShowTutorialModal(false);
+            if (navigateTo === "report") handleTabChange("report");
+          }}
+        />
+      )}
       {showOnboarding && portal.property && (
         <OnboardingOverlay
           propertyName={propertyName}
