@@ -274,6 +274,19 @@ const ReportTab = ({
 
         {/* Action buttons */}
         <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-8 flex flex-wrap gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 font-mono text-[10px] uppercase tracking-wider"
+            onClick={() => {
+              const url = `${window.location.origin}/portal/${propertyId}?page=${activePageId}`;
+              navigator.clipboard.writeText(url);
+              toast.success("Link copied! Share it with your contractor or advisor.");
+            }}
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            Share This Section
+          </Button>
           {onSendMessage && (
             <Button
               variant="outline"
