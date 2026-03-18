@@ -155,11 +155,12 @@ const Index = () => {
           )}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "report" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "report" && (
+        {activeTab === "report" && (
             <ReportTab
               activePageId={reportPageId}
               onNavigate={handleReportPageSelect}
               onTabChange={handleTabChange}
+              onSendMessage={handleSendMessage}
               groups={portal.groups}
               pages={portal.pages}
               pageKeyToDbId={portal.pageKeyToDbId}
@@ -169,6 +170,7 @@ const Index = () => {
               propertyId={portal.property?.id}
               pdfData={pdfData}
               reportId={portal.report?.id}
+              completionPercent={portal.completionPercent}
               propertyContext={portal.property ? {
                 yearBuilt: portal.property.year_built ?? undefined,
                 sqft: portal.property.sqft ?? undefined,
