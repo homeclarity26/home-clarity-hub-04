@@ -246,6 +246,13 @@ export function useClientPortal(propertyId?: string) {
         dependencies: (p.dependencies as { pageKey: string; title: string; type: "before" | "after" }[]) || undefined,
         maintenance: (p.maintenance as { frequency?: string; tasks: string[] }) || undefined,
         creator_notes: p.creator_notes || undefined,
+        last_inspected_date: p.last_inspected_date || undefined,
+        next_review_date: p.next_review_date || undefined,
+        expected_lifespan_years: p.expected_lifespan_years || undefined,
+        current_age_years: p.current_age_years || undefined,
+        replacement_cost_today: p.replacement_cost_today || undefined,
+        findings: (p.findings as unknown[]) || undefined,
+        is_complete: p.is_complete || false,
       } as ReportPageData;
     }
     return map;
