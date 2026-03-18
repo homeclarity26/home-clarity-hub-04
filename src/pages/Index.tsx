@@ -18,10 +18,14 @@ import NotificationPreferences from "@/components/NotificationPreferences";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import NPSSurveyCard from "@/components/NPSSurveyCard";
 import PropertySelector from "@/components/PropertySelector";
+import HelpFloatingButton from "@/components/help/HelpFloatingButton";
+import HelpCenterPanel from "@/components/help/HelpCenterPanel";
+import ClientOnboardingModal from "@/components/help/ClientOnboardingModal";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { usePortalTracking } from "@/hooks/usePortalTracking";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTutorialProgress } from "@/hooks/useTutorialProgress";
 import { supabase } from "@/integrations/supabase/client";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 
