@@ -135,7 +135,7 @@ const DocumentsTab = ({ propertyId }: DocumentsTabProps) => {
           </div>
         ) : (
           categories.map((category) => {
-            const catFiles = files.filter((f) => f.category === category);
+            const catFiles = filteredFiles.filter((f) => f.category === category);
             const Icon = categoryIcons[category] || FileText;
             return (
               <div key={category}>
