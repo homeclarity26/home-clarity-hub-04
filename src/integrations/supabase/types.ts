@@ -52,6 +52,210 @@ export type Database = {
           },
         ]
       }
+      ai_client_insights: {
+        Row: {
+          client_id: string
+          generated_at: string
+          id: string
+          insights_json: Json
+        }
+        Insert: {
+          client_id: string
+          generated_at?: string
+          id?: string
+          insights_json?: Json
+        }
+        Update: {
+          client_id?: string
+          generated_at?: string
+          id?: string
+          insights_json?: Json
+        }
+        Relationships: []
+      }
+      ai_cost_estimates: {
+        Row: {
+          client_id: string
+          created_at: string
+          estimates_json: Json
+          id: string
+          inputs_json: Json
+          project_type: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          estimates_json?: Json
+          id?: string
+          inputs_json?: Json
+          project_type: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          estimates_json?: Json
+          id?: string
+          inputs_json?: Json
+          project_type?: string
+        }
+        Relationships: []
+      }
+      ai_draft_history: {
+        Row: {
+          admin_id: string
+          client_id: string
+          created_at: string
+          generated_text: string
+          id: string
+          input_notes: string
+          section_type: string
+        }
+        Insert: {
+          admin_id: string
+          client_id: string
+          created_at?: string
+          generated_text: string
+          id?: string
+          input_notes: string
+          section_type: string
+        }
+        Update: {
+          admin_id?: string
+          client_id?: string
+          created_at?: string
+          generated_text?: string
+          id?: string
+          input_notes?: string
+          section_type?: string
+        }
+        Relationships: []
+      }
+      ai_maintenance_schedules: {
+        Row: {
+          applied_at: string | null
+          client_id: string
+          generated_at: string
+          id: string
+          schedule_json: Json
+        }
+        Insert: {
+          applied_at?: string | null
+          client_id: string
+          generated_at?: string
+          id?: string
+          schedule_json?: Json
+        }
+        Update: {
+          applied_at?: string | null
+          client_id?: string
+          generated_at?: string
+          id?: string
+          schedule_json?: Json
+        }
+        Relationships: []
+      }
+      ai_message_suggestions: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          suggestions_json: Json
+          thread_context_hash: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          suggestions_json?: Json
+          thread_context_hash?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          suggestions_json?: Json
+          thread_context_hash?: string | null
+        }
+        Relationships: []
+      }
+      ai_score_explanations: {
+        Row: {
+          client_id: string
+          created_at: string
+          explanation_text: string
+          id: string
+          score_value: number | null
+          section: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          explanation_text: string
+          id?: string
+          score_value?: number | null
+          section: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          explanation_text?: string
+          id?: string
+          score_value?: number | null
+          section?: string
+        }
+        Relationships: []
+      }
+      ai_transcript_summaries: {
+        Row: {
+          audio_file_url: string | null
+          client_id: string
+          created_at: string
+          id: string
+          summary_json: Json
+          transcript_text: string | null
+        }
+        Insert: {
+          audio_file_url?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          summary_json?: Json
+          transcript_text?: string | null
+        }
+        Update: {
+          audio_file_url?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          summary_json?: Json
+          transcript_text?: string | null
+        }
+        Relationships: []
+      }
+      ai_vendor_matches: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          project_id: string
+          vendor_recommendations_json: Json
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          project_id: string
+          vendor_recommendations_json?: Json
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          vendor_recommendations_json?: Json
+        }
+        Relationships: []
+      }
       announcement_dismissals: {
         Row: {
           announcement_id: string
@@ -74,6 +278,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "announcement_dismissals_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      announcement_views: {
+        Row: {
+          announcement_id: string
+          client_id: string
+          id: string
+          viewed_at: string
+        }
+        Insert: {
+          announcement_id: string
+          client_id: string
+          id?: string
+          viewed_at?: string
+        }
+        Update: {
+          announcement_id?: string
+          client_id?: string
+          id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_views_announcement_id_fkey"
             columns: ["announcement_id"]
             isOneToOne: false
             referencedRelation: "announcements"
@@ -181,6 +414,128 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      automation_logs: {
+        Row: {
+          action_taken_description: string
+          client_id: string | null
+          id: string
+          rule_id: string
+          triggered_at: string
+        }
+        Insert: {
+          action_taken_description: string
+          client_id?: string | null
+          id?: string
+          rule_id: string
+          triggered_at?: string
+        }
+        Update: {
+          action_taken_description?: string
+          client_id?: string | null
+          id?: string
+          rule_id?: string
+          triggered_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_logs_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_rules: {
+        Row: {
+          admin_id: string
+          config_json: Json
+          created_at: string
+          id: string
+          is_enabled: boolean
+          last_triggered_at: string | null
+          rule_description: string | null
+          rule_name: string
+          rule_type: string
+          trigger_count: number
+        }
+        Insert: {
+          admin_id: string
+          config_json?: Json
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          last_triggered_at?: string | null
+          rule_description?: string | null
+          rule_name: string
+          rule_type: string
+          trigger_count?: number
+        }
+        Update: {
+          admin_id?: string
+          config_json?: Json
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          last_triggered_at?: string | null
+          rule_description?: string | null
+          rule_name?: string
+          rule_type?: string
+          trigger_count?: number
+        }
+        Relationships: []
+      }
+      central_vendors: {
+        Row: {
+          admin_id: string
+          company_name: string
+          contact_name: string | null
+          cost_tier: string | null
+          created_at: string
+          email: string | null
+          id: string
+          lead_time: string | null
+          notes: string | null
+          phone: string | null
+          rating: number | null
+          service_area: string | null
+          specialties: string[] | null
+          status: string
+        }
+        Insert: {
+          admin_id: string
+          company_name: string
+          contact_name?: string | null
+          cost_tier?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          lead_time?: string | null
+          notes?: string | null
+          phone?: string | null
+          rating?: number | null
+          service_area?: string | null
+          specialties?: string[] | null
+          status?: string
+        }
+        Update: {
+          admin_id?: string
+          company_name?: string
+          contact_name?: string | null
+          cost_tier?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          lead_time?: string | null
+          notes?: string | null
+          phone?: string | null
+          rating?: number | null
+          service_area?: string | null
+          specialties?: string[] | null
+          status?: string
+        }
+        Relationships: []
       }
       change_orders: {
         Row: {
@@ -330,6 +685,42 @@ export type Database = {
           login_at?: string
           pages_visited?: Json | null
           session_duration_minutes?: number | null
+        }
+        Relationships: []
+      }
+      client_timeline_events: {
+        Row: {
+          actor: string
+          client_id: string
+          created_at: string
+          event_description: string
+          event_type: string
+          id: string
+          is_admin_note: boolean
+          metadata_json: Json | null
+          note_text: string | null
+        }
+        Insert: {
+          actor?: string
+          client_id: string
+          created_at?: string
+          event_description: string
+          event_type: string
+          id?: string
+          is_admin_note?: boolean
+          metadata_json?: Json | null
+          note_text?: string | null
+        }
+        Update: {
+          actor?: string
+          client_id?: string
+          created_at?: string
+          event_description?: string
+          event_type?: string
+          id?: string
+          is_admin_note?: boolean
+          metadata_json?: Json | null
+          note_text?: string | null
         }
         Relationships: []
       }
@@ -1415,6 +1806,54 @@ export type Database = {
           },
         ]
       }
+      referrals: {
+        Row: {
+          admin_id: string
+          converted_client_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          referral_date: string
+          referred_email: string | null
+          referred_name: string
+          referred_phone: string | null
+          referring_client_id: string
+          reward_amount: number | null
+          reward_status: string
+          status: string
+        }
+        Insert: {
+          admin_id: string
+          converted_client_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          referral_date?: string
+          referred_email?: string | null
+          referred_name: string
+          referred_phone?: string | null
+          referring_client_id: string
+          reward_amount?: number | null
+          reward_status?: string
+          status?: string
+        }
+        Update: {
+          admin_id?: string
+          converted_client_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          referral_date?: string
+          referred_email?: string | null
+          referred_name?: string
+          referred_phone?: string | null
+          referring_client_id?: string
+          reward_amount?: number | null
+          reward_status?: string
+          status?: string
+        }
+        Relationships: []
+      }
       report_comments: {
         Row: {
           comment_text: string
@@ -1617,6 +2056,39 @@ export type Database = {
           },
         ]
       }
+      report_versions: {
+        Row: {
+          change_notes: string | null
+          client_id: string
+          id: string
+          is_published: boolean
+          report_snapshot_json: Json
+          saved_at: string
+          saved_by_admin_id: string
+          version_number: number
+        }
+        Insert: {
+          change_notes?: string | null
+          client_id: string
+          id?: string
+          is_published?: boolean
+          report_snapshot_json?: Json
+          saved_at?: string
+          saved_by_admin_id: string
+          version_number?: number
+        }
+        Update: {
+          change_notes?: string | null
+          client_id?: string
+          id?: string
+          is_published?: boolean
+          report_snapshot_json?: Json
+          saved_at?: string
+          saved_by_admin_id?: string
+          version_number?: number
+        }
+        Relationships: []
+      }
       reports: {
         Row: {
           created_at: string
@@ -1740,6 +2212,7 @@ export type Database = {
       tasks: {
         Row: {
           admin_id: string
+          category: string | null
           client_id: string | null
           created_at: string
           description: string | null
@@ -1752,6 +2225,7 @@ export type Database = {
         }
         Insert: {
           admin_id: string
+          category?: string | null
           client_id?: string | null
           created_at?: string
           description?: string | null
@@ -1764,6 +2238,7 @@ export type Database = {
         }
         Update: {
           admin_id?: string
+          category?: string | null
           client_id?: string | null
           created_at?: string
           description?: string | null

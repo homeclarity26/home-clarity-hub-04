@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X, MessageSquare, CheckSquare, Briefcase, Target, Share2, Megaphone, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
@@ -8,8 +8,14 @@ import { useOpenTaskCount } from "@/hooks/useAdminTasks";
 
 const navItems = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard, showBadge: true },
+  { label: "Inbox", path: "/admin/inbox", icon: MessageSquare },
   { label: "Clients", path: "/admin/clients", icon: Users },
-  { label: "Announcements", path: "/admin/announcements", icon: Menu },
+  { label: "Tasks", path: "/admin/tasks", icon: CheckSquare },
+  { label: "Vendors", path: "/admin/vendors", icon: Briefcase },
+  { label: "Goals", path: "/admin/goals", icon: Target },
+  { label: "Referrals", path: "/admin/referrals", icon: Share2 },
+  { label: "Announcements", path: "/admin/announcements", icon: Megaphone },
+  { label: "Automations", path: "/admin/automations", icon: Zap },
   { label: "Knowledge Base", path: "/admin/knowledge-base", icon: BookOpen },
   { label: "Settings", path: "/admin/settings", icon: Settings },
 ];

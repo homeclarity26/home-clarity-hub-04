@@ -21,6 +21,12 @@ import AdminNewReport from "./pages/admin/AdminNewReport";
 import AdminKnowledgeBase from "./pages/admin/AdminKnowledgeBase";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
+import AdminInbox from "./pages/admin/AdminInbox";
+import AdminTaskBoard from "./pages/admin/AdminTaskBoard";
+import AdminVendorDirectory from "./pages/admin/AdminVendorDirectory";
+import AdminGoalsDashboard from "./pages/admin/AdminGoalsDashboard";
+import AdminReferrals from "./pages/admin/AdminReferrals";
+import AdminAutomations from "./pages/admin/AdminAutomations";
 
 const queryClient = new QueryClient();
 
@@ -154,9 +160,15 @@ const AppRoutes = () => {
         }
       >
         <Route index element={<AdminDashboard />} />
+        <Route path="inbox" element={<AdminInbox />} />
         <Route path="clients" element={<AdminClients />} />
         <Route path="clients/new" element={<AdminNewReport />} />
         <Route path="clients/:clientId" element={<AdminClientDetail />} />
+        <Route path="tasks" element={<AdminTaskBoard />} />
+        <Route path="vendors" element={<AdminVendorDirectory />} />
+        <Route path="goals" element={<AdminGoalsDashboard />} />
+        <Route path="referrals" element={<AdminReferrals />} />
+        <Route path="automations" element={<AdminAutomations />} />
         <Route path="knowledge-base" element={<AdminKnowledgeBase />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="announcements" element={<AdminAnnouncements />} />
