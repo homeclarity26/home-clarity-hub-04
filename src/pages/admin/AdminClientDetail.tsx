@@ -372,7 +372,10 @@ const AdminClientDetail = () => {
         {activeTab === "overview" && (
           <div className="space-y-6">
             <ClientHealthCard client={client} />
+            <PortalEngagementCard clientUserId={client.clientUserId || ""} />
             <ClientOverview client={client} />
+            <HomeGoalsAdmin clientUserId={client.clientUserId || ""} propertyId={client.propertyId} />
+            <PortalPersonalization propertyId={client.propertyId} />
             <AdminValuationCard propertyId={client.propertyId} address={client.address} />
           </div>
         )}
