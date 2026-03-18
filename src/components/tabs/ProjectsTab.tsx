@@ -274,6 +274,9 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
                             </div>
                           )}
 
+                          {/* Contractor Bids Comparison */}
+                          <ContractorBidsSection projectId={project.id} projectTitle={project.title} />
+
                           {/* Ask About This Project */}
                           {project.status !== "complete" && (
                             <Button
