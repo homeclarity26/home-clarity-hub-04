@@ -160,6 +160,7 @@ const AdminClientDetail = () => {
   const [selectedTierPage, setSelectedTierPage] = useState("");
   const [selectedTier, setSelectedTier] = useState("");
   const [eventOpen, setEventOpen] = useState(false);
+  const [editScheduleEvent, setEditScheduleEvent] = useState<any>(null);
 
   // Edit dialog states
   const [editInvoiceOpen, setEditInvoiceOpen] = useState(false);
