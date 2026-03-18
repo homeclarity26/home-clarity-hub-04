@@ -46,7 +46,7 @@ const AdminProjectDetail = () => {
   if (!project) {
     return (
       <div>
-        <AdminHeader breadcrumbs={[{ label: "Projects", href: "/admin/projects" }, { label: "Not Found" }]} />
+        <AdminHeader breadcrumbs={[{ label: "Projects", path: "/admin/projects" }, { label: "Not Found" }]} />
         <div className="p-6 text-center text-muted-foreground font-sans">Project not found.</div>
       </div>
     );
