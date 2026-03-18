@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { DollarSign, TrendingUp, Percent, Receipt, Calendar, ArrowRight } from "lucide-react";
+import { DollarSign, TrendingUp, Percent, Receipt, Calendar, ArrowRight, Plus } from "lucide-react";
 import { format, subMonths, addMonths, differenceInDays } from "date-fns";
 import { useNavigate } from "react-router-dom";
 

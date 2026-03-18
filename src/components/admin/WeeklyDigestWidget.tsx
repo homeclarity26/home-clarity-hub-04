@@ -94,6 +94,34 @@ const WeeklyDigestWidget = () => {
         </div>
       )}
 
+      {!digest && !loading && (
+        <div className="border border-dashed border-border rounded-lg p-4 space-y-2">
+          <div className="grid grid-cols-4 gap-3">
+            <div className="text-center">
+              <DollarSign className="w-3.5 h-3.5 mx-auto mb-1 text-muted-foreground/30" />
+              <p className="text-sm font-sans font-bold text-muted-foreground/40">$0</p>
+              <p className="text-[10px] font-sans text-muted-foreground/30">Collected</p>
+            </div>
+            <div className="text-center">
+              <DollarSign className="w-3.5 h-3.5 mx-auto mb-1 text-muted-foreground/30" />
+              <p className="text-sm font-sans font-bold text-muted-foreground/40">$0</p>
+              <p className="text-[10px] font-sans text-muted-foreground/30">Overdue</p>
+            </div>
+            <div className="text-center">
+              <MessageSquare className="w-3.5 h-3.5 mx-auto mb-1 text-muted-foreground/30" />
+              <p className="text-sm font-sans font-bold text-muted-foreground/40">0</p>
+              <p className="text-[10px] font-sans text-muted-foreground/30">Unread</p>
+            </div>
+            <div className="text-center">
+              <CheckCircle className="w-3.5 h-3.5 mx-auto mb-1 text-muted-foreground/30" />
+              <p className="text-sm font-sans font-bold text-muted-foreground/40">0/0</p>
+              <p className="text-[10px] font-sans text-muted-foreground/30">Tasks</p>
+            </div>
+          </div>
+          <p className="text-xs font-sans text-muted-foreground text-center pt-2">Click "Generate" to see your weekly AI-powered business summary.</p>
+        </div>
+      )}
+
       {digest && expanded && (
         <div className="prose prose-sm max-w-none dark:prose-invert font-sans border-t border-border pt-4 max-h-80 overflow-y-auto">
           <ReactMarkdown>{digest}</ReactMarkdown>
