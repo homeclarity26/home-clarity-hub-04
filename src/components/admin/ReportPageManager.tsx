@@ -278,7 +278,10 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
                   const isUpdating = updatingId === page.id;
 
                   return (
-                    <TableRow key={page.id}>
+                    <TableRow key={page.id} className={selectedIds.includes(page.id) ? "bg-primary/5" : ""}>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox checked={selectedIds.includes(page.id)} onCheckedChange={() => toggleSelect(page.id)} />
+                      </TableCell>
                       <TableCell className="font-sans text-sm font-medium">{page.title}</TableCell>
                       <TableCell>
                         {isUpdating ? (
