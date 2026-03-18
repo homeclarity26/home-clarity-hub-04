@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,6 +53,33 @@ serve(async (req) => {
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
 
+    // --- Knowledge Base Context Injection ---
+    let kbContext = "";
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, serviceKey);
+
+      // Derive category from page slug (e.g. "roof-system" → "roof", "hvac" → "hvac")
+      const slugCategory = pageSlug.split("-")[0].toLowerCase();
+
+      const { data: kbArticles } = await supabase
+        .from("knowledge_templates")
+        .select("title, content, category, region")
+        .or(`category.ilike.%${slugCategory}%,title.ilike.%${pageName}%`)
+        .limit(5);
+
+      if (kbArticles && kbArticles.length > 0) {
+        kbContext = "\n\nKNOWLEDGE BASE ARTICLES (use these for regional/property-specific context):\n" +
+          kbArticles.map((a) => {
+            const contentStr = typeof a.content === "string" ? a.content : JSON.stringify(a.content);
+            return `--- ${a.title} (${a.category}${a.region ? `, ${a.region}` : ""}) ---\n${contentStr}`;
+          }).join("\n\n");
+      }
+    } catch (kbErr) {
+      console.warn("KB lookup failed (non-fatal):", kbErr);
+    }
+
     const specsStr = existingSpecs && Object.keys(existingSpecs).length > 0
       ? Object.entries(existingSpecs).map(([k, v]) => `${k}: ${v}`).join(", ")
       : "none provided";
@@ -81,6 +109,7 @@ Known specs: ${specsStr}
 ${clientIntelligenceSummary ? `Client intelligence summary:\n${clientIntelligenceSummary}` : ""}
 ${clientGoals?.length ? `Client goals: ${clientGoals.join("; ")}` : ""}
 ${clientPriorities?.length ? `Flagged priorities: ${clientPriorities.join("; ")}` : ""}
+${kbContext}
 
 Return a JSON object with:
 - "narrative": array of 2-3 paragraph strings
