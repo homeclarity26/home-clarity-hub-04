@@ -35,6 +35,7 @@ const Index = () => {
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { editMode, toggleEditMode, canEdit } = useEditMode();
+  usePortalTracking(activeTab);
 
   // Check onboarding status for new clients
   useEffect(() => {
