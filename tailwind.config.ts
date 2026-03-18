@@ -61,6 +61,7 @@ export default {
           navy: "hsl(var(--hbc-navy))",
           cream: "hsl(var(--hbc-cream))",
           gold: "hsl(var(--hbc-gold))",
+          rust: "hsl(var(--hbc-rust))",
           white: "hsl(var(--hbc-white))",
           grey: {
             100: "hsl(var(--hbc-grey-100))",
