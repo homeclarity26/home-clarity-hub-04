@@ -56,7 +56,7 @@ const AdminProjectDetail = () => {
 
   return (
     <div>
-      <AdminHeader breadcrumbs={[{ label: "Projects", href: "/admin/projects" }, { label: project.title }]} />
+      <AdminHeader breadcrumbs={[{ label: "Projects", path: "/admin/projects" }, { label: project.title }]} />
       <div className="p-6 max-w-7xl space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">

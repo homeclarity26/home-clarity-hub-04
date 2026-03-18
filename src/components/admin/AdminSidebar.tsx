@@ -14,7 +14,7 @@ const navItems = [
   { label: "Clients", path: "/admin/clients", icon: Users },
   { label: "Projects", path: "/admin/projects", icon: Briefcase },
   { label: "Tasks", path: "/admin/tasks", icon: CheckSquare },
-  { label: "Vendors", path: "/admin/vendors", icon: Briefcase },
+  { label: "Vendors", path: "/admin/vendors", icon: Users },
   { label: "Goals", path: "/admin/goals", icon: Target },
   { label: "Referrals", path: "/admin/referrals", icon: Share2 },
   { label: "Announcements", path: "/admin/announcements", icon: Megaphone },

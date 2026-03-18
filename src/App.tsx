@@ -185,6 +185,21 @@ const AppRoutes = () => {
         <Route path="settings" element={<AdminSettings />} />
         <Route path="announcements" element={<AdminAnnouncements />} />
         <Route path="calendar" element={<AdminCalendar />} />
+        <Route path="projects" element={<AdminProjects />} />
+        <Route path="projects/new" element={<AdminNewProject />} />
+        <Route path="projects/:projectId" element={<AdminProjectDetail />} />
+      </Route>
+
+      {/* Trade Partner routes */}
+      <Route
+        path="/trade"
+        element={
+          <ProtectedRoute>
+            <TradePartnerLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<TradePartnerDashboard />} />
       </Route>
 
       {/* Auth routes */}
