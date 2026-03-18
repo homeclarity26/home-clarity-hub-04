@@ -18,6 +18,7 @@ import AdminClientDetail from "./pages/admin/AdminClientDetail";
 import AdminNewReport from "./pages/admin/AdminNewReport";
 import AdminKnowledgeBase from "./pages/admin/AdminKnowledgeBase";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 
 const queryClient = new QueryClient();
 
