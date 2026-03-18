@@ -109,6 +109,21 @@ const RevenueAnalytics = () => {
 
   if (isLoading || !data) return null;
 
+  const hasRevenue = data.totalInvoiced > 0 || data.months.some(m => m.invoiced > 0 || m.collected > 0);
+
+  if (!hasRevenue) {
+    return (
+      <Card className="p-8 flex flex-col items-center justify-center text-center">
+        <DollarSign className="w-10 h-10 text-muted-foreground/30 mb-3" />
+        <h3 className="text-sm font-sans font-semibold text-foreground mb-1">No revenue data yet</h3>
+        <p className="text-xs font-sans text-muted-foreground mb-4 max-w-sm">Add your first client and create an invoice to start tracking revenue here.</p>
+        <Button variant="outline" size="sm" className="font-sans gap-1.5" onClick={() => navigate("/admin/clients/new")}>
+          <Plus className="w-3.5 h-3.5" />New Client
+        </Button>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card className="p-5">
