@@ -1,5 +1,7 @@
 import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle } from "lucide-react";
 import FeedbackWidget from "@/components/FeedbackWidget";
+import HomeValueTracker from "@/components/HomeValueTracker";
+import MembershipBanner from "@/components/MembershipBanner";
 
 interface HomeTabProps {
   onNavigate: (tab: string, pageId?: string) => void;
@@ -10,6 +12,7 @@ interface HomeTabProps {
   creatorName?: string;
   estimatedValue?: number | null;
   propertyId?: string;
+  membershipEndDate?: string | null;
 }
 
 const HomeTab = ({
@@ -21,6 +24,7 @@ const HomeTab = ({
   creatorName = "Your HBC Team",
   estimatedValue,
   propertyId,
+  membershipEndDate,
 }: HomeTabProps) => {
   const handleAskQuestion = () => {
     // Click the FAB button to open the assistant popup
@@ -85,8 +89,20 @@ const HomeTab = ({
         </div>
       )}
 
+      {/* Membership Banner */}
+      {membershipEndDate && (
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 mb-6">
+          <MembershipBanner membershipEndDate={membershipEndDate} onSendMessage={() => onNavigate("messages")} />
+        </div>
+      )}
+
       {/* Card Grid */}
       <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
+
+        {/* Home Value Tracker */}
+        {propertyId && (
+          <HomeValueTracker propertyId={propertyId} estimatedValue={estimatedValue} />
+        )}
 
         {/* Row 1: Portal Status */}
         <div>

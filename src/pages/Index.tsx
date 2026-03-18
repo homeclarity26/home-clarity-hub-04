@@ -12,8 +12,11 @@ import ScheduleTab from "@/components/tabs/ScheduleTab";
 import DocumentsTab from "@/components/tabs/DocumentsTab";
 import MessagesTab from "@/components/tabs/MessagesTab";
 import EquipmentTab from "@/components/tabs/EquipmentTab";
+import OnboardingOverlay from "@/components/OnboardingOverlay";
+import MembershipBanner from "@/components/MembershipBanner";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { useEditMode } from "@/contexts/EditModeContext";
+import { useAuth } from "@/contexts/AuthContext";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 
 const Index = () => {
@@ -22,10 +25,19 @@ const Index = () => {
   const navigate = useNavigate();
   const isEditLink = searchParams.get("edit") === "true";
   const portal = useClientPortal(propertyId);
+  const { profile, isCreator } = useAuth();
   const [activeTab, setActiveTab] = useState("home");
   const [reportPageId, setReportPageId] = useState<string | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const { editMode, toggleEditMode, canEdit } = useEditMode();
+
+  // Check onboarding status for new clients
+  useEffect(() => {
+    if (!isCreator && profile && !(profile as any).has_completed_onboarding && portal.property) {
+      setShowOnboarding(true);
+    }
+  }, [profile, isCreator, portal.property]);
 
   // Read URL query params for edit mode and page navigation
   useEffect(() => {
@@ -117,6 +129,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {showOnboarding && portal.property && (
+        <OnboardingOverlay
+          propertyName={propertyName}
+          propertyAddress={portal.property.address}
+          creatorName={portal.creatorName}
+          onComplete={() => setShowOnboarding(false)}
+          onSendMessage={() => { setShowOnboarding(false); handleTabChange("messages"); }}
+        />
+      )}
       {isEditLink && canEdit && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-primary text-primary-foreground">
           <div className="max-w-[1200px] mx-auto px-4 py-2 flex items-center justify-between">

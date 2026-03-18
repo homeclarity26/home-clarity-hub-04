@@ -250,6 +250,41 @@ export type Database = {
           },
         ]
       }
+      home_value_history: {
+        Row: {
+          created_at: string
+          estimated_value: number
+          id: string
+          notes: string | null
+          property_id: string
+          recorded_at: string
+        }
+        Insert: {
+          created_at?: string
+          estimated_value: number
+          id?: string
+          notes?: string | null
+          property_id: string
+          recorded_at?: string
+        }
+        Update: {
+          created_at?: string
+          estimated_value?: number
+          id?: string
+          notes?: string | null
+          property_id?: string
+          recorded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_value_history_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_line_items: {
         Row: {
           created_at: string
@@ -531,7 +566,10 @@ export type Database = {
           created_at: string
           email: string | null
           full_name: string | null
+          has_completed_onboarding: boolean | null
           id: string
+          membership_end_date: string | null
+          membership_start_date: string | null
           notification_preferences: Json | null
           phone: string | null
           service_region: string | null
@@ -543,7 +581,10 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name?: string | null
+          has_completed_onboarding?: boolean | null
           id?: string
+          membership_end_date?: string | null
+          membership_start_date?: string | null
           notification_preferences?: Json | null
           phone?: string | null
           service_region?: string | null
@@ -555,7 +596,10 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name?: string | null
+          has_completed_onboarding?: boolean | null
           id?: string
+          membership_end_date?: string | null
+          membership_start_date?: string | null
           notification_preferences?: Json | null
           phone?: string | null
           service_region?: string | null
@@ -580,6 +624,7 @@ export type Database = {
           status: string
           title: string
           updated_at: string
+          value_contribution_estimate: number | null
         }
         Insert: {
           approved_tier?: string | null
@@ -596,6 +641,7 @@ export type Database = {
           status?: string
           title: string
           updated_at?: string
+          value_contribution_estimate?: number | null
         }
         Update: {
           approved_tier?: string | null
@@ -612,6 +658,7 @@ export type Database = {
           status?: string
           title?: string
           updated_at?: string
+          value_contribution_estimate?: number | null
         }
         Relationships: [
           {
@@ -648,6 +695,7 @@ export type Database = {
           iguide_url: string | null
           intake_status: string | null
           metadata: Json | null
+          neighborhood_median_value: number | null
           property_name: string | null
           property_type: string | null
           relationship_type: string | null
@@ -672,6 +720,7 @@ export type Database = {
           iguide_url?: string | null
           intake_status?: string | null
           metadata?: Json | null
+          neighborhood_median_value?: number | null
           property_name?: string | null
           property_type?: string | null
           relationship_type?: string | null
@@ -696,6 +745,7 @@ export type Database = {
           iguide_url?: string | null
           intake_status?: string | null
           metadata?: Json | null
+          neighborhood_median_value?: number | null
           property_name?: string | null
           property_type?: string | null
           relationship_type?: string | null
