@@ -436,6 +436,7 @@ const AdminClientDetail = () => {
             {reportPages && reportPages.length > 0 && (
               <ReportProgressKanban pages={reportPages} propertyId={client.propertyId} />
             )}
+            <AIDraftAssistant propertyId={client.propertyId} propertyAddress={client.address} />
             <VoiceAndPhotoTools reportId={client.reportId || ""} propertyId={client.propertyId} />
             <ReportAITools
               reportId={client.reportId || ""}
