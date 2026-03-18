@@ -173,6 +173,7 @@ const AppRoutes = () => {
         <Route path="referrals" element={<AdminReferrals />} />
         <Route path="automations" element={<AdminAutomations />} />
         <Route path="knowledge-base" element={<AdminKnowledgeBase />} />
+        <Route path="help" element={<AdminHelpCenter />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="announcements" element={<AdminAnnouncements />} />
       </Route>
