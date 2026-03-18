@@ -184,6 +184,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const isCreator = roles.includes("creator");
+  const isTradePartner = roles.includes("trade_partner");
 
   return (
     <AuthContext.Provider
