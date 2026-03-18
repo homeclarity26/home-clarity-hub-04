@@ -10,6 +10,7 @@ interface ChatPanelProps {
   onOpenChange: (open: boolean) => void;
   reportContext: unknown;
   initialQuery?: string;
+  onNavigateToPage?: (pageTitle: string) => void;
 }
 
 const ChatPanel = ({ open, onOpenChange, reportContext, initialQuery }: ChatPanelProps) => {
