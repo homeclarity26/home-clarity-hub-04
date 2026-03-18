@@ -115,6 +115,8 @@ const RootRedirect = () => {
 };
 
 const AppRoutes = () => {
+  // Monitor session health
+  const { useSessionMonitor: useMonitor } = require("@/hooks/useSessionMonitor");
   return (
     <Routes>
       {/* Root redirect based on role */}
