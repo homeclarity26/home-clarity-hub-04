@@ -21,6 +21,12 @@ import AdminNewReport from "./pages/admin/AdminNewReport";
 import AdminKnowledgeBase from "./pages/admin/AdminKnowledgeBase";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
+import AdminInbox from "./pages/admin/AdminInbox";
+import AdminTaskBoard from "./pages/admin/AdminTaskBoard";
+import AdminVendorDirectory from "./pages/admin/AdminVendorDirectory";
+import AdminGoalsDashboard from "./pages/admin/AdminGoalsDashboard";
+import AdminReferrals from "./pages/admin/AdminReferrals";
+import AdminAutomations from "./pages/admin/AdminAutomations";
 
 const queryClient = new QueryClient();
 
