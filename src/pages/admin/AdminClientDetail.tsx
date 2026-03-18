@@ -67,6 +67,8 @@ import ClientRiskScore from "@/components/admin/ClientRiskScore";
 import RecurringInvoiceScheduler from "@/components/admin/RecurringInvoiceScheduler";
 import InternalReportComments from "@/components/admin/InternalReportComments";
 import DragReportReorder from "@/components/admin/DragReportReorder";
+import WYSIWYGReportEditor from "@/components/wysiwyg/WYSIWYGReportEditor";
+import type { ReportBlock } from "@/components/wysiwyg/types";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
