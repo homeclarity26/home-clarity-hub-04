@@ -417,7 +417,8 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
                     {isExpanded && (
                       <TableRow key={`${project.id}-ms`}>
                         <TableCell colSpan={6} className="bg-muted/30 p-4">
-                          <div className="space-y-3">
+                          <div className="space-y-6">
+                            <div className="space-y-3">
                             <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">Milestones</p>
                             {ms.map((m) => (
                               <div key={m.id} className="flex items-center gap-3">
