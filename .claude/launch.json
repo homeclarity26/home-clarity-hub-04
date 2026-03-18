@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Frontend (Vite)",
+      "runtimeExecutable": "/Users/adamkilgore/.bun/bin/bun",
+      "runtimeArgs": ["run", "dev", "--port", "0"],
+      "port": 8080,
+      "autoPort": true
+    }
+  ]
+}

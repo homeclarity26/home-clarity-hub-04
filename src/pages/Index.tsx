@@ -10,6 +10,8 @@ import PaymentsTab from "@/components/tabs/PaymentsTab";
 import ContactsTab from "@/components/tabs/ContactsTab";
 import ScheduleTab from "@/components/tabs/ScheduleTab";
 import DocumentsTab from "@/components/tabs/DocumentsTab";
+import MessagesTab from "@/components/tabs/MessagesTab";
+import EquipmentTab from "@/components/tabs/EquipmentTab";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { useEditMode } from "@/contexts/EditModeContext";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
@@ -128,7 +130,7 @@ const Index = () => {
         onReportPageSelect={handleReportPageSelect}
       />
 
-      <main className={`${isEditLink && canEdit ? "pt-[calc(2rem+36px)]" : "pt-20"} pb-48 md:pb-[140px]`}>
+      <main className={`${isEditLink && canEdit ? "pt-[calc(2rem+36px)]" : "pt-20"} pb-16`}>
         <div className={`transition-opacity duration-300 ${activeTab === "home" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "home" && (
           <HomeTab
@@ -153,8 +155,22 @@ const Index = () => {
               pageImages={portal.pageImages}
               propertyName={propertyName}
               propertyAddress={portal.property?.address || ""}
+              propertyId={portal.property?.id}
               pdfData={pdfData}
               reportId={portal.report?.id}
+              propertyContext={portal.property ? {
+                yearBuilt: portal.property.year_built ?? undefined,
+                sqft: portal.property.sqft ?? undefined,
+                bedrooms: portal.property.bedrooms ?? undefined,
+                bathrooms: portal.property.bathrooms ?? undefined,
+                propertyType: portal.property.property_type ?? undefined,
+                relationshipType: portal.property.relationship_type ?? undefined,
+                clientIntelligenceSummary: portal.property.client_intelligence_summary ?? undefined,
+              } : undefined}
+              hoverUrl={portal.property?.hover_url}
+              hoverPdfUrl={portal.property?.hover_pdf_url}
+              iguideUrl={portal.property?.iguide_url}
+              iguidePdfUrl={portal.property?.iguide_pdf_url}
             />
           )}
         </div>
@@ -170,6 +186,18 @@ const Index = () => {
         <div className={`transition-opacity duration-300 ${activeTab === "documents" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "documents" && <DocumentsTab propertyId={portal.property?.id} />}
         </div>
+        <div className={`transition-opacity duration-300 ${activeTab === "messages" ? "opacity-100" : "opacity-0 hidden"}`}>
+          {activeTab === "messages" && (
+            <MessagesTab
+              propertyId={portal.property?.id}
+              creatorName={portal.creatorName}
+              creatorInitials={portal.creatorProfile?.initials}
+            />
+          )}
+        </div>
+        <div className={`transition-opacity duration-300 ${activeTab === "equipment" ? "opacity-100" : "opacity-0 hidden"}`}>
+          {activeTab === "equipment" && <EquipmentTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}
+        </div>
         <div className={`transition-opacity duration-300 ${activeTab === "schedule" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "schedule" && <ScheduleTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}
         </div>
@@ -180,10 +208,13 @@ const Index = () => {
         onNavigate={handleNavigate}
         invoiceBalance={portal.invoiceBalance}
         reportContext={{
+          propertyName,
           propertyAddress: portal.property?.address || "Unknown address",
           reportCompletionPercent: portal.completionPercent ?? 0,
+          invoiceBalance: portal.invoiceBalance,
           pages: Object.values(portal.pages).map((p) => ({
             title: p.title,
+            group: p.group,
             conditionRating: p.conditionRating,
             narrative: p.narrative,
             specs: p.specs,

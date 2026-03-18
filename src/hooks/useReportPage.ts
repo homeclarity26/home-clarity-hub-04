@@ -39,6 +39,12 @@ export function useReportPage(pageKey: string, fallbackData: ReportPageData, rep
         return;
       }
 
+      // Dev bypass: skip Supabase query for mock user, use fallback data directly
+      if (user.id === "00000000-0000-0000-0000-000000000000") {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         let query = supabase
           .from("report_pages")

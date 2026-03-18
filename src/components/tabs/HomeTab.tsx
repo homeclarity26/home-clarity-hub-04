@@ -18,11 +18,9 @@ const HomeTab = ({
   creatorName = "Your HBC Team",
 }: HomeTabProps) => {
   const handleAskQuestion = () => {
-    const input = document.querySelector<HTMLInputElement>('footer input[type="text"]');
-    if (input) {
-      input.focus();
-      input.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    }
+    // Click the FAB button to open the assistant popup
+    const fab = document.querySelector<HTMLButtonElement>('[aria-label="Open assistant"]');
+    if (fab) fab.click();
   };
 
   const statusLabel = completionPercent === 100 ? "COMPLETE" : completionPercent > 0 ? "IN PROGRESS" : "NOT STARTED";
@@ -169,7 +167,7 @@ const HomeTab = ({
               <Phone className="w-5 h-5 text-accent" />
               <div className="flex-1">
                 <h2 className="font-display text-xl text-foreground mb-1">Contact Your Advisor</h2>
-                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Adam Kinney — Founder & Lead Advisor</p>
+                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Adam Kilgore — Founder & Lead Advisor</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>

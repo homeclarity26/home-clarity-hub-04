@@ -66,6 +66,25 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages }: ProjectsTab
 
   const loadData = async () => {
     if (!propertyId) { setLoading(false); return; }
+
+    // Demo data for dev bypass
+    if (propertyId.startsWith("mock-")) {
+      setProjects([
+        { id: "proj-1", title: "Furnace Replacement", description: "Replace aging primary furnace before next heating season. Current unit is 2008 model showing signs of failure.", status: "approved", approved_tier: "Enhanced", notes: "Three vendor bids received. Preferred vendor: Comfort First HVAC.", estimated_start_date: "2026-05-01", estimated_cost: 8500, contractor_name: "Comfort First HVAC", contractor_contact: "(330) 555-0200", created_at: "2026-03-01T00:00:00Z", report_page_id: null },
+        { id: "proj-2", title: "Electrical Panel Upgrade", description: "Upgrade from 100A to 200A service to support modern loads and future improvements.", status: "planned", approved_tier: null, notes: null, estimated_start_date: "2026-08-01", estimated_cost: 4500, contractor_name: null, contractor_contact: null, created_at: "2026-03-05T00:00:00Z", report_page_id: null },
+      ]);
+      setMilestones({
+        "proj-1": [
+          { id: "ms-1", title: "Select vendor & sign contract", due_date: "2026-04-01", completed: true, sort_order: 1 },
+          { id: "ms-2", title: "Equipment ordered & delivery confirmed", due_date: "2026-04-15", completed: true, sort_order: 2 },
+          { id: "ms-3", title: "Installation scheduled", due_date: "2026-05-01", completed: false, sort_order: 3 },
+          { id: "ms-4", title: "Final inspection & warranty registration", due_date: "2026-05-07", completed: false, sort_order: 4 },
+        ],
+      });
+      setLoading(false);
+      return;
+    }
+
     const { data: projData } = await supabase
       .from("projects")
       .select("*")
@@ -354,7 +373,7 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages }: ProjectsTab
             <button onClick={() => { if (onTabChange) onTabChange("contacts"); else onNavigate("contacts"); }} className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200`}>
               <Phone className="w-5 h-5 text-accent mb-3" />
               <h2 className="font-display text-xl text-foreground mb-1">Contact Your Advisor</h2>
-              <p className="font-sans text-sm text-muted-foreground">Adam Kinney — Founder & Lead Advisor</p>
+              <p className="font-sans text-sm text-muted-foreground">Adam Kilgore — Founder & Lead Advisor</p>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors mt-2" />
             </button>
           </div>

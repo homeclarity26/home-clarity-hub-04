@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Trash2, Pencil, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Pencil, ChevronDown, Sparkles, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -41,7 +41,7 @@ interface AdminProjectsSectionProps {
     created_at: string;
     report_page_id?: string | null;
   }> | undefined;
-  reportPages?: Array<{ id: string; title: string; page_key: string }>;
+  reportPages?: Array<{ id: string; title: string; page_key: string; recommendations?: string[] | null }>;
 }
 
 const defaultForm = {
@@ -58,7 +58,9 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
   const [form, setForm] = useState(defaultForm);
   const [milestones, setMilestones] = useState<Record<string, Milestone[]>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [newMilestone, setNewMilestone] = useState({ title: "", due_date: "" });
+  const [newMilestones, setNewMilestones] = useState<Record<string, { title: string; due_date: string }>>({});
+  const [fromRecOpen, setFromRecOpen] = useState(false);
+  const [fromRecPage, setFromRecPage] = useState<string | null>(null);
 
   const resetForm = () => setForm(defaultForm);
 
@@ -67,7 +69,8 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
     if (!projects || projects.length === 0) return;
     const ids = projects.map((p) => p.id);
     supabase.from("milestones").select("*").in("project_id", ids).order("sort_order", { ascending: true })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) { toast.error("Failed to load milestones"); return; }
         const grouped: Record<string, Milestone[]> = {};
         (data || []).forEach((m: Milestone) => {
           if (!grouped[m.project_id]) grouped[m.project_id] = [];
@@ -153,14 +156,19 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
     setEditOpen(true);
   };
 
+  const getMilestoneInput = (projectId: string) => newMilestones[projectId] ?? { title: "", due_date: "" };
+  const setMilestoneInput = (projectId: string, patch: Partial<{ title: string; due_date: string }>) =>
+    setNewMilestones((prev) => ({ ...prev, [projectId]: { ...getMilestoneInput(projectId), ...patch } }));
+
   // Milestone CRUD
   const addMilestone = async (projectId: string) => {
-    if (!newMilestone.title) return;
+    const input = getMilestoneInput(projectId);
+    if (!input.title) return;
     const order = (milestones[projectId]?.length || 0);
     const { data, error } = await supabase.from("milestones").insert({
       project_id: projectId,
-      title: newMilestone.title,
-      due_date: newMilestone.due_date || null,
+      title: input.title,
+      due_date: input.due_date || null,
       sort_order: order,
     }).select().single();
     if (error) { toast.error("Failed to add milestone"); return; }
@@ -168,7 +176,7 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
       ...prev,
       [projectId]: [...(prev[projectId] || []), data as Milestone],
     }));
-    setNewMilestone({ title: "", due_date: "" });
+    setMilestoneInput(projectId, { title: "", due_date: "" });
   };
 
   const toggleMilestone = async (m: Milestone) => {
@@ -238,14 +246,99 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-sans font-semibold text-foreground">Projects</h3>
-        <Dialog open={createOpen} onOpenChange={(o) => { setCreateOpen(o); if (!o) resetForm(); }}>
-          <DialogTrigger asChild><Button size="sm" className="gap-1.5 text-xs font-sans"><Plus className="w-3.5 h-3.5" />Add Project</Button></DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader><DialogTitle className="font-sans">Create Project</DialogTitle></DialogHeader>
-            <FormFields />
-            <Button onClick={createProject} className="w-full font-sans">Create</Button>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          {/* From Recommendation — only show if there are pages with recommendations */}
+          {reportPages && reportPages.some((p) => p.recommendations && p.recommendations.length > 0) && (
+            <Dialog open={fromRecOpen} onOpenChange={(o) => { setFromRecOpen(o); if (!o) setFromRecPage(null); }}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  From Recommendation
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="font-sans">Create Project from Recommendation</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto py-1">
+                  {!fromRecPage ? (
+                    // Step 1: pick a report page
+                    <div className="space-y-2">
+                      <p className="text-xs font-sans text-muted-foreground">Choose a report page to pull recommendations from:</p>
+                      {(reportPages || [])
+                        .filter((p) => p.recommendations && p.recommendations.length > 0)
+                        .map((p) => (
+                          <button
+                            key={p.id}
+                            onClick={() => setFromRecPage(p.id)}
+                            className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-lg border border-border bg-card hover:bg-muted/40 text-left transition-colors group"
+                          >
+                            <div>
+                              <p className="font-sans text-sm font-medium text-foreground">{p.title}</p>
+                              <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
+                                {(p.recommendations || []).length} recommendation{(p.recommendations || []).length !== 1 ? "s" : ""}
+                              </p>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-accent transition-colors" />
+                          </button>
+                        ))}
+                    </div>
+                  ) : (
+                    // Step 2: pick a recommendation
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 mb-1">
+                        <button
+                          onClick={() => setFromRecPage(null)}
+                          className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          ← Back
+                        </button>
+                        <span className="text-xs font-sans text-muted-foreground">·</span>
+                        <span className="text-xs font-sans font-medium text-foreground">
+                          {reportPages?.find((p) => p.id === fromRecPage)?.title}
+                        </span>
+                      </div>
+                      <p className="text-xs font-sans text-muted-foreground">Select a recommendation to create a project from:</p>
+                      {(reportPages?.find((p) => p.id === fromRecPage)?.recommendations || []).map((rec, i) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            const page = reportPages?.find((p) => p.id === fromRecPage);
+                            if (!page) return;
+                            // Truncate recommendation to reasonable title length
+                            const title = rec.length > 80 ? rec.substring(0, 77) + "…" : rec;
+                            setForm({
+                              ...defaultForm,
+                              title,
+                              description: rec,
+                              report_page_id: page.id,
+                              status: "planned",
+                            });
+                            setFromRecOpen(false);
+                            setFromRecPage(null);
+                            setCreateOpen(true);
+                          }}
+                          className="w-full flex items-start gap-3 px-4 py-3 rounded-lg border border-border bg-card hover:bg-muted/40 text-left transition-colors group"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0 mt-2" />
+                          <p className="font-sans text-sm text-foreground">{rec}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+          <Dialog open={createOpen} onOpenChange={(o) => { setCreateOpen(o); if (!o) resetForm(); }}>
+            <DialogTrigger asChild><Button size="sm" className="gap-1.5 text-xs font-sans"><Plus className="w-3.5 h-3.5" />Add Project</Button></DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader><DialogTitle className="font-sans">Create Project</DialogTitle></DialogHeader>
+              <FormFields />
+              <Button onClick={createProject} className="w-full font-sans">Create</Button>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Edit dialog */}
@@ -336,15 +429,15 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
                             <div className="flex items-center gap-2 pt-1">
                               <Input
                                 placeholder="Milestone name"
-                                value={newMilestone.title}
-                                onChange={(e) => setNewMilestone({ ...newMilestone, title: e.target.value })}
+                                value={getMilestoneInput(project.id).title}
+                                onChange={(e) => setMilestoneInput(project.id, { title: e.target.value })}
                                 className="h-8 text-sm flex-1"
                                 onKeyDown={(e) => { if (e.key === "Enter") addMilestone(project.id); }}
                               />
                               <Input
                                 type="date"
-                                value={newMilestone.due_date}
-                                onChange={(e) => setNewMilestone({ ...newMilestone, due_date: e.target.value })}
+                                value={getMilestoneInput(project.id).due_date}
+                                onChange={(e) => setMilestoneInput(project.id, { due_date: e.target.value })}
                                 className="h-8 text-sm w-[140px]"
                               />
                               <Button size="sm" variant="outline" className="h-8 text-xs font-sans" onClick={() => addMilestone(project.id)}>

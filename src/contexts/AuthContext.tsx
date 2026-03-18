@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,6 +26,39 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
 }
 
+// ── DEV AUTH BYPASS ─────────────────────────────────────────────────────
+// Set to true to skip login and act as a mock creator user.
+// TODO: Remove before production deployment.
+const DEV_BYPASS_AUTH = true;
+
+const MOCK_USER = {
+  id: "00000000-0000-0000-0000-000000000000",
+  email: "dev@homeclarityhub.com",
+  aud: "authenticated",
+  role: "authenticated",
+  app_metadata: {},
+  user_metadata: { full_name: "Dev Creator" },
+  created_at: new Date().toISOString(),
+} as unknown as User;
+
+const MOCK_SESSION = {
+  access_token: "dev-bypass-token",
+  refresh_token: "dev-bypass-refresh",
+  expires_in: 999999,
+  token_type: "bearer",
+  user: MOCK_USER,
+} as unknown as Session;
+
+const MOCK_PROFILE: Profile = {
+  id: "00000000-0000-0000-0000-000000000000",
+  user_id: "00000000-0000-0000-0000-000000000000",
+  full_name: "Dev Creator",
+  avatar_initials: "DC",
+  email: "dev@homeclarityhub.com",
+  phone: null,
+};
+// ─────────────────────────────────────────────────────────────────────────
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
@@ -37,11 +70,12 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [roles, setRoles] = useState<AppRole[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(DEV_BYPASS_AUTH ? MOCK_USER : null);
+  const [session, setSession] = useState<Session | null>(DEV_BYPASS_AUTH ? MOCK_SESSION : null);
+  const [profile, setProfile] = useState<Profile | null>(DEV_BYPASS_AUTH ? MOCK_PROFILE : null);
+  const [roles, setRoles] = useState<AppRole[]>(DEV_BYPASS_AUTH ? ["creator"] : []);
+  const [isLoading, setIsLoading] = useState(DEV_BYPASS_AUTH ? false : true);
+  const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data: profileData } = await supabase
@@ -73,6 +107,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user, fetchProfile, fetchRoles]);
 
   useEffect(() => {
+    // Skip real auth entirely when dev bypass is active
+    if (DEV_BYPASS_AUTH) return;
+
+    // Safety timeout: if auth doesn't resolve within 8s (e.g. network failure),
+    // stop the loading spinner so users aren't stuck indefinitely.
+    loadingTimeoutRef.current = setTimeout(() => {
+      setIsLoading(false);
+    }, 8000);
+
     // Auth state listener — fires immediately with INITIAL_SESSION for existing sessions
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
@@ -88,11 +131,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               fetchProfile(newSession.user.id),
               fetchRoles(newSession.user.id),
             ]);
+            if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
             setIsLoading(false);
           }, 0);
         } else {
           setProfile(null);
           setRoles([]);
+          if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
           setIsLoading(false);
         }
       }
@@ -101,11 +146,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Fallback: if no session exists and onAuthStateChange doesn't set loading=false
     supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       if (!existingSession) {
+        if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
         setIsLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+    };
   }, [fetchProfile, fetchRoles]);
 
   const signIn = async (email: string, password: string) => {

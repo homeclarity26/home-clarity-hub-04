@@ -11,39 +11,68 @@ serve(async (req) => {
 
   try {
     const { messages, reportContext } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `You are a friendly, knowledgeable home advisor assistant for Hometown Builders Club (HBC). You help homeowners understand their Home Clarity Report and answer questions about their property.
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
 
-You have access to the following report data for this property:
+    const ctx = reportContext || {};
+    const pagesText = Array.isArray(ctx.pages) && ctx.pages.length > 0
+      ? ctx.pages.map((p: Record<string, unknown>) => {
+          const narrative = Array.isArray(p.narrative) ? p.narrative.join(" ") : (p.narrative || "");
+          const specs = p.specs && typeof p.specs === "object"
+            ? Object.entries(p.specs as Record<string, unknown>).map(([k, v]) => `${k}: ${v}`).join(", ")
+            : "";
+          const tiers = Array.isArray(p.tiers)
+            ? (p.tiers as Record<string, unknown>[]).map((t) => `${t.label}: ${t.cost}`).join(" | ")
+            : "";
+          const recs = Array.isArray(p.recommendations) ? (p.recommendations as string[]).join("; ") : "";
+          return [
+            `### ${p.title} (${p.group || ""}) — Condition: ${p.conditionRating || "Not assessed"}`,
+            narrative,
+            specs ? `Specs: ${specs}` : "",
+            tiers ? `Cost tiers: ${tiers}` : "",
+            recs ? `Recommendations: ${recs}` : "",
+          ].filter(Boolean).join("\n");
+        }).join("\n\n")
+      : "No report pages available yet.";
 
-${reportContext ? JSON.stringify(reportContext, null, 2) : "No report data available yet."}
+    const systemPrompt = `You are a friendly, knowledgeable home advisor for Home Clarity Hub. You help homeowners understand their Home Clarity Report and answer questions about their property. Speak plainly and warmly — no jargon, real answers.
 
-Guidelines:
-- Be warm, professional, and reassuring
-- Reference specific data from the report when answering questions
-- When discussing costs, always mention the tier ranges (Essential, Enhanced, Signature)
+PROPERTY: ${ctx.propertyName || ctx.propertyAddress || "Unknown"}
+ADDRESS: ${ctx.propertyAddress || "Unknown"}
+REPORT STATUS: ${ctx.reportCompletionPercent ?? 0}% complete
+${ctx.invoiceBalance ? `OUTSTANDING BALANCE: $${ctx.invoiceBalance}` : ""}
+${Array.isArray(ctx.projects) && ctx.projects.length ? `ACTIVE PROJECTS:\n${(ctx.projects as Record<string, unknown>[]).map((p) => `- ${p.title}: ${p.status}${p.total_cost ? ` ($${p.total_cost})` : ""}`).join("\n")}` : ""}
+
+REPORT PAGES:
+${pagesText}
+
+GUIDELINES:
+- Reference specific findings from the report when answering
+- When discussing costs, cite the tier ranges (e.g., "Adam recommends budgeting $4,000–$8,000")
+- Flag anything rated Poor or Critical as urgent
 - If asked about something not in the report, say so honestly
-- Keep answers concise but thorough
-- Use markdown formatting for clarity (bold for emphasis, lists for recommendations)
-- Never make up data that isn't in the report`;
+- Keep answers concise. Use bullet points or bold for clarity
+- Never invent data that isn't in the report
+- Refer to "Adam" or "your advisor" when appropriate`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages,
-        ],
-        stream: true,
-      }),
-    });
+    const geminiContents = messages.map((m: { role: string; content: string }) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    }));
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: geminiContents,
+          generationConfig: { temperature: 0.6, maxOutputTokens: 1024 },
+        }),
+      }
+    );
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -51,20 +80,55 @@ Guidelines:
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
+      console.error("Gemini streaming error:", response.status, t);
       return new Response(JSON.stringify({ error: "AI service unavailable" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+    // Convert Gemini SSE → OpenAI-compatible SSE so the client (useChat.ts) needs no changes
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
+        const reader = response.body!.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        const emit = (text: string) => {
+          const chunk = JSON.stringify({ choices: [{ delta: { content: text } }] });
+          controller.enqueue(encoder.encode(`data: ${chunk}\n\n`));
+        };
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+
+            let idx: number;
+            while ((idx = buffer.indexOf("\n")) !== -1) {
+              const line = buffer.slice(0, idx).replace(/\r$/, "");
+              buffer = buffer.slice(idx + 1);
+              if (!line.startsWith("data: ")) continue;
+              const json = line.slice(6).trim();
+              if (!json || json === "[DONE]") continue;
+              try {
+                const parsed = JSON.parse(json);
+                const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) emit(text);
+              } catch { /* partial chunk, skip */ }
+            }
+          }
+        } finally {
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
     });
   } catch (e) {
     console.error("chat-assistant error:", e);

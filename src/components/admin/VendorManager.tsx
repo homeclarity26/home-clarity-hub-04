@@ -152,6 +152,11 @@ const VendorManager = ({ propertyId }: VendorManagerProps) => {
               {v.contact_name && <p className="text-sm font-sans text-foreground mt-2">{v.contact_name}</p>}
               {v.email && <p className="text-xs font-sans text-muted-foreground">{v.email}</p>}
               {v.phone && <p className="text-xs font-sans text-muted-foreground">{v.phone}</p>}
+              {(v as Record<string, unknown>).report_page_key && (
+                <p className="text-[10px] font-mono uppercase tracking-[0.12em] text-accent mt-2.5">
+                  Assigned to: {String((v as Record<string, unknown>).report_page_key).replace(/-/g, " ")}
+                </p>
+              )}
             </Card>
           ))}
         </div>

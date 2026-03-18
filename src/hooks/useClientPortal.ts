@@ -14,6 +14,17 @@ export interface PortalProperty {
   property_name: string | null;
   address: string;
   estimated_value: number | null;
+  year_built?: number | null;
+  sqft?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  property_type?: string | null;
+  relationship_type?: string | null;
+  client_intelligence_summary?: string | null;
+  hover_url?: string | null;
+  hover_pdf_url?: string | null;
+  iguide_url?: string | null;
+  iguide_pdf_url?: string | null;
 }
 
 export interface PortalReport {
@@ -63,6 +74,28 @@ export function useClientPortal(propertyId?: string) {
       return;
     }
 
+    // ── DEV BYPASS: provide mock property/report when using mock auth ──
+    if (user.id === "00000000-0000-0000-0000-000000000000") {
+      setProperty({
+        id: "mock-property-demo",
+        property_name: "Johnson Residence",
+        address: "1234 Maple Ridge Drive, Hudson, OH 44236",
+        estimated_value: 425000,
+      });
+      setReport({
+        id: "mock-report-demo",
+        title: "Home Clarity Report",
+        status: "published",
+        created_by: "00000000-0000-0000-0000-000000000000",
+      });
+      setCreatorName("Adam Kilgore");
+      setCreatorProfile({ name: "Adam Kilgore", email: "adam@homeclarityhub.com", phone: "(330) 555-0100", initials: "AK" });
+      // Leave hasDbData false so it falls back to the rich static demo content
+      setIsLoading(false);
+      return;
+    }
+    // ────────────────────────────────────────────────────────────────────
+
     async function load() {
       try {
         // 1. Fetch property — scope by ownership for clients, allow all for creators
@@ -86,6 +119,17 @@ export function useClientPortal(propertyId?: string) {
           property_name: prop.property_name,
           address: prop.address,
           estimated_value: prop.estimated_value,
+          year_built: (prop as Record<string, unknown>).year_built as number | null ?? null,
+          sqft: (prop as Record<string, unknown>).sqft as number | null ?? null,
+          bedrooms: ((prop as Record<string, unknown>).metadata as Record<string, unknown> | null)?.bedrooms as number | null ?? null,
+          bathrooms: ((prop as Record<string, unknown>).metadata as Record<string, unknown> | null)?.bathrooms as number | null ?? null,
+          property_type: (prop as Record<string, unknown>).property_type as string | null ?? null,
+          relationship_type: (prop as Record<string, unknown>).relationship_type as string | null ?? null,
+          client_intelligence_summary: (prop as Record<string, unknown>).client_intelligence_summary as string | null ?? null,
+          hover_url: (prop as Record<string, unknown>).hover_url as string | null ?? null,
+          hover_pdf_url: (prop as Record<string, unknown>).hover_pdf_url as string | null ?? null,
+          iguide_url: (prop as Record<string, unknown>).iguide_url as string | null ?? null,
+          iguide_pdf_url: (prop as Record<string, unknown>).iguide_pdf_url as string | null ?? null,
         });
 
         // 2. Fetch report for this property
@@ -209,10 +253,17 @@ export function useClientPortal(propertyId?: string) {
   }, [dbPages]);
 
   const completionPercent = useMemo(() => {
-    if (dbPages.length === 0) return 0;
-    const done = dbPages.filter((p) => p.status === "complete").length;
-    return Math.round((done / dbPages.length) * 100);
-  }, [dbPages]);
+    if (dbPages.length > 0) {
+      const done = dbPages.filter((p) => p.status === "complete").length;
+      return Math.round((done / dbPages.length) * 100);
+    }
+    // When using static demo content, report is "complete"
+    if (!hasDbData && report) {
+      const pageCount = Object.keys(staticPages).length;
+      return pageCount > 0 ? 100 : 0;
+    }
+    return 0;
+  }, [dbPages, hasDbData, report]);
 
   const pageImages: Record<string, string[]> = useMemo(() => {
     const map: Record<string, string[]> = {};

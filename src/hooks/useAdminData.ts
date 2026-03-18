@@ -9,6 +9,12 @@ export interface AdminClient {
   email: string;
   phone: string;
   address: string;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  county: string | null;
+  propertyType: string | null;
+  relationshipType: string | null;
   yearBuilt: number | null;
   sqft: number | null;
   bedrooms: number | null;
@@ -23,6 +29,14 @@ export interface AdminClient {
   flaggedPages: number;
   openQuestions: number;
   clientUserId: string;
+  discoveryNotes: string | null;
+  clientIntelligenceSummary: string | null;
+  hoverUrl: string | null;
+  hoverPdfUrl: string | null;
+  iguideUrl: string | null;
+  iguidePdfUrl: string | null;
+  intakeStatus: string | null;
+  digitalAssetsStatus: string | null;
 }
 
 export function useAdminClients() {
@@ -74,6 +88,12 @@ export function useAdminClients() {
           email: clientEmail,
           phone: clientPhone,
           address: prop.address,
+          city: prop.city || null,
+          state: prop.state || null,
+          zip: prop.zip || null,
+          county: prop.county || null,
+          propertyType: prop.property_type || null,
+          relationshipType: prop.relationship_type || null,
           yearBuilt: (metadata.year_built as number) || null,
           sqft: (metadata.sqft as number) || null,
           bedrooms: (metadata.bedrooms as number) || null,
@@ -88,6 +108,14 @@ export function useAdminClients() {
           flaggedPages,
           openQuestions: 0,
           clientUserId: prop.client_user_id,
+          discoveryNotes: prop.discovery_notes || null,
+          clientIntelligenceSummary: prop.client_intelligence_summary || null,
+          hoverUrl: prop.hover_url || null,
+          hoverPdfUrl: prop.hover_pdf_url || null,
+          iguideUrl: prop.iguide_url || null,
+          iguidePdfUrl: prop.iguide_pdf_url || null,
+          intakeStatus: prop.intake_status || null,
+          digitalAssetsStatus: prop.digital_assets_status || null,
         };
       });
     },

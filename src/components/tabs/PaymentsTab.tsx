@@ -25,6 +25,18 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
 
   useEffect(() => {
     if (!propertyId) { setLoading(false); return; }
+
+    // Demo data for dev bypass
+    if (propertyId.startsWith("mock-")) {
+      setInvoices([
+        { id: "inv-1", description: "Home Clarity Report — Johnson Residence", amount: 2500, status: "paid", due_date: "2026-01-15", paid_date: "2026-01-12", created_at: "2026-01-01T00:00:00Z" },
+        { id: "inv-2", description: "Annual Membership — Year 1", amount: 750, status: "paid", due_date: "2026-02-01", paid_date: "2026-01-28", created_at: "2026-01-20T00:00:00Z" },
+        { id: "inv-3", description: "Furnace Consultation & Vendor Coordination", amount: 350, status: "pending", due_date: "2026-04-01", paid_date: null, created_at: "2026-03-10T00:00:00Z" },
+      ]);
+      setLoading(false);
+      return;
+    }
+
     supabase.from("invoices").select("*").eq("property_id", propertyId).order("created_at", { ascending: false })
       .then(({ data }) => { if (data) setInvoices(data as Invoice[]); setLoading(false); });
   }, [propertyId]);
@@ -60,7 +72,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
       <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto">
         <h1 className="font-display text-3xl md:text-[36px] text-foreground mb-3">Payments & Financial History</h1>
         <p className="font-sans text-base text-muted-foreground">
-          Manage your account and review transaction history with Hometown Builders Club.
+          Manage your account and review transaction history with Home Clarity Hub.
         </p>
       </section>
 
@@ -129,28 +141,39 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
               <table className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-left pb-4 border-b border-border">Date</th>
                     <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-left pb-4 border-b border-border">Description</th>
+                    <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-left pb-4 border-b border-border hidden sm:table-cell">Due Date</th>
                     <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-right pb-4 border-b border-border">Amount</th>
                     <th className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground text-right pb-4 border-b border-border">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {invoices.map((inv) => (
-                    <tr key={inv.id}>
-                      <td className="text-sm text-foreground py-5 border-b border-border">
-                        {new Date(inv.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                      </td>
-                      <td className="text-sm text-foreground py-5 border-b border-border">{inv.description}</td>
-                      <td className="text-sm text-foreground py-5 border-b border-border text-right">{fmt(inv.amount)}</td>
-                      <td className="text-sm py-5 border-b border-border text-right">
-                        <span className="inline-flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${statusDot[inv.status] || "bg-muted"}`} />
-                          {inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {invoices.map((inv) => {
+                    const isOverdue = inv.status === "overdue";
+                    return (
+                      <tr key={inv.id} className={isOverdue ? "bg-destructive/5" : ""}>
+                        <td className={`text-sm py-5 border-b border-border ${isOverdue ? "text-destructive font-medium" : "text-foreground"}`}>
+                          {inv.description}
+                        </td>
+                        <td className="text-sm text-muted-foreground py-5 border-b border-border hidden sm:table-cell">
+                          {inv.due_date
+                            ? new Date(inv.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                            : inv.status === "paid" && inv.paid_date
+                            ? `Paid ${new Date(inv.paid_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+                            : "—"}
+                        </td>
+                        <td className={`text-sm py-5 border-b border-border text-right ${isOverdue ? "text-destructive font-medium" : "text-foreground"}`}>
+                          {fmt(inv.amount)}
+                        </td>
+                        <td className="text-sm py-5 border-b border-border text-right">
+                          <span className="inline-flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${statusDot[inv.status] || "bg-muted"}`} />
+                            {inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { humanizeAuthError } from "@/lib/utils";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
@@ -22,7 +23,7 @@ const Signup = () => {
     const { error } = await signUp(email, password, fullName);
 
     if (error) {
-      toast.error(error.message);
+      toast.error(humanizeAuthError(error.message));
       setIsLoading(false);
     } else {
       toast.success("Check your email to confirm your account!");

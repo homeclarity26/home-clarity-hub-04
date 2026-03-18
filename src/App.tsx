@@ -49,7 +49,7 @@ const CreatorRoute = ({ children }: { children: React.ReactNode }) => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="font-sans text-sm text-muted-foreground">Loading...</div>
+        <div className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Loading...</div>
       </div>
     );
   }

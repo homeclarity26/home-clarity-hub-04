@@ -33,6 +33,25 @@ const DocumentsTab = ({ propertyId }: DocumentsTabProps) => {
 
   useEffect(() => {
     if (!propertyId) { setLoading(false); return; }
+
+    // Demo data for dev bypass
+    if (propertyId.startsWith("mock-")) {
+      setFiles([
+        { id: "doc-1", file_name: "Discovery Call Notes — Johnson.pdf", category: "Discovery Call", storage_path: "", file_type: "pdf", file_size: "245 KB", created_at: "2026-01-05T00:00:00Z" },
+        { id: "doc-2", file_name: "Discovery Call Recording.mp3", category: "Discovery Call", storage_path: "", file_type: "audio", file_size: "18.2 MB", created_at: "2026-01-05T00:00:00Z" },
+        { id: "doc-3", file_name: "Exterior — Front Elevation.jpg", category: "Exterior Photos", storage_path: "", file_type: "image", file_size: "3.1 MB", created_at: "2026-01-12T00:00:00Z" },
+        { id: "doc-4", file_name: "Exterior — Roof Overview.jpg", category: "Exterior Photos", storage_path: "", file_type: "image", file_size: "2.8 MB", created_at: "2026-01-12T00:00:00Z" },
+        { id: "doc-5", file_name: "Exterior — Foundation Detail.jpg", category: "Exterior Photos", storage_path: "", file_type: "image", file_size: "2.4 MB", created_at: "2026-01-12T00:00:00Z" },
+        { id: "doc-6", file_name: "Kitchen — Range & Cabinetry.jpg", category: "Interior Photos", storage_path: "", file_type: "image", file_size: "3.5 MB", created_at: "2026-01-12T00:00:00Z" },
+        { id: "doc-7", file_name: "Kitchen — Plumbing Under Sink.jpg", category: "Interior Photos", storage_path: "", file_type: "image", file_size: "2.9 MB", created_at: "2026-01-12T00:00:00Z" },
+        { id: "doc-8", file_name: "Furnace — Serial Plate.jpg", category: "Serial Plates", storage_path: "", file_type: "image", file_size: "1.2 MB", created_at: "2026-01-12T00:00:00Z" },
+        { id: "doc-9", file_name: "Electrical Panel — Label.jpg", category: "Serial Plates", storage_path: "", file_type: "image", file_size: "1.1 MB", created_at: "2026-01-12T00:00:00Z" },
+        { id: "doc-10", file_name: "Home Clarity Report — Johnson Residence.pdf", category: "General", storage_path: "", file_type: "pdf", file_size: "4.8 MB", created_at: "2026-02-15T00:00:00Z" },
+      ]);
+      setLoading(false);
+      return;
+    }
+
     supabase
       .from("client_files")
       .select("*")

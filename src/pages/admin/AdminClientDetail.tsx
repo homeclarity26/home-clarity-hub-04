@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, ExternalLink, Plus, Loader2, Trash2, Pencil } from "lucide-react";
+import { ArrowLeft, ExternalLink, Plus, Loader2, Trash2, Pencil, Sparkles } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import ClientOverview from "@/components/admin/ClientOverview";
 import ReportPageManager from "@/components/admin/ReportPageManager";
@@ -17,6 +17,7 @@ import FileManager from "@/components/admin/FileManager";
 import CommentsManager from "@/components/admin/CommentsManager";
 import VendorManager from "@/components/admin/VendorManager";
 import AdminProjectsSection from "@/components/admin/AdminProjectsSection";
+import EquipmentSection from "@/components/admin/EquipmentSection";
 import { useAdminClient, useAdminProjects, useAdminInvoices, useAdminScheduleEvents } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -28,7 +29,7 @@ import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 
-type ClientTab = "overview" | "report" | "files" | "comments" | "projects" | "payments" | "schedule" | "vendors";
+type ClientTab = "overview" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors";
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -37,6 +38,7 @@ const tabs: { id: ClientTab; label: string }[] = [
   { id: "comments", label: "Comments" },
   { id: "projects", label: "Projects" },
   { id: "payments", label: "Payments" },
+  { id: "equipment", label: "Equipment" },
   { id: "schedule", label: "Schedule" },
   { id: "vendors", label: "Vendors" },
 ];
@@ -48,7 +50,7 @@ const AdminClientDetail = () => {
   const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState<ClientTab>("overview");
   const { client, isLoading } = useAdminClient(clientId);
-  const { data: projects } = useAdminProjects(clientId);
+  const { data: projects, isLoading: projectsLoading } = useAdminProjects(clientId);
   const { data: invoices } = useAdminInvoices(clientId);
   const { data: events } = useAdminScheduleEvents(clientId);
 
@@ -128,6 +130,9 @@ const AdminClientDetail = () => {
 
   // Create dialog states
   const [invoiceOpen, setInvoiceOpen] = useState(false);
+  const [tierInvoiceOpen, setTierInvoiceOpen] = useState(false);
+  const [selectedTierPage, setSelectedTierPage] = useState("");
+  const [selectedTier, setSelectedTier] = useState("");
   const [eventOpen, setEventOpen] = useState(false);
 
   // Edit dialog states
@@ -325,35 +330,128 @@ const AdminClientDetail = () => {
                 />
               )}
             </div>
-            <ReportPageManager propertyId={client.propertyId} reportId={client.reportId} />
+            <ReportPageManager
+              propertyId={client.propertyId}
+              reportId={client.reportId}
+              propertyContext={{
+                propertyAddress: client.address,
+                yearBuilt: client.yearBuilt,
+                sqft: client.sqft,
+                bedrooms: client.bedrooms,
+                bathrooms: client.bathrooms,
+                propertyType: client.propertyType,
+                relationshipType: client.relationshipType,
+                clientIntelligenceSummary: client.clientIntelligenceSummary,
+              }}
+            />
           </div>
         )}
         {activeTab === "files" && <FileManager propertyId={client.propertyId} />}
         {activeTab === "comments" && <CommentsManager clientId={client.id} />}
         {activeTab === "vendors" && <VendorManager propertyId={client.propertyId} />}
+        {activeTab === "equipment" && (
+          <EquipmentSection
+            propertyId={client.propertyId}
+            reportPages={reportPages?.map((rp) => ({ id: rp.id, title: rp.title, page_key: rp.page_key }))}
+          />
+        )}
 
         {/* PROJECTS TAB */}
         {activeTab === "projects" && (
-          <AdminProjectsSection
-            propertyId={client.propertyId}
-            projects={projects}
-            reportPages={reportPages?.map((rp) => ({ id: rp.id, title: rp.title, page_key: rp.page_key }))}
-          />
+          projectsLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <AdminProjectsSection
+              propertyId={client.propertyId}
+              projects={projects}
+              reportPages={reportPages?.map((rp) => ({ id: rp.id, title: rp.title, page_key: rp.page_key }))}
+            />
+          )
         )}
 
         {/* PAYMENTS TAB */}
         {activeTab === "payments" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <h3 className="text-sm font-sans font-semibold text-foreground">Invoices</h3>
-              <Dialog open={invoiceOpen} onOpenChange={(o) => { setInvoiceOpen(o); if (!o) resetInvoiceForm(); }}>
-                <DialogTrigger asChild><Button size="sm" className="gap-1.5 text-xs font-sans"><Plus className="w-3.5 h-3.5" />Create Invoice</Button></DialogTrigger>
-                <DialogContent>
-                  <DialogHeader><DialogTitle className="font-sans">Create Invoice</DialogTitle></DialogHeader>
-                  <InvoiceFormFields />
-                  <Button onClick={createInvoice} className="w-full font-sans">Create</Button>
-                </DialogContent>
-              </Dialog>
+              <div className="flex gap-2">
+                {/* Create invoice from report tier */}
+                {reportPages && reportPages.some((rp) => {
+                  const page = reportPages.find((p) => p.id === rp.id);
+                  return page && (page as any).tiers && Array.isArray((page as any).tiers) && (page as any).tiers.length > 0;
+                }) && (
+                  <Dialog open={tierInvoiceOpen} onOpenChange={(o) => { setTierInvoiceOpen(o); if (!o) { setSelectedTierPage(""); setSelectedTier(""); } }}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans border-primary/30 text-primary hover:bg-primary/5">
+                        <Sparkles className="w-3.5 h-3.5" />From Report Tier
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader><DialogTitle className="font-sans">Invoice from Report Tier</DialogTitle></DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label className="font-sans text-xs">Report Page</Label>
+                          <Select value={selectedTierPage} onValueChange={(v) => { setSelectedTierPage(v); setSelectedTier(""); }}>
+                            <SelectTrigger className="text-xs"><SelectValue placeholder="Select a page…" /></SelectTrigger>
+                            <SelectContent>
+                              {(reportPages || [])
+                                .filter((rp) => (rp as any).tiers && Array.isArray((rp as any).tiers) && (rp as any).tiers.length > 0)
+                                .map((rp) => <SelectItem key={rp.id} value={rp.id} className="text-xs">{rp.title}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {selectedTierPage && (() => {
+                          const page = (reportPages || []).find((p) => p.id === selectedTierPage);
+                          const tiers = page ? ((page as any).tiers as { label: string; cost: string }[] | null) : null;
+                          if (!tiers || tiers.length === 0) return null;
+                          return (
+                            <div>
+                              <Label className="font-sans text-xs">Tier</Label>
+                              <div className="grid gap-2 mt-2">
+                                {tiers.map((t, i) => (
+                                  <button
+                                    key={i}
+                                    onClick={() => setSelectedTier(t.cost)}
+                                    className={`flex items-center justify-between px-3 py-2.5 rounded-md border text-sm font-sans text-left transition-colors ${selectedTier === t.cost ? "bg-primary/5 border-primary/40 text-primary" : "border-border hover:bg-muted/50"}`}
+                                  >
+                                    <span>{t.label}</span>
+                                    <span className="font-mono text-xs text-muted-foreground">{t.cost}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                        <Button
+                          className="w-full font-sans"
+                          disabled={!selectedTierPage || !selectedTier}
+                          onClick={() => {
+                            const page = (reportPages || []).find((p) => p.id === selectedTierPage);
+                            if (!page) return;
+                            const costStr = selectedTier.replace(/[^0-9,–-]/g, "").split(/[–-]/)[0].replace(/,/g, "");
+                            const amount = parseFloat(costStr) || 0;
+                            setInvoiceForm({ description: `${page.title} — ${selectedTier}`, amount: String(amount), due_date: "", status: "pending" });
+                            setTierInvoiceOpen(false);
+                            setInvoiceOpen(true);
+                          }}
+                        >
+                          Pre-fill Invoice →
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+                <Dialog open={invoiceOpen} onOpenChange={(o) => { setInvoiceOpen(o); if (!o) resetInvoiceForm(); }}>
+                  <DialogTrigger asChild><Button size="sm" className="gap-1.5 text-xs font-sans"><Plus className="w-3.5 h-3.5" />Create Invoice</Button></DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader><DialogTitle className="font-sans">Create Invoice</DialogTitle></DialogHeader>
+                    <InvoiceFormFields />
+                    <Button onClick={createInvoice} className="w-full font-sans">Create</Button>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
 
             <Dialog open={editInvoiceOpen} onOpenChange={(o) => { setEditInvoiceOpen(o); if (!o) { resetInvoiceForm(); setEditId(null); } }}>
