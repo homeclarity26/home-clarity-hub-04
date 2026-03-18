@@ -42,9 +42,11 @@ const ValuationModal = ({
   valueDrivers,
   neighborhoodMedian,
 }: ValuationModalProps) => {
-  if (!valuation) return null;
-
-  const { price, price_range_low, price_range_high, subject_property: sp, comparables } = valuation;
+  const price = valuation?.price ?? null;
+  const price_range_low = valuation?.price_range_low ?? null;
+  const price_range_high = valuation?.price_range_high ?? null;
+  const sp = valuation?.subject_property ?? {};
+  const comparables = valuation?.comparables ?? [];
 
   const confidence = useMemo(() => {
     if (!price || !price_range_low || !price_range_high) return null;
