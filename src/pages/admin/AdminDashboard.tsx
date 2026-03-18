@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, FileText, HelpCircle, CheckCircle, BookOpen, AlertTriangle, Plus, Loader2, DollarSign, TrendingUp, CreditCard, MessageSquare, UserPlus, Clock } from "lucide-react";
+import { Users, FileText, HelpCircle, CheckCircle, BookOpen, AlertTriangle, Plus, Loader2, DollarSign, TrendingUp, CreditCard, MessageSquare, UserPlus, Clock, Command } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,8 @@ import RevenueAnalytics from "@/components/admin/RevenueAnalytics";
 import TasksSection from "@/components/admin/TasksSection";
 import NPSOverviewCard from "@/components/admin/NPSOverviewCard";
 import PropertyMap from "@/components/admin/PropertyMap";
+import OverdueActionCenter from "@/components/admin/OverdueActionCenter";
+import CrossReportAnalytics from "@/components/admin/CrossReportAnalytics";
 import { useAdminClients, useAdminStats, useAdminActivityLog, useClientsNeedingAttention } from "@/hooks/useAdminData";
 import { useWeeklyTimeEntries } from "@/hooks/useTimeTracking";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,8 +66,14 @@ const AdminDashboard = () => {
           <StatsCard label="Published Reports" value={stats?.publishedReports ?? 0} icon={CheckCircle} />
         </div>
 
+        {/* Overdue Action Center */}
+        <OverdueActionCenter />
+
         {/* Revenue Analytics */}
         <RevenueAnalytics />
+
+        {/* Cross-Report Analytics */}
+        <CrossReportAnalytics />
 
         {/* Property Map */}
         <PropertyMap />
@@ -151,6 +159,12 @@ const AdminDashboard = () => {
                 </Button>
                 <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => navigate("/admin/clients/new")}>
                   <UserPlus className="w-4 h-4" />Invite / Add Client
+                </Button>
+                <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => {
+                  // Trigger Cmd+K
+                  window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+                }}>
+                  <Command className="w-4 h-4" />Quick Search (⌘K)
                 </Button>
                 <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => navigate("/admin/knowledge-base")}>
                   <BookOpen className="w-4 h-4" />View Knowledge Base

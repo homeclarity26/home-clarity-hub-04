@@ -37,6 +37,10 @@ import ProfitabilityCard from "@/components/admin/ProfitabilityCard";
 import PortalPersonalization from "@/components/admin/PortalPersonalization";
 import PortalEngagementCard from "@/components/admin/PortalEngagementCard";
 import HomeGoalsAdmin from "@/components/admin/HomeGoalsAdmin";
+import ClientStickyNotes from "@/components/admin/ClientStickyNotes";
+import ReportCloneDialog from "@/components/admin/ReportCloneDialog";
+import TemplateVersioning from "@/components/admin/TemplateVersioning";
+import ReportProgressKanban from "@/components/admin/ReportProgressKanban";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 import ReportAITools from "@/components/admin/ReportAITools";
 import VoiceAndPhotoTools from "@/components/admin/VoiceAndPhotoTools";
@@ -374,6 +378,7 @@ const AdminClientDetail = () => {
         {activeTab === "overview" && (
           <div className="space-y-6">
             <ClientHealthCard client={client} />
+            <ClientStickyNotes propertyId={client.propertyId} />
             <PortalEngagementCard clientUserId={client.clientUserId || ""} />
             <ClientOverview client={client} />
             <HomeGoalsAdmin clientUserId={client.clientUserId || ""} propertyId={client.propertyId} />
@@ -385,6 +390,9 @@ const AdminClientDetail = () => {
         {activeTab === "report" && (
           <div className="space-y-4">
             <div className="flex items-center justify-end gap-2">
+              {client.reportId && (
+                <ReportCloneDialog sourceReportId={client.reportId} sourcePropertyName={client.propertyName} />
+              )}
               {pdfData && (
                 <PDFDownloadButton
                   data={pdfData}
@@ -395,6 +403,10 @@ const AdminClientDetail = () => {
                 />
               )}
             </div>
+            {client.reportId && <TemplateVersioning reportId={client.reportId} />}
+            {reportPages && reportPages.length > 0 && (
+              <ReportProgressKanban pages={reportPages} propertyId={client.propertyId} />
+            )}
             <VoiceAndPhotoTools reportId={client.reportId || ""} propertyId={client.propertyId} />
             <ReportAITools
               reportId={client.reportId || ""}
@@ -427,7 +439,7 @@ const AdminClientDetail = () => {
         {activeTab === "files" && <FileManager propertyId={client.propertyId} />}
         {activeTab === "comments" && <CommentsManager clientId={client.id} />}
         {activeTab === "vendors" && <VendorManager propertyId={client.propertyId} />}
-        {activeTab === "messages" && <AdminMessagesSection propertyId={client.propertyId} />}
+        {activeTab === "messages" && <AdminMessagesSection propertyId={client.propertyId} clientName={client.name} propertyAddress={client.address} />}
         {activeTab === "equipment" && (
           <EquipmentSection
             propertyId={client.propertyId}

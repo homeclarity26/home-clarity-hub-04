@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, Loader2, MessageSquare, Video, Link } from "lucide-react";
+import { Send, Loader2, MessageSquare, Video, Link, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,9 +25,11 @@ interface Message {
 
 interface AdminMessagesSectionProps {
   propertyId: string;
+  clientName?: string;
+  propertyAddress?: string;
 }
 
-const AdminMessagesSection = ({ propertyId }: AdminMessagesSectionProps) => {
+const AdminMessagesSection = ({ propertyId, clientName, propertyAddress }: AdminMessagesSectionProps) => {
   const { user, profile } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,6 +37,8 @@ const AdminMessagesSection = ({ propertyId }: AdminMessagesSectionProps) => {
   const [isSending, setIsSending] = useState(false);
   const [videoDialogOpen, setVideoDialogOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
+  const [smartReplies, setSmartReplies] = useState<{ label: string; message: string }[]>([]);
+  const [loadingReplies, setLoadingReplies] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const fetchMessages = async () => {
@@ -99,6 +104,19 @@ const AdminMessagesSection = ({ propertyId }: AdminMessagesSectionProps) => {
     finally { setIsSending(false); }
   };
 
+  const handleAIReply = async () => {
+    setLoadingReplies(true);
+    setSmartReplies([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-smart-reply", {
+        body: { messages: messages.slice(-10), clientName, propertyAddress },
+      });
+      if (error) throw error;
+      setSmartReplies(data?.replies || []);
+    } catch { toast.error("Failed to generate replies"); }
+    finally { setLoadingReplies(false); }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
@@ -150,9 +168,26 @@ const AdminMessagesSection = ({ propertyId }: AdminMessagesSectionProps) => {
           <div ref={bottomRef} />
         </div>
 
+        {/* AI Smart Reply suggestions */}
+        {smartReplies.length > 0 && (
+          <div className="border-t border-border px-3 py-2 bg-accent/5 space-y-1.5">
+            <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1"><Sparkles className="w-3 h-3" />AI Suggestions</p>
+            {smartReplies.map((r, i) => (
+              <button key={i} onClick={() => { setNewMessage(r.message); setSmartReplies([]); }}
+                className="w-full text-left px-2.5 py-1.5 rounded-md border border-border bg-background hover:bg-muted/50 transition-colors cursor-pointer">
+                <Badge variant="outline" className="text-[9px] mb-0.5">{r.label}</Badge>
+                <p className="text-xs font-sans text-foreground line-clamp-2">{r.message}</p>
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="border-t border-border p-3 flex gap-2 items-end bg-card">
           <Button variant="ghost" size="sm" className="shrink-0 h-9 w-9 p-0" onClick={() => setVideoDialogOpen(true)} title="Send Video">
             <Video className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" className="shrink-0 h-9 w-9 p-0" onClick={handleAIReply} disabled={loadingReplies || messages.length === 0} title="AI Smart Reply">
+            {loadingReplies ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           </Button>
           <textarea
             value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleKeyDown}
