@@ -102,7 +102,10 @@ const HomeTab = ({
         {/* Home Value Tracker */}
         {propertyId && (
           <HomeValueTracker propertyId={propertyId} estimatedValue={estimatedValue} />
-        )
+        )}
+
+        {/* Row 1: Portal Status */}
+        <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Your Portal Status</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
