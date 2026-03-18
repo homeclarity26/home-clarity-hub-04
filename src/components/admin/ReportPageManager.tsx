@@ -368,7 +368,7 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
                           </TableRow>
                           {isExpanded && (
                             <TableRow key={`${page.id}-expanded`}>
-                              <TableCell colSpan={6} className="bg-muted/30 p-4">
+                              <TableCell colSpan={6} className="bg-muted/30 p-4 space-y-3">
                                 <div className="flex items-center gap-3 flex-wrap">
                                   <QACoachPanel page={{
                                     id: page.id,
@@ -380,12 +380,26 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
                                     key_observations: page.key_observations,
                                     images: page.images,
                                   }} />
+                                  <ConditionRatingWizard
+                                    pageSlug={page.page_key}
+                                    onRate={async (rating) => {
+                                      await supabase.from("report_pages").update({ condition_rating: rating } as any).eq("id", page.id);
+                                      await queryClient.invalidateQueries({ queryKey: ["admin-report-pages", reportId] });
+                                      toast.success(`Condition set to ${rating}`);
+                                    }}
+                                  />
+                                  <InspectionChecklist reportPageId={page.id} pageTitle={page.title} />
                                   <NarrativeToneSelector value="client-friendly" onChange={(tone: NarrativeTone) => toast.info(`Tone "${tone}" saved for next AI draft.`)} />
                                   <div className="ml-auto text-xs font-sans text-muted-foreground">
                                     {page.expected_lifespan_years && <span>Lifespan: {page.expected_lifespan_years}yr</span>}
                                     {page.current_age_years != null && <span className="ml-3">Age: {page.current_age_years}yr</span>}
                                   </div>
                                 </div>
+                                <ComparableBenchmark
+                                  pageSlug={page.page_key}
+                                  conditionRating={page.condition_rating || undefined}
+                                  yearBuilt={propertyContext?.yearBuilt}
+                                />
                               </TableCell>
                             </TableRow>
                           )}
