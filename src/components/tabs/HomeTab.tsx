@@ -1,7 +1,10 @@
-import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle } from "lucide-react";
+import { useState } from "react";
+import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle, Info } from "lucide-react";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import HomeValueTracker from "@/components/HomeValueTracker";
 import MembershipBanner from "@/components/MembershipBanner";
+import ValuationModal from "@/components/ValuationModal";
+import { usePropertyValuation } from "@/hooks/usePropertyValuation";
 
 interface HomeTabProps {
   onNavigate: (tab: string, pageId?: string) => void;
