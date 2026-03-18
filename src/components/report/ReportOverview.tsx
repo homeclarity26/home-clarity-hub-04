@@ -66,6 +66,7 @@ interface ReportOverviewProps {
   hoverPdfUrl?: string | null;
   iguideUrl?: string | null;
   iguidePdfUrl?: string | null;
+  estimatedValue?: number | null;
 }
 
 const ReportOverview = ({
