@@ -54,7 +54,7 @@ export default function AddressAutocomplete({
   onPropertyDataFetched,
 }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const autocompleteRef = useRef<any>(null);
   const scriptLoaded = useRef(false);
 
   const [parsedAddress, setParsedAddress] = useState<ParsedAddress | null>(null);
