@@ -423,6 +423,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
     setInvoiceForm({ title: "", type: "invoice", issue_date: new Date().toISOString().split("T")[0], due_date: "", notes: "", description: "" });
     setEditLineItems([]);
     setAiJobDescription("");
+    setAiTranscript("");
   };
 
   const addLineItem = () => setEditLineItems([...editLineItems, { description: "", quantity: "1", unit_price: "0", item_type: "service" }]);
