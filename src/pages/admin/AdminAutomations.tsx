@@ -23,6 +23,18 @@ const DEFAULT_RULES = [
   { rule_type: "unanswered_message", rule_name: "Unanswered Message Alert", rule_description: "Notify admin when a client message goes unanswered for 24 hours.", icon: MessageSquare, config: { hours: 24 } },
   { rule_type: "equipment_service", rule_name: "Equipment Service Alert", rule_description: "Create a task when equipment service date is within X days.", icon: AlertTriangle, config: { days: 60 } },
   { rule_type: "stale_project", rule_name: "Stale Project Reminder", rule_description: "Create a task when a project has been in 'Planned' status for X days.", icon: Calendar, config: { days: 45 } },
+  // CRM Client Automations
+  { rule_type: "portal_inactivity", rule_name: "Portal Inactivity Check-In", rule_description: "Send check-in message when client hasn't logged into portal in X days.", icon: Heart, config: { days: 30 } },
+  { rule_type: "health_score_drop", rule_name: "Health Score Drop Alert", rule_description: "Flag client and create follow-up task when health score drops below threshold.", icon: AlertTriangle, config: { threshold: 60 } },
+  { rule_type: "invoice_overdue_escalate", rule_name: "Invoice Overdue Escalation", rule_description: "Send reminder then escalate when invoice is unpaid X days after due date.", icon: FileText, config: { days: 7 } },
+  { rule_type: "client_completed_survey", rule_name: "Completion Survey & Referral Ask", rule_description: "Send satisfaction survey + referral request when client moves to 'Completed' stage.", icon: Heart, config: {} },
+  { rule_type: "new_client_welcome_sequence", rule_name: "New Client Welcome Sequence", rule_description: "Day 1 welcome email, Day 7 call task, Day 30 check-in for every new client.", icon: Calendar, config: { day1: true, day7: true, day30: true } },
+  // CRM Trade Partner Automations
+  { rule_type: "insurance_expiry_reminder", rule_name: "Insurance Expiry Reminder", rule_description: "Send renewal reminder when trade partner insurance expires within X days.", icon: AlertTriangle, config: { days: 60 } },
+  { rule_type: "license_expiry_reminder", rule_name: "License Expiry Reminder", rule_description: "Send renewal reminder when trade partner license expires within X days.", icon: AlertTriangle, config: { days: 60 } },
+  { rule_type: "partner_inactivity", rule_name: "Partner Availability Check", rule_description: "Prompt to check availability when trade partner hasn't been assigned a project in X days.", icon: Calendar, config: { days: 90 } },
+  { rule_type: "bid_response_timeout", rule_name: "Bid Response Timeout", rule_description: "Send reminder + admin alert when bid invitation isn't responded to in X days.", icon: MessageSquare, config: { days: 5 } },
+  { rule_type: "project_completion_review", rule_name: "Post-Project Performance Review", rule_description: "Auto-send performance review request when a project is marked complete.", icon: Heart, config: {} },
 ];
 
 const AdminAutomations = () => {
