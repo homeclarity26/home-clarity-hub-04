@@ -108,6 +108,9 @@ const AdminDashboard = () => {
                 <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => navigate("/admin/clients/new")}>
                   <Plus className="w-4 h-4" />Create New Report
                 </Button>
+                <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => navigate("/admin/clients/new")}>
+                  <UserPlus className="w-4 h-4" />Invite / Add Client
+                </Button>
                 <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => navigate("/admin/knowledge-base")}>
                   <BookOpen className="w-4 h-4" />View Knowledge Base
                 </Button>
