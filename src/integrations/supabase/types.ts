@@ -2978,6 +2978,7 @@ export type Database = {
       reports: {
         Row: {
           based_on_report_id: string | null
+          blocks_json: Json | null
           created_at: string
           created_by: string
           id: string
@@ -2988,6 +2989,7 @@ export type Database = {
         }
         Insert: {
           based_on_report_id?: string | null
+          blocks_json?: Json | null
           created_at?: string
           created_by: string
           id?: string
@@ -2998,6 +3000,7 @@ export type Database = {
         }
         Update: {
           based_on_report_id?: string | null
+          blocks_json?: Json | null
           created_at?: string
           created_by?: string
           id?: string
