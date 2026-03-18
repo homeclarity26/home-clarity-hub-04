@@ -55,8 +55,7 @@ const DigitalHomePanel = ({
                   href={hoverUrl!}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md text-sm font-sans font-medium text-white transition-all hover:opacity-90"
-                  style={{ backgroundColor: "#B7410E" }}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md text-sm font-sans font-medium text-white bg-hbc-rust transition-all hover:opacity-90"
                 >
                   <ExternalLink className="w-4 h-4" />
                   Launch 3D Model
