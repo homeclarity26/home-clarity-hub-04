@@ -80,6 +80,19 @@ const AdminClientDetail = () => {
   const { data: invoices } = useAdminInvoices(clientId);
   const { data: events } = useAdminScheduleEvents(clientId);
 
+  // Fetch equipment for smart scheduling suggestions
+  const { data: equipmentData } = useQuery({
+    queryKey: ["admin-equipment", clientId],
+    enabled: !!clientId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("equipment")
+        .select("id, name, next_service_date, category")
+        .eq("property_id", clientId!);
+      return data || [];
+    },
+  });
+
   // Fetch report pages for PDF generation
   const { data: reportPages } = useQuery({
     queryKey: ["admin-report-pages", client?.reportId],
