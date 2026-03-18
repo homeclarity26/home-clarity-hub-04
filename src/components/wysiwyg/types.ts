@@ -1,0 +1,252 @@
+// WYSIWYG Block Editor — Core Types
+
+export type BlockType =
+  | "cover"
+  | "score"
+  | "text"
+  | "finding_card"
+  | "finding_group"
+  | "photo"
+  | "photo_gallery"
+  | "priority_action"
+  | "cost_range"
+  | "stat_card"
+  | "divider"
+  | "strategic_plan"
+  | "chapter_header"
+  | "ai_narrative";
+
+export type ColSpan = 1 | 2 | 3 | 4 | 6 | 12;
+
+export interface ReportBlock {
+  id: string;
+  type: BlockType;
+  content: Record<string, unknown>;
+  colSpan: ColSpan;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Content shapes per block type ────────────────────────────────
+
+export interface CoverContent {
+  propertyName: string;
+  address: string;
+  reportTitle: string;
+  date?: string;
+  imageUrl?: string;
+}
+
+export interface ScoreContent {
+  overall: number;
+  exterior?: number;
+  interior?: number;
+  systems?: number;
+  safety?: number;
+}
+
+export interface TextContent {
+  html: string;
+}
+
+export interface FindingCardContent {
+  name: string;
+  rating: string; // Excellent | Good | Fair | Poor | Critical
+  notes: string;
+}
+
+export interface FindingGroupContent {
+  title: string;
+  findings: FindingCardContent[];
+}
+
+export interface PhotoContent {
+  url: string;
+  caption?: string;
+}
+
+export interface PhotoGalleryContent {
+  photos: PhotoContent[];
+}
+
+export interface PriorityActionContent {
+  items: { text: string; priority: "urgent" | "high" | "medium" | "low" }[];
+}
+
+export interface CostRangeContent {
+  label: string;
+  low: number;
+  high: number;
+  tier?: string;
+}
+
+export interface StatCardContent {
+  label: string;
+  value: string;
+  subtitle?: string;
+  icon?: string;
+}
+
+export interface StrategicPlanContent {
+  title: string;
+  description: string;
+  timeframe: string;
+  urgency: "urgent" | "soon" | "future";
+  estimatedCost?: string;
+}
+
+export interface ChapterHeaderContent {
+  title: string;
+  icon?: string;
+  score?: number;
+  chapterId?: string;
+}
+
+export interface AINarrativeContent {
+  html: string;
+  fieldNotes?: string;
+  isGenerating?: boolean;
+}
+
+// ─── Block templates for the "Add Block" picker ──────────────────
+
+export interface BlockTemplate {
+  type: BlockType;
+  label: string;
+  description: string;
+  icon: string; // lucide icon name
+  defaultColSpan: ColSpan;
+  defaultContent: Record<string, unknown>;
+}
+
+export const BLOCK_TEMPLATES: BlockTemplate[] = [
+  {
+    type: "cover",
+    label: "Cover",
+    description: "Full-width hero with property name and address",
+    icon: "Image",
+    defaultColSpan: 12,
+    defaultContent: { propertyName: "", address: "", reportTitle: "Home Clarity Report" },
+  },
+  {
+    type: "chapter_header",
+    label: "Chapter Header",
+    description: "Section title with optional score badge",
+    icon: "Heading1",
+    defaultColSpan: 12,
+    defaultContent: { title: "New Chapter", score: 0 },
+  },
+  {
+    type: "score",
+    label: "Health Score",
+    description: "Overall and chapter health score circles",
+    icon: "Activity",
+    defaultColSpan: 12,
+    defaultContent: { overall: 0 },
+  },
+  {
+    type: "text",
+    label: "Text / Narrative",
+    description: "Rich text paragraph with inline editing",
+    icon: "Type",
+    defaultColSpan: 12,
+    defaultContent: { html: "<p>Start writing...</p>" },
+  },
+  {
+    type: "ai_narrative",
+    label: "AI Narrative",
+    description: "AI-assisted text block — paste notes, generate narrative",
+    icon: "Sparkles",
+    defaultColSpan: 12,
+    defaultContent: { html: "", fieldNotes: "" },
+  },
+  {
+    type: "finding_card",
+    label: "Finding Card",
+    description: "Single finding with condition rating",
+    icon: "ClipboardCheck",
+    defaultColSpan: 6,
+    defaultContent: { name: "New Finding", rating: "Good", notes: "" },
+  },
+  {
+    type: "finding_group",
+    label: "Finding Group",
+    description: "Group of related findings",
+    icon: "LayoutList",
+    defaultColSpan: 12,
+    defaultContent: { title: "Findings", findings: [] },
+  },
+  {
+    type: "photo",
+    label: "Photo",
+    description: "Single photo with caption",
+    icon: "ImageIcon",
+    defaultColSpan: 6,
+    defaultContent: { url: "", caption: "" },
+  },
+  {
+    type: "photo_gallery",
+    label: "Photo Gallery",
+    description: "Multi-photo grid layout",
+    icon: "Images",
+    defaultColSpan: 12,
+    defaultContent: { photos: [] },
+  },
+  {
+    type: "priority_action",
+    label: "Priority Actions",
+    description: "Urgent action items callout",
+    icon: "AlertTriangle",
+    defaultColSpan: 12,
+    defaultContent: { items: [] },
+  },
+  {
+    type: "cost_range",
+    label: "Cost Range",
+    description: "Estimated cost low-high range",
+    icon: "DollarSign",
+    defaultColSpan: 4,
+    defaultContent: { label: "", low: 0, high: 0 },
+  },
+  {
+    type: "stat_card",
+    label: "Stat Card",
+    description: "Single metric display card",
+    icon: "BarChart3",
+    defaultColSpan: 3,
+    defaultContent: { label: "Metric", value: "0", subtitle: "" },
+  },
+  {
+    type: "divider",
+    label: "Divider",
+    description: "Horizontal section separator",
+    icon: "Minus",
+    defaultColSpan: 12,
+    defaultContent: {},
+  },
+  {
+    type: "strategic_plan",
+    label: "Strategic Plan",
+    description: "Project recommendation card",
+    icon: "Target",
+    defaultColSpan: 6,
+    defaultContent: { title: "", description: "", timeframe: "", urgency: "future" },
+  },
+];
+
+// ─── Helpers ─────────────────────────────────────────────────────
+
+export function createBlock(type: BlockType, order: number, overrides?: Partial<ReportBlock>): ReportBlock {
+  const template = BLOCK_TEMPLATES.find((t) => t.type === type);
+  return {
+    id: crypto.randomUUID(),
+    type,
+    content: template?.defaultContent || {},
+    colSpan: template?.defaultColSpan || 12,
+    order,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
