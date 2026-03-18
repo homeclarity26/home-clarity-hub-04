@@ -15,6 +15,7 @@ import PropertyMap from "@/components/admin/PropertyMap";
 import OverdueActionCenter from "@/components/admin/OverdueActionCenter";
 import CrossReportAnalytics from "@/components/admin/CrossReportAnalytics";
 import WeeklyDigestWidget from "@/components/admin/WeeklyDigestWidget";
+import EquipmentWarrantyCalendar from "@/components/admin/EquipmentWarrantyCalendar";
 import { useAdminClients, useAdminStats, useAdminActivityLog, useClientsNeedingAttention } from "@/hooks/useAdminData";
 import { useWeeklyTimeEntries } from "@/hooks/useTimeTracking";
 import { supabase } from "@/integrations/supabase/client";
