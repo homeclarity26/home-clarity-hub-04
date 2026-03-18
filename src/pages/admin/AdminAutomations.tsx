@@ -137,6 +137,12 @@ const AdminAutomations = () => {
                             <Label className="text-xs text-muted-foreground">Days:</Label>
                             <Input type="number" value={config.days} onChange={e => updateConfig(rule.id, { ...config, days: Number(e.target.value) })} className="w-16 h-7 text-xs" />
                           </div>
+                         )}
+                        {config.threshold !== undefined && (
+                          <div className="flex items-center gap-1.5">
+                            <Label className="text-xs text-muted-foreground">Threshold:</Label>
+                            <Input type="number" value={config.threshold} onChange={e => updateConfig(rule.id, { ...config, threshold: Number(e.target.value) })} className="w-16 h-7 text-xs" />
+                          </div>
                         )}
                         {config.hours !== undefined && (
                           <div className="flex items-center gap-1.5">
