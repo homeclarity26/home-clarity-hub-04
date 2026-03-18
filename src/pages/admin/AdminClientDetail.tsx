@@ -409,7 +409,7 @@ const AdminClientDetail = () => {
             <ClientHealthCard client={client} />
             <AIFollowUpSuggestions propertyId={client.propertyId} clientName={client.name} />
             <ConditionForecast propertyId={client.propertyId} />
-            <OnboardingTracker clientId={client.propertyId} />
+            <OnboardingTracker client={client} />
             <ClientStickyNotes propertyId={client.propertyId} />
             <PortalEngagementCard clientUserId={client.clientUserId || ""} />
             <ClientOverview client={client} />
