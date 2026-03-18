@@ -34,6 +34,8 @@ import AdminCalendar from "./pages/admin/AdminCalendar";
 import AdminProjects from "./pages/admin/AdminProjects";
 import AdminProjectDetail from "./pages/admin/AdminProjectDetail";
 import AdminNewProject from "./pages/admin/AdminNewProject";
+import AdminCRM from "./pages/admin/AdminCRM";
+import AdminCRMClientProfile from "./pages/admin/AdminCRMClientProfile";
 import TradePartnerLayout from "./layouts/TradePartnerLayout";
 import TradePartnerDashboard from "./pages/trade/TradePartnerDashboard";
 
