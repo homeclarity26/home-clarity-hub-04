@@ -367,12 +367,30 @@ const HomeTab = ({
           </div>
         </div>
 
-        {/* Activity Timeline */}
+        {/* Property Timeline */}
         <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-8">
           <div className="bg-card rounded-lg p-8 shadow-hbc-sm border border-border">
-            <ClientActivityTimeline propertyId={propertyId} />
+            <PropertyTimeline propertyId={propertyId} />
           </div>
         </div>
+
+        {/* Schedule Consultation Button */}
+        {propertyId && (
+          <div className="max-w-[1400px] mx-auto px-6 md:px-20">
+            <button
+              onClick={() => setShowAppointment(true)}
+              className="w-full group bg-card rounded-lg p-6 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4 border border-border text-left"
+            >
+              <CalendarPlus className="w-5 h-5 text-accent" />
+              <div className="flex-1">
+                <h3 className="font-display text-lg text-foreground">Schedule a Consultation</h3>
+                <p className="font-sans text-sm text-muted-foreground">Pick a time to speak with your advisor</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors" />
+            </button>
+            <AppointmentRequestModal open={showAppointment} onOpenChange={setShowAppointment} propertyId={propertyId} />
+          </div>
+        )}
       </div>
 
       {/* Feedback */}
