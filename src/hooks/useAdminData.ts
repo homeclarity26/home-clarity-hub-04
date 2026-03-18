@@ -24,6 +24,7 @@ export interface AdminClient {
   reportVersion: string;
   lastUpdated: string;
   unreadComments: number;
+  unreadMessages: number;
   totalPages: number;
   completePages: number;
   flaggedPages: number;
