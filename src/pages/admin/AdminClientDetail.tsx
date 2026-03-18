@@ -503,6 +503,21 @@ const AdminClientDetail = () => {
             )}
           </div>
         )}
+
+        {/* TASKS TAB */}
+        {activeTab === "tasks" && (
+          <Card className="p-5">
+            <TasksSection clientId={client.propertyId} />
+          </Card>
+        )}
+
+        {/* TIME TRACKING TAB */}
+        {activeTab === "time" && (
+          <div className="space-y-4">
+            <TimeTrackingSection clientId={client.propertyId} totalRevenue={0} />
+            <ProfitabilityCard data={{ totalRevenue: 0, totalHours: 0, targetHourlyRate: 150, messageCount: 0, messageCostPerMsg: 5 }} />
+          </div>
+        )}
       </div>
     </div>
   );
