@@ -12,35 +12,26 @@ const AnnualReportCard = ({ propertyId }: AnnualReportCardProps) => {
     queryKey: ["annual-report-card", propertyId],
     enabled: !!propertyId && !propertyId.startsWith("mock-"),
     queryFn: async () => {
-      const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString();
+      // Get invoices for this property
+      const { data: invoices } = await supabase.from("invoices").select("id").eq("property_id", propertyId);
+      const invIds = invoices?.map((i) => i.id) || [];
 
-      const [
-        { data: payments },
-        { data: projects },
-        { data: valueHistory },
-        { data: valuation },
-      ] = await Promise.all([
-        supabase.from("payments_posted").select("amount, invoice_id").then(async (res) => {
-          if (!res.data) return { data: [] };
-          // Filter by property via invoices
-          const invIds = res.data.map((p) => p.invoice_id);
-          if (invIds.length === 0) return { data: [] };
-          const { data: invs } = await supabase.from("invoices").select("id, property_id").in("id", invIds).eq("property_id", propertyId);
-          const validIds = new Set(invs?.map((i) => i.id) || []);
-          return { data: res.data.filter((p) => validIds.has(p.invoice_id)) };
-        }),
-        supabase.from("projects").select("title, status, estimated_cost, value_contribution_estimate").eq("property_id", propertyId),
-        supabase.from("home_value_history").select("estimated_value, recorded_at").eq("property_id", propertyId).order("recorded_at", { ascending: true }),
-        supabase.from("property_valuations").select("price").eq("property_id", propertyId).order("fetched_at", { ascending: false }).limit(1),
-      ]);
+      let totalSpent = 0;
+      if (invIds.length > 0) {
+        const { data: payments } = await supabase.from("payments_posted").select("amount").in("invoice_id", invIds);
+        totalSpent = (payments || []).reduce((s, p) => s + Number(p.amount), 0);
+      }
 
-      const totalSpent = (payments?.data || []).reduce((s, p) => s + Number(p.amount), 0);
-      const completedProjects = (projects?.data || []).filter((p) => p.status === "complete" || p.status === "completed");
-      const activeProjects = (projects?.data || []).filter((p) => p.status !== "complete" && p.status !== "completed" && p.status !== "cancelled");
+      const { data: projects } = await supabase.from("projects").select("title, status, estimated_cost, value_contribution_estimate").eq("property_id", propertyId);
+      const { data: valueHistory } = await supabase.from("home_value_history").select("estimated_value, recorded_at").eq("property_id", propertyId).order("recorded_at", { ascending: true });
+      const { data: valuation } = await supabase.from("property_valuations").select("price").eq("property_id", propertyId).order("fetched_at", { ascending: false }).limit(1);
+
+      const completedProjects = (projects || []).filter((p) => p.status === "complete" || p.status === "completed");
+      const activeProjects = (projects || []).filter((p) => p.status !== "complete" && p.status !== "completed" && p.status !== "cancelled");
       const totalValueContribution = completedProjects.reduce((s, p) => s + Number(p.value_contribution_estimate || 0), 0);
 
-      const currentValue = valuation?.data?.[0]?.price || null;
-      const history = valueHistory?.data || [];
+      const currentValue = valuation?.[0]?.price || null;
+      const history = valueHistory || [];
       const firstValue = history.length > 0 ? Number(history[0].estimated_value) : null;
       const valueChange = currentValue && firstValue ? currentValue - firstValue : null;
       const valueChangePct = firstValue && valueChange ? ((valueChange / firstValue) * 100).toFixed(1) : null;
