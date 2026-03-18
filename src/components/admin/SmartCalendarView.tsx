@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, ChevronLeft, ChevronRight, Wrench, FileText, CreditCard, ClipboardCheck } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Wrench, FileText, CreditCard, ClipboardCheck, Plus } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, isToday } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";

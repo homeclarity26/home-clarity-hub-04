@@ -168,7 +168,7 @@ const AdminDashboard = () => {
               <h2 className="text-sm font-sans font-semibold text-foreground mb-4">Quick Actions</h2>
               <div className="space-y-2">
                 <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => navigate("/admin/clients/new")}>
-                  <Plus className="w-4 h-4" />Create New Report
+                  <Plus className="w-4 h-4" />New Client
                 </Button>
                 <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => navigate("/admin/clients/new")}>
                   <UserPlus className="w-4 h-4" />Invite / Add Client

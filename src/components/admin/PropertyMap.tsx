@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MapPin, ExternalLink, RefreshCw } from "lucide-react";
+import { Loader2, MapPin, ExternalLink, RefreshCw, Plus } from "lucide-react";
 import { toast } from "sonner";
 import "leaflet/dist/leaflet.css";
 
