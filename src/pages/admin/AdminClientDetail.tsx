@@ -428,59 +428,11 @@ const AdminClientDetail = () => {
         {activeTab === "timeline" && <ClientTimelineTab propertyId={client.propertyId} />}
         {activeTab === "engagement" && <ClientEngagementTab clientUserId={client.clientUserId || ""} propertyId={client.propertyId} />}
         {activeTab === "report" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-end gap-2">
-              {client.reportId && <ReportVersionHistory reportId={client.reportId} propertyId={client.propertyId} />}
-              {client.reportId && (
-                <ReportCloneDialog sourceReportId={client.reportId} sourcePropertyName={client.propertyName} />
-              )}
-              {pdfData && (
-                <PDFDownloadButton
-                  data={pdfData}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
-                  label="Generate PDF"
-                />
-              )}
-            </div>
-            {client.reportId && <TemplateVersioning reportId={client.reportId} />}
-            {reportPages && reportPages.length > 0 && (
-              <ReportProgressKanban pages={reportPages} propertyId={client.propertyId} />
-            )}
-            <AIDraftAssistant propertyId={client.propertyId} propertyContext={{ propertyAddress: client.address, yearBuilt: client.yearBuilt, sqft: client.sqft, propertyType: client.propertyType }} />
-            <VoiceAndPhotoTools reportId={client.reportId || ""} propertyId={client.propertyId} />
-            <ReportAITools
-              reportId={client.reportId || ""}
-              propertyId={client.propertyId}
-              propertyContext={{
-                propertyAddress: client.address,
-                yearBuilt: client.yearBuilt,
-                sqft: client.sqft,
-                bedrooms: client.bedrooms,
-                bathrooms: client.bathrooms,
-                propertyType: client.propertyType,
-              }}
-            />
-            <InternalReportComments reportId={client.reportId} />
-            {reportPages && reportPages.length > 0 && (
-              <DragReportReorder pages={reportPages.map(p => ({ id: p.id, title: p.title, group_name: p.group_name, sort_order: p.sort_order, status: p.status, condition_rating: p.condition_rating }))} reportId={client.reportId!} />
-            )}
-            <ReportPageManager
-              propertyId={client.propertyId}
-              reportId={client.reportId}
-              propertyContext={{
-                propertyAddress: client.address,
-                yearBuilt: client.yearBuilt,
-                sqft: client.sqft,
-                bedrooms: client.bedrooms,
-                bathrooms: client.bathrooms,
-                propertyType: client.propertyType,
-                relationshipType: client.relationshipType,
-                clientIntelligenceSummary: client.clientIntelligenceSummary,
-              }}
-            />
-          </div>
+          <ReportTabContent
+            client={client}
+            reportPages={reportPages}
+            pdfData={pdfData}
+          />
         )}
         {activeTab === "files" && (
           <div className="space-y-4">
