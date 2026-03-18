@@ -401,6 +401,7 @@ const AdminClientDetail = () => {
 
         {activeTab === "overview" && (
           <div className="space-y-6">
+            <AIClientInsightsCard propertyId={client.propertyId} clientData={{ name: client.name, address: client.address, propertyType: client.propertyType, yearBuilt: client.yearBuilt }} />
             <ClientHealthCard client={client} />
             <AIFollowUpSuggestions propertyId={client.propertyId} clientName={client.name} />
             <ConditionForecast propertyId={client.propertyId} />
@@ -412,7 +413,8 @@ const AdminClientDetail = () => {
             <AdminValuationCard propertyId={client.propertyId} address={client.address} />
           </div>
         )}
-        {activeTab === "timeline" && <ClientActivityTimeline propertyId={client.propertyId} />}
+        {activeTab === "timeline" && <ClientTimelineTab propertyId={client.propertyId} />}
+        {activeTab === "engagement" && <ClientEngagementTab clientUserId={client.clientUserId || ""} />}
         {activeTab === "report" && (
           <div className="space-y-4">
             <div className="flex items-center justify-end gap-2">
