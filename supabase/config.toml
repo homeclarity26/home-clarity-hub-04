@@ -38,3 +38,21 @@ verify_jwt = false
 
 [functions.ai-auto-follow-up]
 verify_jwt = false
+
+[functions.ai-draft-assistant]
+verify_jwt = false
+
+[functions.ai-score-explainer]
+verify_jwt = false
+
+[functions.ai-client-insights]
+verify_jwt = false
+
+[functions.ai-maintenance-schedule]
+verify_jwt = false
+
+[functions.ai-transcript-summarizer]
+verify_jwt = false
+
+[functions.ai-vendor-match]
+verify_jwt = false
