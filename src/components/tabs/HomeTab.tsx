@@ -40,6 +40,19 @@ const HomeTab = ({
 }: HomeTabProps) => {
   const [valuationOpen, setValuationOpen] = useState(false);
   const { valuation, isLoading: valLoading, fetchValuation } = usePropertyValuation(propertyId, propertyAddress);
+  const [customization, setCustomization] = useState<{ welcome_message?: string; tagline?: string; hero_photo_url?: string; advisor_signature?: string } | null>(null);
+
+  useEffect(() => {
+    if (!propertyId || propertyId.startsWith("mock-")) return;
+    const load = async () => {
+      const { data } = await (supabase.from("portal_customizations" as any) as any)
+        .select("*")
+        .eq("property_id", propertyId)
+        .limit(1);
+      if (data && data.length > 0) setCustomization(data[0]);
+    };
+    load();
+  }, [propertyId]);
 
   const displayValue = valuation?.price ?? estimatedValue;
 
