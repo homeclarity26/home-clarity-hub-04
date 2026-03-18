@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle, Info, Wrench } from "lucide-react";
+import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle, Info, Wrench, CalendarPlus } from "lucide-react";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import HomeValueTracker from "@/components/HomeValueTracker";
 import MembershipBanner from "@/components/MembershipBanner";
@@ -15,7 +15,10 @@ import AnnualReportCard from "@/components/AnnualReportCard";
 import MaintenanceReminders from "@/components/MaintenanceReminders";
 import HomeGoals from "@/components/HomeGoals";
 import InsuranceAssistant from "@/components/InsuranceAssistant";
-import ClientActivityTimeline from "@/components/ClientActivityTimeline";
+import PropertyTimeline from "@/components/portal/PropertyTimeline";
+import AIPriorityCard from "@/components/portal/AIPriorityCard";
+import SatisfactionSurvey from "@/components/portal/SatisfactionSurvey";
+import AppointmentRequestModal from "@/components/portal/AppointmentRequestModal";
 import { usePropertyValuation } from "@/hooks/usePropertyValuation";
 import { supabase } from "@/integrations/supabase/client";
 import type { ReportPageData } from "@/data/reportContent";
