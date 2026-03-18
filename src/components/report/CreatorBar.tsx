@@ -117,6 +117,7 @@ const CreatorBar = ({
 
       {/* Right: draft + save indicator + PDF */}
       <div className="flex items-center gap-2">
+        {qaCoachSlot}
         {onDraftNarrative && (
           <Button
             variant="ghost"
