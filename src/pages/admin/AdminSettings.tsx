@@ -343,7 +343,7 @@ const AdminSettings = () => {
           </TabsContent>
 
           <TabsContent value="integrations">
-            <ApiWebhookSettings />
+            <IntegrationsHub />
           </TabsContent>
 
           <TabsContent value="sla">
