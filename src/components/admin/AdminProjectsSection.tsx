@@ -13,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Plus, Trash2, Pencil, ChevronDown, Sparkles, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ContractorBidsSection from "./ContractorBidsSection";
+import ProjectPhotoTimeline from "./ProjectPhotoTimeline";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -449,6 +450,8 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
                             </div>
                             {/* Contractor Bids */}
                             <ContractorBidsSection projectId={project.id} projectTitle={project.title} isAdmin />
+                            {/* Photo Timeline */}
+                            <ProjectPhotoTimeline projectId={project.id} projectTitle={project.title} isAdmin />
                           </div>
                         </TableCell>
                       </TableRow>
