@@ -46,6 +46,7 @@ const HomeTab = ({
   reportPages,
 }: HomeTabProps) => {
   const [valuationOpen, setValuationOpen] = useState(false);
+  const [showServiceRequest, setShowServiceRequest] = useState(false);
   const { valuation, isLoading: valLoading, fetchValuation } = usePropertyValuation(propertyId, propertyAddress);
   const [customization, setCustomization] = useState<{ welcome_message?: string; tagline?: string; hero_photo_url?: string; advisor_signature?: string } | null>(null);
 
