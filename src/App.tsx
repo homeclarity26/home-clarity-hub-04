@@ -36,8 +36,15 @@ import AdminProjectDetail from "./pages/admin/AdminProjectDetail";
 import AdminNewProject from "./pages/admin/AdminNewProject";
 import AdminCRM from "./pages/admin/AdminCRM";
 import AdminCRMClientProfile from "./pages/admin/AdminCRMClientProfile";
+import AdminCRMTradePartnerProfile from "./pages/admin/AdminCRMTradePartnerProfile";
 import TradePartnerLayout from "./layouts/TradePartnerLayout";
 import TradePartnerDashboard from "./pages/trade/TradePartnerDashboard";
+import TradePartnerProjects from "./pages/trade/TradePartnerProjects";
+import TradePartnerTasks from "./pages/trade/TradePartnerTasks";
+import TradePartnerSchedule from "./pages/trade/TradePartnerSchedule";
+import TradePartnerMessages from "./pages/trade/TradePartnerMessages";
+import TradePartnerDocuments from "./pages/trade/TradePartnerDocuments";
+import TradePartnerBids from "./pages/trade/TradePartnerBids";
 
 const queryClient = new QueryClient();
 
