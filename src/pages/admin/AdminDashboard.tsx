@@ -73,6 +73,9 @@ const AdminDashboard = () => {
         {/* Revenue Analytics */}
         <RevenueAnalytics />
 
+        {/* Weekly AI Digest */}
+        <WeeklyDigestWidget />
+
         {/* Cross-Report Analytics */}
         <CrossReportAnalytics />
 
