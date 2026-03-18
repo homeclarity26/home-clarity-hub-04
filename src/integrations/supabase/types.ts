@@ -247,6 +247,65 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_bids: {
+        Row: {
+          bid_amount: number
+          bid_date: string | null
+          contact_name: string | null
+          contractor_name: string
+          created_at: string
+          email: string | null
+          estimated_timeline: string | null
+          id: string
+          notes: string | null
+          phone: string | null
+          project_id: string
+          scope_of_work: string | null
+          status: string
+          warranty_offered: string | null
+        }
+        Insert: {
+          bid_amount?: number
+          bid_date?: string | null
+          contact_name?: string | null
+          contractor_name: string
+          created_at?: string
+          email?: string | null
+          estimated_timeline?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          project_id: string
+          scope_of_work?: string | null
+          status?: string
+          warranty_offered?: string | null
+        }
+        Update: {
+          bid_amount?: number
+          bid_date?: string | null
+          contact_name?: string | null
+          contractor_name?: string
+          created_at?: string
+          email?: string | null
+          estimated_timeline?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          project_id?: string
+          scope_of_work?: string | null
+          status?: string
+          warranty_offered?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_bids_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipment: {
         Row: {
           brand: string | null

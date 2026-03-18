@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Plus, Trash2, Pencil, ChevronDown, Sparkles, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import ContractorBidsSection from "./ContractorBidsSection";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -416,7 +417,8 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
                     {isExpanded && (
                       <TableRow key={`${project.id}-ms`}>
                         <TableCell colSpan={6} className="bg-muted/30 p-4">
-                          <div className="space-y-3">
+                          <div className="space-y-6">
+                            <div className="space-y-3">
                             <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">Milestones</p>
                             {ms.map((m) => (
                               <div key={m.id} className="flex items-center gap-3">
@@ -444,6 +446,9 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
                                 <Plus className="w-3 h-3 mr-1" />Add
                               </Button>
                             </div>
+                            </div>
+                            {/* Contractor Bids */}
+                            <ContractorBidsSection projectId={project.id} projectTitle={project.title} isAdmin />
                           </div>
                         </TableCell>
                       </TableRow>

@@ -231,6 +231,50 @@ const AdminSettings = () => {
             {savingRegion ? "Saving..." : "Update"}
           </Button>
         </Card>
+
+        {/* Business Intelligence */}
+        <Card className="p-6 space-y-5">
+          <h3 className="text-base font-sans font-semibold text-foreground">Business Intelligence</h3>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-sans">Target Hourly Rate ($)</Label>
+              <Input type="number" defaultValue="150" className="font-sans w-40" disabled />
+              <p className="text-[11px] font-sans text-muted-foreground">Used to calculate client profitability scores.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-sans">Message Friction Cost ($)</Label>
+              <Input type="number" defaultValue="5" className="font-sans w-40" disabled />
+              <p className="text-[11px] font-sans text-muted-foreground">Estimated cost per client message for profitability calculation.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-sans">Referral Reward</Label>
+              <Input defaultValue="$250 account credit" className="font-sans" disabled />
+              <p className="text-[11px] font-sans text-muted-foreground">Displayed in client referral sections as a reminder.</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Payment Escalation Rules */}
+        <Card className="p-6 space-y-5">
+          <h3 className="text-base font-sans font-semibold text-foreground">Payment Escalation Rules</h3>
+          <p className="text-sm font-sans text-muted-foreground">Automated actions when invoices go past due.</p>
+          <div className="space-y-3">
+            {[
+              { label: "Day 1 — Gentle reminder email", default: true },
+              { label: "Day 7 — Firm follow-up email", default: true },
+              { label: "Day 14 — Final notice + admin flag", default: true },
+              { label: "Day 30 — Collections risk + urgent task", default: true },
+            ].map((rule) => (
+              <div key={rule.label} className="flex items-center justify-between">
+                <Label className="text-sm font-sans text-foreground">{rule.label}</Label>
+                <Switch checked={rule.default} disabled />
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] font-sans text-muted-foreground">
+            Escalation checks run automatically. Activity is logged in each client's timeline.
+          </p>
+        </Card>
       </div>
     </div>
   );
