@@ -450,6 +450,8 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
                             </div>
                             {/* Contractor Bids */}
                             <ContractorBidsSection projectId={project.id} projectTitle={project.title} isAdmin />
+                            {/* Photo Timeline */}
+                            <ProjectPhotoTimeline projectId={project.id} projectTitle={project.title} isAdmin />
                           </div>
                         </TableCell>
                       </TableRow>
