@@ -52,6 +52,23 @@ const AdminClientDetail = () => {
   const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState<ClientTab>("overview");
   const { client, isLoading } = useAdminClient(clientId);
+
+  // Fetch unread message count for badge
+  const { data: unreadMsgCount } = useQuery({
+    queryKey: ["admin-unread-messages", clientId],
+    enabled: !!clientId,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { count, error } = await (supabase
+        .from("property_messages" as any) as any)
+        .select("*", { count: "exact", head: true })
+        .eq("property_id", clientId)
+        .eq("is_read", false)
+        .neq("sender_id", user?.id);
+      if (error) return 0;
+      return count || 0;
+    },
+  });
   const { data: projects, isLoading: projectsLoading } = useAdminProjects(clientId);
   const { data: invoices } = useAdminInvoices(clientId);
   const { data: events } = useAdminScheduleEvents(clientId);
