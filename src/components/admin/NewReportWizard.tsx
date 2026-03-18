@@ -702,6 +702,8 @@ const NewReportWizard = () => {
     }
   };
 
+  const [sendingEmail, setSendingEmail] = useState(false);
+
   const copyInviteMessage = () => {
     const firstName = form.fullName.split(" ")[0] || form.fullName;
     const portalUrl = publishResult?.portalUrl
@@ -727,6 +729,34 @@ const NewReportWizard = () => {
 
     navigator.clipboard.writeText(lines.join("\n"));
     toast({ title: "Copied!", description: "Invite message copied to clipboard — paste into email or text." });
+  };
+
+  const sendEmailInvite = async () => {
+    setSendingEmail(true);
+    try {
+      const portalUrl = publishResult?.portalUrl
+        ? `${window.location.origin}${publishResult.portalUrl.startsWith("/") ? "" : "/"}${publishResult.portalUrl}`
+        : `${window.location.origin}/portal/${createdPropertyId}`;
+
+      const { data, error } = await supabase.functions.invoke("send-client-invite", {
+        body: {
+          email: form.email,
+          fullName: form.fullName,
+          portalUrl,
+          tempPassword: publishResult?.tempPassword && !publishResult?.isExisting ? publishResult.tempPassword : undefined,
+          propertyName: form.propertyName || form.address,
+          creatorName: profile?.full_name || "Your Home Clarity Advisor",
+        },
+      });
+
+      if (error) throw error;
+      toast({ title: "Email sent!", description: `Invitation email sent to ${form.email}.` });
+    } catch (err: any) {
+      console.error("Send email error:", err);
+      toast({ title: "Email failed", description: err.message || "Could not send the invitation email.", variant: "destructive" });
+    } finally {
+      setSendingEmail(false);
+    }
   };
 
   return (
