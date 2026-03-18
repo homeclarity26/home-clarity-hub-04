@@ -135,7 +135,7 @@ const ReportTab = ({
     const nextPage = nextPageId ? reportPages[nextPageId] : null;
 
     // Extended page data for new fields
-    const extPage = page as Record<string, unknown>;
+    const extPage = page as unknown as Record<string, unknown>;
     const findings = (extPage.findings as Finding[]) || [];
     const expectedLifespan = extPage.expected_lifespan_years as number | undefined;
     const currentAge = extPage.current_age_years as number | undefined;
