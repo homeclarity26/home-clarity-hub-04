@@ -307,5 +307,6 @@ export function useClientPortal(propertyId?: string) {
     hasDbData,
     isLoading,
     invoiceBalance,
+    blocksJson,
   };
 }
