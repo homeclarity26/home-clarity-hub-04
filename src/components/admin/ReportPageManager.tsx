@@ -377,7 +377,7 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
                                     key_observations: page.key_observations,
                                     images: page.images,
                                   }} />
-                                  <NarrativeToneSelector onSelect={(tone: NarrativeTone) => toast.info(`Tone "${tone}" saved for next AI draft.`)} />
+                                  <NarrativeToneSelector value="client-friendly" onChange={(tone: NarrativeTone) => toast.info(`Tone "${tone}" saved for next AI draft.`)} />
                                   <div className="ml-auto text-xs font-sans text-muted-foreground">
                                     {page.expected_lifespan_years && <span>Lifespan: {page.expected_lifespan_years}yr</span>}
                                     {page.current_age_years != null && <span className="ml-3">Age: {page.current_age_years}yr</span>}
