@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ExternalLink, CheckCircle, Edit, AlertTriangle, XCircle, Loader2, Sparkles } from "lucide-react";
+import BatchOperationsBar from "./BatchOperationsBar";
 import { useAdminReportPages } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -67,6 +69,16 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isDraftingAll, setIsDraftingAll] = useState(false);
   const [draftProgress, setDraftProgress] = useState<{ current: number; total: number; currentTitle: string } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  };
+
+  const toggleAll = () => {
+    if (!pages) return;
+    setSelectedIds((prev) => prev.length === pages.length ? [] : pages.map((p) => p.id));
+  };
 
   const handleStatusChange = async (pageId: string, newStatus: string) => {
     setUpdatingId(pageId);
@@ -191,6 +203,7 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
 
   return (
     <div className="space-y-6">
+      <BatchOperationsBar selectedIds={selectedIds} onClear={() => setSelectedIds([])} context="report-pages" reportId={reportId || undefined} />
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3 flex-wrap">
           <h3 className="text-sm font-sans font-semibold text-foreground">Report Pages</h3>
@@ -244,6 +257,12 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={pages && selectedIds.length === pages.length && pages.length > 0}
+                    onCheckedChange={toggleAll}
+                  />
+                </TableHead>
                 <TableHead className="font-sans text-xs">Page</TableHead>
                 <TableHead className="font-sans text-xs w-[180px]">Status</TableHead>
                 <TableHead className="font-sans text-xs hidden sm:table-cell">Last Edited</TableHead>
@@ -259,7 +278,10 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
                   const isUpdating = updatingId === page.id;
 
                   return (
-                    <TableRow key={page.id}>
+                    <TableRow key={page.id} className={selectedIds.includes(page.id) ? "bg-primary/5" : ""}>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox checked={selectedIds.includes(page.id)} onCheckedChange={() => toggleSelect(page.id)} />
+                      </TableCell>
                       <TableCell className="font-sans text-sm font-medium">{page.title}</TableCell>
                       <TableCell>
                         {isUpdating ? (

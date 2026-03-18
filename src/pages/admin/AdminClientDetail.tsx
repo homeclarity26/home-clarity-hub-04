@@ -29,6 +29,8 @@ import AdminValuationCard from "@/components/admin/AdminValuationCard";
 import ClientHealthCard from "@/components/admin/ClientHealthCard";
 import AdminInvoicesSection from "@/components/admin/AdminInvoicesSection";
 import ClientActivityTimeline from "@/components/admin/ClientActivityTimeline";
+import SmartScheduleDialog from "@/components/admin/SmartScheduleDialog";
+import FollowUpSequence from "@/components/admin/FollowUpSequence";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
@@ -77,6 +79,19 @@ const AdminClientDetail = () => {
   const { data: projects, isLoading: projectsLoading } = useAdminProjects(clientId);
   const { data: invoices } = useAdminInvoices(clientId);
   const { data: events } = useAdminScheduleEvents(clientId);
+
+  // Fetch equipment for smart scheduling suggestions
+  const { data: equipmentData } = useQuery({
+    queryKey: ["admin-equipment", clientId],
+    enabled: !!clientId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("equipment")
+        .select("id, name, next_service_date, category")
+        .eq("property_id", clientId!);
+      return data || [];
+    },
+  });
 
   // Fetch report pages for PDF generation
   const { data: reportPages } = useQuery({
@@ -158,6 +173,7 @@ const AdminClientDetail = () => {
   const [selectedTierPage, setSelectedTierPage] = useState("");
   const [selectedTier, setSelectedTier] = useState("");
   const [eventOpen, setEventOpen] = useState(false);
+  const [editScheduleEvent, setEditScheduleEvent] = useState<any>(null);
 
   // Edit dialog states
   const [editInvoiceOpen, setEditInvoiceOpen] = useState(false);
@@ -426,23 +442,26 @@ const AdminClientDetail = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-sans font-semibold text-foreground">Schedule & Events</h3>
-              <Dialog open={eventOpen} onOpenChange={(o) => { setEventOpen(o); if (!o) resetEventForm(); }}>
-                <DialogTrigger asChild><Button size="sm" className="gap-1.5 text-xs font-sans"><Plus className="w-3.5 h-3.5" />Add Event</Button></DialogTrigger>
-                <DialogContent>
-                  <DialogHeader><DialogTitle className="font-sans">Add Event</DialogTitle></DialogHeader>
-                  <EventFormFields />
-                  <Button onClick={createEvent} className="w-full font-sans">Add</Button>
-                </DialogContent>
-              </Dialog>
+              <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => { setEditScheduleEvent(null); setEventOpen(true); }}>
+                <Plus className="w-3.5 h-3.5" />Add Event
+              </Button>
             </div>
 
-            <Dialog open={editEventOpen} onOpenChange={(o) => { setEditEventOpen(o); if (!o) { resetEventForm(); setEditId(null); } }}>
-              <DialogContent>
-                <DialogHeader><DialogTitle className="font-sans">Edit Event</DialogTitle></DialogHeader>
-                <EventFormFields />
-                <Button onClick={updateEvent} className="w-full font-sans">Save Changes</Button>
-              </DialogContent>
-            </Dialog>
+            <SmartScheduleDialog
+              open={eventOpen}
+              onOpenChange={(o) => { setEventOpen(o); if (!o) setEditScheduleEvent(null); }}
+              propertyId={client.propertyId}
+              existingEvents={events || []}
+              equipment={equipmentData || []}
+              editEvent={editScheduleEvent}
+            />
+
+            {/* Follow-Up Sequence */}
+            <FollowUpSequence
+              propertyId={client.propertyId}
+              reportStatus={client.reportStatus}
+              events={events || []}
+            />
 
             {events && events.length > 0 ? (
               <Card className="p-5">
@@ -455,7 +474,7 @@ const AdminClientDetail = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-sans text-muted-foreground">{format(new Date(event.event_date), "MMM d, yyyy h:mm a")}</span>
-                        <Button variant="ghost" size="sm" onClick={() => openEditEvent(event)}><Pencil className="w-3.5 h-3.5" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setEditScheduleEvent(event); setEventOpen(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild><Button variant="ghost" size="sm"><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button></AlertDialogTrigger>
                           <AlertDialogContent>
