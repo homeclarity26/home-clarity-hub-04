@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, CheckCircle, Edit, AlertTriangle, XCircle, Loader2, Sparkles, LayoutGrid, List, FileText, Shield, Brain, DollarSign } from "lucide-react";
+import { ExternalLink, CheckCircle, Edit, AlertTriangle, XCircle, Loader2, Sparkles, LayoutGrid, List, FileText, Shield, Brain, DollarSign, Copy, Users, BarChart3, BookOpen, ClipboardList } from "lucide-react";
 import BatchOperationsBar from "./BatchOperationsBar";
 import ReportCloneDialog from "./ReportCloneDialog";
 import ReportProgressKanban from "./ReportProgressKanban";
@@ -14,6 +14,8 @@ import SnippetLibrary from "./SnippetLibrary";
 import CrossReportAnalytics from "./CrossReportAnalytics";
 import TemplateVersioning from "./TemplateVersioning";
 import PageAssignments from "./PageAssignments";
+import QACoachPanel from "./QACoachPanel";
+import SmartDefaults from "./SmartDefaults";
 import { useAdminReportPages } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -78,6 +80,9 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
   const [isDraftingAll, setIsDraftingAll] = useState(false);
   const [draftProgress, setDraftProgress] = useState<{ current: number; total: number; currentTitle: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [activeView, setActiveView] = useState("pages");
+  const [cloneOpen, setCloneOpen] = useState(false);
+  const [expandedPageId, setExpandedPageId] = useState<string | null>(null);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
@@ -97,14 +102,9 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
         .eq("id", pageId);
 
       if (error) throw error;
-
-      // Recalculate completion % on the parent report
       if (reportId) await recalculateCompletion(reportId);
-
-      // Invalidate queries so UI refreshes
       await queryClient.invalidateQueries({ queryKey: ["admin-report-pages", reportId] });
       await queryClient.invalidateQueries({ queryKey: ["admin-clients"] });
-
       toast.success(`Page marked as ${STATUS_OPTIONS.find((s) => s.value === newStatus)?.label}`);
     } catch (err) {
       console.error("Status update failed:", err);
@@ -114,10 +114,25 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
     }
   };
 
+  const handleSmartDefaults = async (pageId: string, defaults: { conditionRating?: string; expectedLifespanYears?: number; currentAgeYears?: number }) => {
+    try {
+      const updates: Record<string, unknown> = {};
+      if (defaults.conditionRating) updates.condition_rating = defaults.conditionRating;
+      if (defaults.expectedLifespanYears) updates.expected_lifespan_years = defaults.expectedLifespanYears;
+      if (defaults.currentAgeYears) updates.current_age_years = defaults.currentAgeYears;
+
+      const { error } = await supabase.from("report_pages").update(updates as any).eq("id", pageId);
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ["admin-report-pages", reportId] });
+    } catch (err) {
+      console.error("Smart defaults failed:", err);
+      toast.error("Failed to apply smart defaults");
+    }
+  };
+
   const handleBulkDraft = async () => {
     if (!pages || pages.length === 0) return;
 
-    // Only draft pages with empty or very short narrative
     const draftable = pages.filter((p) => {
       const narr = (p.narrative as unknown as string[] | null) || [];
       const wordCount = narr.join(" ").split(/\s+/).filter(Boolean).length;
@@ -202,8 +217,6 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
   }
 
   const groups = [...new Set(pages.map((p) => p.group_name))];
-
-  // Completion summary
   const totalPages = pages.length;
   const donePages = pages.filter((p) => p.status === "complete" || p.status === "published").length;
   const needsReviewPages = pages.filter((p) => p.status === "needs_review").length;
@@ -212,6 +225,8 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
   return (
     <div className="space-y-6">
       <BatchOperationsBar selectedIds={selectedIds} onClear={() => setSelectedIds([])} context="report-pages" reportId={reportId || undefined} />
+
+      {/* Header with completion + actions */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3 flex-wrap">
           <h3 className="text-sm font-sans font-semibold text-foreground">Report Pages</h3>
@@ -225,33 +240,24 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
               </Badge>
             )}
             <div className="h-1.5 w-20 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-accent rounded-full transition-all duration-500"
-                style={{ width: `${completionPct}%` }}
-              />
+              <div className="h-full bg-accent rounded-full transition-all duration-500" style={{ width: `${completionPct}%` }} />
             </div>
             <span className="font-mono text-[10px] text-muted-foreground">{completionPct}%</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {isDraftingAll && draftProgress ? (
             <div className="flex items-center gap-2 text-xs font-sans text-muted-foreground">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
               <span>Drafting {draftProgress.current}/{draftProgress.total}: {draftProgress.currentTitle}</span>
             </div>
           ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 text-xs font-sans"
-              onClick={handleBulkDraft}
-              disabled={isDraftingAll}
-              title="Auto-draft narrative for all empty pages using AI"
-            >
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans" onClick={handleBulkDraft} disabled={isDraftingAll}>
               <Sparkles className="w-3.5 h-3.5" />
               Draft All with AI
             </Button>
           )}
+          <ReportCloneDialog reportId={reportId || ""} reportTitle="Report" />
           <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans" onClick={() => window.open(`/portal/${propertyId}?edit=true`, "_blank")}>
             <ExternalLink className="w-3.5 h-3.5" />
             Open in Portal
@@ -259,85 +265,166 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
         </div>
       </div>
 
-      {groups.map((group) => (
-        <div key={group}>
-          <h4 className="text-xs font-sans font-semibold text-muted-foreground uppercase tracking-wider mb-2">{group}</h4>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">
-                  <Checkbox
-                    checked={pages && selectedIds.length === pages.length && pages.length > 0}
-                    onCheckedChange={toggleAll}
-                  />
-                </TableHead>
-                <TableHead className="font-sans text-xs">Page</TableHead>
-                <TableHead className="font-sans text-xs w-[180px]">Status</TableHead>
-                <TableHead className="font-sans text-xs hidden sm:table-cell">Last Edited</TableHead>
-                <TableHead className="font-sans text-xs text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pages
-                .filter((p) => p.group_name === group)
-                .map((page) => {
-                  const status = statusConfig[page.status] || statusConfig.draft;
-                  const StatusIcon = status.icon;
-                  const isUpdating = updatingId === page.id;
+      {/* Tabbed views */}
+      <Tabs value={activeView} onValueChange={setActiveView}>
+        <TabsList className="h-8">
+          <TabsTrigger value="pages" className="text-xs font-sans gap-1.5 px-3"><List className="w-3.5 h-3.5" />Pages</TabsTrigger>
+          <TabsTrigger value="kanban" className="text-xs font-sans gap-1.5 px-3"><LayoutGrid className="w-3.5 h-3.5" />Kanban</TabsTrigger>
+          <TabsTrigger value="assignments" className="text-xs font-sans gap-1.5 px-3"><Users className="w-3.5 h-3.5" />Assignments</TabsTrigger>
+          <TabsTrigger value="snippets" className="text-xs font-sans gap-1.5 px-3"><BookOpen className="w-3.5 h-3.5" />Snippets</TabsTrigger>
+          <TabsTrigger value="analytics" className="text-xs font-sans gap-1.5 px-3"><BarChart3 className="w-3.5 h-3.5" />Analytics</TabsTrigger>
+          <TabsTrigger value="templates" className="text-xs font-sans gap-1.5 px-3"><FileText className="w-3.5 h-3.5" />Templates</TabsTrigger>
+        </TabsList>
 
-                  return (
-                    <TableRow key={page.id} className={selectedIds.includes(page.id) ? "bg-primary/5" : ""}>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Checkbox checked={selectedIds.includes(page.id)} onCheckedChange={() => toggleSelect(page.id)} />
-                      </TableCell>
-                      <TableCell className="font-sans text-sm font-medium">{page.title}</TableCell>
-                      <TableCell>
-                        {isUpdating ? (
-                          <div className="flex items-center gap-1.5 text-muted-foreground">
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span className="text-xs font-sans">Saving…</span>
-                          </div>
-                        ) : (
-                          <Select
-                            value={page.status || "draft"}
-                            onValueChange={(val) => handleStatusChange(page.id, val)}
-                          >
-                            <SelectTrigger className="h-7 text-xs font-sans border-none bg-transparent px-0 w-auto gap-1.5 focus:ring-0 focus:ring-offset-0 [&>svg]:hidden">
-                              <Badge className={`${status.className} text-[11px] font-sans font-medium border-none gap-1 cursor-pointer`}>
-                                <StatusIcon className="w-3 h-3" />
-                                {status.label}
-                              </Badge>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {STATUS_OPTIONS.map((opt) => (
-                                <SelectItem key={opt.value} value={opt.value} className="text-xs font-sans">
-                                  {opt.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-sans text-sm text-muted-foreground hidden sm:table-cell">
-                        {new Date(page.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs font-sans"
-                          onClick={() => window.open(`/portal/${propertyId}?edit=true&page=${page.page_key}`, "_blank")}
-                        >
-                          Edit
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-            </TableBody>
-          </Table>
-        </div>
-      ))}
+        {/* PAGES LIST VIEW */}
+        <TabsContent value="pages" className="space-y-4 mt-4">
+          {groups.map((group) => (
+            <div key={group}>
+              <h4 className="text-xs font-sans font-semibold text-muted-foreground uppercase tracking-wider mb-2">{group}</h4>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={pages && selectedIds.length === pages.length && pages.length > 0}
+                        onCheckedChange={toggleAll}
+                      />
+                    </TableHead>
+                    <TableHead className="font-sans text-xs">Page</TableHead>
+                    <TableHead className="font-sans text-xs w-[140px]">Condition</TableHead>
+                    <TableHead className="font-sans text-xs w-[160px]">Status</TableHead>
+                    <TableHead className="font-sans text-xs hidden sm:table-cell">Last Edited</TableHead>
+                    <TableHead className="font-sans text-xs text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pages
+                    .filter((p) => p.group_name === group)
+                    .map((page) => {
+                      const status = statusConfig[page.status] || statusConfig.draft;
+                      const StatusIcon = status.icon;
+                      const isUpdating = updatingId === page.id;
+                      const isExpanded = expandedPageId === page.id;
+
+                      return (
+                        <>
+                          <TableRow key={page.id} className={`${selectedIds.includes(page.id) ? "bg-primary/5" : ""} cursor-pointer`} onClick={() => setExpandedPageId(isExpanded ? null : page.id)}>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <Checkbox checked={selectedIds.includes(page.id)} onCheckedChange={() => toggleSelect(page.id)} />
+                            </TableCell>
+                            <TableCell className="font-sans text-sm font-medium">{page.title}</TableCell>
+                            <TableCell>
+                              <span className={`text-[11px] font-sans font-medium px-2 py-0.5 rounded-full ${
+                                page.condition_rating === "Excellent" ? "bg-emerald-100 text-emerald-700" :
+                                page.condition_rating === "Good" ? "bg-primary/10 text-primary" :
+                                page.condition_rating === "Fair" ? "bg-amber-100 text-amber-700" :
+                                page.condition_rating === "Poor" ? "bg-orange-100 text-orange-700" :
+                                page.condition_rating === "Critical" ? "bg-destructive/10 text-destructive" :
+                                "bg-muted text-muted-foreground"
+                              }`}>
+                                {page.condition_rating || "—"}
+                              </span>
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              {isUpdating ? (
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  <span className="text-xs font-sans">Saving…</span>
+                                </div>
+                              ) : (
+                                <Select value={page.status || "draft"} onValueChange={(val) => handleStatusChange(page.id, val)}>
+                                  <SelectTrigger className="h-7 text-xs font-sans border-none bg-transparent px-0 w-auto gap-1.5 focus:ring-0 focus:ring-offset-0 [&>svg]:hidden">
+                                    <Badge className={`${status.className} text-[11px] font-sans font-medium border-none gap-1 cursor-pointer`}>
+                                      <StatusIcon className="w-3 h-3" />
+                                      {status.label}
+                                    </Badge>
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {STATUS_OPTIONS.map((opt) => (
+                                      <SelectItem key={opt.value} value={opt.value} className="text-xs font-sans">{opt.label}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </TableCell>
+                            <TableCell className="font-sans text-sm text-muted-foreground hidden sm:table-cell">
+                              {new Date(page.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                            </TableCell>
+                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center gap-1 justify-end">
+                                <SmartDefaults
+                                  yearBuilt={propertyContext?.yearBuilt}
+                                  pageSlug={page.page_key}
+                                  onApply={(defaults) => handleSmartDefaults(page.id, defaults)}
+                                />
+                                <Button variant="ghost" size="sm" className="text-xs font-sans" onClick={() => window.open(`/portal/${propertyId}?edit=true&page=${page.page_key}`, "_blank")}>
+                                  Edit
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                          {isExpanded && (
+                            <TableRow key={`${page.id}-expanded`}>
+                              <TableCell colSpan={6} className="bg-muted/30 p-4">
+                                <div className="flex items-center gap-3 flex-wrap">
+                                  <QACoachPanel page={{
+                                    id: page.id,
+                                    title: page.title,
+                                    condition_rating: page.condition_rating,
+                                    narrative: page.narrative,
+                                    specs: page.specs,
+                                    tiers: page.tiers,
+                                    key_observations: page.key_observations,
+                                    images: page.images,
+                                  }} />
+                                  <NarrativeToneSelector onSelect={(tone: NarrativeTone) => toast.info(`Tone "${tone}" saved for next AI draft.`)} />
+                                  <div className="ml-auto text-xs font-sans text-muted-foreground">
+                                    {page.expected_lifespan_years && <span>Lifespan: {page.expected_lifespan_years}yr</span>}
+                                    {page.current_age_years != null && <span className="ml-3">Age: {page.current_age_years}yr</span>}
+                                  </div>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            </div>
+          ))}
+        </TabsContent>
+
+        {/* KANBAN VIEW */}
+        <TabsContent value="kanban" className="mt-4">
+          <ReportProgressKanban
+            pages={pages.map((p) => ({ id: p.id, title: p.title, status: p.status, group: p.group_name }))}
+            onStatusChange={handleStatusChange}
+          />
+        </TabsContent>
+
+        {/* ASSIGNMENTS VIEW */}
+        <TabsContent value="assignments" className="mt-4">
+          <PageAssignments
+            pages={pages.map((p) => ({ id: p.id, title: p.title, status: p.status }))}
+          />
+        </TabsContent>
+
+        {/* SNIPPETS VIEW */}
+        <TabsContent value="snippets" className="mt-4">
+          <SnippetLibrary />
+        </TabsContent>
+
+        {/* ANALYTICS VIEW */}
+        <TabsContent value="analytics" className="mt-4">
+          <CrossReportAnalytics />
+        </TabsContent>
+
+        {/* TEMPLATES VIEW */}
+        <TabsContent value="templates" className="mt-4">
+          <TemplateVersioning />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
