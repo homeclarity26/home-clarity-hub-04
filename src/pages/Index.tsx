@@ -12,8 +12,11 @@ import ScheduleTab from "@/components/tabs/ScheduleTab";
 import DocumentsTab from "@/components/tabs/DocumentsTab";
 import MessagesTab from "@/components/tabs/MessagesTab";
 import EquipmentTab from "@/components/tabs/EquipmentTab";
+import OnboardingOverlay from "@/components/OnboardingOverlay";
+import MembershipBanner from "@/components/MembershipBanner";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { useEditMode } from "@/contexts/EditModeContext";
+import { useAuth } from "@/contexts/AuthContext";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 
 const Index = () => {
@@ -22,10 +25,19 @@ const Index = () => {
   const navigate = useNavigate();
   const isEditLink = searchParams.get("edit") === "true";
   const portal = useClientPortal(propertyId);
+  const { profile, isCreator } = useAuth();
   const [activeTab, setActiveTab] = useState("home");
   const [reportPageId, setReportPageId] = useState<string | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const { editMode, toggleEditMode, canEdit } = useEditMode();
+
+  // Check onboarding status for new clients
+  useEffect(() => {
+    if (!isCreator && profile && !(profile as any).has_completed_onboarding && portal.property) {
+      setShowOnboarding(true);
+    }
+  }, [profile, isCreator, portal.property]);
 
   // Read URL query params for edit mode and page navigation
   useEffect(() => {
