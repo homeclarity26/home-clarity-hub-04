@@ -128,6 +128,11 @@ const ReportTab = ({
 
   const page = activePageId ? reportPages[activePageId] : null;
 
+  // --- WYSIWYG blocks view (when blocks_json has content) ---
+  if (hasBlocks && !activePageId) {
+    return <PortalBlockViewer blocks={blocksJson as ReportBlock[]} propertyAddress={propertyAddress} />;
+  }
+
   // --- Individual report page view ---
   if (page) {
     const dbPageId = pageKeyToDbId[activePageId!];
