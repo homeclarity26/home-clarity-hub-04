@@ -105,6 +105,65 @@ serve(async (req) => {
           ${ctaButton("View Projects", portalUrl + "?tab=projects")}`;
         break;
 
+      case "maintenance_reminder": {
+        const items = data?.items || [];
+        const overdueCount = data?.overdue_count || 0;
+        const dueSoonCount = data?.due_soon_count || 0;
+        const upcomingCount = data?.upcoming_count || 0;
+
+        subject = overdueCount > 0
+          ? `⚠️ ${overdueCount} Overdue Maintenance Item${overdueCount > 1 ? "s" : ""} — Action Required`
+          : `🔧 Upcoming Maintenance Reminder (${dueSoonCount + upcomingCount} items)`;
+
+        const urgencyBadge = (urgency: string) => {
+          const colors: Record<string, string> = { overdue: "#dc2626", due_soon: "#f59e0b", upcoming: "#3b82f6" };
+          const labels: Record<string, string> = { overdue: "OVERDUE", due_soon: "DUE SOON", upcoming: "UPCOMING" };
+          return `<span style="display:inline-block;padding:2px 8px;border-radius:4px;background:${colors[urgency] || "#6b7280"};color:#fff;font-size:10px;font-weight:700;letter-spacing:0.5px;">${labels[urgency] || urgency}</span>`;
+        };
+
+        const itemRows = items.map((item: any) => {
+          const daysText = item.days_until <= 0
+            ? `${Math.abs(item.days_until)} day${Math.abs(item.days_until) !== 1 ? "s" : ""} overdue`
+            : `in ${item.days_until} day${item.days_until !== 1 ? "s" : ""}`;
+          return `<tr>
+            <td style="padding:10px 12px;border-bottom:1px solid #eee;">
+              <strong style="color:${BRAND.navy};font-size:14px;">${item.name}</strong>
+              ${item.brand ? `<br><span style="color:#6b7280;font-size:12px;">${item.brand}${item.model ? ` ${item.model}` : ""}</span>` : ""}
+            </td>
+            <td style="padding:10px 12px;border-bottom:1px solid #eee;text-align:center;">
+              ${urgencyBadge(item.urgency)}
+            </td>
+            <td style="padding:10px 12px;border-bottom:1px solid #eee;text-align:right;color:#4a5568;font-size:13px;">
+              ${daysText}
+            </td>
+          </tr>`;
+        }).join("");
+
+        body = `<h2 style="margin:0 0 8px;color:${BRAND.navy};font-size:20px;">Maintenance Reminder</h2>
+          <p style="color:#4a5568;font-size:14px;line-height:1.7;margin:0 0 20px;">
+            Hi ${clientName}, here's an update on your home's upcoming maintenance needs:
+          </p>
+
+          ${overdueCount > 0 ? `<div style="background:#fef2f2;border-left:4px solid #dc2626;padding:12px 16px;border-radius:4px;margin-bottom:16px;">
+            <p style="margin:0;color:#991b1b;font-size:14px;font-weight:600;">⚠️ ${overdueCount} item${overdueCount > 1 ? "s" : ""} overdue — please schedule service soon</p>
+          </div>` : ""}
+
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+            <tr style="background:#f9fafb;">
+              <th style="padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;">Equipment</th>
+              <th style="padding:10px 12px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;">Status</th>
+              <th style="padding:10px 12px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;">Due</th>
+            </tr>
+            ${itemRows}
+          </table>
+
+          ${ctaButton("View Equipment in Portal", portalUrl + "?tab=equipment")}
+          <p style="color:#6b7280;font-size:12px;text-align:center;margin-top:8px;">
+            Need help scheduling service? Reply to this email or contact your HBC advisor.
+          </p>`;
+        break;
+      }
+
       default:
         return new Response(JSON.stringify({ error: "Unknown notification type" }), {
           status: 400,
