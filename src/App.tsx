@@ -156,6 +156,7 @@ const AppRoutes = () => {
         <Route path="clients/:clientId" element={<AdminClientDetail />} />
         <Route path="knowledge-base" element={<AdminKnowledgeBase />} />
         <Route path="settings" element={<AdminSettings />} />
+        <Route path="announcements" element={<AdminAnnouncements />} />
       </Route>
 
       {/* Auth routes */}

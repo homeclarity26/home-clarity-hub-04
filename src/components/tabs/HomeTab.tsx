@@ -133,6 +133,9 @@ const HomeTab = ({
         {propertyId && !propertyId.startsWith("mock-") && (
           <AnnualReportCard propertyId={propertyId} />
         )}
+        {propertyId && !propertyId.startsWith("mock-") && (
+          <MaintenanceReminders propertyId={propertyId} />
+        )}
 
         {/* Row 1: Portal Status */}
         <div>

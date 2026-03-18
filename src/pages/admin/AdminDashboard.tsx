@@ -157,6 +157,8 @@ const AdminDashboard = () => {
                 </Button>
               </div>
             </Card>
+
+            <NPSOverviewCard />
           </div>
         </div>
 
