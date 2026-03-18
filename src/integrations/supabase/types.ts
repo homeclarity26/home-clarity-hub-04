@@ -358,75 +358,36 @@ export type Database = {
       properties: {
         Row: {
           address: string
-          city: string | null
-          client_intelligence_summary: string | null
           client_user_id: string
-          county: string | null
           created_at: string
-          digital_assets_status: string | null
-          discovery_notes: string | null
           estimated_value: number | null
-          hover_pdf_url: string | null
-          hover_url: string | null
           id: string
-          iguide_pdf_url: string | null
           iguide_url: string | null
-          intake_status: string | null
           metadata: Json | null
           property_name: string | null
-          property_type: string | null
-          relationship_type: string | null
-          state: string | null
           updated_at: string
-          zip: string | null
         }
         Insert: {
           address: string
-          city?: string | null
-          client_intelligence_summary?: string | null
           client_user_id: string
-          county?: string | null
           created_at?: string
-          digital_assets_status?: string | null
-          discovery_notes?: string | null
           estimated_value?: number | null
-          hover_pdf_url?: string | null
-          hover_url?: string | null
           id?: string
-          iguide_pdf_url?: string | null
           iguide_url?: string | null
-          intake_status?: string | null
           metadata?: Json | null
           property_name?: string | null
-          property_type?: string | null
-          relationship_type?: string | null
-          state?: string | null
           updated_at?: string
-          zip?: string | null
         }
         Update: {
           address?: string
-          city?: string | null
-          client_intelligence_summary?: string | null
           client_user_id?: string
-          county?: string | null
           created_at?: string
-          digital_assets_status?: string | null
-          discovery_notes?: string | null
           estimated_value?: number | null
-          hover_pdf_url?: string | null
-          hover_url?: string | null
           id?: string
-          iguide_pdf_url?: string | null
           iguide_url?: string | null
-          intake_status?: string | null
           metadata?: Json | null
           property_name?: string | null
-          property_type?: string | null
-          relationship_type?: string | null
-          state?: string | null
           updated_at?: string
-          zip?: string | null
         }
         Relationships: []
       }
