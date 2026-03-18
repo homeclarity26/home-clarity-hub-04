@@ -63,7 +63,6 @@ import ClientEngagementTab from "@/components/admin/ClientEngagementTab";
 import ReportVersionHistory from "@/components/admin/ReportVersionHistory";
 import HealthScoreTrend from "@/components/admin/HealthScoreTrend";
 import SignatureRequestManager from "@/components/admin/SignatureRequestManager";
-import OnboardingTracker from "@/components/admin/OnboardingTracker";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
