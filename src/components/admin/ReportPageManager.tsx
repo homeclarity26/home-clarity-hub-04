@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, CheckCircle, Edit, AlertTriangle, XCircle, Loader2, Sparkles, LayoutGrid, List, FileText, Shield, Brain, DollarSign, Copy, Users, BarChart3, BookOpen, ClipboardList } from "lucide-react";
+import { ExternalLink, CheckCircle, Edit, AlertTriangle, XCircle, Loader2, Sparkles, LayoutGrid, List, FileText, Shield, Brain, DollarSign, Copy, Users, BarChart3, BookOpen, ClipboardList, ClipboardCheck } from "lucide-react";
 import BatchOperationsBar from "./BatchOperationsBar";
 import ReportCloneDialog from "./ReportCloneDialog";
 import ReportProgressKanban from "./ReportProgressKanban";
