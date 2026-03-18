@@ -60,6 +60,12 @@ const AdminGoalsDashboard = () => {
     <div>
       <AdminHeader breadcrumbs={[{ label: "Goals" }]} />
       <div className="p-6 max-w-7xl space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-sans font-bold text-foreground">Client Goals</h1>
+          <Button size="sm" className="gap-1.5 font-sans" onClick={() => setCreateOpen(true)}>
+            <Plus className="w-3.5 h-3.5" />New Goal
+          </Button>
+        </div>
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           <Card className="p-4 text-center">
