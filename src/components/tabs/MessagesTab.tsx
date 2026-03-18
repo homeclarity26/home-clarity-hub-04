@@ -57,7 +57,7 @@ const MOCK_MESSAGES: Message[] = [
   },
 ];
 
-const MessagesTab = ({ propertyId, creatorName = "Your HBC Advisor", creatorInitials = "HB" }: MessagesTabProps) => {
+const MessagesTab = ({ propertyId, creatorName = "Your HBC Advisor", creatorInitials = "HB", initialMessage }: MessagesTabProps) => {
   const { user, profile, isCreator } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
