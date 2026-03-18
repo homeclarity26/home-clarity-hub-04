@@ -54,14 +54,25 @@ const HomeTab = ({
         {propertyAddress && (
           <p className="font-sans text-base text-muted-foreground">{propertyAddress}</p>
         )}
-        <div className="flex items-center justify-center gap-2 mt-3">
+        <button
+          onClick={() => { setValuationOpen(true); if (!valuation) fetchValuation(); }}
+          className="flex items-center justify-center gap-2 mt-3 bg-transparent border-none cursor-pointer group"
+        >
           <Home className="w-4 h-4 text-accent" />
-          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-foreground">
-            {estimatedValue
-              ? `Estimated Value: $${estimatedValue.toLocaleString()}`
+          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-foreground group-hover:text-accent transition-colors underline underline-offset-2 decoration-accent/30">
+            {displayValue
+              ? `Estimated Value: $${displayValue.toLocaleString()}`
               : "Value estimate pending"}
           </p>
-        </div>
+          <Info className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-accent transition-colors" />
+        </button>
+        <ValuationModal
+          open={valuationOpen}
+          onOpenChange={setValuationOpen}
+          valuation={valuation}
+          onRefresh={() => fetchValuation(true)}
+          isRefreshing={valLoading}
+        />
       </section>
 
       {/* Getting Started */}
