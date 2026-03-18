@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, ExternalLink, Plus, Loader2, Trash2, Pencil, Sparkles } from "lucide-react";
+import { ArrowLeft, ExternalLink, Plus, Loader2, Trash2, Pencil, Sparkles, MapPin } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import ClientOverview from "@/components/admin/ClientOverview";
 import ReportPageManager from "@/components/admin/ReportPageManager";
@@ -382,6 +382,7 @@ const AdminClientDetail = () => {
           </div>
           <div className="flex items-center gap-2">
             <AIClientBrief propertyId={client.propertyId} propertyName={client.propertyName} />
+            <Button onClick={() => navigate(`/admin/inspect/${client.propertyId}`)} variant="outline" className="gap-1.5 font-sans"><MapPin className="w-4 h-4" />Inspect</Button>
             <Button onClick={() => navigate(`/portal/${client.propertyId}?edit=true`)} className="gap-1.5 font-sans"><ExternalLink className="w-4 h-4" />Open in Portal</Button>
           </div>
         </div>

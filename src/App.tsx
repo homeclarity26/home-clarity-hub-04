@@ -27,6 +27,7 @@ import AdminVendorDirectory from "./pages/admin/AdminVendorDirectory";
 import AdminGoalsDashboard from "./pages/admin/AdminGoalsDashboard";
 import AdminReferrals from "./pages/admin/AdminReferrals";
 import AdminAutomations from "./pages/admin/AdminAutomations";
+import AdminFieldInspection from "./pages/admin/AdminFieldInspection";
 
 const queryClient = new QueryClient();
 
@@ -164,6 +165,7 @@ const AppRoutes = () => {
         <Route path="clients" element={<AdminClients />} />
         <Route path="clients/new" element={<AdminNewReport />} />
         <Route path="clients/:clientId" element={<AdminClientDetail />} />
+        <Route path="inspect/:propertyId" element={<AdminFieldInspection />} />
         <Route path="tasks" element={<AdminTaskBoard />} />
         <Route path="vendors" element={<AdminVendorDirectory />} />
         <Route path="goals" element={<AdminGoalsDashboard />} />
