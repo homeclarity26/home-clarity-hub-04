@@ -52,6 +52,44 @@ export type Database = {
           },
         ]
       }
+      change_orders: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          invoice_id: string
+          status: string
+          title: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id: string
+          status?: string
+          title: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "change_orders_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_files: {
         Row: {
           category: string
@@ -171,36 +209,113 @@ export type Database = {
           },
         ]
       }
+      invoice_line_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          item_type: string
+          quantity: number
+          sort_order: number
+          total: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id: string
+          item_type?: string
+          quantity?: number
+          sort_order?: number
+          total?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          item_type?: string
+          quantity?: number
+          sort_order?: number
+          total?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_line_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
+          ai_summary: string | null
           amount: number
+          balance_due: number
           created_at: string
           description: string
           due_date: string | null
           id: string
+          invoice_number: string | null
+          issue_date: string | null
+          notes: string | null
           paid_date: string | null
           property_id: string
           status: string
+          subtotal: number
+          tax: number
+          title: string | null
+          total: number
+          type: string
+          updated_at: string | null
         }
         Insert: {
+          ai_summary?: string | null
           amount: number
+          balance_due?: number
           created_at?: string
           description: string
           due_date?: string | null
           id?: string
+          invoice_number?: string | null
+          issue_date?: string | null
+          notes?: string | null
           paid_date?: string | null
           property_id: string
           status?: string
+          subtotal?: number
+          tax?: number
+          title?: string | null
+          total?: number
+          type?: string
+          updated_at?: string | null
         }
         Update: {
+          ai_summary?: string | null
           amount?: number
+          balance_due?: number
           created_at?: string
           description?: string
           due_date?: string | null
           id?: string
+          invoice_number?: string | null
+          issue_date?: string | null
+          notes?: string | null
           paid_date?: string | null
           property_id?: string
           status?: string
+          subtotal?: number
+          tax?: number
+          title?: string | null
+          total?: number
+          type?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -330,6 +445,44 @@ export type Database = {
           version?: number
         }
         Relationships: []
+      }
+      payments_posted: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          invoice_id: string
+          method: string
+          notes: string | null
+          payment_date: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          invoice_id: string
+          method?: string
+          notes?: string | null
+          payment_date?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          method?: string
+          notes?: string | null
+          payment_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_posted_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
