@@ -902,6 +902,62 @@ export type Database = {
           },
         ]
       }
+      field_inspections: {
+        Row: {
+          admin_id: string
+          checked_in_at: string
+          checked_out_at: string | null
+          created_at: string
+          distance_meters: number | null
+          gps_lat: number | null
+          gps_lng: number | null
+          gps_verified: boolean | null
+          id: string
+          notes: string | null
+          property_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          checked_in_at?: string
+          checked_out_at?: string | null
+          created_at?: string
+          distance_meters?: number | null
+          gps_lat?: number | null
+          gps_lng?: number | null
+          gps_verified?: boolean | null
+          id?: string
+          notes?: string | null
+          property_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          checked_in_at?: string
+          checked_out_at?: string | null
+          created_at?: string
+          distance_meters?: number | null
+          gps_lat?: number | null
+          gps_lng?: number | null
+          gps_verified?: boolean | null
+          id?: string
+          notes?: string | null
+          property_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_inspections_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       home_goals: {
         Row: {
           client_id: string
@@ -1004,6 +1060,108 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "inspection_checklists_report_page_id_fkey"
+            columns: ["report_page_id"]
+            isOneToOne: false
+            referencedRelation: "report_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspection_photos: {
+        Row: {
+          caption: string | null
+          category: string | null
+          created_at: string
+          gps_lat: number | null
+          gps_lng: number | null
+          id: string
+          inspection_id: string
+          photo_url: string
+          report_page_id: string | null
+        }
+        Insert: {
+          caption?: string | null
+          category?: string | null
+          created_at?: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          inspection_id: string
+          photo_url: string
+          report_page_id?: string | null
+        }
+        Update: {
+          caption?: string | null
+          category?: string | null
+          created_at?: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          inspection_id?: string
+          photo_url?: string
+          report_page_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_photos_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "field_inspections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_photos_report_page_id_fkey"
+            columns: ["report_page_id"]
+            isOneToOne: false
+            referencedRelation: "report_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspection_voice_notes: {
+        Row: {
+          ai_narrative: string | null
+          audio_url: string | null
+          condition_suggestion: string | null
+          created_at: string
+          id: string
+          inspection_id: string
+          key_observations: Json | null
+          report_page_id: string | null
+          transcription: string | null
+        }
+        Insert: {
+          ai_narrative?: string | null
+          audio_url?: string | null
+          condition_suggestion?: string | null
+          created_at?: string
+          id?: string
+          inspection_id: string
+          key_observations?: Json | null
+          report_page_id?: string | null
+          transcription?: string | null
+        }
+        Update: {
+          ai_narrative?: string | null
+          audio_url?: string | null
+          condition_suggestion?: string | null
+          created_at?: string
+          id?: string
+          inspection_id?: string
+          key_observations?: Json | null
+          report_page_id?: string | null
+          transcription?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_voice_notes_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "field_inspections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_voice_notes_report_page_id_fkey"
             columns: ["report_page_id"]
             isOneToOne: false
             referencedRelation: "report_pages"
