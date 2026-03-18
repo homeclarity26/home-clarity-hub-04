@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef, Re
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-type AppRole = "creator" | "client";
+type AppRole = "creator" | "client" | "trade_partner";
 
 interface Profile {
   id: string;
@@ -19,6 +19,7 @@ interface AuthContextType {
   profile: Profile | null;
   roles: AppRole[];
   isCreator: boolean;
+  isTradePartner: boolean;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
@@ -183,6 +184,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const isCreator = roles.includes("creator");
+  const isTradePartner = roles.includes("trade_partner");
 
   return (
     <AuthContext.Provider
@@ -192,6 +194,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         profile,
         roles,
         isCreator,
+        isTradePartner,
         isLoading,
         signIn,
         signUp,
