@@ -90,7 +90,7 @@ const ProjectPhotoGallery = ({ open, onOpenChange, projectId, projectTitle }: Pr
     }
   };
 
-  const phasePhotos = photos.filter(p => p.phase === activePhase);
+  const phasePhotos = photos.filter(p => p.photo_stage === activePhase);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
