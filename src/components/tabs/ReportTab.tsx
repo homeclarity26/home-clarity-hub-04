@@ -57,6 +57,7 @@ interface ReportTabProps {
   iguideUrl?: string | null;
   iguidePdfUrl?: string | null;
   completionPercent?: number;
+  estimatedValue?: number | null;
 }
 
 const ReportTab = ({
@@ -79,6 +80,7 @@ const ReportTab = ({
   iguideUrl,
   iguidePdfUrl,
   completionPercent = 0,
+  estimatedValue,
 }: ReportTabProps) => {
   const reportGroups = groups || staticGroups;
   const reportPages = pages || staticPages;
@@ -344,6 +346,7 @@ const ReportTab = ({
       hoverPdfUrl={hoverPdfUrl}
       iguideUrl={iguideUrl}
       iguidePdfUrl={iguidePdfUrl}
+      estimatedValue={estimatedValue}
     />
   );
 };

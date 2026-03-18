@@ -790,6 +790,53 @@ export type Database = {
           },
         ]
       }
+      property_valuations: {
+        Row: {
+          address: string
+          comparables: Json | null
+          created_at: string
+          fetched_at: string
+          id: string
+          price: number | null
+          price_range_high: number | null
+          price_range_low: number | null
+          property_id: string
+          subject_property: Json | null
+        }
+        Insert: {
+          address: string
+          comparables?: Json | null
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          price?: number | null
+          price_range_high?: number | null
+          price_range_low?: number | null
+          property_id: string
+          subject_property?: Json | null
+        }
+        Update: {
+          address?: string
+          comparables?: Json | null
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          price?: number | null
+          price_range_high?: number | null
+          price_range_low?: number | null
+          property_id?: string
+          subject_property?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_valuations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_comments: {
         Row: {
           comment_text: string

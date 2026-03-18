@@ -66,6 +66,7 @@ interface ReportOverviewProps {
   hoverPdfUrl?: string | null;
   iguideUrl?: string | null;
   iguidePdfUrl?: string | null;
+  estimatedValue?: number | null;
 }
 
 const ReportOverview = ({
@@ -82,6 +83,7 @@ const ReportOverview = ({
   hoverPdfUrl,
   iguideUrl,
   iguidePdfUrl,
+  estimatedValue,
 }: ReportOverviewProps) => {
   // Calculate health scores
   const allPagesList = useMemo(() => Object.values(pages), [pages]);
@@ -251,16 +253,31 @@ const ReportOverview = ({
           </section>
         )}
 
-        {/* Report Completion */}
-        <section>
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-              Report Completion
-            </span>
-            <span className="font-mono text-[10px] text-muted-foreground">{completionPercent}%</span>
-          </div>
-          <Progress value={completionPercent} className="h-2" />
-        </section>
+        {/* Market Value + Report Completion */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {estimatedValue && (
+            <Card className="p-6 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-5 h-5 text-accent" />
+              </div>
+              <div>
+                <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Current Market Value</p>
+                <p className="font-display text-2xl text-foreground">
+                  ${estimatedValue.toLocaleString()}
+                </p>
+              </div>
+            </Card>
+          )}
+          <section className={estimatedValue ? "" : "col-span-2"}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+                Report Completion
+              </span>
+              <span className="font-mono text-[10px] text-muted-foreground">{completionPercent}%</span>
+            </div>
+            <Progress value={completionPercent} className="h-2" />
+          </section>
+        </div>
 
         {/* Priority Action Items */}
         {priorityItems.length > 0 && (

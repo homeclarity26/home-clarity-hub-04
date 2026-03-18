@@ -205,6 +205,7 @@ const Index = () => {
               hoverPdfUrl={portal.property?.hover_pdf_url}
               iguideUrl={portal.property?.iguide_url}
               iguidePdfUrl={portal.property?.iguide_pdf_url}
+              estimatedValue={portal.property?.estimated_value}
             />
           )}
         </div>
