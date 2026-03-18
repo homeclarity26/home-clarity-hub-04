@@ -72,6 +72,34 @@ const Index = () => {
     }
   }, [profile, isCreator, portal.property]);
 
+  // Show tutorial modal for first-time clients
+  useEffect(() => {
+    if (!isCreator && portal.property && tutorialProgress !== undefined && tutorialProgress !== null && !tutorialProgress.onboarding_complete) {
+      setShowTutorialModal(true);
+    } else if (!isCreator && portal.property && tutorialProgress === null) {
+      // No record yet — show modal on first visit
+      setShowTutorialModal(true);
+    }
+  }, [isCreator, portal.property, tutorialProgress]);
+
+  // Auto-track checklist items based on tab visits
+  useEffect(() => {
+    if (isCreator || !portal.property) return;
+    const tabToKey: Record<string, string> = {
+      report: "view_report",
+      home: "check_health",
+      projects: "explore_projects",
+      equipment: "view_equipment",
+      documents: "view_document",
+      messages: "send_message",
+      schedule: "check_schedule",
+    };
+    const key = tabToKey[activeTab];
+    if (key) {
+      markChecklistItem(key);
+    }
+  }, [activeTab, isCreator, portal.property]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Read URL query params for edit mode and page navigation
   useEffect(() => {
     const editParam = searchParams.get("edit");
