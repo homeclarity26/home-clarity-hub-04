@@ -220,6 +220,13 @@ const HomeTab = ({
         </div>
 
       </div>
+
+      {/* Feedback */}
+      {propertyId && !propertyId.startsWith("mock-") && (
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16">
+          <FeedbackWidget propertyId={propertyId} title="How's your experience with Home Clarity Hub?" />
+        </div>
+      )}
     </div>
   );
 };
