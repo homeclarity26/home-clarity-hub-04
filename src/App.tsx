@@ -179,6 +179,7 @@ const AppRoutes = () => {
         <Route path="help" element={<AdminHelpCenter />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="announcements" element={<AdminAnnouncements />} />
+        <Route path="calendar" element={<AdminCalendar />} />
       </Route>
 
       {/* Auth routes */}

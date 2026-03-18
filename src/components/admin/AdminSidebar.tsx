@@ -10,6 +10,7 @@ const navItems = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard, showBadge: true },
   { label: "Analytics", path: "/admin/analytics", icon: BarChart3 },
   { label: "Inbox", path: "/admin/inbox", icon: MessageSquare },
+  { label: "Calendar", path: "/admin/calendar", icon: Calendar },
   { label: "Clients", path: "/admin/clients", icon: Users },
   { label: "Tasks", path: "/admin/tasks", icon: CheckSquare },
   { label: "Vendors", path: "/admin/vendors", icon: Briefcase },
