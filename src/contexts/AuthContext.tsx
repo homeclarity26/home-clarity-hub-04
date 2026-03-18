@@ -29,7 +29,7 @@ interface AuthContextType {
 // ── DEV AUTH BYPASS ─────────────────────────────────────────────────────
 // Set to true to skip login and act as a mock creator user.
 // TODO: Remove before production deployment.
-const DEV_BYPASS_AUTH = true;
+const DEV_BYPASS_AUTH = false;
 
 const MOCK_USER = {
   id: "00000000-0000-0000-0000-000000000000",
