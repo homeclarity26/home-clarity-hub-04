@@ -123,6 +123,65 @@ export type Database = {
         }
         Relationships: []
       }
+      annual_report_cards: {
+        Row: {
+          advisor_message: string | null
+          completed_projects_count: number | null
+          condition_changes: Json | null
+          created_at: string
+          generated_at: string
+          health_score_end: number | null
+          health_score_start: number | null
+          id: string
+          property_id: string
+          report_year: number
+          total_invested: number | null
+          total_payments: number | null
+          value_end: number | null
+          value_start: number | null
+        }
+        Insert: {
+          advisor_message?: string | null
+          completed_projects_count?: number | null
+          condition_changes?: Json | null
+          created_at?: string
+          generated_at?: string
+          health_score_end?: number | null
+          health_score_start?: number | null
+          id?: string
+          property_id: string
+          report_year: number
+          total_invested?: number | null
+          total_payments?: number | null
+          value_end?: number | null
+          value_start?: number | null
+        }
+        Update: {
+          advisor_message?: string | null
+          completed_projects_count?: number | null
+          condition_changes?: Json | null
+          created_at?: string
+          generated_at?: string
+          health_score_end?: number | null
+          health_score_start?: number | null
+          id?: string
+          property_id?: string
+          report_year?: number
+          total_invested?: number | null
+          total_payments?: number | null
+          value_end?: number | null
+          value_start?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "annual_report_cards_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       change_orders: {
         Row: {
           amount: number
@@ -244,6 +303,33 @@ export type Database = {
           project_status?: boolean
           report_updated?: boolean
           updated_at?: string
+        }
+        Relationships: []
+      }
+      client_sessions: {
+        Row: {
+          client_id: string
+          id: string
+          last_active_at: string
+          login_at: string
+          pages_visited: Json | null
+          session_duration_minutes: number | null
+        }
+        Insert: {
+          client_id: string
+          id?: string
+          last_active_at?: string
+          login_at?: string
+          pages_visited?: Json | null
+          session_duration_minutes?: number | null
+        }
+        Update: {
+          client_id?: string
+          id?: string
+          last_active_at?: string
+          login_at?: string
+          pages_visited?: Json | null
+          session_duration_minutes?: number | null
         }
         Relationships: []
       }
@@ -424,6 +510,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      home_goals: {
+        Row: {
+          client_id: string
+          created_at: string
+          description: string | null
+          estimated_budget: number | null
+          id: string
+          status: string
+          target_year: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          description?: string | null
+          estimated_budget?: number | null
+          id?: string
+          status?: string
+          target_year?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          estimated_budget?: number | null
+          id?: string
+          status?: string
+          target_year?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       home_value_history: {
         Row: {
@@ -751,6 +873,27 @@ export type Database = {
         }
         Relationships: []
       }
+      page_views: {
+        Row: {
+          client_id: string
+          id: string
+          page_name: string
+          viewed_at: string
+        }
+        Insert: {
+          client_id: string
+          id?: string
+          page_name: string
+          viewed_at?: string
+        }
+        Update: {
+          client_id?: string
+          id?: string
+          page_name?: string
+          viewed_at?: string
+        }
+        Relationships: []
+      }
       payments_posted: {
         Row: {
           amount: number
@@ -785,6 +928,47 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_customizations: {
+        Row: {
+          advisor_signature: string | null
+          created_at: string
+          hero_photo_url: string | null
+          id: string
+          property_id: string
+          tagline: string | null
+          updated_at: string
+          welcome_message: string | null
+        }
+        Insert: {
+          advisor_signature?: string | null
+          created_at?: string
+          hero_photo_url?: string | null
+          id?: string
+          property_id: string
+          tagline?: string | null
+          updated_at?: string
+          welcome_message?: string | null
+        }
+        Update: {
+          advisor_signature?: string | null
+          created_at?: string
+          hero_photo_url?: string | null
+          id?: string
+          property_id?: string
+          tagline?: string | null
+          updated_at?: string
+          welcome_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_customizations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: true
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -836,6 +1020,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      project_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          photo_stage: string | null
+          photo_url: string
+          project_id: string
+          taken_date: string
+          uploaded_by: string
+          uploader_type: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          photo_stage?: string | null
+          photo_url: string
+          project_id: string
+          taken_date?: string
+          uploaded_by: string
+          uploader_type?: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          photo_stage?: string | null
+          photo_url?: string
+          project_id?: string
+          taken_date?: string
+          uploaded_by?: string
+          uploader_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projects: {
         Row: {
