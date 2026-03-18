@@ -62,6 +62,10 @@ interface ReportOverviewProps {
   onChapterSelect: (chapterId: string) => void;
   onPageSelect: (pageId: string) => void;
   onSendMessage?: (msg: string) => void;
+  hoverUrl?: string | null;
+  hoverPdfUrl?: string | null;
+  iguideUrl?: string | null;
+  iguidePdfUrl?: string | null;
 }
 
 const ReportOverview = ({
@@ -74,6 +78,10 @@ const ReportOverview = ({
   onChapterSelect,
   onPageSelect,
   onSendMessage,
+  hoverUrl,
+  hoverPdfUrl,
+  iguideUrl,
+  iguidePdfUrl,
 }: ReportOverviewProps) => {
   // Calculate health scores
   const allPagesList = useMemo(() => Object.values(pages), [pages]);
