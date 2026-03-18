@@ -1,0 +1,368 @@
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Plus, Send, ArrowRight, ArrowLeft, Trash2, FileText, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { format } from "date-fns";
+
+const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+const statusColors: Record<string, string> = {
+  draft: "bg-muted text-muted-foreground",
+  sent: "bg-blue-100 text-blue-800",
+  accepted: "bg-green-100 text-green-800",
+  declined: "bg-destructive/10 text-destructive",
+  converted: "bg-accent/20 text-accent-foreground",
+};
+
+interface EstimatesSectionProps {
+  propertyId: string;
+  clientName?: string;
+}
+
+interface LineItemForm {
+  service_id: string | null;
+  description: string;
+  quantity: string;
+  unit_price: string;
+}
+
+const EstimatesSection = ({ propertyId, clientName }: EstimatesSectionProps) => {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [converting, setConverting] = useState(false);
+  const [title, setTitle] = useState("Estimate");
+  const [notes, setNotes] = useState("");
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [discountType, setDiscountType] = useState("dollar");
+  const [tax, setTax] = useState(0);
+  const [lineItems, setLineItems] = useState<LineItemForm[]>([]);
+
+  const { data: estimates = [], isLoading } = useQuery({
+    queryKey: ["estimates", propertyId],
+    queryFn: async () => {
+      const { data } = await (supabase.from("estimates") as any).select("*").eq("property_id", propertyId).order("created_at", { ascending: false });
+      return data || [];
+    },
+  });
+
+  const { data: estimateLineItems = [] } = useQuery({
+    queryKey: ["estimate-line-items", propertyId],
+    queryFn: async () => {
+      const estIds = estimates.map((e: any) => e.id);
+      if (estIds.length === 0) return [];
+      const { data } = await (supabase.from("estimate_line_items") as any).select("*").in("estimate_id", estIds).order("sort_order");
+      return data || [];
+    },
+    enabled: estimates.length > 0,
+  });
+
+  const { data: services = [] } = useQuery({
+    queryKey: ["services-library"],
+    queryFn: async () => {
+      const { data } = await (supabase.from("services") as any).select("*").eq("is_active", true).order("name");
+      return data || [];
+    },
+  });
+
+  const addLine = () => setLineItems([...lineItems, { service_id: null, description: "", quantity: "1", unit_price: "0" }]);
+  const removeLine = (i: number) => setLineItems(lineItems.filter((_, idx) => idx !== i));
+  const updateLine = (i: number, field: keyof LineItemForm, value: string) => {
+    const updated = [...lineItems];
+    (updated[i] as any)[field] = value;
+    // If selecting a service, auto-fill description and price
+    if (field === "service_id" && value) {
+      const svc = services.find((s: any) => s.id === value);
+      if (svc) {
+        updated[i].description = svc.name;
+        updated[i].unit_price = String(svc.price);
+      }
+    }
+    setLineItems(updated);
+  };
+
+  const subtotal = lineItems.reduce((s, li) => s + (parseFloat(li.quantity) || 0) * (parseFloat(li.unit_price) || 0), 0);
+  const discount = discountType === "percent" ? subtotal * (discountAmount / 100) : discountAmount;
+  const total = subtotal - discount + tax;
+
+  const createEstimate = async () => {
+    if (!user || lineItems.length === 0) return;
+    const { data: est, error } = await (supabase.from("estimates") as any).insert({
+      property_id: propertyId, admin_id: user.id, title, notes, subtotal,
+      discount_amount: discountAmount, discount_type: discountType, tax, total,
+    }).select("id").single();
+    if (error || !est) { toast.error("Failed to create estimate"); return; }
+
+    await (supabase.from("estimate_line_items") as any).insert(
+      lineItems.map((li, i) => ({
+        estimate_id: est.id, service_id: li.service_id || null,
+        description: li.description, quantity: parseFloat(li.quantity) || 1,
+        unit_price: parseFloat(li.unit_price) || 0,
+        total: (parseFloat(li.quantity) || 1) * (parseFloat(li.unit_price) || 0),
+        sort_order: i,
+      }))
+    );
+
+    toast.success("Estimate created");
+    setCreateOpen(false);
+    resetForm();
+    qc.invalidateQueries({ queryKey: ["estimates", propertyId] });
+  };
+
+  const updateStatus = async (id: string, status: string) => {
+    await (supabase.from("estimates") as any).update({ status, ...(status === "sent" ? { sent_at: new Date().toISOString() } : {}) }).eq("id", id);
+    qc.invalidateQueries({ queryKey: ["estimates", propertyId] });
+    toast.success(`Estimate ${status}`);
+  };
+
+  const convertToInvoice = async (est: any) => {
+    if (!user) return;
+    setConverting(true);
+    try {
+      const lis = estimateLineItems.filter((li: any) => li.estimate_id === est.id);
+
+      // Create invoice
+      const { data: inv, error } = await (supabase.from("invoices") as any).insert({
+        property_id: propertyId, title: est.title, description: est.title,
+        amount: est.total, subtotal: est.subtotal, tax: est.tax, total: est.total,
+        balance_due: est.total, status: "draft", type: "invoice", notes: est.notes,
+      }).select("id").single();
+      if (error || !inv) throw error;
+
+      // Copy line items
+      if (lis.length > 0) {
+        await (supabase.from("invoice_line_items") as any).insert(
+          lis.map((li: any) => ({
+            invoice_id: inv.id, service_id: li.service_id, description: li.description,
+            quantity: li.quantity, unit_price: li.unit_price, total: li.total, sort_order: li.sort_order,
+          }))
+        );
+      }
+
+      // Mark estimate as converted
+      await (supabase.from("estimates") as any).update({ status: "converted", converted_invoice_id: inv.id }).eq("id", est.id);
+
+      toast.success("Estimate converted to invoice");
+      qc.invalidateQueries({ queryKey: ["estimates", propertyId] });
+      qc.invalidateQueries({ queryKey: ["admin-invoices", propertyId] });
+    } catch {
+      toast.error("Failed to convert estimate");
+    } finally {
+      setConverting(false);
+    }
+  };
+
+  const deleteEstimate = async (id: string) => {
+    await (supabase.from("estimate_line_items") as any).delete().eq("estimate_id", id);
+    await (supabase.from("estimates") as any).delete().eq("id", id);
+    if (selectedId === id) setSelectedId(null);
+    qc.invalidateQueries({ queryKey: ["estimates", propertyId] });
+    toast.success("Estimate deleted");
+  };
+
+  const resetForm = () => {
+    setTitle("Estimate"); setNotes(""); setDiscountAmount(0); setDiscountType("dollar"); setTax(0); setLineItems([]);
+  };
+
+  // Detail view
+  if (selectedId) {
+    const est = estimates.find((e: any) => e.id === selectedId);
+    if (!est) { setSelectedId(null); return null; }
+    const lis = estimateLineItems.filter((li: any) => li.estimate_id === est.id);
+
+    return (
+      <Card className="p-6 space-y-5">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => setSelectedId(null)} className="gap-1 font-sans"><ArrowLeft className="w-4 h-4" />Back</Button>
+          <div className="flex-1">
+            <h3 className="text-lg font-sans font-bold text-foreground flex items-center gap-2">
+              {est.title}
+              <Badge className={`text-[10px] ${statusColors[est.status] || "bg-muted"}`}>{est.status.toUpperCase()}</Badge>
+            </h3>
+            <p className="text-xs font-sans text-muted-foreground">{format(new Date(est.created_at), "MMM d, yyyy")}</p>
+          </div>
+          <div className="flex gap-2">
+            {est.status === "draft" && (
+              <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => updateStatus(est.id, "sent")}>
+                <Send className="w-3.5 h-3.5" />Send to Client
+              </Button>
+            )}
+            {est.status === "accepted" && (
+              <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => convertToInvoice(est)} disabled={converting}>
+                {converting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
+                Convert to Invoice
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="font-sans text-xs">Description</TableHead>
+              <TableHead className="font-sans text-xs text-right">Qty</TableHead>
+              <TableHead className="font-sans text-xs text-right">Unit Price</TableHead>
+              <TableHead className="font-sans text-xs text-right">Total</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {lis.map((li: any) => (
+              <TableRow key={li.id}>
+                <TableCell className="font-sans text-sm">{li.description}</TableCell>
+                <TableCell className="font-mono text-sm text-right">{li.quantity}</TableCell>
+                <TableCell className="font-mono text-sm text-right">{fmt(li.unit_price)}</TableCell>
+                <TableCell className="font-mono text-sm text-right">{fmt(li.total)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        <div className="flex justify-end">
+          <div className="w-64 space-y-1 text-sm font-sans">
+            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="font-mono">{fmt(est.subtotal)}</span></div>
+            {est.discount_amount > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Discount</span><span className="font-mono text-destructive">-{fmt(est.discount_type === "percent" ? est.subtotal * est.discount_amount / 100 : est.discount_amount)}</span></div>}
+            {est.tax > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span className="font-mono">{fmt(est.tax)}</span></div>}
+            <div className="flex justify-between font-bold pt-1 border-t border-border"><span>Total</span><span className="font-mono">{fmt(est.total)}</span></div>
+          </div>
+        </div>
+
+        {est.notes && <div className="bg-muted/50 rounded-md p-3"><p className="text-xs font-sans text-muted-foreground">{est.notes}</p></div>}
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="p-6 space-y-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FileText className="w-5 h-5 text-accent" />
+          <h3 className="text-base font-sans font-semibold text-foreground">Estimates & Proposals</h3>
+          <Badge variant="outline" className="text-[10px] font-mono">{estimates.length}</Badge>
+        </div>
+        <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => { resetForm(); addLine(); setCreateOpen(true); }}>
+          <Plus className="w-3.5 h-3.5" />New Estimate
+        </Button>
+      </div>
+
+      {estimates.length === 0 ? (
+        <div className="text-center py-8">
+          <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+          <p className="text-sm font-sans text-muted-foreground">No estimates yet. Create one to send a proposal to this client.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {estimates.map((est: any) => (
+            <div key={est.id} className="flex items-center justify-between py-3 px-4 rounded-md border border-border hover:bg-muted/30 cursor-pointer transition-colors" onClick={() => setSelectedId(est.id)}>
+              <div className="flex items-center gap-3">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <span className="text-sm font-sans font-medium text-foreground">{est.title}</span>
+                  <p className="text-[11px] font-sans text-muted-foreground">{format(new Date(est.created_at), "MMM d, yyyy")}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-mono font-bold">{fmt(est.total)}</span>
+                <Badge className={`text-[10px] ${statusColors[est.status]}`}>{est.status.toUpperCase()}</Badge>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={e => { e.stopPropagation(); deleteEstimate(est.id); }}>
+                  <Trash2 className="w-3 h-3 text-destructive" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Create estimate dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle className="font-sans">New Estimate{clientName ? ` for ${clientName}` : ""}</DialogTitle></DialogHeader>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-sans">Title</Label>
+              <Input value={title} onChange={e => setTitle(e.target.value)} className="font-sans" />
+            </div>
+
+            {/* Line items */}
+            <div className="space-y-2">
+              <Label className="text-xs font-sans">Line Items</Label>
+              {lineItems.map((li, i) => (
+                <div key={i} className="grid grid-cols-12 gap-2 items-end">
+                  <div className="col-span-4">
+                    <Select value={li.service_id || "custom"} onValueChange={v => updateLine(i, "service_id", v === "custom" ? "" : v)}>
+                      <SelectTrigger className="font-sans text-xs h-9"><SelectValue placeholder="Service..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="custom" className="font-sans text-xs">Custom Item</SelectItem>
+                        {services.map((s: any) => (
+                          <SelectItem key={s.id} value={s.id} className="font-sans text-xs">{s.name} — {fmt(s.price)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-3">
+                    <Input value={li.description} onChange={e => updateLine(i, "description", e.target.value)} placeholder="Description" className="font-sans text-xs h-9" />
+                  </div>
+                  <div className="col-span-2">
+                    <Input type="number" value={li.quantity} onChange={e => updateLine(i, "quantity", e.target.value)} className="font-mono text-xs h-9" />
+                  </div>
+                  <div className="col-span-2">
+                    <Input type="number" value={li.unit_price} onChange={e => updateLine(i, "unit_price", e.target.value)} className="font-mono text-xs h-9" />
+                  </div>
+                  <div className="col-span-1">
+                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0" onClick={() => removeLine(i)}><Trash2 className="w-3 h-3" /></Button>
+                  </div>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" className="text-xs font-sans" onClick={addLine}><Plus className="w-3 h-3 mr-1" />Add Line</Button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-sans">Discount</Label>
+                <div className="flex gap-2">
+                  <Input type="number" value={discountAmount} onChange={e => setDiscountAmount(Number(e.target.value))} className="font-mono text-sm" />
+                  <Select value={discountType} onValueChange={setDiscountType}>
+                    <SelectTrigger className="w-20 font-sans text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dollar">$</SelectItem>
+                      <SelectItem value="percent">%</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-sans">Tax ($)</Label>
+                <Input type="number" value={tax} onChange={e => setTax(Number(e.target.value))} className="font-mono text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-sans">Total</Label>
+                <p className="text-lg font-mono font-bold text-foreground">{fmt(total)}</p>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-sans">Notes / Terms</Label>
+              <Textarea value={notes} onChange={e => setNotes(e.target.value)} className="font-sans text-sm" rows={2} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)} className="font-sans">Cancel</Button>
+            <Button onClick={createEstimate} disabled={lineItems.length === 0} className="font-sans">Create Estimate</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+};
+
+export default EstimatesSection;
