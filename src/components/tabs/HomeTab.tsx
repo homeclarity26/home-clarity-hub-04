@@ -147,6 +147,9 @@ const HomeTab = ({
         </div>
 
         {/* Row 2: Portal Navigation */}
+        }
+
+        {/* Row 1: Portal Status */}
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Navigate Your Portal</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
