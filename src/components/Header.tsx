@@ -69,7 +69,7 @@ const Header = ({ activeTab, onTabChange }: HeaderProps) => {
 
       {/* User Section */}
       <div className="hidden md:flex items-center ml-6 flex-shrink-0 gap-3">
-        {!isCreator && <AnnouncementBanner />}
+        {!isCreator && <PropertySelector />}
         {!isCreator && (
           <button
             onClick={() => onTabChange("notifications")}
