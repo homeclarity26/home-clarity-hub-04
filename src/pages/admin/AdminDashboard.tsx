@@ -66,8 +66,14 @@ const AdminDashboard = () => {
           <StatsCard label="Published Reports" value={stats?.publishedReports ?? 0} icon={CheckCircle} />
         </div>
 
+        {/* Overdue Action Center */}
+        <OverdueActionCenter />
+
         {/* Revenue Analytics */}
         <RevenueAnalytics />
+
+        {/* Cross-Report Analytics */}
+        <CrossReportAnalytics />
 
         {/* Property Map */}
         <PropertyMap />
