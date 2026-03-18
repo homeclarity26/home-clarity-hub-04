@@ -38,6 +38,8 @@ import PortalPersonalization from "@/components/admin/PortalPersonalization";
 import PortalEngagementCard from "@/components/admin/PortalEngagementCard";
 import HomeGoalsAdmin from "@/components/admin/HomeGoalsAdmin";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
+import ReportAITools from "@/components/admin/ReportAITools";
+import VoiceAndPhotoTools from "@/components/admin/VoiceAndPhotoTools";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
