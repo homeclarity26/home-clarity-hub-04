@@ -584,6 +584,16 @@ const AdminClientDetail = () => {
           </div>
         )}
 
+        {/* ESTIMATES TAB */}
+        {activeTab === "estimates" && (
+          <EstimatesSection propertyId={client.propertyId} clientName={client.name} />
+        )}
+
+        {/* SERVICES TAB */}
+        {activeTab === "services" && (
+          <ClientServicesTab propertyId={client.propertyId} clientUserId={client.clientUserId || ""} />
+        )}
+
         {/* SCHEDULE TAB */}
         {activeTab === "schedule" && (
           <div className="space-y-4">

@@ -12,6 +12,8 @@ import ScheduleTab from "@/components/tabs/ScheduleTab";
 import DocumentsTab from "@/components/tabs/DocumentsTab";
 import MessagesTab from "@/components/tabs/MessagesTab";
 import EquipmentTab from "@/components/tabs/EquipmentTab";
+import ServicesMenu from "@/components/portal/ServicesMenu";
+import EstimatesPortal from "@/components/portal/EstimatesPortal";
 import OnboardingOverlay from "@/components/OnboardingOverlay";
 import MembershipBanner from "@/components/MembershipBanner";
 import NotificationPreferences from "@/components/NotificationPreferences";
