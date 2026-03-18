@@ -1,4 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
+import PortalBlockViewer from "@/components/wysiwyg/PortalBlockViewer";
+import type { ReportBlock } from "@/components/wysiwyg/types";
 import { reportPages as staticPages, reportGroups as staticGroups, type ReportPageData } from "@/data/reportContent";
 import ReportPage from "@/components/report/ReportPage";
 import FinancialRoadmapPage from "@/components/report/FinancialRoadmapPage";
