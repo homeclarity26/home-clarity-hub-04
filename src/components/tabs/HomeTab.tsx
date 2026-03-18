@@ -121,6 +121,9 @@ const HomeTab = ({
       {/* Card Grid */}
       <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
 
+        {/* Home Health Diagram */}
+        {reportPages && <HomeHealthDiagram pages={reportPages} onNavigate={onNavigate} />}
+
         {/* Home Value Tracker */}
         {propertyId && (
           <HomeValueTracker propertyId={propertyId} estimatedValue={estimatedValue} />
