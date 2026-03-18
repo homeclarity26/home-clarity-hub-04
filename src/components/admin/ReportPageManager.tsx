@@ -203,6 +203,7 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
 
   return (
     <div className="space-y-6">
+      <BatchOperationsBar selectedIds={selectedIds} onClear={() => setSelectedIds([])} context="report-pages" reportId={reportId || undefined} />
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3 flex-wrap">
           <h3 className="text-sm font-sans font-semibold text-foreground">Report Pages</h3>
