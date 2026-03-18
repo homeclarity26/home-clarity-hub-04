@@ -10,6 +10,7 @@ import type { AdminClient } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ClientIntelligenceCard from "./ClientIntelligenceCard";
+import OnboardingTracker from "./OnboardingTracker";
 
 interface ClientOverviewProps {
   client: AdminClient;
@@ -149,6 +150,7 @@ const ClientOverview = ({ client }: ClientOverviewProps) => {
 
   return (
     <div className="space-y-6">
+      <OnboardingTracker client={client} />
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-sans font-semibold text-foreground">Client & Property Info</h3>

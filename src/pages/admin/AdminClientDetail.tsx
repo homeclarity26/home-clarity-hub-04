@@ -26,15 +26,17 @@ import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import AdminMessagesSection from "@/components/admin/AdminMessagesSection";
 import AdminInvoicesSection from "@/components/admin/AdminInvoicesSection";
+import ClientActivityTimeline from "@/components/admin/ClientActivityTimeline";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 
-type ClientTab = "overview" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages";
+type ClientTab = "overview" | "timeline" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages";
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
+  { id: "timeline", label: "Timeline" },
   { id: "report", label: "Report" },
   { id: "files", label: "Files" },
   { id: "comments", label: "Comments" },
@@ -342,6 +344,7 @@ const AdminClientDetail = () => {
         </div>
 
         {activeTab === "overview" && <ClientOverview client={client} />}
+        {activeTab === "timeline" && <ClientActivityTimeline propertyId={client.propertyId} />}
         {activeTab === "report" && (
           <div className="space-y-4">
             <div className="flex items-center justify-end">
