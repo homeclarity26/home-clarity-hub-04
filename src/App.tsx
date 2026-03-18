@@ -28,6 +28,7 @@ import AdminGoalsDashboard from "./pages/admin/AdminGoalsDashboard";
 import AdminReferrals from "./pages/admin/AdminReferrals";
 import AdminAutomations from "./pages/admin/AdminAutomations";
 import AdminFieldInspection from "./pages/admin/AdminFieldInspection";
+import AdminHelpCenter from "./pages/admin/AdminHelpCenter";
 
 const queryClient = new QueryClient();
 
@@ -172,6 +173,7 @@ const AppRoutes = () => {
         <Route path="referrals" element={<AdminReferrals />} />
         <Route path="automations" element={<AdminAutomations />} />
         <Route path="knowledge-base" element={<AdminKnowledgeBase />} />
+        <Route path="help" element={<AdminHelpCenter />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="announcements" element={<AdminAnnouncements />} />
       </Route>

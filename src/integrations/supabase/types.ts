@@ -2458,6 +2458,42 @@ export type Database = {
           },
         ]
       }
+      tutorial_progress: {
+        Row: {
+          admin_setup_dismissed: boolean
+          admin_setup_items_json: Json
+          checklist_items_json: Json
+          completed_tours: Json
+          created_at: string
+          id: string
+          onboarding_complete: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_setup_dismissed?: boolean
+          admin_setup_items_json?: Json
+          checklist_items_json?: Json
+          completed_tours?: Json
+          created_at?: string
+          id?: string
+          onboarding_complete?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_setup_dismissed?: boolean
+          admin_setup_items_json?: Json
+          checklist_items_json?: Json
+          completed_tours?: Json
+          created_at?: string
+          id?: string
+          onboarding_complete?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

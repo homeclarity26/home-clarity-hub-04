@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X, MessageSquare, CheckSquare, Briefcase, Target, Share2, Megaphone, Zap } from "lucide-react";
+import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X, MessageSquare, CheckSquare, Briefcase, Target, Share2, Megaphone, Zap, GraduationCap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
@@ -17,6 +17,7 @@ const navItems = [
   { label: "Announcements", path: "/admin/announcements", icon: Megaphone },
   { label: "Automations", path: "/admin/automations", icon: Zap },
   { label: "Knowledge Base", path: "/admin/knowledge-base", icon: BookOpen },
+  { label: "Help & Tutorials", path: "/admin/help", icon: GraduationCap },
   { label: "Settings", path: "/admin/settings", icon: Settings },
 ];
 

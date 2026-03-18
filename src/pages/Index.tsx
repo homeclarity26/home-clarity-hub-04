@@ -18,10 +18,14 @@ import NotificationPreferences from "@/components/NotificationPreferences";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import NPSSurveyCard from "@/components/NPSSurveyCard";
 import PropertySelector from "@/components/PropertySelector";
+import HelpFloatingButton from "@/components/help/HelpFloatingButton";
+import HelpCenterPanel from "@/components/help/HelpCenterPanel";
+import ClientOnboardingModal from "@/components/help/ClientOnboardingModal";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { usePortalTracking } from "@/hooks/usePortalTracking";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTutorialProgress } from "@/hooks/useTutorialProgress";
 import { supabase } from "@/integrations/supabase/client";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 
@@ -35,6 +39,8 @@ const Index = () => {
   const [reportPageId, setReportPageId] = useState<string | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [showTutorialModal, setShowTutorialModal] = useState(false);
   const { editMode, toggleEditMode, canEdit } = useEditMode();
 
   // Auto-redirect to first property if none specified
@@ -57,6 +63,7 @@ const Index = () => {
   const portal = useClientPortal(propertyId);
   const { profile } = useAuth();
   usePortalTracking(activeTab);
+  const { progress: tutorialProgress, markChecklistItem, ensureRecord } = useTutorialProgress();
 
   // Check onboarding status for new clients
   useEffect(() => {
@@ -64,6 +71,34 @@ const Index = () => {
       setShowOnboarding(true);
     }
   }, [profile, isCreator, portal.property]);
+
+  // Show tutorial modal for first-time clients
+  useEffect(() => {
+    if (!isCreator && portal.property && tutorialProgress !== undefined && tutorialProgress !== null && !tutorialProgress.onboarding_complete) {
+      setShowTutorialModal(true);
+    } else if (!isCreator && portal.property && tutorialProgress === null) {
+      // No record yet — show modal on first visit
+      setShowTutorialModal(true);
+    }
+  }, [isCreator, portal.property, tutorialProgress]);
+
+  // Auto-track checklist items based on tab visits
+  useEffect(() => {
+    if (isCreator || !portal.property) return;
+    const tabToKey: Record<string, string> = {
+      report: "view_report",
+      home: "check_health",
+      projects: "explore_projects",
+      equipment: "view_equipment",
+      documents: "view_document",
+      messages: "send_message",
+      schedule: "check_schedule",
+    };
+    const key = tabToKey[activeTab];
+    if (key) {
+      markChecklistItem(key);
+    }
+  }, [activeTab, isCreator, portal.property]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Read URL query params for edit mode and page navigation
   useEffect(() => {
@@ -155,6 +190,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Tutorial onboarding modal for first-time clients */}
+      {showTutorialModal && !isCreator && (
+        <ClientOnboardingModal
+          onComplete={(navigateTo) => {
+            setShowTutorialModal(false);
+            if (navigateTo === "report") handleTabChange("report");
+          }}
+        />
+      )}
       {showOnboarding && portal.property && (
         <OnboardingOverlay
           propertyName={propertyName}
@@ -272,6 +316,18 @@ const Index = () => {
       {/* NPS Survey */}
       {portal.property?.id && !isCreator && (
         <NPSSurveyCard propertyId={portal.property.id} />
+      )}
+
+      {/* Help Center */}
+      {!isCreator && (
+        <>
+          <HelpFloatingButton onClick={() => setHelpOpen(true)} />
+          <HelpCenterPanel
+            open={helpOpen}
+            onClose={() => setHelpOpen(false)}
+            onNavigate={handleTabChange}
+          />
+        </>
       )}
 
       <Footer
