@@ -205,6 +205,7 @@ const AppRoutes = () => {
         <Route path="crm" element={<AdminCRM />} />
         <Route path="crm/clients/:id" element={<AdminCRMClientProfile />} />
         <Route path="crm/trade-partners/:id" element={<AdminCRMTradePartnerProfile />} />
+        <Route path="crm/pipeline" element={<AdminCRMPipeline />} />
       </Route>
 
       {/* Trade Partner routes */}

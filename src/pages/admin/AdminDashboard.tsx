@@ -86,6 +86,9 @@ const AdminDashboard = () => {
         {/* Weekly AI Digest */}
         <WeeklyDigestWidget />
 
+        {/* CRM Dashboard Widget */}
+        <CRMDashboardWidget />
+
         {/* Cross-Report Analytics */}
         <CrossReportAnalytics />
 
