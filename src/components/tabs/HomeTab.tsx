@@ -29,8 +29,12 @@ const HomeTab = ({
   propertyId,
   membershipEndDate,
 }: HomeTabProps) => {
+  const [valuationOpen, setValuationOpen] = useState(false);
+  const { valuation, isLoading: valLoading, fetchValuation } = usePropertyValuation(propertyId, propertyAddress);
+
+  const displayValue = valuation?.price ?? estimatedValue;
+
   const handleAskQuestion = () => {
-    // Click the FAB button to open the assistant popup
     const fab = document.querySelector<HTMLButtonElement>('[aria-label="Open assistant"]');
     if (fab) fab.click();
   };
