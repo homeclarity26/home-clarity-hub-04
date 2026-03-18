@@ -45,6 +45,14 @@ const Index = () => {
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab);
     setReportPageId(null);
+    if (tab !== "messages") setPendingMessage(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const handleSendMessage = useCallback((msg: string) => {
+    setPendingMessage(msg);
+    setActiveTab("messages");
+    setReportPageId(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
