@@ -129,6 +129,9 @@ const HomeTab = ({
         {propertyId && (
           <HomeValueTracker propertyId={propertyId} estimatedValue={estimatedValue} />
         )}
+        {propertyId && !propertyId.startsWith("mock-") && (
+          <AnnualReportCard propertyId={propertyId} />
+        )}
 
         {/* Row 1: Portal Status */}
         <div>
