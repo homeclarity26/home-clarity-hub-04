@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight, ChevronDown, CheckCircle, Calendar, DollarSign, User, Loader2, MessageSquare } from "lucide-react";
 import ContractorBidsSection from "@/components/admin/ContractorBidsSection";
+import ProjectPhotoTimeline from "@/components/admin/ProjectPhotoTimeline";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
