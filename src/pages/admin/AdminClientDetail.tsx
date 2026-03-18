@@ -474,6 +474,7 @@ const AdminClientDetail = () => {
         )}
         {activeTab === "files" && (
           <div className="space-y-4">
+            <SignatureRequestManager clientId={client.propertyId} propertyId={client.propertyId} />
             <AITranscriptSummarizer propertyId={client.propertyId} />
             <FileManager propertyId={client.propertyId} />
           </div>
