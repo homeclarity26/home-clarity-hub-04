@@ -343,7 +343,12 @@ const AdminClientDetail = () => {
           ))}
         </div>
 
-        {activeTab === "overview" && <ClientOverview client={client} />}
+        {activeTab === "overview" && (
+          <div className="space-y-6">
+            <ClientOverview client={client} />
+            <AdminValuationCard propertyId={client.propertyId} address={client.address} estimatedValue={client.estimatedValue} />
+          </div>
+        )}
         {activeTab === "timeline" && <ClientActivityTimeline propertyId={client.propertyId} />}
         {activeTab === "report" && (
           <div className="space-y-4">
