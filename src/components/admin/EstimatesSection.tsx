@@ -29,6 +29,9 @@ const statusColors: Record<string, string> = {
 interface EstimatesSectionProps {
   propertyId: string;
   clientName?: string;
+  propertyAddress?: string;
+  sqft?: number | null;
+  propertyType?: string | null;
 }
 
 interface LineItemForm {
@@ -38,7 +41,7 @@ interface LineItemForm {
   unit_price: string;
 }
 
-const EstimatesSection = ({ propertyId, clientName }: EstimatesSectionProps) => {
+const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, propertyType }: EstimatesSectionProps) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -50,6 +53,10 @@ const EstimatesSection = ({ propertyId, clientName }: EstimatesSectionProps) => 
   const [discountType, setDiscountType] = useState("dollar");
   const [tax, setTax] = useState(0);
   const [lineItems, setLineItems] = useState<LineItemForm[]>([]);
+  const [aiTranscript, setAiTranscript] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+  const [selectedLineItemIds, setSelectedLineItemIds] = useState<Set<string>>(new Set());
 
   const { data: estimates = [], isLoading } = useQuery({
     queryKey: ["estimates", propertyId],
