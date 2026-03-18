@@ -31,6 +31,11 @@ import AdminFieldInspection from "./pages/admin/AdminFieldInspection";
 import AdminHelpCenter from "./pages/admin/AdminHelpCenter";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminCalendar from "./pages/admin/AdminCalendar";
+import AdminProjects from "./pages/admin/AdminProjects";
+import AdminProjectDetail from "./pages/admin/AdminProjectDetail";
+import AdminNewProject from "./pages/admin/AdminNewProject";
+import TradePartnerLayout from "./layouts/TradePartnerLayout";
+import TradePartnerDashboard from "./pages/trade/TradePartnerDashboard";
 
 const queryClient = new QueryClient();
 
