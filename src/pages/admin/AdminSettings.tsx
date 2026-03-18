@@ -138,7 +138,7 @@ const AdminSettings = () => {
             <TabsTrigger value="general" className="font-sans text-xs">General</TabsTrigger>
             <TabsTrigger value="services" className="font-sans text-xs">Services Library</TabsTrigger>
             <TabsTrigger value="tiers" className="font-sans text-xs">Membership Tiers</TabsTrigger>
-            <TabsTrigger value="integrations" className="font-sans text-xs">Integrations & API</TabsTrigger>
+            <TabsTrigger value="integrations" className="font-sans text-xs">Integrations</TabsTrigger>
             <TabsTrigger value="sla" className="font-sans text-xs">SLA</TabsTrigger>
             <TabsTrigger value="templates" className="font-sans text-xs">Message Templates</TabsTrigger>
             <TabsTrigger value="audit" className="font-sans text-xs">Audit Log</TabsTrigger>
