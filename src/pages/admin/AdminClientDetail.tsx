@@ -466,7 +466,12 @@ const AdminClientDetail = () => {
             />
           </div>
         )}
-        {activeTab === "files" && <FileManager propertyId={client.propertyId} />}
+        {activeTab === "files" && (
+          <div className="space-y-4">
+            <AITranscriptSummarizer propertyId={client.propertyId} />
+            <FileManager propertyId={client.propertyId} />
+          </div>
+        )}
         {activeTab === "comments" && <CommentsManager clientId={client.id} />}
         {activeTab === "vendors" && <VendorManager propertyId={client.propertyId} />}
         {activeTab === "messages" && (
