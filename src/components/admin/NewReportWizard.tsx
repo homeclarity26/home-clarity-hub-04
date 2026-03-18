@@ -1294,13 +1294,14 @@ const NewReportWizard = () => {
                 </div>
               )}
 
-              <div className="p-3 rounded-lg bg-muted/40 border border-border">
+              <div className="p-3 rounded-lg bg-muted/40 border border-border space-y-2">
                 <p className="text-xs font-sans font-medium text-foreground mb-1.5">Share with client:</p>
-                <p className="text-xs font-sans text-muted-foreground mb-2.5 leading-relaxed">
-                  Copy a formatted message with the portal link and login credentials to send via email or text.
-                </p>
+                <Button size="sm" className="gap-1.5 font-sans text-xs w-full" onClick={sendEmailInvite} disabled={sendingEmail}>
+                  {sendingEmail ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                  {sendingEmail ? "Sending…" : "Send Email Invite"}
+                </Button>
                 <Button variant="outline" size="sm" className="gap-1.5 font-sans text-xs w-full" onClick={copyInviteMessage}>
-                  <Mail className="w-3.5 h-3.5" />
+                  <Copy className="w-3.5 h-3.5" />
                   Copy Invite Message
                 </Button>
               </div>
