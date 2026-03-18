@@ -257,6 +257,12 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={pages && selectedIds.length === pages.length && pages.length > 0}
+                    onCheckedChange={toggleAll}
+                  />
+                </TableHead>
                 <TableHead className="font-sans text-xs">Page</TableHead>
                 <TableHead className="font-sans text-xs w-[180px]">Status</TableHead>
                 <TableHead className="font-sans text-xs hidden sm:table-cell">Last Edited</TableHead>
