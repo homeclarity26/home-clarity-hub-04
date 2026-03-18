@@ -30,6 +30,7 @@ import AdminAutomations from "./pages/admin/AdminAutomations";
 import AdminFieldInspection from "./pages/admin/AdminFieldInspection";
 import AdminHelpCenter from "./pages/admin/AdminHelpCenter";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminCalendar from "./pages/admin/AdminCalendar";
 
 const queryClient = new QueryClient();
 
@@ -178,6 +179,7 @@ const AppRoutes = () => {
         <Route path="help" element={<AdminHelpCenter />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="announcements" element={<AdminAnnouncements />} />
+        <Route path="calendar" element={<AdminCalendar />} />
       </Route>
 
       {/* Auth routes */}

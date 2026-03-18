@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X, MessageSquare, CheckSquare, Briefcase, Target, Share2, Megaphone, Zap, GraduationCap, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X, MessageSquare, CheckSquare, Briefcase, Target, Share2, Megaphone, Zap, GraduationCap, BarChart3, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
@@ -10,6 +10,7 @@ const navItems = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard, showBadge: true },
   { label: "Analytics", path: "/admin/analytics", icon: BarChart3 },
   { label: "Inbox", path: "/admin/inbox", icon: MessageSquare },
+  { label: "Calendar", path: "/admin/calendar", icon: Calendar },
   { label: "Clients", path: "/admin/clients", icon: Users },
   { label: "Tasks", path: "/admin/tasks", icon: CheckSquare },
   { label: "Vendors", path: "/admin/vendors", icon: Briefcase },

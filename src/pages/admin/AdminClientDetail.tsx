@@ -63,6 +63,10 @@ import ClientEngagementTab from "@/components/admin/ClientEngagementTab";
 import ReportVersionHistory from "@/components/admin/ReportVersionHistory";
 import HealthScoreTrend from "@/components/admin/HealthScoreTrend";
 import SignatureRequestManager from "@/components/admin/SignatureRequestManager";
+import ClientRiskScore from "@/components/admin/ClientRiskScore";
+import RecurringInvoiceScheduler from "@/components/admin/RecurringInvoiceScheduler";
+import InternalReportComments from "@/components/admin/InternalReportComments";
+import DragReportReorder from "@/components/admin/DragReportReorder";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
@@ -406,6 +410,7 @@ const AdminClientDetail = () => {
           <div className="space-y-6">
             <AIClientInsightsCard propertyId={client.propertyId} clientData={{ name: client.name, address: client.address, propertyType: client.propertyType, yearBuilt: client.yearBuilt }} />
             <HealthScoreTrend clientId={client.propertyId} />
+            <ClientRiskScore client={client} invoices={invoices?.map(i => ({ status: i.status, due_date: i.due_date, balance_due: Number(i.balance_due) }))} />
             <ClientHealthCard client={client} />
             <AIFollowUpSuggestions propertyId={client.propertyId} clientName={client.name} />
             <ConditionForecast propertyId={client.propertyId} />
@@ -455,6 +460,10 @@ const AdminClientDetail = () => {
                 propertyType: client.propertyType,
               }}
             />
+            <InternalReportComments reportId={client.reportId} />
+            {reportPages && reportPages.length > 0 && (
+              <DragReportReorder pages={reportPages.map(p => ({ id: p.id, title: p.title, group_name: p.group_name, sort_order: p.sort_order, status: p.status, condition_rating: p.condition_rating }))} reportId={client.reportId!} />
+            )}
             <ReportPageManager
               propertyId={client.propertyId}
               reportId={client.reportId}
@@ -513,15 +522,18 @@ const AdminClientDetail = () => {
 
         {/* PAYMENTS TAB */}
         {activeTab === "payments" && (
-          <AdminInvoicesSection
-            propertyId={client.propertyId}
-            propertyContext={{
-              propertyAddress: client.address,
-              sqft: client.sqft,
-              propertyType: client.propertyType,
-              clientName: client.name,
-            }}
-          />
+          <div className="space-y-6">
+            <RecurringInvoiceScheduler propertyId={client.propertyId} />
+            <AdminInvoicesSection
+              propertyId={client.propertyId}
+              propertyContext={{
+                propertyAddress: client.address,
+                sqft: client.sqft,
+                propertyType: client.propertyType,
+                clientName: client.name,
+              }}
+            />
+          </div>
         )}
 
         {/* SCHEDULE TAB */}
