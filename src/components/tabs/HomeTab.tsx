@@ -9,6 +9,7 @@ import AnnualReportCard from "@/components/AnnualReportCard";
 import MaintenanceReminders from "@/components/MaintenanceReminders";
 import HomeGoals from "@/components/HomeGoals";
 import InsuranceAssistant from "@/components/InsuranceAssistant";
+import ClientActivityTimeline from "@/components/ClientActivityTimeline";
 import { usePropertyValuation } from "@/hooks/usePropertyValuation";
 import { supabase } from "@/integrations/supabase/client";
 import type { ReportPageData } from "@/data/reportContent";
