@@ -357,7 +357,7 @@ const AdminFieldInspection = () => {
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-primary" />
                 <CardTitle className="text-sm font-sans">GPS Check-In</CardTitle>
-                {gpsStatus === "verified" && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                {gpsStatus === "verified" && <CheckCircle2 className="w-4 h-4 text-primary" />}
                 {gpsStatus === "failed" && <XCircle className="w-4 h-4 text-destructive" />}
               </div>
               {expandedSection === "gps" ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
