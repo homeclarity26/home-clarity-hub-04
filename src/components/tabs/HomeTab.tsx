@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
-import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle, Info } from "lucide-react";
+import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle, Info, Wrench } from "lucide-react";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import HomeValueTracker from "@/components/HomeValueTracker";
 import MembershipBanner from "@/components/MembershipBanner";
 import ValuationModal from "@/components/ValuationModal";
-import HomeHealthDiagram from "@/components/HomeHealthDiagram";
+import InteractiveHealthDashboard from "@/components/portal/InteractiveHealthDashboard";
+import SeasonalMaintenanceTips from "@/components/portal/SeasonalMaintenanceTips";
+import DocumentExpirationTracker from "@/components/portal/DocumentExpirationTracker";
+import ClientReferralPortal from "@/components/portal/ClientReferralPortal";
+import CostComparisonTool from "@/components/portal/CostComparisonTool";
+import HomeImprovementWishlist from "@/components/portal/HomeImprovementWishlist";
+import ServiceRequestForm from "@/components/portal/ServiceRequestForm";
 import AnnualReportCard from "@/components/AnnualReportCard";
 import MaintenanceReminders from "@/components/MaintenanceReminders";
 import HomeGoals from "@/components/HomeGoals";
@@ -40,6 +46,7 @@ const HomeTab = ({
   reportPages,
 }: HomeTabProps) => {
   const [valuationOpen, setValuationOpen] = useState(false);
+  const [showServiceRequest, setShowServiceRequest] = useState(false);
   const { valuation, isLoading: valLoading, fetchValuation } = usePropertyValuation(propertyId, propertyAddress);
   const [customization, setCustomization] = useState<{ welcome_message?: string; tagline?: string; hero_photo_url?: string; advisor_signature?: string } | null>(null);
 
@@ -140,8 +147,11 @@ const HomeTab = ({
       {/* Card Grid */}
       <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
 
-        {/* Home Health Diagram */}
-        {reportPages && <HomeHealthDiagram pages={reportPages} onNavigate={onNavigate} />}
+        {/* Interactive Home Health Dashboard */}
+        {reportPages && <InteractiveHealthDashboard pages={reportPages} onNavigate={onNavigate} />}
+
+        {/* Cost Comparison Tool */}
+        {reportPages && <CostComparisonTool pages={reportPages} />}
 
         {/* Home Value Tracker */}
         {propertyId && (
@@ -150,6 +160,13 @@ const HomeTab = ({
         {propertyId && !propertyId.startsWith("mock-") && (
           <AnnualReportCard propertyId={propertyId} />
         )}
+
+        {/* Seasonal Maintenance Tips */}
+        <SeasonalMaintenanceTips />
+
+        {/* Document Expiration Tracking */}
+        {propertyId && <DocumentExpirationTracker propertyId={propertyId} />}
+
         {propertyId && !propertyId.startsWith("mock-") && (
           <MaintenanceReminders propertyId={propertyId} />
         )}
@@ -159,9 +176,45 @@ const HomeTab = ({
           <HomeGoals propertyId={propertyId} />
         )}
 
+        {/* Home Improvement Wishlist */}
+        {propertyId && <HomeImprovementWishlist propertyId={propertyId} />}
+
         {/* Insurance Assistant */}
         {propertyId && !propertyId.startsWith("mock-") && (
           <InsuranceAssistant propertyId={propertyId} />
+        )}
+
+        {/* Client Referral Portal */}
+        <ClientReferralPortal />
+
+        {/* Service Request */}
+        {propertyId && (
+          <div className="max-w-[1400px] mx-auto px-6 md:px-20">
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Need Help?</p>
+            <div className="bg-card rounded-lg border border-border shadow-hbc-sm p-6">
+              {showServiceRequest ? (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-display text-lg text-foreground">Submit a Service Request</h3>
+                    <button onClick={() => setShowServiceRequest(false)} className="font-mono text-[10px] text-muted-foreground bg-transparent border-none cursor-pointer hover:text-foreground">Cancel</button>
+                  </div>
+                  <ServiceRequestForm propertyId={propertyId} onSubmitted={() => setShowServiceRequest(false)} />
+                </>
+              ) : (
+                <button
+                  onClick={() => setShowServiceRequest(true)}
+                  className="w-full flex items-center gap-3 bg-transparent border-none cursor-pointer text-left p-2 hover:bg-muted/30 rounded-lg transition-colors"
+                >
+                  <Wrench className="w-5 h-5 text-accent" />
+                  <div className="flex-1">
+                    <h3 className="font-display text-lg text-foreground">Report an Issue</h3>
+                    <p className="font-sans text-sm text-muted-foreground">Submit a service request with photos</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
+                </button>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Advisor Signature */}
