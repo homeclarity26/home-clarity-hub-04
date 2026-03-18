@@ -460,6 +460,10 @@ const AdminClientDetail = () => {
                 propertyType: client.propertyType,
               }}
             />
+            <InternalReportComments reportId={client.reportId} />
+            {reportPages && reportPages.length > 0 && (
+              <DragReportReorder pages={reportPages.map(p => ({ id: p.id, title: p.title, group_name: p.group_name, sort_order: p.sort_order, status: p.status, condition_rating: p.condition_rating }))} reportId={client.reportId!} />
+            )}
             <ReportPageManager
               propertyId={client.propertyId}
               reportId={client.reportId}
