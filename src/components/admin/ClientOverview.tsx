@@ -10,6 +10,7 @@ import type { AdminClient } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ClientIntelligenceCard from "./ClientIntelligenceCard";
+import OnboardingTracker from "./OnboardingTracker";
 
 interface ClientOverviewProps {
   client: AdminClient;
