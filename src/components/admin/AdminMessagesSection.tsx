@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, Loader2, MessageSquare, Video, Link } from "lucide-react";
+import { Send, Loader2, MessageSquare, Video, Link, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
