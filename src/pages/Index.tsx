@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
+import ClientAgentPanel from "@/components/agent/ClientAgentPanel";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import Header from "@/components/Header";
@@ -360,6 +361,7 @@ const Index = () => {
           })),
         }}
       />
+      <ClientAgentPanel />
     </div>
   );
 };

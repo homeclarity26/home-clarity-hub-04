@@ -52,6 +52,54 @@ export type Database = {
           },
         ]
       }
+      agent_logs: {
+        Row: {
+          actions_taken: number | null
+          agent_reply: string | null
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          id: string
+          page_context: Json | null
+          role: string
+          session_id: string | null
+          tokens_used: number | null
+          tools_called: Json | null
+          user_id: string | null
+          user_message: string
+        }
+        Insert: {
+          actions_taken?: number | null
+          agent_reply?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          page_context?: Json | null
+          role?: string
+          session_id?: string | null
+          tokens_used?: number | null
+          tools_called?: Json | null
+          user_id?: string | null
+          user_message: string
+        }
+        Update: {
+          actions_taken?: number | null
+          agent_reply?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          page_context?: Json | null
+          role?: string
+          session_id?: string | null
+          tokens_used?: number | null
+          tools_called?: Json | null
+          user_id?: string | null
+          user_message?: string
+        }
+        Relationships: []
+      }
       ai_client_insights: {
         Row: {
           client_id: string
