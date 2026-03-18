@@ -21,6 +21,7 @@ interface MessagesTabProps {
   propertyId?: string;
   creatorName?: string;
   creatorInitials?: string;
+  initialMessage?: string;
 }
 
 const MOCK_MESSAGES: Message[] = [
