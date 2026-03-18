@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ExternalLink, CheckCircle, Edit, AlertTriangle, XCircle, Loader2, Sparkles } from "lucide-react";
+import BatchOperationsBar from "./BatchOperationsBar";
 import { useAdminReportPages } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
