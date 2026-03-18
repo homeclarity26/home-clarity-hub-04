@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, FileText, HelpCircle, CheckCircle, BookOpen, AlertTriangle, Plus, Loader2, DollarSign, TrendingUp, CreditCard, MessageSquare, UserPlus } from "lucide-react";
+import { Users, FileText, HelpCircle, CheckCircle, BookOpen, AlertTriangle, Plus, Loader2, DollarSign, TrendingUp, CreditCard, MessageSquare, UserPlus, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,9 @@ import StatsCard from "@/components/admin/StatsCard";
 import ActivityFeed from "@/components/admin/ActivityFeed";
 import ClientTable from "@/components/admin/ClientTable";
 import RevenueAnalytics from "@/components/admin/RevenueAnalytics";
+import TasksSection from "@/components/admin/TasksSection";
 import { useAdminClients, useAdminStats, useAdminActivityLog, useClientsNeedingAttention } from "@/hooks/useAdminData";
+import { useWeeklyTimeEntries } from "@/hooks/useTimeTracking";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -22,8 +24,19 @@ const AdminDashboard = () => {
   const { data: clients, isLoading: clientsLoading } = useAdminClients();
   const { data: activities } = useAdminActivityLog(10);
   const { data: attentionClients } = useClientsNeedingAttention();
+  const { data: weeklyTime } = useWeeklyTimeEntries();
 
   const isLoading = statsLoading || clientsLoading;
+
+  // Weekly time summary
+  const weeklyHours = (weeklyTime || []).reduce((s: number, e: any) => s + Number(e.hours), 0);
+  const weeklyByClient: Record<string, { name: string; hours: number }> = {};
+  (weeklyTime || []).forEach((e: any) => {
+    const name = e.properties?.property_name || e.properties?.address || "Unknown";
+    if (!weeklyByClient[e.client_id]) weeklyByClient[e.client_id] = { name, hours: 0 };
+    weeklyByClient[e.client_id].hours += Number(e.hours);
+  });
+  const weeklyRanked = Object.values(weeklyByClient).sort((a, b) => b.hours - a.hours).slice(0, 5);
 
   useEffect(() => {
     const channel = supabase
@@ -51,6 +64,33 @@ const AdminDashboard = () => {
 
         {/* Revenue Analytics */}
         <RevenueAnalytics />
+
+        {/* Tasks + Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* My Tasks */}
+          <Card className="lg:col-span-2 p-5">
+            <TasksSection compact />
+          </Card>
+
+          {/* Time This Week */}
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="w-4 h-4 text-muted-foreground" />
+              <h3 className="text-sm font-sans font-semibold text-foreground">Time This Week</h3>
+            </div>
+            <p className="text-2xl font-sans font-bold text-foreground">{weeklyHours.toFixed(1)}h</p>
+            {weeklyRanked.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {weeklyRanked.map((c) => (
+                  <div key={c.name} className="flex items-center justify-between">
+                    <span className="text-xs font-sans text-muted-foreground truncate max-w-[150px]">{c.name}</span>
+                    <span className="text-xs font-mono text-foreground">{c.hours.toFixed(1)}h</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Activity */}

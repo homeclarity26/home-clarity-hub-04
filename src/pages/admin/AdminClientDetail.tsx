@@ -31,16 +31,21 @@ import AdminInvoicesSection from "@/components/admin/AdminInvoicesSection";
 import ClientActivityTimeline from "@/components/admin/ClientActivityTimeline";
 import SmartScheduleDialog from "@/components/admin/SmartScheduleDialog";
 import FollowUpSequence from "@/components/admin/FollowUpSequence";
+import TasksSection from "@/components/admin/TasksSection";
+import TimeTrackingSection from "@/components/admin/TimeTrackingSection";
+import ProfitabilityCard from "@/components/admin/ProfitabilityCard";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 
-type ClientTab = "overview" | "timeline" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages";
+type ClientTab = "overview" | "timeline" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time";
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "timeline", label: "Timeline" },
+  { id: "tasks", label: "Tasks" },
+  { id: "time", label: "Time" },
   { id: "report", label: "Report" },
   { id: "files", label: "Files" },
   { id: "comments", label: "Comments" },
@@ -496,6 +501,21 @@ const AdminClientDetail = () => {
             ) : (
               <Card className="p-8 text-center"><p className="text-sm font-sans text-muted-foreground">No events scheduled. Add one to get started.</p></Card>
             )}
+          </div>
+        )}
+
+        {/* TASKS TAB */}
+        {activeTab === "tasks" && (
+          <Card className="p-5">
+            <TasksSection clientId={client.propertyId} />
+          </Card>
+        )}
+
+        {/* TIME TRACKING TAB */}
+        {activeTab === "time" && (
+          <div className="space-y-4">
+            <TimeTrackingSection clientId={client.propertyId} totalRevenue={0} />
+            <ProfitabilityCard data={{ totalRevenue: 0, totalHours: 0, targetHourlyRate: 150, messageCount: 0, messageCostPerMsg: 5 }} />
           </div>
         )}
       </div>

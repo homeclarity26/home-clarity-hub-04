@@ -1118,6 +1118,94 @@ export type Database = {
           },
         ]
       }
+      tasks: {
+        Row: {
+          admin_id: string
+          client_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_entries: {
+        Row: {
+          activity_type: string
+          admin_id: string
+          client_id: string
+          created_at: string
+          entry_date: string
+          hours: number
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          activity_type?: string
+          admin_id: string
+          client_id: string
+          created_at?: string
+          entry_date?: string
+          hours?: number
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          activity_type?: string
+          admin_id?: string
+          client_id?: string
+          created_at?: string
+          entry_date?: string
+          hours?: number
+          id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
