@@ -522,15 +522,18 @@ const AdminClientDetail = () => {
 
         {/* PAYMENTS TAB */}
         {activeTab === "payments" && (
-          <AdminInvoicesSection
-            propertyId={client.propertyId}
-            propertyContext={{
-              propertyAddress: client.address,
-              sqft: client.sqft,
-              propertyType: client.propertyType,
-              clientName: client.name,
-            }}
-          />
+          <div className="space-y-6">
+            <RecurringInvoiceScheduler propertyId={client.propertyId} />
+            <AdminInvoicesSection
+              propertyId={client.propertyId}
+              propertyContext={{
+                propertyAddress: client.address,
+                sqft: client.sqft,
+                propertyType: client.propertyType,
+                clientName: client.name,
+              }}
+            />
+          </div>
         )}
 
         {/* SCHEDULE TAB */}
