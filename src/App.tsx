@@ -27,6 +27,7 @@ import AdminVendorDirectory from "./pages/admin/AdminVendorDirectory";
 import AdminGoalsDashboard from "./pages/admin/AdminGoalsDashboard";
 import AdminReferrals from "./pages/admin/AdminReferrals";
 import AdminAutomations from "./pages/admin/AdminAutomations";
+import AdminFieldInspection from "./pages/admin/AdminFieldInspection";
 
 const queryClient = new QueryClient();
 
