@@ -25,9 +25,11 @@ interface Message {
 
 interface AdminMessagesSectionProps {
   propertyId: string;
+  clientName?: string;
+  propertyAddress?: string;
 }
 
-const AdminMessagesSection = ({ propertyId }: AdminMessagesSectionProps) => {
+const AdminMessagesSection = ({ propertyId, clientName, propertyAddress }: AdminMessagesSectionProps) => {
   const { user, profile } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
