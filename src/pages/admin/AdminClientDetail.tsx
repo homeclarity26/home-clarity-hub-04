@@ -366,9 +366,15 @@ const AdminClientDetail = () => {
             <div>
               <h1 className="text-xl font-sans font-bold text-foreground">{client.propertyName}</h1>
               <p className="text-sm font-sans text-muted-foreground">{client.name}</p>
+              <div className="mt-1.5">
+                <ClientTags propertyId={client.propertyId} />
+              </div>
             </div>
           </div>
-          <Button onClick={() => navigate(`/portal/${client.propertyId}?edit=true`)} className="gap-1.5 font-sans"><ExternalLink className="w-4 h-4" />Open in Portal</Button>
+          <div className="flex items-center gap-2">
+            <AIClientBrief propertyId={client.propertyId} propertyName={client.propertyName} />
+            <Button onClick={() => navigate(`/portal/${client.propertyId}?edit=true`)} className="gap-1.5 font-sans"><ExternalLink className="w-4 h-4" />Open in Portal</Button>
+          </div>
         </div>
 
         <div className="flex gap-1 border-b border-border overflow-x-auto">
