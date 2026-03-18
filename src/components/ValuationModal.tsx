@@ -79,6 +79,8 @@ const ValuationModal = ({
 
   const completedDrivers = valueDrivers?.filter((d) => d.value_contribution_estimate && d.value_contribution_estimate > 0) || [];
 
+  if (!valuation) return null;
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[92vh] overflow-y-auto">
