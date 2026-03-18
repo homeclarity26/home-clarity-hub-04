@@ -40,6 +40,12 @@ const AdminClients = () => {
               ))}
             </div>
           </div>
+          {clients && clients.length > 0 && (
+            <Button variant="outline" size="sm" onClick={() => exportClientsToCSV(clients)} className="gap-1.5 text-xs font-sans">
+              <Download className="w-4 h-4" />
+              Export CSV
+            </Button>
+          )}
           <Button onClick={() => navigate("/admin/clients/new")} className="gap-1.5 font-sans" size="sm">
             <Plus className="w-4 h-4" />
             New Client
