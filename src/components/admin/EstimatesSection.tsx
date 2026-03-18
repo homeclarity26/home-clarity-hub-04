@@ -5,10 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Send, ArrowRight, ArrowLeft, Trash2, FileText, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Send, ArrowRight, ArrowLeft, Trash2, FileText, Loader2, Sparkles, MessageSquareText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,6 +29,9 @@ const statusColors: Record<string, string> = {
 interface EstimatesSectionProps {
   propertyId: string;
   clientName?: string;
+  propertyAddress?: string;
+  sqft?: number | null;
+  propertyType?: string | null;
 }
 
 interface LineItemForm {
@@ -36,7 +41,7 @@ interface LineItemForm {
   unit_price: string;
 }
 
-const EstimatesSection = ({ propertyId, clientName }: EstimatesSectionProps) => {
+const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, propertyType }: EstimatesSectionProps) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -48,6 +53,10 @@ const EstimatesSection = ({ propertyId, clientName }: EstimatesSectionProps) => 
   const [discountType, setDiscountType] = useState("dollar");
   const [tax, setTax] = useState(0);
   const [lineItems, setLineItems] = useState<LineItemForm[]>([]);
+  const [aiTranscript, setAiTranscript] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+  const [selectedLineItemIds, setSelectedLineItemIds] = useState<Set<string>>(new Set());
 
   const { data: estimates = [], isLoading } = useQuery({
     queryKey: ["estimates", propertyId],
@@ -95,6 +104,78 @@ const EstimatesSection = ({ propertyId, clientName }: EstimatesSectionProps) => 
   const subtotal = lineItems.reduce((s, li) => s + (parseFloat(li.quantity) || 0) * (parseFloat(li.unit_price) || 0), 0);
   const discount = discountType === "percent" ? subtotal * (discountAmount / 100) : discountAmount;
   const total = subtotal - discount + tax;
+
+  // AI: Generate from transcript
+  const handleAiFromTranscript = async () => {
+    if (!aiTranscript.trim()) return;
+    setAiGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-invoice-assistant", {
+        body: {
+          task: "from_transcript",
+          context: {
+            transcript: aiTranscript,
+            propertyAddress,
+            sqft,
+            propertyType,
+            clientName,
+          },
+        },
+      });
+      if (error) throw error;
+      if (data?.title) setTitle(data.title);
+      if (data?.notes) setNotes(data.notes);
+      if (data?.lineItems && Array.isArray(data.lineItems)) {
+        setLineItems(data.lineItems.map((li: any) => ({
+          service_id: null,
+          description: li.description || "",
+          quantity: String(li.quantity || 1),
+          unit_price: String(li.unit_price || 0),
+        })));
+        toast.success(`AI extracted ${data.lineItems.length} line items — review before saving`);
+      }
+    } catch (err: any) {
+      if (err?.status === 429) toast.error("Rate limited — try again in a moment");
+      else if (err?.status === 402) toast.error("AI credits exhausted");
+      else toast.error("AI generation failed — try again or enter items manually");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  // Partial conversion: selected line items → invoice
+  const convertPartialToInvoice = async (est: any) => {
+    if (!user || selectedLineItemIds.size === 0) return;
+    setConverting(true);
+    try {
+      const lis = estimateLineItems.filter((li: any) => li.estimate_id === est.id && selectedLineItemIds.has(li.id));
+      const partialSubtotal = lis.reduce((s: number, li: any) => s + Number(li.total), 0);
+
+      const { data: inv, error } = await (supabase.from("invoices") as any).insert({
+        property_id: propertyId, title: `${est.title} (partial)`, description: est.title,
+        amount: partialSubtotal, subtotal: partialSubtotal, tax: 0, total: partialSubtotal,
+        balance_due: partialSubtotal, status: "draft", type: "invoice", notes: est.notes,
+      }).select("id").single();
+      if (error || !inv) throw error;
+
+      await (supabase.from("invoice_line_items") as any).insert(
+        lis.map((li: any, i: number) => ({
+          invoice_id: inv.id, service_id: li.service_id, description: li.description,
+          quantity: li.quantity, unit_price: li.unit_price, total: li.total, sort_order: i,
+        }))
+      );
+
+      toast.success(`Invoice created from ${lis.length} selected items`);
+      setConvertDialogOpen(false);
+      setSelectedLineItemIds(new Set());
+      qc.invalidateQueries({ queryKey: ["estimates", propertyId] });
+      qc.invalidateQueries({ queryKey: ["admin-invoices", propertyId] });
+    } catch {
+      toast.error("Failed to create invoice from selected items");
+    } finally {
+      setConverting(false);
+    }
+  };
 
   const createEstimate = async () => {
     if (!user || lineItems.length === 0) return;
@@ -172,7 +253,7 @@ const EstimatesSection = ({ propertyId, clientName }: EstimatesSectionProps) => 
   };
 
   const resetForm = () => {
-    setTitle("Estimate"); setNotes(""); setDiscountAmount(0); setDiscountType("dollar"); setTax(0); setLineItems([]);
+    setTitle("Estimate"); setNotes(""); setDiscountAmount(0); setDiscountType("dollar"); setTax(0); setLineItems([]); setAiTranscript("");
   };
 
   // Detail view
@@ -192,54 +273,99 @@ const EstimatesSection = ({ propertyId, clientName }: EstimatesSectionProps) => 
             </h3>
             <p className="text-xs font-sans text-muted-foreground">{format(new Date(est.created_at), "MMM d, yyyy")}</p>
           </div>
-          <div className="flex gap-2">
-            {est.status === "draft" && (
-              <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => updateStatus(est.id, "sent")}>
-                <Send className="w-3.5 h-3.5" />Send to Client
-              </Button>
-            )}
-            {est.status === "accepted" && (
-              <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => convertToInvoice(est)} disabled={converting}>
-                {converting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
-                Convert to Invoice
-              </Button>
-            )}
-          </div>
-        </div>
+           <div className="flex gap-2">
+             {est.status === "draft" && (
+               <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => updateStatus(est.id, "sent")}>
+                 <Send className="w-3.5 h-3.5" />Send to Client
+               </Button>
+             )}
+             {(est.status === "accepted" || est.status === "sent" || est.status === "draft") && lis.length > 1 && (
+               <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={() => { setSelectedLineItemIds(new Set(lis.map((l: any) => l.id))); setConvertDialogOpen(true); }}>
+                 <FileText className="w-3.5 h-3.5" />Pull to Invoice
+               </Button>
+             )}
+             {est.status === "accepted" && (
+               <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => convertToInvoice(est)} disabled={converting}>
+                 {converting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
+                 Convert All to Invoice
+               </Button>
+             )}
+           </div>
+         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="font-sans text-xs">Description</TableHead>
-              <TableHead className="font-sans text-xs text-right">Qty</TableHead>
-              <TableHead className="font-sans text-xs text-right">Unit Price</TableHead>
-              <TableHead className="font-sans text-xs text-right">Total</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {lis.map((li: any) => (
-              <TableRow key={li.id}>
-                <TableCell className="font-sans text-sm">{li.description}</TableCell>
-                <TableCell className="font-mono text-sm text-right">{li.quantity}</TableCell>
-                <TableCell className="font-mono text-sm text-right">{fmt(li.unit_price)}</TableCell>
-                <TableCell className="font-mono text-sm text-right">{fmt(li.total)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+         <Table>
+           <TableHeader>
+             <TableRow>
+               <TableHead className="font-sans text-xs">Description</TableHead>
+               <TableHead className="font-sans text-xs text-right">Qty</TableHead>
+               <TableHead className="font-sans text-xs text-right">Unit Price</TableHead>
+               <TableHead className="font-sans text-xs text-right">Total</TableHead>
+             </TableRow>
+           </TableHeader>
+           <TableBody>
+             {lis.map((li: any) => (
+               <TableRow key={li.id}>
+                 <TableCell className="font-sans text-sm">{li.description}</TableCell>
+                 <TableCell className="font-mono text-sm text-right">{li.quantity}</TableCell>
+                 <TableCell className="font-mono text-sm text-right">{fmt(li.unit_price)}</TableCell>
+                 <TableCell className="font-mono text-sm text-right">{fmt(li.total)}</TableCell>
+               </TableRow>
+             ))}
+           </TableBody>
+         </Table>
 
-        <div className="flex justify-end">
-          <div className="w-64 space-y-1 text-sm font-sans">
-            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="font-mono">{fmt(est.subtotal)}</span></div>
-            {est.discount_amount > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Discount</span><span className="font-mono text-destructive">-{fmt(est.discount_type === "percent" ? est.subtotal * est.discount_amount / 100 : est.discount_amount)}</span></div>}
-            {est.tax > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span className="font-mono">{fmt(est.tax)}</span></div>}
-            <div className="flex justify-between font-bold pt-1 border-t border-border"><span>Total</span><span className="font-mono">{fmt(est.total)}</span></div>
-          </div>
-        </div>
+         <div className="flex justify-end">
+           <div className="w-64 space-y-1 text-sm font-sans">
+             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="font-mono">{fmt(est.subtotal)}</span></div>
+             {est.discount_amount > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Discount</span><span className="font-mono text-destructive">-{fmt(est.discount_type === "percent" ? est.subtotal * est.discount_amount / 100 : est.discount_amount)}</span></div>}
+             {est.tax > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span className="font-mono">{fmt(est.tax)}</span></div>}
+             <div className="flex justify-between font-bold pt-1 border-t border-border"><span>Total</span><span className="font-mono">{fmt(est.total)}</span></div>
+           </div>
+         </div>
 
-        {est.notes && <div className="bg-muted/50 rounded-md p-3"><p className="text-xs font-sans text-muted-foreground">{est.notes}</p></div>}
-      </Card>
-    );
+         {est.notes && <div className="bg-muted/50 rounded-md p-3"><p className="text-xs font-sans text-muted-foreground">{est.notes}</p></div>}
+
+         {/* Partial Conversion Dialog */}
+         <Dialog open={convertDialogOpen} onOpenChange={setConvertDialogOpen}>
+           <DialogContent className="max-w-lg">
+             <DialogHeader><DialogTitle className="font-sans">Select Items for Invoice</DialogTitle></DialogHeader>
+             <p className="text-xs text-muted-foreground font-sans">Choose which line items to pull into a new invoice.</p>
+             <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+               {lis.map((li: any) => (
+                 <div key={li.id} className="flex items-center gap-3 p-2 rounded-md border border-border">
+                   <Checkbox
+                     checked={selectedLineItemIds.has(li.id)}
+                     onCheckedChange={(checked) => {
+                       const next = new Set(selectedLineItemIds);
+                       if (checked) next.add(li.id); else next.delete(li.id);
+                       setSelectedLineItemIds(next);
+                     }}
+                   />
+                   <div className="flex-1">
+                     <p className="text-sm font-sans">{li.description}</p>
+                     <p className="text-xs text-muted-foreground font-mono">{li.quantity} × {fmt(li.unit_price)}</p>
+                   </div>
+                   <span className="text-sm font-mono font-medium">{fmt(li.total)}</span>
+                 </div>
+               ))}
+             </div>
+             <div className="flex justify-between items-center pt-2 border-t border-border">
+               <span className="text-sm font-sans text-muted-foreground">{selectedLineItemIds.size} items selected</span>
+               <span className="text-sm font-sans font-bold">
+                 {fmt(lis.filter((li: any) => selectedLineItemIds.has(li.id)).reduce((s: number, li: any) => s + Number(li.total), 0))}
+               </span>
+             </div>
+             <DialogFooter>
+               <Button variant="outline" onClick={() => setConvertDialogOpen(false)} className="font-sans">Cancel</Button>
+               <Button onClick={() => convertPartialToInvoice(est)} disabled={converting || selectedLineItemIds.size === 0} className="gap-1.5 font-sans">
+                 {converting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
+                 Create Invoice
+               </Button>
+             </DialogFooter>
+           </DialogContent>
+         </Dialog>
+       </Card>
+     );
   }
 
   return (
@@ -288,6 +414,25 @@ const EstimatesSection = ({ propertyId, clientName }: EstimatesSectionProps) => 
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle className="font-sans">New Estimate{clientName ? ` for ${clientName}` : ""}</DialogTitle></DialogHeader>
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            {/* AI Transcript Assistant */}
+            <Card className="p-4 bg-muted/30 space-y-3">
+              <div className="flex items-center gap-2">
+                <MessageSquareText className="w-4 h-4 text-accent" />
+                <p className="text-sm font-sans font-medium">AI Estimate from Meeting Notes</p>
+              </div>
+              <Textarea
+                value={aiTranscript}
+                onChange={e => setAiTranscript(e.target.value)}
+                placeholder="Paste meeting notes or call transcript here... AI will extract scope items and generate line items with pricing."
+                className="text-sm font-sans"
+                rows={4}
+              />
+              <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={handleAiFromTranscript} disabled={aiGenerating || !aiTranscript.trim()}>
+                {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                Generate Estimate from Transcript
+              </Button>
+            </Card>
+
             <div className="space-y-1.5">
               <Label className="text-xs font-sans">Title</Label>
               <Input value={title} onChange={e => setTitle(e.target.value)} className="font-sans" />

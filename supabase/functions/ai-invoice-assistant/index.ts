@@ -22,6 +22,22 @@ serve(async (req) => {
         userPrompt = `Generate line items for this job:\n\nJob Description: ${context.jobDescription}\nProperty: ${context.propertyAddress || "Unknown"}\nSquare Footage: ${context.sqft || "Unknown"}\nProperty Type: ${context.propertyType || "Residential"}`;
         break;
       }
+      case "from_transcript": {
+        systemPrompt = `You are an expert home services estimator. A consultant just had a meeting or discovery call with a homeowner. Analyze the meeting notes/transcript and extract every actionable scope item that could be estimated or invoiced.
+
+For each item, determine a realistic price based on the described work, property details, and regional norms. Group related items logically. Include labor and materials as separate line items when appropriate.
+
+Also extract:
+- A suggested estimate/invoice title
+- Any notes or terms mentioned (payment schedule, timeline, warranty)
+
+Return JSON with:
+- title (string): suggested title for the estimate
+- lineItems: array of {description (string), quantity (number), unit_price (number)}
+- notes (string): any terms, conditions, or scheduling notes mentioned`;
+        userPrompt = `Extract estimate line items from this meeting transcript/notes:\n\n${context.transcript}\n\nProperty: ${context.propertyAddress || "Unknown"}\nSquare Footage: ${context.sqft || "Unknown"}\nProperty Type: ${context.propertyType || "Residential"}\nClient: ${context.clientName || "Unknown"}`;
+        break;
+      }
       case "draft_change_order": {
         systemPrompt = "You are a professional home services administrator. Draft a change order with a clear title, professional description, and suggested amount. Return JSON with: title (string), description (string), amount (number).";
         userPrompt = `Draft a change order for:\n\nChange Description: ${context.changeDescription}\nOriginal Invoice: ${context.invoiceTitle}\nOriginal Total: $${context.invoiceTotal}`;
@@ -143,6 +159,29 @@ function getSchema(task: string) {
           },
         },
         required: ["lineItems"],
+        additionalProperties: false,
+      };
+    case "from_transcript":
+      return {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          lineItems: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                description: { type: "string" },
+                quantity: { type: "number" },
+                unit_price: { type: "number" },
+              },
+              required: ["description", "quantity", "unit_price"],
+              additionalProperties: false,
+            },
+          },
+          notes: { type: "string" },
+        },
+        required: ["title", "lineItems", "notes"],
         additionalProperties: false,
       };
     case "draft_change_order":

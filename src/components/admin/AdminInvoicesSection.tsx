@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Pencil, ArrowLeft, DollarSign, CreditCard, FileText, Sparkles, Loader2, Send, X } from "lucide-react";
+import { Plus, Trash2, Pencil, ArrowLeft, DollarSign, CreditCard, FileText, Sparkles, Loader2, Send, X, MessageSquareText } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface AdminInvoicesSectionProps {
@@ -115,6 +115,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
   const [paymentForm, setPaymentForm] = useState({ amount: "", payment_date: new Date().toISOString().split("T")[0], method: "check", notes: "" });
   const [changeOrderForm, setChangeOrderForm] = useState({ title: "", description: "", amount: "" });
   const [aiJobDescription, setAiJobDescription] = useState("");
+  const [aiTranscript, setAiTranscript] = useState("");
   const [aiChangeDescription, setAiChangeDescription] = useState("");
 
   // Edit mode
@@ -288,7 +289,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
     loadData();
   };
 
-  // AI: Generate estimate line items
+  // AI: Generate estimate line items from description
   const handleAiGenerate = async () => {
     if (!aiJobDescription.trim()) return;
     setAiGenerating(true);
@@ -316,6 +317,44 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
       }
     } catch (err) {
       toast.error("AI generation failed — try again or enter items manually");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  // AI: Generate from meeting transcript
+  const handleAiFromTranscript = async () => {
+    if (!aiTranscript.trim()) return;
+    setAiGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-invoice-assistant", {
+        body: {
+          task: "from_transcript",
+          context: {
+            transcript: aiTranscript,
+            propertyAddress: propertyContext?.propertyAddress,
+            sqft: propertyContext?.sqft,
+            propertyType: propertyContext?.propertyType,
+            clientName: propertyContext?.clientName,
+          },
+        },
+      });
+      if (error) throw error;
+      if (data?.title) setInvoiceForm(f => ({ ...f, title: data.title }));
+      if (data?.notes) setInvoiceForm(f => ({ ...f, notes: data.notes }));
+      if (data?.lineItems && Array.isArray(data.lineItems)) {
+        setEditLineItems(data.lineItems.map((li: any) => ({
+          description: li.description || "",
+          quantity: String(li.quantity || 1),
+          unit_price: String(li.unit_price || 0),
+          item_type: "service",
+        })));
+        toast.success(`AI extracted ${data.lineItems.length} line items from transcript`);
+      }
+    } catch (err: any) {
+      if (err?.status === 429) toast.error("Rate limited — try again in a moment");
+      else if (err?.status === 402) toast.error("AI credits exhausted");
+      else toast.error("AI generation failed — try again or enter items manually");
     } finally {
       setAiGenerating(false);
     }
@@ -384,6 +423,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
     setInvoiceForm({ title: "", type: "invoice", issue_date: new Date().toISOString().split("T")[0], due_date: "", notes: "", description: "" });
     setEditLineItems([]);
     setAiJobDescription("");
+    setAiTranscript("");
   };
 
   const addLineItem = () => setEditLineItems([...editLineItems, { description: "", quantity: "1", unit_price: "0", item_type: "service" }]);
@@ -649,16 +689,30 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
               <div><Label className="font-sans">Due Date</Label><Input type="date" value={invoiceForm.due_date} onChange={e => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })} /></div>
               <div><Label className="font-sans">Notes</Label><Textarea value={invoiceForm.notes} onChange={e => setInvoiceForm({ ...invoiceForm, notes: e.target.value })} placeholder="Internal or client-facing notes" /></div>
 
-              {/* AI Estimate Generator */}
+              {/* AI Assistant */}
               <Card className="p-4 bg-muted/30 space-y-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-accent" />
-                  <p className="text-sm font-sans font-medium">AI Estimate Generator</p>
+                  <p className="text-sm font-sans font-medium">AI Line Item Generator</p>
                 </div>
-                <Textarea value={aiJobDescription} onChange={e => setAiJobDescription(e.target.value)} placeholder="Describe the job (e.g. 'Full furnace replacement, 2500 sqft home, standard ductwork')..." className="text-sm" />
-                <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={handleAiGenerate} disabled={aiGenerating || !aiJobDescription.trim()}>
-                  {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} Generate Line Items
-                </Button>
+                <Tabs defaultValue="description" className="w-full">
+                  <TabsList className="w-full">
+                    <TabsTrigger value="description" className="flex-1 text-xs font-sans gap-1"><Sparkles className="w-3 h-3" />From Description</TabsTrigger>
+                    <TabsTrigger value="transcript" className="flex-1 text-xs font-sans gap-1"><MessageSquareText className="w-3 h-3" />From Transcript</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="description" className="space-y-2 mt-3">
+                    <Textarea value={aiJobDescription} onChange={e => setAiJobDescription(e.target.value)} placeholder="Describe the job (e.g. 'Full furnace replacement, 2500 sqft home, standard ductwork')..." className="text-sm" />
+                    <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={handleAiGenerate} disabled={aiGenerating || !aiJobDescription.trim()}>
+                      {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} Generate Line Items
+                    </Button>
+                  </TabsContent>
+                  <TabsContent value="transcript" className="space-y-2 mt-3">
+                    <Textarea value={aiTranscript} onChange={e => setAiTranscript(e.target.value)} placeholder="Paste meeting notes or call transcript... AI will extract scope items and generate line items with pricing." className="text-sm" rows={4} />
+                    <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={handleAiFromTranscript} disabled={aiGenerating || !aiTranscript.trim()}>
+                      {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageSquareText className="w-3.5 h-3.5" />} Extract from Transcript
+                    </Button>
+                  </TabsContent>
+                </Tabs>
               </Card>
 
               {/* Line Items */}
