@@ -361,6 +361,7 @@ const Index = () => {
           })),
         }}
       />
+      <ClientAgentPanel />
     </div>
   );
 };
