@@ -73,7 +73,21 @@ const DocumentsTab = ({ propertyId }: DocumentsTabProps) => {
     return data.publicUrl;
   };
 
-  const categories = [...new Set(files.map((f) => f.category))];
+  const allCategories = useMemo(() => [...new Set(files.map((f) => f.category))], [files]);
+
+  const filteredFiles = useMemo(() => {
+    let result = files;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((f) => f.file_name.toLowerCase().includes(q));
+    }
+    if (categoryFilter !== "all") {
+      result = result.filter((f) => f.category === categoryFilter);
+    }
+    return result;
+  }, [files, searchQuery, categoryFilter]);
+
+  const categories = [...new Set(filteredFiles.map((f) => f.category))];
 
   return (
     <div>
