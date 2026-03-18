@@ -2,3 +2,21 @@ project_id = "abarpsxwglxuessimrkk"
 
 [functions.insurance-assistant]
 verify_jwt = false
+
+[functions.pre-inspection-brief]
+verify_jwt = false
+
+[functions.consistency-check]
+verify_jwt = false
+
+[functions.generate-exec-summary]
+verify_jwt = false
+
+[functions.estimate-costs]
+verify_jwt = false
+
+[functions.categorize-photo]
+verify_jwt = false
+
+[functions.voice-to-narrative]
+verify_jwt = false
