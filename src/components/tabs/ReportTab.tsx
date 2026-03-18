@@ -340,6 +340,10 @@ const ReportTab = ({
       onChapterSelect={handleChapterChange}
       onPageSelect={handlePageSelect}
       onSendMessage={onSendMessage}
+      hoverUrl={hoverUrl}
+      hoverPdfUrl={hoverPdfUrl}
+      iguideUrl={iguideUrl}
+      iguidePdfUrl={iguidePdfUrl}
     />
   );
 };
