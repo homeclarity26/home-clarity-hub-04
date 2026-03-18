@@ -446,6 +446,9 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
                                 <Plus className="w-3 h-3 mr-1" />Add
                               </Button>
                             </div>
+                            </div>
+                            {/* Contractor Bids */}
+                            <ContractorBidsSection projectId={project.id} projectTitle={project.title} isAdmin />
                           </div>
                         </TableCell>
                       </TableRow>
