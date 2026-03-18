@@ -126,6 +126,12 @@ const SmartCalendarView = () => {
           <h2 className="text-base font-sans font-semibold text-foreground">Smart Calendar</h2>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="text-xs font-sans gap-1" onClick={() => {
+            // Scroll to add event - for now just select today
+            setSelectedDate(new Date());
+          }}>
+            <Plus className="w-3 h-3" />Add Event
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="w-4 h-4" /></Button>
           <span className="text-sm font-sans font-medium text-foreground min-w-[140px] text-center">{format(currentMonth, "MMMM yyyy")}</span>
           <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="w-4 h-4" /></Button>
