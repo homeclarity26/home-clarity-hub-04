@@ -424,7 +424,7 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
 
         {/* TEMPLATES VIEW */}
         <TabsContent value="templates" className="mt-4">
-          <TemplateVersioning />
+          <TemplateVersioning reportId={reportId || ""} />
         </TabsContent>
       </Tabs>
     </div>
