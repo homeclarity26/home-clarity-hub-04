@@ -384,7 +384,7 @@ const AdminClientDetail = () => {
         {activeTab === "timeline" && <ClientActivityTimeline propertyId={client.propertyId} />}
         {activeTab === "report" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-end gap-2">
               {pdfData && (
                 <PDFDownloadButton
                   data={pdfData}
@@ -395,6 +395,19 @@ const AdminClientDetail = () => {
                 />
               )}
             </div>
+            <VoiceAndPhotoTools reportId={client.reportId || ""} propertyId={client.propertyId} />
+            <ReportAITools
+              reportId={client.reportId || ""}
+              propertyId={client.propertyId}
+              propertyContext={{
+                propertyAddress: client.address,
+                yearBuilt: client.yearBuilt,
+                sqft: client.sqft,
+                bedrooms: client.bedrooms,
+                bathrooms: client.bathrooms,
+                propertyType: client.propertyType,
+              }}
+            />
             <ReportPageManager
               propertyId={client.propertyId}
               reportId={client.reportId}
