@@ -14,6 +14,7 @@ import AuditLogSection from "@/components/admin/AuditLogSection";
 import SLASettings from "@/components/admin/SLASettings";
 import MembershipTierManager from "@/components/admin/MembershipTierManager";
 import MessageTemplateLibrary from "@/components/admin/MessageTemplateLibrary";
+import ServicesLibrary from "@/components/admin/ServicesLibrary";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
