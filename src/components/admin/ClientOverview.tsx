@@ -150,6 +150,7 @@ const ClientOverview = ({ client }: ClientOverviewProps) => {
 
   return (
     <div className="space-y-6">
+      <OnboardingTracker client={client} />
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-sans font-semibold text-foreground">Client & Property Info</h3>
