@@ -50,6 +50,38 @@ const HomeTab = ({
         </div>
       </section>
 
+      {/* Getting Started */}
+      {completionPercent < 100 && (
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20">
+          <div className="bg-card rounded-lg p-6 border border-border shadow-hbc-sm">
+            <h2 className="font-display text-lg text-foreground mb-1">Getting Started</h2>
+            <p className="font-sans text-sm text-muted-foreground mb-4">Here's what to explore in your home portal</p>
+            <div className="space-y-2.5">
+              {[
+                { label: "Review your Home Clarity Report", done: completionPercent > 0, action: () => onNavigate("report") },
+                { label: "Explore your equipment registry", done: false, action: () => onNavigate("equipment") },
+                { label: "Check your upcoming schedule", done: false, action: () => onNavigate("schedule") },
+                { label: "Send a message to your advisor", done: false, action: () => onNavigate("messages") },
+              ].map(step => (
+                <button
+                  key={step.label}
+                  onClick={step.action}
+                  className="w-full flex items-center gap-3 text-left bg-transparent border-none cursor-pointer p-2 rounded-md hover:bg-muted/50 transition-colors"
+                >
+                  {step.done ? (
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                  ) : (
+                    <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />
+                  )}
+                  <span className={`text-sm font-sans ${step.done ? 'text-foreground' : 'text-muted-foreground'}`}>{step.label}</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 ml-auto" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Card Grid */}
       <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
 
