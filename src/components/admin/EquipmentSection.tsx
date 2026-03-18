@@ -126,7 +126,7 @@ const EquipmentSection = ({ propertyId, reportPages }: EquipmentSectionProps) =>
 
   const create = async () => {
     if (!form.name) return;
-    const { error } = await supabase.from("equipment").insert(buildInsert());
+    const { error } = await (supabase.from("equipment" as any) as any).insert(buildInsert());
     if (error) { toast.error("Failed to add equipment"); return; }
     toast.success("Equipment added");
     setCreateOpen(false);
