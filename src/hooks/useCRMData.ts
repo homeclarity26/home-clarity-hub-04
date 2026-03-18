@@ -284,7 +284,7 @@ export function useCRMTradePartnersEnriched() {
       const vendorMap = new Map((vendors || []).map((v: any) => [v.id, v]));
 
       return (contacts || []).map((c: CRMContact) => {
-        const vendor = c.vendor_id ? vendorMap.get(c.vendor_id) : null;
+        const vendor: any = c.vendor_id ? vendorMap.get(c.vendor_id) : null;
         return {
           ...c,
           name: vendor?.contact_name || vendor?.company_name || "Unknown",

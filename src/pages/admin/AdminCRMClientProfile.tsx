@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Sparkles, Phone, Mail, MapPin, Calendar, DollarSign, Briefcase, MessageSquare, FileText, Users, Settings, GitBranch, Heart } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import { useCRMContact, useCRMActivities, useCRMPipelineHistory, useCRMPeople } from "@/hooks/useCRMData";
-import { useAdminClient, useAdminProjects, useAdminInvoices } from "@/hooks/useAdminData";
+import { useAdminClients, useAdminProjects, useAdminInvoices } from "@/hooks/useAdminData";
 import CRMAIAssistant from "@/components/admin/CRMAIAssistant";
 import CRMOverviewTab from "@/components/crm/CRMOverviewTab";
 import CRMPipelineTab from "@/components/crm/CRMPipelineTab";
@@ -49,15 +49,15 @@ const AdminCRMClientProfile = () => {
 
   // Also load the legacy client data for property info
   const propertyId = crmContact?.property_id;
-  const { data: clients } = useAdminClient(propertyId || undefined);
-  const client = clients;
+  const { data: allClients } = useAdminClients();
+  const client = allClients?.find(c => c.id === propertyId) || null;
   const { data: projects } = useAdminProjects(propertyId || undefined);
   const { data: invoices } = useAdminInvoices(propertyId || undefined);
 
   if (contactLoading) {
     return (
       <div>
-        <AdminHeader breadcrumbs={[{ label: "CRM", href: "/admin/crm" }, { label: "Loading..." }]} />
+        <AdminHeader breadcrumbs={[{ label: "CRM", path: "/admin/crm" }, { label: "Loading..." }]} />
         <div className="p-6 space-y-4 max-w-6xl">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-48 w-full" />
@@ -69,7 +69,7 @@ const AdminCRMClientProfile = () => {
   if (!crmContact) {
     return (
       <div>
-        <AdminHeader breadcrumbs={[{ label: "CRM", href: "/admin/crm" }, { label: "Not Found" }]} />
+        <AdminHeader breadcrumbs={[{ label: "CRM", path: "/admin/crm" }, { label: "Not Found" }]} />
         <div className="p-6 max-w-6xl">
           <Card className="p-12 text-center">
             <h3 className="font-sans font-semibold text-lg text-foreground mb-2">Contact not found</h3>
@@ -84,7 +84,7 @@ const AdminCRMClientProfile = () => {
 
   return (
     <div>
-      <AdminHeader breadcrumbs={[{ label: "CRM", href: "/admin/crm" }, { label: clientName }]} />
+      <AdminHeader breadcrumbs={[{ label: "CRM", path: "/admin/crm" }, { label: clientName }]} />
       <div className="p-6 space-y-4 max-w-6xl">
         {/* Header */}
         <div className="flex items-center justify-between gap-4">
@@ -106,7 +106,7 @@ const AdminCRMClientProfile = () => {
           </div>
           <div className="flex items-center gap-2">
             <Badge className="text-[10px] font-sans bg-emerald-100 text-emerald-800">
-              {(crmContact.client_stage || "lead").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
+              {(crmContact.client_stage || "lead").replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
             </Badge>
             <Button variant="outline" size="sm" onClick={() => setAiOpen(true)} className="gap-1.5 font-sans">
               <Sparkles className="w-4 h-4" /> AI
@@ -137,7 +137,7 @@ const AdminCRMClientProfile = () => {
             <CRMContactsTab contactId={crmContact.id} people={people} />
           </TabsContent>
           <TabsContent value="projects">
-            {propertyId ? <AdminProjectsSection propertyId={propertyId} /> : <EmptySection label="No property linked" />}
+            {propertyId && projects ? <AdminProjectsSection propertyId={propertyId} projects={projects} /> : <EmptySection label="No property linked" />}
           </TabsContent>
           <TabsContent value="financial">
             <CRMFinancialTab propertyId={propertyId} invoices={invoices} />
