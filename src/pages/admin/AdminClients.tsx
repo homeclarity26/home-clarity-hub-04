@@ -2,10 +2,13 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Search, Plus, Loader2, Download } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Plus, Loader2, Download, BarChart3, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AdminHeader from "@/components/admin/AdminHeader";
 import ClientTable from "@/components/admin/ClientTable";
+import ClientComparisonView from "@/components/admin/ClientComparisonView";
+import BulkReportGenerator from "@/components/admin/BulkReportGenerator";
 import { useAdminClients } from "@/hooks/useAdminData";
 import { exportClientsToCSV } from "@/lib/csvExport";
 
