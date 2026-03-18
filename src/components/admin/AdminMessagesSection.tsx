@@ -168,9 +168,26 @@ const AdminMessagesSection = ({ propertyId, clientName, propertyAddress }: Admin
           <div ref={bottomRef} />
         </div>
 
+        {/* AI Smart Reply suggestions */}
+        {smartReplies.length > 0 && (
+          <div className="border-t border-border px-3 py-2 bg-accent/5 space-y-1.5">
+            <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1"><Sparkles className="w-3 h-3" />AI Suggestions</p>
+            {smartReplies.map((r, i) => (
+              <button key={i} onClick={() => { setNewMessage(r.message); setSmartReplies([]); }}
+                className="w-full text-left px-2.5 py-1.5 rounded-md border border-border bg-background hover:bg-muted/50 transition-colors cursor-pointer">
+                <Badge variant="outline" className="text-[9px] mb-0.5">{r.label}</Badge>
+                <p className="text-xs font-sans text-foreground line-clamp-2">{r.message}</p>
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="border-t border-border p-3 flex gap-2 items-end bg-card">
           <Button variant="ghost" size="sm" className="shrink-0 h-9 w-9 p-0" onClick={() => setVideoDialogOpen(true)} title="Send Video">
             <Video className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" className="shrink-0 h-9 w-9 p-0" onClick={handleAIReply} disabled={loadingReplies || messages.length === 0} title="AI Smart Reply">
+            {loadingReplies ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           </Button>
           <textarea
             value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleKeyDown}
