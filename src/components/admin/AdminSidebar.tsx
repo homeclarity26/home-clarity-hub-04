@@ -9,6 +9,7 @@ import { useOpenTaskCount } from "@/hooks/useAdminTasks";
 const navItems = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard, showBadge: true },
   { label: "Clients", path: "/admin/clients", icon: Users },
+  { label: "Announcements", path: "/admin/announcements", icon: Menu },
   { label: "Knowledge Base", path: "/admin/knowledge-base", icon: BookOpen },
   { label: "Settings", path: "/admin/settings", icon: Settings },
 ];

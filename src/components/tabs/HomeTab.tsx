@@ -6,6 +6,7 @@ import MembershipBanner from "@/components/MembershipBanner";
 import ValuationModal from "@/components/ValuationModal";
 import HomeHealthDiagram from "@/components/HomeHealthDiagram";
 import AnnualReportCard from "@/components/AnnualReportCard";
+import MaintenanceReminders from "@/components/MaintenanceReminders";
 import { usePropertyValuation } from "@/hooks/usePropertyValuation";
 import type { ReportPageData } from "@/data/reportContent";
 
@@ -131,6 +132,9 @@ const HomeTab = ({
         )}
         {propertyId && !propertyId.startsWith("mock-") && (
           <AnnualReportCard propertyId={propertyId} />
+        )}
+        {propertyId && !propertyId.startsWith("mock-") && (
+          <MaintenanceReminders propertyId={propertyId} />
         )}
 
         {/* Row 1: Portal Status */}

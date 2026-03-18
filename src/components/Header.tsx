@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Menu, X, Settings, Pencil } from "lucide-react";
+import { Menu, X, Settings, Pencil, Bell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { Switch } from "@/components/ui/switch";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
 
 interface HeaderProps {
   activeTab: string;
@@ -66,7 +67,17 @@ const Header = ({ activeTab, onTabChange }: HeaderProps) => {
       </button>
 
       {/* User Section */}
-      <div className="hidden md:flex item ml-6 flex-shrink-0s-center gap-4">
+      <div className="hidden md:flex items-center ml-6 flex-shrink-0 gap-3">
+        {!isCreator && <AnnouncementBanner />}
+        {!isCreator && (
+          <button
+            onClick={() => onTabChange("notifications")}
+            className="p-2 text-muted-foreground hover:text-foreground transition-colors bg-transparent border-none cursor-pointer"
+            title="Notification Settings"
+          >
+            <Bell className="w-4 h-4" />
+          </button>
+        )}
         {isCreator && (
           <button
             onClick={toggleEditMode}

@@ -52,6 +52,77 @@ export type Database = {
           },
         ]
       }
+      announcement_dismissals: {
+        Row: {
+          announcement_id: string
+          dismissed_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          announcement_id: string
+          dismissed_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          announcement_id?: string
+          dismissed_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_dismissals_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      announcements: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          display_type: string
+          end_date: string | null
+          id: string
+          start_date: string
+          target_audience: string
+          target_client_ids: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by: string
+          display_type?: string
+          end_date?: string | null
+          id?: string
+          start_date?: string
+          target_audience?: string
+          target_client_ids?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          display_type?: string
+          end_date?: string | null
+          id?: string
+          start_date?: string
+          target_audience?: string
+          target_client_ids?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       change_orders: {
         Row: {
           amount: number
@@ -130,6 +201,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      client_notification_preferences: {
+        Row: {
+          announcements: boolean
+          client_id: string
+          created_at: string
+          frequency: string
+          id: string
+          invoice_sent: boolean
+          maintenance_reminders: boolean
+          new_message: boolean
+          payment_received: boolean
+          project_status: boolean
+          report_updated: boolean
+          updated_at: string
+        }
+        Insert: {
+          announcements?: boolean
+          client_id: string
+          created_at?: string
+          frequency?: string
+          id?: string
+          invoice_sent?: boolean
+          maintenance_reminders?: boolean
+          new_message?: boolean
+          payment_received?: boolean
+          project_status?: boolean
+          report_updated?: boolean
+          updated_at?: string
+        }
+        Update: {
+          announcements?: boolean
+          client_id?: string
+          created_at?: string
+          frequency?: string
+          id?: string
+          invoice_sent?: boolean
+          maintenance_reminders?: boolean
+          new_message?: boolean
+          payment_received?: boolean
+          project_status?: boolean
+          report_updated?: boolean
+          updated_at?: string
+        }
+        Relationships: []
       }
       equipment: {
         Row: {
@@ -435,6 +551,60 @@ export type Database = {
           version?: number
         }
         Relationships: []
+      }
+      maintenance_reminders: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          equipment_id: string | null
+          id: string
+          is_dismissed: boolean
+          last_sent_at: string | null
+          property_id: string
+          recommended_month: number
+          title: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          equipment_id?: string | null
+          id?: string
+          is_dismissed?: boolean
+          last_sent_at?: string | null
+          property_id: string
+          recommended_month: number
+          title: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          equipment_id?: string | null
+          id?: string
+          is_dismissed?: boolean
+          last_sent_at?: string | null
+          property_id?: string
+          recommended_month?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_reminders_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_reminders_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       milestones: {
         Row: {
@@ -761,6 +931,8 @@ export type Database = {
           id: string
           is_read: boolean
           message: string
+          message_type: string
+          metadata: Json | null
           property_id: string
           sender_id: string
         }
@@ -769,6 +941,8 @@ export type Database = {
           id?: string
           is_read?: boolean
           message: string
+          message_type?: string
+          metadata?: Json | null
           property_id: string
           sender_id: string
         }
@@ -777,6 +951,8 @@ export type Database = {
           id?: string
           is_read?: boolean
           message?: string
+          message_type?: string
+          metadata?: Json | null
           property_id?: string
           sender_id?: string
         }
@@ -1070,6 +1246,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "reports_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      satisfaction_surveys: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          property_id: string
+          score: number
+          snoozed_until: string | null
+          trigger_event: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          property_id: string
+          score: number
+          snoozed_until?: string | null
+          trigger_event?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          property_id?: string
+          score?: number
+          snoozed_until?: string | null
+          trigger_event?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "satisfaction_surveys_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"

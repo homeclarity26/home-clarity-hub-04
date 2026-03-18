@@ -14,6 +14,9 @@ import MessagesTab from "@/components/tabs/MessagesTab";
 import EquipmentTab from "@/components/tabs/EquipmentTab";
 import OnboardingOverlay from "@/components/OnboardingOverlay";
 import MembershipBanner from "@/components/MembershipBanner";
+import NotificationPreferences from "@/components/NotificationPreferences";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
+import NPSSurveyCard from "@/components/NPSSurveyCard";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -238,7 +241,15 @@ const Index = () => {
         <div className={`transition-opacity duration-300 ${activeTab === "schedule" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "schedule" && <ScheduleTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}
         </div>
+        <div className={`transition-opacity duration-300 ${activeTab === "notifications" ? "opacity-100" : "opacity-0 hidden"}`}>
+          {activeTab === "notifications" && <NotificationPreferences />}
+        </div>
       </main>
+
+      {/* NPS Survey */}
+      {portal.property?.id && !isCreator && (
+        <NPSSurveyCard propertyId={portal.property.id} />
+      )}
 
       <Footer
         activeTab={activeTab}

@@ -18,6 +18,7 @@ import AdminClientDetail from "./pages/admin/AdminClientDetail";
 import AdminNewReport from "./pages/admin/AdminNewReport";
 import AdminKnowledgeBase from "./pages/admin/AdminKnowledgeBase";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 
 const queryClient = new QueryClient();
 
@@ -155,6 +156,7 @@ const AppRoutes = () => {
         <Route path="clients/:clientId" element={<AdminClientDetail />} />
         <Route path="knowledge-base" element={<AdminKnowledgeBase />} />
         <Route path="settings" element={<AdminSettings />} />
+        <Route path="announcements" element={<AdminAnnouncements />} />
       </Route>
 
       {/* Auth routes */}

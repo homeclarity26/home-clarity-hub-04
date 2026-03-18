@@ -10,6 +10,7 @@ import ActivityFeed from "@/components/admin/ActivityFeed";
 import ClientTable from "@/components/admin/ClientTable";
 import RevenueAnalytics from "@/components/admin/RevenueAnalytics";
 import TasksSection from "@/components/admin/TasksSection";
+import NPSOverviewCard from "@/components/admin/NPSOverviewCard";
 import { useAdminClients, useAdminStats, useAdminActivityLog, useClientsNeedingAttention } from "@/hooks/useAdminData";
 import { useWeeklyTimeEntries } from "@/hooks/useTimeTracking";
 import { supabase } from "@/integrations/supabase/client";
@@ -156,6 +157,8 @@ const AdminDashboard = () => {
                 </Button>
               </div>
             </Card>
+
+            <NPSOverviewCard />
           </div>
         </div>
 
