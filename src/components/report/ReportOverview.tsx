@@ -363,6 +363,15 @@ const ReportOverview = ({
             })}
           </div>
         </section>
+
+        {/* Digital Home */}
+        <DigitalHomePanel
+          propertyAddress={propertyAddress}
+          hoverUrl={hoverUrl}
+          hoverPdfUrl={hoverPdfUrl}
+          iguideUrl={iguideUrl}
+          iguidePdfUrl={iguidePdfUrl}
+        />
       </div>
     </div>
   );
