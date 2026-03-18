@@ -115,7 +115,7 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 
 // Root redirect: creators go to /admin, clients go to portal
 const RootRedirect = () => {
-  const { user, isCreator, isLoading } = useAuth();
+  const { user, isCreator, isTradePartner, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -135,7 +135,11 @@ const RootRedirect = () => {
     return <Navigate to="/admin" replace />;
   }
 
-  // Client — go to portal (using a default property for now)
+  if (isTradePartner) {
+    return <Navigate to="/trade" replace />;
+  }
+
+  // Client — go to portal
   return <Navigate to="/portal" replace />;
 };
 
