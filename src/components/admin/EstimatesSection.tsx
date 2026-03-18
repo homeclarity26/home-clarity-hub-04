@@ -414,6 +414,25 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle className="font-sans">New Estimate{clientName ? ` for ${clientName}` : ""}</DialogTitle></DialogHeader>
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            {/* AI Transcript Assistant */}
+            <Card className="p-4 bg-muted/30 space-y-3">
+              <div className="flex items-center gap-2">
+                <MessageSquareText className="w-4 h-4 text-accent" />
+                <p className="text-sm font-sans font-medium">AI Estimate from Meeting Notes</p>
+              </div>
+              <Textarea
+                value={aiTranscript}
+                onChange={e => setAiTranscript(e.target.value)}
+                placeholder="Paste meeting notes or call transcript here... AI will extract scope items and generate line items with pricing."
+                className="text-sm font-sans"
+                rows={4}
+              />
+              <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={handleAiFromTranscript} disabled={aiGenerating || !aiTranscript.trim()}>
+                {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                Generate Estimate from Transcript
+              </Button>
+            </Card>
+
             <div className="space-y-1.5">
               <Label className="text-xs font-sans">Title</Label>
               <Input value={title} onChange={e => setTitle(e.target.value)} className="font-sans" />
