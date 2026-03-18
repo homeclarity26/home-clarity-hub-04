@@ -415,7 +415,11 @@ const BlockRenderer = ({
               onSave={(tiers) => onUpdate({ tiers })}
             />
           ) : (
-            <PricingTiers tiers={pageData.tiers} />
+            <PricingTiers
+              tiers={pageData.tiers}
+              pageTitle={pageData.title}
+              propertyId={propertyId}
+            />
           )}
         </div>
       )}
