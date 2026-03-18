@@ -34,7 +34,6 @@ const DocumentsTab = ({ propertyId }: DocumentsTabProps) => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!propertyId) { setLoading(false); return; }
