@@ -136,7 +136,7 @@ const EquipmentSection = ({ propertyId, reportPages }: EquipmentSectionProps) =>
 
   const update = async () => {
     if (!editId || !form.name) return;
-    const { error } = await supabase.from("equipment").update({
+    const { error } = await (supabase.from("equipment" as any) as any).update({
       name: form.name, category: form.category, brand: form.brand || null, model: form.model || null,
       serial_number: form.serial_number || null, install_date: form.install_date || null,
       warranty_expiry: form.warranty_expiry || null, last_service_date: form.last_service_date || null,
