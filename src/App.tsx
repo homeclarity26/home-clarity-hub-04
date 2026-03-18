@@ -28,6 +28,7 @@ import AdminGoalsDashboard from "./pages/admin/AdminGoalsDashboard";
 import AdminReferrals from "./pages/admin/AdminReferrals";
 import AdminAutomations from "./pages/admin/AdminAutomations";
 import AdminFieldInspection from "./pages/admin/AdminFieldInspection";
+import AdminHelpCenter from "./pages/admin/AdminHelpCenter";
 
 const queryClient = new QueryClient();
 
