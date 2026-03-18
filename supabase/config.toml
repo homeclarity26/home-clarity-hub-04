@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.ai-vendor-match]
 verify_jwt = false
+
+[functions.maintenance-alerts]
+verify_jwt = false
