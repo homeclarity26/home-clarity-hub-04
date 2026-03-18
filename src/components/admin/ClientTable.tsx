@@ -43,6 +43,7 @@ const ClientTable = ({ clients, compact }: ClientTableProps) => {
           <TableHead className="font-sans text-xs">Version</TableHead>
           {!compact && <TableHead className="font-sans text-xs">Updated</TableHead>}
           {!compact && <TableHead className="font-sans text-xs">Comments</TableHead>}
+          {!compact && <TableHead className="font-sans text-xs">Messages</TableHead>}
           <TableHead className="font-sans text-xs text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -64,6 +65,18 @@ const ClientTable = ({ clients, compact }: ClientTableProps) => {
                   <span className="flex items-center gap-1.5 text-accent">
                     <MessageSquare className="w-3.5 h-3.5" />
                     <span className="text-sm font-sans font-medium">{client.unreadComments}</span>
+                  </span>
+                ) : (
+                  <span className="text-sm font-sans text-muted-foreground">—</span>
+                )}
+              </TableCell>
+            )}
+            {!compact && (
+              <TableCell>
+                {client.unreadMessages > 0 ? (
+                  <span className="flex items-center gap-1.5 text-destructive">
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span className="text-sm font-sans font-medium">{client.unreadMessages}</span>
                   </span>
                 ) : (
                   <span className="text-sm font-sans text-muted-foreground">—</span>

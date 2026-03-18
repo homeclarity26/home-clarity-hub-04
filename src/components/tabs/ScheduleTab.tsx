@@ -1,11 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
-  Calendar, Clock, Sun, Thermometer, Leaf, Snowflake,
-  Phone, Hammer, ChevronRight, FileText, Wrench,
-  AlertCircle, CheckCircle2, Star,
+  Calendar as CalendarIcon, Clock, Sun, Thermometer, Leaf, Snowflake,
+  Phone, Hammer, ChevronRight, ChevronLeft, Wrench,
+  AlertCircle, CheckCircle2, Star, FileText,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { format, isThisWeek, isFuture, isPast, isToday, differenceInDays, startOfDay } from "date-fns";
+import {
+  format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
+  eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths,
+  isToday, isFuture, isPast,
+} from "date-fns";
 
 interface ScheduleTabProps {
   propertyId?: string;
@@ -21,8 +25,13 @@ interface ScheduleEvent {
   status: string;
 }
 
-const cardBase =
-  "group bg-card rounded-lg p-6 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full";
+const eventTypeConfig: Record<string, { icon: typeof CalendarIcon; label: string; dotClass: string }> = {
+  appointment: { icon: CalendarIcon, label: "Appointment", dotClass: "bg-[hsl(var(--primary))]" },
+  milestone: { icon: Star, label: "Milestone", dotClass: "bg-[hsl(var(--accent))]" },
+  task: { icon: Wrench, label: "Task", dotClass: "bg-orange-400" },
+  inspection: { icon: FileText, label: "Inspection", dotClass: "bg-[hsl(var(--primary))]" },
+  reminder: { icon: AlertCircle, label: "Reminder", dotClass: "bg-[hsl(var(--destructive))]" },
+};
 
 const seasonalCards = [
   {
@@ -47,62 +56,16 @@ const seasonalCards = [
   },
 ];
 
-const eventTypeConfig: Record<string, { icon: typeof Calendar; label: string; dotClass: string; badgeClass: string }> = {
-  appointment: { icon: Calendar, label: "Appointment", dotClass: "bg-foreground", badgeClass: "bg-muted text-muted-foreground" },
-  milestone: { icon: Star, label: "Milestone", dotClass: "bg-accent", badgeClass: "bg-accent/10 text-accent" },
-  task: { icon: Wrench, label: "Task", dotClass: "bg-orange-400", badgeClass: "bg-orange-100 text-orange-700" },
-  inspection: { icon: FileText, label: "Inspection", dotClass: "bg-primary", badgeClass: "bg-primary/10 text-primary" },
-  reminder: { icon: AlertCircle, label: "Reminder", dotClass: "bg-destructive", badgeClass: "bg-destructive/10 text-destructive" },
-};
+const cardBase =
+  "group bg-card rounded-lg p-6 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full";
 
-function getRelativeLabel(dateStr: string): string {
-  const date = startOfDay(new Date(dateStr));
-  const today = startOfDay(new Date());
-  const diff = differenceInDays(date, today);
-  if (isToday(new Date(dateStr))) return "Today";
-  if (diff === 1) return "Tomorrow";
-  if (diff === -1) return "Yesterday";
-  if (diff > 0 && diff <= 7) return `In ${diff} days`;
-  if (diff < 0 && diff >= -7) return `${Math.abs(diff)} days ago`;
-  return format(new Date(dateStr), "MMM d, yyyy");
-}
-
-interface EventCardProps {
-  event: ScheduleEvent;
-  past?: boolean;
-}
-
-const EventCard = ({ event, past }: EventCardProps) => {
-  const cfg = eventTypeConfig[event.event_type] || eventTypeConfig.appointment;
-
-  return (
-    <div className={`flex items-start gap-3 py-3 border-b border-border last:border-b-0 ${past ? "opacity-60" : ""}`}>
-      <span className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${cfg.dotClass}`} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2 flex-wrap">
-          <p className="font-sans text-sm font-medium text-foreground">{event.title}</p>
-          <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded flex-shrink-0 ${cfg.badgeClass}`}>
-            {cfg.label}
-          </span>
-        </div>
-        {event.description && (
-          <p className="font-sans text-xs text-muted-foreground mt-0.5 line-clamp-2">{event.description}</p>
-        )}
-        <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-1.5 flex items-center gap-1.5">
-          <Clock className="w-3 h-3" />
-          <span className="text-foreground/70">{getRelativeLabel(event.event_date)}</span>
-          <span className="text-muted-foreground/40">·</span>
-          <span>{format(new Date(event.event_date), "MMMM d, yyyy")}</span>
-        </p>
-      </div>
-      {past && <CheckCircle2 className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 mt-1" />}
-    </div>
-  );
-};
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const ScheduleTab = ({ propertyId, onTabChange }: ScheduleTabProps) => {
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [expandedSeason, setExpandedSeason] = useState<string | null>(null);
 
   useEffect(() => {
@@ -115,11 +78,11 @@ const ScheduleTab = ({ propertyId, onTabChange }: ScheduleTabProps) => {
         return dt.toISOString();
       };
       setEvents([
-        { id: "1", title: "Furnace replacement consultation", description: "Review vendor bids with Adam — bring questions about efficiency ratings and warranty", event_date: d(2), event_type: "appointment", status: "scheduled" },
-        { id: "2", title: "Electrical panel inspection", description: "Licensed electrician evaluating panel upgrade options and load capacity", event_date: d(18), event_type: "inspection", status: "scheduled" },
-        { id: "3", title: "Spring exterior walkthrough", description: "Seasonal assessment of roof, gutters, and landscaping drainage", event_date: d(45), event_type: "milestone", status: "scheduled" },
-        { id: "4", title: "HVAC filter replacement", description: "Changed all 3-inch MERV 11 filters — next change due in 90 days", event_date: d(-30), event_type: "task", status: "completed" },
-        { id: "5", title: "Roof inspection", description: "Pre-winter assessment completed — minor sealant repair at chimney flashing noted", event_date: d(-90), event_type: "inspection", status: "completed" },
+        { id: "1", title: "Furnace replacement consultation", description: "Review vendor bids with Adam", event_date: d(2), event_type: "appointment", status: "scheduled" },
+        { id: "2", title: "Electrical panel inspection", description: "Licensed electrician evaluating panel upgrade options", event_date: d(18), event_type: "inspection", status: "scheduled" },
+        { id: "3", title: "Spring exterior walkthrough", description: "Seasonal assessment of roof, gutters, and landscaping", event_date: d(45), event_type: "milestone", status: "scheduled" },
+        { id: "4", title: "HVAC filter replacement", description: "Changed all MERV 11 filters — next change in 90 days", event_date: d(-30), event_type: "task", status: "completed" },
+        { id: "5", title: "Roof inspection", description: "Pre-winter assessment completed", event_date: d(-90), event_type: "inspection", status: "completed" },
       ]);
       setLoading(false);
       return;
@@ -136,11 +99,33 @@ const ScheduleTab = ({ propertyId, onTabChange }: ScheduleTabProps) => {
       });
   }, [propertyId]);
 
-  const todayEvents = events.filter((e) => isToday(new Date(e.event_date)));
-  const thisWeekEvents = events.filter((e) => isThisWeek(new Date(e.event_date)) && isFuture(new Date(e.event_date)));
-  const upcomingEvents = events.filter((e) => isFuture(new Date(e.event_date)) && !isThisWeek(new Date(e.event_date)));
-  const pastEvents = events.filter((e) => isPast(new Date(e.event_date)) && !isToday(new Date(e.event_date)));
-  const allUpcoming = [...todayEvents, ...thisWeekEvents, ...upcomingEvents];
+  // Calendar grid days
+  const calendarDays = useMemo(() => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    const calStart = startOfWeek(monthStart);
+    const calEnd = endOfWeek(monthEnd);
+    return eachDayOfInterval({ start: calStart, end: calEnd });
+  }, [currentMonth]);
+
+  // Events grouped by date key
+  const eventsByDate = useMemo(() => {
+    const map: Record<string, ScheduleEvent[]> = {};
+    for (const ev of events) {
+      const key = format(new Date(ev.event_date), "yyyy-MM-dd");
+      if (!map[key]) map[key] = [];
+      map[key].push(ev);
+    }
+    return map;
+  }, [events]);
+
+  const selectedEvents = useMemo(() => {
+    if (!selectedDate) return [];
+    const key = format(selectedDate, "yyyy-MM-dd");
+    return eventsByDate[key] || [];
+  }, [selectedDate, eventsByDate]);
+
+  const upcomingCount = events.filter((e) => isFuture(new Date(e.event_date))).length;
 
   return (
     <div>
@@ -150,45 +135,141 @@ const ScheduleTab = ({ propertyId, onTabChange }: ScheduleTabProps) => {
         <p className="font-sans text-base text-muted-foreground">
           Upcoming appointments, maintenance reminders, and project milestones.
         </p>
-        {!loading && allUpcoming.length > 0 && (
+        {!loading && upcomingCount > 0 && (
           <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-accent mt-3">
-            {allUpcoming.length} upcoming event{allUpcoming.length !== 1 ? "s" : ""}
+            {upcomingCount} upcoming event{upcomingCount !== 1 ? "s" : ""}
           </p>
         )}
       </section>
 
       <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
 
-        {/* Upcoming */}
+        {/* Calendar */}
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Upcoming</p>
-          <div className="bg-card rounded-lg border border-border p-6">
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Calendar</p>
+          <div className="bg-card rounded-lg border border-border overflow-hidden">
+            {/* Month Nav */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <button
+                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <h3 className="font-display text-xl text-foreground">
+                {format(currentMonth, "MMMM yyyy")}
+              </h3>
+              <button
+                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Weekday headers */}
+            <div className="grid grid-cols-7 border-b border-border">
+              {WEEKDAYS.map((day) => (
+                <div key={day} className="py-2 text-center font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Day cells */}
             {loading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => <div key={i} className="h-12 bg-muted rounded animate-pulse" />)}
-              </div>
-            ) : allUpcoming.length === 0 ? (
-              <div className="text-center py-8">
-                <Calendar className="w-8 h-8 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="font-sans text-sm text-muted-foreground">No upcoming events scheduled</p>
-                <p className="font-sans text-xs text-muted-foreground/60 mt-1">
-                  Your HBC advisor will add appointments and milestones here
-                </p>
+              <div className="flex items-center justify-center py-16">
+                <div className="h-6 w-6 border-2 border-muted-foreground/20 border-t-accent rounded-full animate-spin" />
               </div>
             ) : (
-              allUpcoming.map((event) => <EventCard key={event.id} event={event} />)
+              <div className="grid grid-cols-7">
+                {calendarDays.map((day) => {
+                  const dateKey = format(day, "yyyy-MM-dd");
+                  const dayEvents = eventsByDate[dateKey] || [];
+                  const inMonth = isSameMonth(day, currentMonth);
+                  const today = isToday(day);
+                  const isSelected = selectedDate && isSameDay(day, selectedDate);
+
+                  return (
+                    <button
+                      key={dateKey}
+                      onClick={() => setSelectedDate(isSelected ? null : day)}
+                      className={`relative min-h-[72px] md:min-h-[80px] p-1.5 border-b border-r border-border text-left transition-colors cursor-pointer ${
+                        !inMonth ? "bg-muted/30" : "bg-card hover:bg-muted/50"
+                      } ${isSelected ? "ring-2 ring-inset ring-accent" : ""}`}
+                    >
+                      <span className={`text-xs font-sans block mb-1 ${
+                        today
+                          ? "w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center font-bold"
+                          : inMonth
+                            ? "text-foreground"
+                            : "text-muted-foreground/40"
+                      }`}>
+                        {format(day, "d")}
+                      </span>
+                      {dayEvents.length > 0 && (
+                        <div className="flex gap-0.5 flex-wrap">
+                          {dayEvents.slice(0, 3).map((ev) => {
+                            const cfg = eventTypeConfig[ev.event_type] || eventTypeConfig.appointment;
+                            return (
+                              <span
+                                key={ev.id}
+                                className={`w-1.5 h-1.5 rounded-full ${cfg.dotClass}`}
+                                title={ev.title}
+                              />
+                            );
+                          })}
+                          {dayEvents.length > 3 && (
+                            <span className="text-[8px] font-mono text-muted-foreground ml-0.5">+{dayEvents.length - 3}</span>
+                          )}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
 
-        {/* History */}
-        {!loading && pastEvents.length > 0 && (
+        {/* Selected day detail */}
+        {selectedDate && (
           <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">History</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">
+              {format(selectedDate, "EEEE, MMMM d, yyyy")}
+            </p>
             <div className="bg-card rounded-lg border border-border p-6">
-              {pastEvents.slice().reverse().map((event) => (
-                <EventCard key={event.id} event={event} past />
-              ))}
+              {selectedEvents.length === 0 ? (
+                <p className="text-sm font-sans text-muted-foreground text-center py-4">No events on this day</p>
+              ) : (
+                <div className="space-y-3">
+                  {selectedEvents.map((ev) => {
+                    const cfg = eventTypeConfig[ev.event_type] || eventTypeConfig.appointment;
+                    const past = isPast(new Date(ev.event_date)) && !isToday(new Date(ev.event_date));
+                    return (
+                      <div key={ev.id} className={`flex items-start gap-3 py-3 border-b border-border last:border-b-0 ${past ? "opacity-60" : ""}`}>
+                        <span className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${cfg.dotClass}`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 flex-wrap">
+                            <p className="font-sans text-sm font-medium text-foreground">{ev.title}</p>
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground flex-shrink-0">
+                              {cfg.label}
+                            </span>
+                          </div>
+                          {ev.description && (
+                            <p className="font-sans text-xs text-muted-foreground mt-0.5">{ev.description}</p>
+                          )}
+                          <p className="font-mono text-[10px] text-muted-foreground mt-1 flex items-center gap-1.5">
+                            <Clock className="w-3 h-3" />
+                            {format(new Date(ev.event_date), "h:mm a")}
+                          </p>
+                        </div>
+                        {past && <CheckCircle2 className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 mt-1" />}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}

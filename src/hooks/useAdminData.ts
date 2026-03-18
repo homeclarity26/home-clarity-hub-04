@@ -24,6 +24,7 @@ export interface AdminClient {
   reportVersion: string;
   lastUpdated: string;
   unreadComments: number;
+  unreadMessages: number;
   totalPages: number;
   completePages: number;
   flaggedPages: number;
@@ -59,6 +60,24 @@ export function useAdminClients() {
       const { data: reportPages } = await supabase
         .from("report_pages")
         .select("*");
+
+      // Fetch unread message counts per property
+      const { data: unreadMessages } = await (supabase
+        .from("property_messages" as any) as any)
+        .select("property_id")
+        .eq("is_read", false);
+
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+      // Count unread messages not sent by the current user, grouped by property
+      const unreadByProperty: Record<string, number> = {};
+      if (unreadMessages && currentUser) {
+        for (const msg of unreadMessages as { property_id: string; sender_id: string }[]) {
+          if ((msg as any).sender_id !== currentUser.id) {
+            unreadByProperty[msg.property_id] = (unreadByProperty[msg.property_id] || 0) + 1;
+          }
+        }
+      }
 
       const userIds = [...new Set(properties.map((p) => p.client_user_id))];
       const { data: profiles } = await supabase
@@ -103,6 +122,7 @@ export function useAdminClients() {
           reportVersion: "v1",
           lastUpdated: report?.updated_at || prop.updated_at,
           unreadComments: 0,
+          unreadMessages: unreadByProperty[prop.id] || 0,
           totalPages: pages.length,
           completePages,
           flaggedPages,

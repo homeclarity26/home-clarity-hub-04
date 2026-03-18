@@ -1,4 +1,4 @@
-import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight } from "lucide-react";
+import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home } from "lucide-react";
 
 interface HomeTabProps {
   onNavigate: (tab: string, pageId?: string) => void;
@@ -7,6 +7,7 @@ interface HomeTabProps {
   propertyAddress?: string;
   completionPercent?: number;
   creatorName?: string;
+  estimatedValue?: number | null;
 }
 
 const HomeTab = ({
@@ -16,6 +17,7 @@ const HomeTab = ({
   propertyAddress,
   completionPercent = 0,
   creatorName = "Your HBC Team",
+  estimatedValue,
 }: HomeTabProps) => {
   const handleAskQuestion = () => {
     // Click the FAB button to open the assistant popup
@@ -38,6 +40,14 @@ const HomeTab = ({
         {propertyAddress && (
           <p className="font-sans text-base text-muted-foreground">{propertyAddress}</p>
         )}
+        <div className="flex items-center justify-center gap-2 mt-3">
+          <Home className="w-4 h-4 text-accent" />
+          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-foreground">
+            {estimatedValue
+              ? `Estimated Value: $${estimatedValue.toLocaleString()}`
+              : "Value estimate pending"}
+          </p>
+        </div>
       </section>
 
       {/* Card Grid */}

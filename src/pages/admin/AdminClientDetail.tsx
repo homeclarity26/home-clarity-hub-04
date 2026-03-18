@@ -24,18 +24,20 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
+import AdminMessagesSection from "@/components/admin/AdminMessagesSection";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 
-type ClientTab = "overview" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors";
+type ClientTab = "overview" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages";
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "report", label: "Report" },
   { id: "files", label: "Files" },
   { id: "comments", label: "Comments" },
+  { id: "messages", label: "Messages" },
   { id: "projects", label: "Projects" },
   { id: "payments", label: "Payments" },
   { id: "equipment", label: "Equipment" },
@@ -50,6 +52,23 @@ const AdminClientDetail = () => {
   const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState<ClientTab>("overview");
   const { client, isLoading } = useAdminClient(clientId);
+
+  // Fetch unread message count for badge
+  const { data: unreadMsgCount } = useQuery({
+    queryKey: ["admin-unread-messages", clientId],
+    enabled: !!clientId,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { count, error } = await (supabase
+        .from("property_messages" as any) as any)
+        .select("*", { count: "exact", head: true })
+        .eq("property_id", clientId)
+        .eq("is_read", false)
+        .neq("sender_id", user?.id);
+      if (error) return 0;
+      return count || 0;
+    },
+  });
   const { data: projects, isLoading: projectsLoading } = useAdminProjects(clientId);
   const { data: invoices } = useAdminInvoices(clientId);
   const { data: events } = useAdminScheduleEvents(clientId);
@@ -310,8 +329,13 @@ const AdminClientDetail = () => {
 
         <div className="flex gap-1 border-b border-border overflow-x-auto">
           {tabs.map((tab) => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2.5 text-sm font-sans whitespace-nowrap transition-colors border-b-2 bg-transparent cursor-pointer ${activeTab === tab.id ? "border-primary text-foreground font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2.5 text-sm font-sans whitespace-nowrap transition-colors border-b-2 bg-transparent cursor-pointer relative ${activeTab === tab.id ? "border-primary text-foreground font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
               {tab.label}
+              {tab.id === "messages" && (unreadMsgCount ?? 0) > 0 && (
+                <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1">
+                  {unreadMsgCount}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -349,6 +373,7 @@ const AdminClientDetail = () => {
         {activeTab === "files" && <FileManager propertyId={client.propertyId} />}
         {activeTab === "comments" && <CommentsManager clientId={client.id} />}
         {activeTab === "vendors" && <VendorManager propertyId={client.propertyId} />}
+        {activeTab === "messages" && <AdminMessagesSection propertyId={client.propertyId} />}
         {activeTab === "equipment" && (
           <EquipmentSection
             propertyId={client.propertyId}
