@@ -68,6 +68,9 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [requestDialogOpen, setRequestDialogOpen] = useState(false);
+  const [requestSubmitting, setRequestSubmitting] = useState(false);
+  const [selectedRecommendation, setSelectedRecommendation] = useState<{ pageTitle: string; recommendation: string } | null>(null);
 
   const loadData = async () => {
     if (!propertyId) { setLoading(false); return; }
