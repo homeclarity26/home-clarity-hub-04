@@ -3,6 +3,7 @@ import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
+import DigitalHomePanel from "./DigitalHomePanel";
 import { CHAPTERS } from "./ReportChapterNav";
 import {
   Home,
@@ -61,6 +62,10 @@ interface ReportOverviewProps {
   onChapterSelect: (chapterId: string) => void;
   onPageSelect: (pageId: string) => void;
   onSendMessage?: (msg: string) => void;
+  hoverUrl?: string | null;
+  hoverPdfUrl?: string | null;
+  iguideUrl?: string | null;
+  iguidePdfUrl?: string | null;
 }
 
 const ReportOverview = ({
@@ -73,6 +78,10 @@ const ReportOverview = ({
   onChapterSelect,
   onPageSelect,
   onSendMessage,
+  hoverUrl,
+  hoverPdfUrl,
+  iguideUrl,
+  iguidePdfUrl,
 }: ReportOverviewProps) => {
   // Calculate health scores
   const allPagesList = useMemo(() => Object.values(pages), [pages]);
@@ -354,6 +363,15 @@ const ReportOverview = ({
             })}
           </div>
         </section>
+
+        {/* Digital Home */}
+        <DigitalHomePanel
+          propertyAddress={propertyAddress}
+          hoverUrl={hoverUrl}
+          hoverPdfUrl={hoverPdfUrl}
+          iguideUrl={iguideUrl}
+          iguidePdfUrl={iguidePdfUrl}
+        />
       </div>
     </div>
   );
