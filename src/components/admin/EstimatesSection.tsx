@@ -253,7 +253,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
   };
 
   const resetForm = () => {
-    setTitle("Estimate"); setNotes(""); setDiscountAmount(0); setDiscountType("dollar"); setTax(0); setLineItems([]);
+    setTitle("Estimate"); setNotes(""); setDiscountAmount(0); setDiscountType("dollar"); setTax(0); setLineItems([]); setAiTranscript("");
   };
 
   // Detail view
