@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle, Info } from "lucide-react";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import HomeValueTracker from "@/components/HomeValueTracker";
@@ -7,7 +7,10 @@ import ValuationModal from "@/components/ValuationModal";
 import HomeHealthDiagram from "@/components/HomeHealthDiagram";
 import AnnualReportCard from "@/components/AnnualReportCard";
 import MaintenanceReminders from "@/components/MaintenanceReminders";
+import HomeGoals from "@/components/HomeGoals";
+import InsuranceAssistant from "@/components/InsuranceAssistant";
 import { usePropertyValuation } from "@/hooks/usePropertyValuation";
+import { supabase } from "@/integrations/supabase/client";
 import type { ReportPageData } from "@/data/reportContent";
 
 interface HomeTabProps {
@@ -37,6 +40,19 @@ const HomeTab = ({
 }: HomeTabProps) => {
   const [valuationOpen, setValuationOpen] = useState(false);
   const { valuation, isLoading: valLoading, fetchValuation } = usePropertyValuation(propertyId, propertyAddress);
+  const [customization, setCustomization] = useState<{ welcome_message?: string; tagline?: string; hero_photo_url?: string; advisor_signature?: string } | null>(null);
+
+  useEffect(() => {
+    if (!propertyId || propertyId.startsWith("mock-")) return;
+    const load = async () => {
+      const { data } = await (supabase.from("portal_customizations" as any) as any)
+        .select("*")
+        .eq("property_id", propertyId)
+        .limit(1);
+      if (data && data.length > 0) setCustomization(data[0]);
+    };
+    load();
+  }, [propertyId]);
 
   const displayValue = valuation?.price ?? estimatedValue;
 
@@ -50,12 +66,12 @@ const HomeTab = ({
   return (
     <div>
       {/* Hero */}
-      <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto">
-        <h1 className="font-display text-3xl md:text-[36px] text-foreground mb-3">
-          {propertyName}
+      <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto" style={customization?.hero_photo_url ? { backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${customization.hero_photo_url})`, backgroundSize: "cover", backgroundPosition: "center", borderRadius: "0.5rem" } : undefined}>
+        <h1 className={`font-display text-3xl md:text-[36px] mb-3 ${customization?.hero_photo_url ? "text-white" : "text-foreground"}`}>
+          {customization?.welcome_message || propertyName}
         </h1>
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-2">
-          Home Operating System
+        <p className={`font-mono text-[11px] uppercase tracking-[0.2em] mb-2 ${customization?.hero_photo_url ? "text-white/80" : "text-accent"}`}>
+          {customization?.tagline || "Home Operating System"}
         </p>
         {propertyAddress && (
           <p className="font-sans text-base text-muted-foreground">{propertyAddress}</p>
@@ -135,6 +151,25 @@ const HomeTab = ({
         )}
         {propertyId && !propertyId.startsWith("mock-") && (
           <MaintenanceReminders propertyId={propertyId} />
+        )}
+
+        {/* Home Goals */}
+        {propertyId && !propertyId.startsWith("mock-") && (
+          <HomeGoals propertyId={propertyId} />
+        )}
+
+        {/* Insurance Assistant */}
+        {propertyId && !propertyId.startsWith("mock-") && (
+          <InsuranceAssistant propertyId={propertyId} />
+        )}
+
+        {/* Advisor Signature */}
+        {customization?.advisor_signature && (
+          <div className="max-w-[1400px] mx-auto px-6 md:px-20">
+            <div className="bg-card rounded-lg p-6 border border-border shadow-hbc-sm text-center">
+              <p className="font-sans text-sm text-muted-foreground italic">{customization.advisor_signature}</p>
+            </div>
+          </div>
         )}
 
         {/* Row 1: Portal Status */}

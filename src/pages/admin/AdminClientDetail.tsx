@@ -34,6 +34,9 @@ import FollowUpSequence from "@/components/admin/FollowUpSequence";
 import TasksSection from "@/components/admin/TasksSection";
 import TimeTrackingSection from "@/components/admin/TimeTrackingSection";
 import ProfitabilityCard from "@/components/admin/ProfitabilityCard";
+import PortalPersonalization from "@/components/admin/PortalPersonalization";
+import PortalEngagementCard from "@/components/admin/PortalEngagementCard";
+import HomeGoalsAdmin from "@/components/admin/HomeGoalsAdmin";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
@@ -369,7 +372,10 @@ const AdminClientDetail = () => {
         {activeTab === "overview" && (
           <div className="space-y-6">
             <ClientHealthCard client={client} />
+            <PortalEngagementCard clientUserId={client.clientUserId || ""} />
             <ClientOverview client={client} />
+            <HomeGoalsAdmin clientUserId={client.clientUserId || ""} propertyId={client.propertyId} />
+            <PortalPersonalization propertyId={client.propertyId} />
             <AdminValuationCard propertyId={client.propertyId} address={client.address} />
           </div>
         )}

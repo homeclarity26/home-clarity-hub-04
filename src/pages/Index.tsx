@@ -18,6 +18,7 @@ import NotificationPreferences from "@/components/NotificationPreferences";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import NPSSurveyCard from "@/components/NPSSurveyCard";
 import { useClientPortal } from "@/hooks/useClientPortal";
+import { usePortalTracking } from "@/hooks/usePortalTracking";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
@@ -34,6 +35,7 @@ const Index = () => {
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { editMode, toggleEditMode, canEdit } = useEditMode();
+  usePortalTracking(activeTab);
 
   // Check onboarding status for new clients
   useEffect(() => {
