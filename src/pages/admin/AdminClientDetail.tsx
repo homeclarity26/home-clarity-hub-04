@@ -442,23 +442,26 @@ const AdminClientDetail = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-sans font-semibold text-foreground">Schedule & Events</h3>
-              <Dialog open={eventOpen} onOpenChange={(o) => { setEventOpen(o); if (!o) resetEventForm(); }}>
-                <DialogTrigger asChild><Button size="sm" className="gap-1.5 text-xs font-sans"><Plus className="w-3.5 h-3.5" />Add Event</Button></DialogTrigger>
-                <DialogContent>
-                  <DialogHeader><DialogTitle className="font-sans">Add Event</DialogTitle></DialogHeader>
-                  <EventFormFields />
-                  <Button onClick={createEvent} className="w-full font-sans">Add</Button>
-                </DialogContent>
-              </Dialog>
+              <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => { setEditScheduleEvent(null); setEventOpen(true); }}>
+                <Plus className="w-3.5 h-3.5" />Add Event
+              </Button>
             </div>
 
-            <Dialog open={editEventOpen} onOpenChange={(o) => { setEditEventOpen(o); if (!o) { resetEventForm(); setEditId(null); } }}>
-              <DialogContent>
-                <DialogHeader><DialogTitle className="font-sans">Edit Event</DialogTitle></DialogHeader>
-                <EventFormFields />
-                <Button onClick={updateEvent} className="w-full font-sans">Save Changes</Button>
-              </DialogContent>
-            </Dialog>
+            <SmartScheduleDialog
+              open={eventOpen}
+              onOpenChange={(o) => { setEventOpen(o); if (!o) setEditScheduleEvent(null); }}
+              propertyId={client.propertyId}
+              existingEvents={events || []}
+              equipment={equipmentData || []}
+              editEvent={editScheduleEvent}
+            />
+
+            {/* Follow-Up Sequence */}
+            <FollowUpSequence
+              propertyId={client.propertyId}
+              reportStatus={client.reportStatus}
+              events={events || []}
+            />
 
             {events && events.length > 0 ? (
               <Card className="p-5">
@@ -471,7 +474,7 @@ const AdminClientDetail = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-sans text-muted-foreground">{format(new Date(event.event_date), "MMM d, yyyy h:mm a")}</span>
-                        <Button variant="ghost" size="sm" onClick={() => openEditEvent(event)}><Pencil className="w-3.5 h-3.5" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setEditScheduleEvent(event); setEventOpen(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild><Button variant="ghost" size="sm"><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button></AlertDialogTrigger>
                           <AlertDialogContent>
