@@ -103,7 +103,7 @@ const ProjectPhotoGallery = ({ open, onOpenChange, projectId, projectTitle }: Pr
           <TabsList className="w-full">
             {phases.map(phase => (
               <TabsTrigger key={phase} value={phase} className="flex-1 capitalize">
-                {phase} ({photos.filter(p => p.phase === phase).length})
+                {phase} ({photos.filter(p => p.photo_stage === phase).length})
               </TabsTrigger>
             ))}
           </TabsList>
