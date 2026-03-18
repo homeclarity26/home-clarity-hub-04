@@ -11,6 +11,7 @@ import ClientTable from "@/components/admin/ClientTable";
 import RevenueAnalytics from "@/components/admin/RevenueAnalytics";
 import TasksSection from "@/components/admin/TasksSection";
 import NPSOverviewCard from "@/components/admin/NPSOverviewCard";
+import PropertyMap from "@/components/admin/PropertyMap";
 import { useAdminClients, useAdminStats, useAdminActivityLog, useClientsNeedingAttention } from "@/hooks/useAdminData";
 import { useWeeklyTimeEntries } from "@/hooks/useTimeTracking";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,6 +66,9 @@ const AdminDashboard = () => {
 
         {/* Revenue Analytics */}
         <RevenueAnalytics />
+
+        {/* Property Map */}
+        <PropertyMap />
 
         {/* Tasks + Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -1151,6 +1151,8 @@ export type Database = {
           iguide_pdf_url: string | null
           iguide_url: string | null
           intake_status: string | null
+          latitude: number | null
+          longitude: number | null
           metadata: Json | null
           neighborhood_median_value: number | null
           property_name: string | null
@@ -1176,6 +1178,8 @@ export type Database = {
           iguide_pdf_url?: string | null
           iguide_url?: string | null
           intake_status?: string | null
+          latitude?: number | null
+          longitude?: number | null
           metadata?: Json | null
           neighborhood_median_value?: number | null
           property_name?: string | null
@@ -1201,6 +1205,8 @@ export type Database = {
           iguide_pdf_url?: string | null
           iguide_url?: string | null
           intake_status?: string | null
+          latitude?: number | null
+          longitude?: number | null
           metadata?: Json | null
           neighborhood_median_value?: number | null
           property_name?: string | null
