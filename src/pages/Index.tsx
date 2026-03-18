@@ -24,6 +24,7 @@ const Index = () => {
   const portal = useClientPortal(propertyId);
   const [activeTab, setActiveTab] = useState("home");
   const [reportPageId, setReportPageId] = useState<string | null>(null);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const { editMode, toggleEditMode, canEdit } = useEditMode();
 
   // Read URL query params for edit mode and page navigation
