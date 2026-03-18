@@ -73,7 +73,7 @@ const ProjectPhotoGallery = ({ open, onOpenChange, projectId, projectTitle }: Pr
         await supabase.from("project_photos").insert({
           project_id: projectId,
           photo_url: publicUrl,
-          phase: activePhase,
+          photo_stage: activePhase,
           uploaded_by: "client",
           caption: null,
         });
