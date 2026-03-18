@@ -10,9 +10,10 @@ import { toast } from "sonner";
 interface Photo {
   id: string;
   photo_url: string;
-  phase: string;
+  photo_stage: string;
   caption: string | null;
   uploaded_by: string;
+  uploader_type: string;
   created_at: string;
 }
 
