@@ -406,9 +406,11 @@ const AdminClientDetail = () => {
         {activeTab === "overview" && (
           <div className="space-y-6">
             <AIClientInsightsCard propertyId={client.propertyId} clientData={{ name: client.name, address: client.address, propertyType: client.propertyType, yearBuilt: client.yearBuilt }} />
+            <HealthScoreTrend clientId={client.propertyId} />
             <ClientHealthCard client={client} />
             <AIFollowUpSuggestions propertyId={client.propertyId} clientName={client.name} />
             <ConditionForecast propertyId={client.propertyId} />
+            <OnboardingTracker clientId={client.propertyId} />
             <ClientStickyNotes propertyId={client.propertyId} />
             <PortalEngagementCard clientUserId={client.clientUserId || ""} />
             <ClientOverview client={client} />
