@@ -911,6 +911,36 @@ export type Database = {
           },
         ]
       }
+      dashboard_widget_configs: {
+        Row: {
+          admin_id: string
+          created_at: string
+          id: string
+          is_visible: boolean
+          size: string
+          sort_order: number
+          widget_key: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          size?: string
+          sort_order?: number
+          widget_key: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          size?: string
+          sort_order?: number
+          widget_key?: string
+        }
+        Relationships: []
+      }
       equipment: {
         Row: {
           brand: string | null
@@ -1323,6 +1353,47 @@ export type Database = {
           },
           {
             foreignKeyName: "inspection_voice_notes_report_page_id_fkey"
+            columns: ["report_page_id"]
+            isOneToOne: false
+            referencedRelation: "report_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internal_report_comments: {
+        Row: {
+          author_id: string
+          comment_text: string
+          created_at: string
+          id: string
+          is_resolved: boolean
+          report_page_id: string
+          resolved_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          comment_text: string
+          created_at?: string
+          id?: string
+          is_resolved?: boolean
+          report_page_id: string
+          resolved_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          comment_text?: string
+          created_at?: string
+          id?: string
+          is_resolved?: boolean
+          report_page_id?: string
+          resolved_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_report_comments_report_page_id_fkey"
             columns: ["report_page_id"]
             isOneToOne: false
             referencedRelation: "report_pages"
@@ -2393,6 +2464,62 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_invoice_schedules: {
+        Row: {
+          admin_id: string
+          amount: number
+          created_at: string
+          description: string | null
+          frequency: string
+          id: string
+          is_active: boolean
+          last_run_date: string | null
+          line_items_json: Json
+          next_run_date: string
+          property_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          amount?: number
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          last_run_date?: string | null
+          line_items_json?: Json
+          next_run_date: string
+          property_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          amount?: number
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          last_run_date?: string | null
+          line_items_json?: Json
+          next_run_date?: string
+          property_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_invoice_schedules_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referrals: {
         Row: {
           admin_id: string
@@ -3146,6 +3273,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vendor_performance_reviews: {
+        Row: {
+          admin_id: string
+          communication_rating: number
+          cost_accuracy_rating: number
+          created_at: string
+          id: string
+          notes: string | null
+          project_id: string | null
+          quality_rating: number
+          review_date: string
+          timeliness_rating: number
+          vendor_id: string
+        }
+        Insert: {
+          admin_id: string
+          communication_rating?: number
+          cost_accuracy_rating?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          project_id?: string | null
+          quality_rating?: number
+          review_date?: string
+          timeliness_rating?: number
+          vendor_id: string
+        }
+        Update: {
+          admin_id?: string
+          communication_rating?: number
+          cost_accuracy_rating?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          project_id?: string | null
+          quality_rating?: number
+          review_date?: string
+          timeliness_rating?: number
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_performance_reviews_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vendors: {
         Row: {
