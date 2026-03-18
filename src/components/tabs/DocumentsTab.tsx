@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
-import { FileText, Image, Music, ExternalLink, FolderOpen, Loader2 } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { FileText, Image, Music, ExternalLink, FolderOpen, Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DocumentsTabProps {
   propertyId?: string;
@@ -30,6 +32,8 @@ interface ClientFile {
 const DocumentsTab = ({ propertyId }: DocumentsTabProps) => {
   const [files, setFiles] = useState<ClientFile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
   useEffect(() => {
     if (!propertyId) { setLoading(false); return; }
@@ -68,7 +72,21 @@ const DocumentsTab = ({ propertyId }: DocumentsTabProps) => {
     return data.publicUrl;
   };
 
-  const categories = [...new Set(files.map((f) => f.category))];
+  const allCategories = useMemo(() => [...new Set(files.map((f) => f.category))], [files]);
+
+  const filteredFiles = useMemo(() => {
+    let result = files;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((f) => f.file_name.toLowerCase().includes(q));
+    }
+    if (categoryFilter !== "all") {
+      result = result.filter((f) => f.category === categoryFilter);
+    }
+    return result;
+  }, [files, searchQuery, categoryFilter]);
+
+  const categories = [...new Set(filteredFiles.map((f) => f.category))];
 
   return (
     <div>
@@ -80,6 +98,32 @@ const DocumentsTab = ({ propertyId }: DocumentsTabProps) => {
       </section>
 
       <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
+        {/* Search & Filter */}
+        {files.length > 0 && (
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search files..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 font-sans text-sm"
+              />
+            </div>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full sm:w-[200px] font-sans text-sm">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {allCategories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
         ) : files.length === 0 ? (
@@ -90,7 +134,7 @@ const DocumentsTab = ({ propertyId }: DocumentsTabProps) => {
           </div>
         ) : (
           categories.map((category) => {
-            const catFiles = files.filter((f) => f.category === category);
+            const catFiles = filteredFiles.filter((f) => f.category === category);
             const Icon = categoryIcons[category] || FileText;
             return (
               <div key={category}>

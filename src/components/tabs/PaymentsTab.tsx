@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Receipt, ShieldCheck, Calendar, List, MessageCircle, FileText, ChevronRight, Eye } from "lucide-react";
+import { Receipt, ShieldCheck, Calendar, List, MessageCircle, FileText, ChevronRight, Eye, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
@@ -327,7 +327,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
     <div>
       {/* Hero */}
       <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto">
-        <h1 className="font-display text-3xl md:text-[36px] text-foreground mb-3">Payments & Financial History</h1>
+        <h1 className="font-display text-3xl md:text-[36px] text-foreground mb-3">Payments & Invoices</h1>
         <p className="font-sans text-base text-muted-foreground">
           Manage your account and review transaction history with Home Clarity Hub.
         </p>
@@ -482,7 +482,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
         {/* Quick Actions */}
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <button onClick={() => onTabChange?.("contacts")} className={cardBase}>
               <MessageCircle className="w-5 h-5 text-accent" />
               <h2 className="font-display text-xl text-foreground mb-1">Contact About Billing</h2>
@@ -495,6 +495,12 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
               <p className="font-sans text-sm text-muted-foreground">Review the services included in your membership</p>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
+            <div className={`${cardBase} cursor-default relative`}>
+              <CreditCard className="w-5 h-5 text-accent" />
+              <h2 className="font-display text-xl text-foreground mb-1">Make a Payment</h2>
+              <p className="font-sans text-sm text-muted-foreground">Pay invoices online securely via Stripe</p>
+              <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground absolute top-4 right-4">Coming Soon</span>
+            </div>
           </div>
         </div>
       </div>

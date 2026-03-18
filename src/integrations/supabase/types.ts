@@ -532,6 +532,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          notification_preferences: Json | null
           phone: string | null
           service_region: string | null
           updated_at: string
@@ -543,6 +544,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          notification_preferences?: Json | null
           phone?: string | null
           service_region?: string | null
           updated_at?: string
@@ -554,6 +556,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          notification_preferences?: Json | null
           phone?: string | null
           service_region?: string | null
           updated_at?: string

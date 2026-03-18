@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight, ChevronDown, CheckCircle, Calendar, DollarSign, User, Loader2 } from "lucide-react";
+import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight, ChevronDown, CheckCircle, Calendar, DollarSign, User, Loader2, MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,6 +13,7 @@ interface ProjectsTabProps {
   onTabChange?: (tab: string) => void;
   propertyId?: string;
   pages?: Record<string, ReportPageData>;
+  onSendMessage?: (msg: string) => void;
 }
 
 interface Milestone {
@@ -57,7 +59,7 @@ const getUrgencyBadge = (timing: string) => {
   return { label: "FUTURE", cls: "bg-muted text-muted-foreground" };
 };
 
-const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages }: ProjectsTabProps) => {
+const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage }: ProjectsTabProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [milestones, setMilestones] = useState<Record<string, Milestone[]>>({});
   const [loading, setLoading] = useState(true);
@@ -269,6 +271,22 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages }: ProjectsTab
                               <CheckCircle className="w-3.5 h-3.5 text-accent" />
                               <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent">{project.approved_tier} tier approved</span>
                             </div>
+                          )}
+
+                          {/* Ask About This Project */}
+                          {project.status !== "complete" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-xs font-sans mt-2 w-fit"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onSendMessage?.(`I have a question about my ${project.title} project.`);
+                              }}
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                              Ask About This Project
+                            </Button>
                           )}
                         </div>
                       </CollapsibleContent>

@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Wrench, AlertTriangle, Clock, CheckCircle, ShieldAlert, ChevronRight, FileText } from "lucide-react";
+import { Wrench, AlertTriangle, Clock, CheckCircle, ShieldAlert, ChevronRight, FileText, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, isPast, isAfter, addDays } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 interface EquipmentTabProps {
   propertyId?: string;
   onTabChange?: (tab: string) => void;
+  onSendMessage?: (msg: string) => void;
 }
 
 interface Equipment {
@@ -68,7 +70,7 @@ const DEMO_EQUIPMENT: Equipment[] = [
   { id: "eq-5", name: "Smoke Detectors (6x)", category: "safety", brand: "Kidde", model: "i12060", serial_number: null, install_date: "2023-03-01", warranty_expiry: "2033-03-01", last_service_date: "2026-01-01", next_service_date: "2027-01-01", estimated_replacement_cost: 200, condition: "good", notes: "Replace batteries annually." },
 ];
 
-const EquipmentTab = ({ propertyId, onTabChange }: EquipmentTabProps) => {
+const EquipmentTab = ({ propertyId, onTabChange, onSendMessage }: EquipmentTabProps) => {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -238,6 +240,19 @@ const EquipmentTab = ({ propertyId, onTabChange }: EquipmentTabProps) => {
                         <p className="text-xs font-sans text-muted-foreground mt-4 pt-4 border-t border-border italic">
                           {item.notes}
                         </p>
+                      )}
+
+                      {/* Schedule Service button for flagged items */}
+                      {(svc.label === "Service Overdue" || svc.label === "Service Due Soon" || svc.label === "Warranty Expired") && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 text-xs font-sans mt-3 w-fit"
+                          onClick={() => onSendMessage?.(`I'd like to schedule service for my ${item.name}.`)}
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          Schedule Service
+                        </Button>
                       )}
                     </div>
                   );

@@ -24,6 +24,7 @@ const Index = () => {
   const portal = useClientPortal(propertyId);
   const [activeTab, setActiveTab] = useState("home");
   const [reportPageId, setReportPageId] = useState<string | null>(null);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const { editMode, toggleEditMode, canEdit } = useEditMode();
 
   // Read URL query params for edit mode and page navigation
@@ -43,6 +44,14 @@ const Index = () => {
 
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab);
+    setReportPageId(null);
+    if (tab !== "messages") setPendingMessage(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const handleSendMessage = useCallback((msg: string) => {
+    setPendingMessage(msg);
+    setActiveTab("messages");
     setReportPageId(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
@@ -177,7 +186,7 @@ const Index = () => {
           )}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "projects" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "projects" && <ProjectsTab onNavigate={handleNavigate} onTabChange={handleTabChange} propertyId={portal.property?.id} pages={portal.pages} />}
+          {activeTab === "projects" && <ProjectsTab onNavigate={handleNavigate} onTabChange={handleTabChange} propertyId={portal.property?.id} pages={portal.pages} onSendMessage={handleSendMessage} />}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "payments" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "payments" && <PaymentsTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}
@@ -194,11 +203,12 @@ const Index = () => {
               propertyId={portal.property?.id}
               creatorName={portal.creatorName}
               creatorInitials={portal.creatorProfile?.initials}
+              initialMessage={pendingMessage || undefined}
             />
           )}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "equipment" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "equipment" && <EquipmentTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}
+          {activeTab === "equipment" && <EquipmentTab propertyId={portal.property?.id} onTabChange={handleTabChange} onSendMessage={handleSendMessage} />}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "schedule" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "schedule" && <ScheduleTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}
