@@ -53,7 +53,7 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
           clientGoals: intelligenceParsed?.goals || [],
           clientPriorities: intelligenceParsed?.priorities || [],
           existingConditionRating: pageData.conditionRating,
-          existingSpecs: pageData.specs as Record<string, unknown> | undefined,
+          existingSpecs: (pageData.specs as unknown as Record<string, unknown>) || undefined,
         },
       });
 

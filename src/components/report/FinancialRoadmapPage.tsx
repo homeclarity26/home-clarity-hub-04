@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useEditMode } from "@/contexts/EditModeContext";
 import { DollarSign, TrendingUp, AlertCircle, Clock } from "lucide-react";
 
 interface TierEntry {
