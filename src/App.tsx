@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { EditModeProvider } from "@/contexts/EditModeContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
