@@ -69,6 +69,7 @@ export function useClientPortal(propertyId?: string) {
   const [property, setProperty] = useState<PortalProperty | null>(null);
   const [report, setReport] = useState<PortalReport | null>(null);
   const [dbPages, setDbPages] = useState<DbPage[]>([]);
+  const [blocksJson, setBlocksJson] = useState<unknown[]>([]);
   const [creatorName, setCreatorName] = useState<string>("Your HBC Team");
   const [creatorProfile, setCreatorProfile] = useState<{ name: string; email?: string; phone?: string; initials: string }>({ name: "Your HBC Team", initials: "HB" });
   const [isLoading, setIsLoading] = useState(true);
