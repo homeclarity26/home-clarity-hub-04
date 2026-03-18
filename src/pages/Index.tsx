@@ -63,6 +63,7 @@ const Index = () => {
   const portal = useClientPortal(propertyId);
   const { profile } = useAuth();
   usePortalTracking(activeTab);
+  const { progress: tutorialProgress, markChecklistItem, ensureRecord } = useTutorialProgress();
 
   // Check onboarding status for new clients
   useEffect(() => {
