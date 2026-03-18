@@ -163,6 +163,7 @@ const AppRoutes = () => {
         }
       >
         <Route index element={<AdminDashboard />} />
+        <Route path="analytics" element={<AdminAnalytics />} />
         <Route path="inbox" element={<AdminInbox />} />
         <Route path="clients" element={<AdminClients />} />
         <Route path="clients/new" element={<AdminNewReport />} />
