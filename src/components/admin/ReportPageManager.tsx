@@ -257,7 +257,7 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
               Draft All with AI
             </Button>
           )}
-          <ReportCloneDialog reportId={reportId || ""} reportTitle="Report" />
+          <ReportCloneDialog sourceReportId={reportId || ""} sourcePropertyName="Current Report" />
           <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans" onClick={() => window.open(`/portal/${propertyId}?edit=true`, "_blank")}>
             <ExternalLink className="w-3.5 h-3.5" />
             Open in Portal
