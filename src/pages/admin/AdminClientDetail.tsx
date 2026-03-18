@@ -399,148 +399,15 @@ const AdminClientDetail = () => {
 
         {/* PAYMENTS TAB */}
         {activeTab === "payments" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <h3 className="text-sm font-sans font-semibold text-foreground">Invoices</h3>
-              <div className="flex gap-2">
-                {/* Create invoice from report tier */}
-                {reportPages && reportPages.some((rp) => {
-                  const page = reportPages.find((p) => p.id === rp.id);
-                  return page && (page as any).tiers && Array.isArray((page as any).tiers) && (page as any).tiers.length > 0;
-                }) && (
-                  <Dialog open={tierInvoiceOpen} onOpenChange={(o) => { setTierInvoiceOpen(o); if (!o) { setSelectedTierPage(""); setSelectedTier(""); } }}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans border-primary/30 text-primary hover:bg-primary/5">
-                        <Sparkles className="w-3.5 h-3.5" />From Report Tier
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader><DialogTitle className="font-sans">Invoice from Report Tier</DialogTitle></DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label className="font-sans text-xs">Report Page</Label>
-                          <Select value={selectedTierPage} onValueChange={(v) => { setSelectedTierPage(v); setSelectedTier(""); }}>
-                            <SelectTrigger className="text-xs"><SelectValue placeholder="Select a page…" /></SelectTrigger>
-                            <SelectContent>
-                              {(reportPages || [])
-                                .filter((rp) => (rp as any).tiers && Array.isArray((rp as any).tiers) && (rp as any).tiers.length > 0)
-                                .map((rp) => <SelectItem key={rp.id} value={rp.id} className="text-xs">{rp.title}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        {selectedTierPage && (() => {
-                          const page = (reportPages || []).find((p) => p.id === selectedTierPage);
-                          const tiers = page ? ((page as any).tiers as { label: string; cost: string }[] | null) : null;
-                          if (!tiers || tiers.length === 0) return null;
-                          return (
-                            <div>
-                              <Label className="font-sans text-xs">Tier</Label>
-                              <div className="grid gap-2 mt-2">
-                                {tiers.map((t, i) => (
-                                  <button
-                                    key={i}
-                                    onClick={() => setSelectedTier(t.cost)}
-                                    className={`flex items-center justify-between px-3 py-2.5 rounded-md border text-sm font-sans text-left transition-colors ${selectedTier === t.cost ? "bg-primary/5 border-primary/40 text-primary" : "border-border hover:bg-muted/50"}`}
-                                  >
-                                    <span>{t.label}</span>
-                                    <span className="font-mono text-xs text-muted-foreground">{t.cost}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })()}
-                        <Button
-                          className="w-full font-sans"
-                          disabled={!selectedTierPage || !selectedTier}
-                          onClick={() => {
-                            const page = (reportPages || []).find((p) => p.id === selectedTierPage);
-                            if (!page) return;
-                            const costStr = selectedTier.replace(/[^0-9,–-]/g, "").split(/[–-]/)[0].replace(/,/g, "");
-                            const amount = parseFloat(costStr) || 0;
-                            setInvoiceForm({ description: `${page.title} — ${selectedTier}`, amount: String(amount), due_date: "", status: "pending" });
-                            setTierInvoiceOpen(false);
-                            setInvoiceOpen(true);
-                          }}
-                        >
-                          Pre-fill Invoice →
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                )}
-                <Dialog open={invoiceOpen} onOpenChange={(o) => { setInvoiceOpen(o); if (!o) resetInvoiceForm(); }}>
-                  <DialogTrigger asChild><Button size="sm" className="gap-1.5 text-xs font-sans"><Plus className="w-3.5 h-3.5" />Create Invoice</Button></DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader><DialogTitle className="font-sans">Create Invoice</DialogTitle></DialogHeader>
-                    <InvoiceFormFields />
-                    <Button onClick={createInvoice} className="w-full font-sans">Create</Button>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-
-            <Dialog open={editInvoiceOpen} onOpenChange={(o) => { setEditInvoiceOpen(o); if (!o) { resetInvoiceForm(); setEditId(null); } }}>
-              <DialogContent>
-                <DialogHeader><DialogTitle className="font-sans">Edit Invoice</DialogTitle></DialogHeader>
-                <InvoiceFormFields />
-                <Button onClick={updateInvoice} className="w-full font-sans">Save Changes</Button>
-              </DialogContent>
-            </Dialog>
-
-            {invoices && invoices.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="font-sans text-xs">Description</TableHead>
-                    <TableHead className="font-sans text-xs">Amount</TableHead>
-                    <TableHead className="font-sans text-xs">Due Date</TableHead>
-                    <TableHead className="font-sans text-xs">Status</TableHead>
-                    <TableHead className="font-sans text-xs w-20"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {invoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-sans text-sm font-medium">{invoice.description}</TableCell>
-                      <TableCell className="font-sans text-sm font-medium">${Number(invoice.amount).toLocaleString()}</TableCell>
-                      <TableCell className="font-sans text-sm text-muted-foreground">{invoice.due_date ? format(new Date(invoice.due_date), "MMM d, yyyy") : "—"}</TableCell>
-                      <TableCell>
-                        <Select value={invoice.status} onValueChange={(v) => updateInvoiceStatus(invoice.id, v)}>
-                          <SelectTrigger className="h-7 w-[100px] text-[11px] font-sans"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="paid">Paid</SelectItem>
-                            <SelectItem value="overdue">Overdue</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-0.5">
-                          <Button variant="ghost" size="sm" onClick={() => openEditInvoice(invoice)}><Pencil className="w-3.5 h-3.5" /></Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild><Button variant="ghost" size="sm"><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button></AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle className="font-sans">Delete invoice?</AlertDialogTitle>
-                                <AlertDialogDescription className="font-sans">This will permanently delete this invoice. This action cannot be undone.</AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel className="font-sans">Cancel</AlertDialogCancel>
-                                <AlertDialogAction className="font-sans bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteInvoice(invoice.id)}>Delete</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <Card className="p-8 text-center"><p className="text-sm font-sans text-muted-foreground">No invoices yet.</p></Card>
-            )}
-          </div>
+          <AdminInvoicesSection
+            propertyId={client.propertyId}
+            propertyContext={{
+              propertyAddress: client.address,
+              sqft: client.sqft,
+              propertyType: client.propertyType,
+              clientName: client.name,
+            }}
+          />
         )}
 
         {/* SCHEDULE TAB */}
