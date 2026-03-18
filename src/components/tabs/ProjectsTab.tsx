@@ -12,6 +12,7 @@ interface ProjectsTabProps {
   onTabChange?: (tab: string) => void;
   propertyId?: string;
   pages?: Record<string, ReportPageData>;
+  onSendMessage?: (msg: string) => void;
 }
 
 interface Milestone {
