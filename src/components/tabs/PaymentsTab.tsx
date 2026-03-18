@@ -327,7 +327,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
     <div>
       {/* Hero */}
       <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto">
-        <h1 className="font-display text-3xl md:text-[36px] text-foreground mb-3">Payments & Financial History</h1>
+        <h1 className="font-display text-3xl md:text-[36px] text-foreground mb-3">Payments & Invoices</h1>
         <p className="font-sans text-base text-muted-foreground">
           Manage your account and review transaction history with Home Clarity Hub.
         </p>
