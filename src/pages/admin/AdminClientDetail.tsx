@@ -414,7 +414,7 @@ const AdminClientDetail = () => {
           </div>
         )}
         {activeTab === "timeline" && <ClientTimelineTab propertyId={client.propertyId} />}
-        {activeTab === "engagement" && <ClientEngagementTab clientUserId={client.clientUserId || ""} />}
+        {activeTab === "engagement" && <ClientEngagementTab clientUserId={client.clientUserId || ""} propertyId={client.propertyId} />}
         {activeTab === "report" && (
           <div className="space-y-4">
             <div className="flex items-center justify-end gap-2">
