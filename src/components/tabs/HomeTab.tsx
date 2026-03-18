@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle, Info } from "lucide-react";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import HomeValueTracker from "@/components/HomeValueTracker";
@@ -7,7 +7,10 @@ import ValuationModal from "@/components/ValuationModal";
 import HomeHealthDiagram from "@/components/HomeHealthDiagram";
 import AnnualReportCard from "@/components/AnnualReportCard";
 import MaintenanceReminders from "@/components/MaintenanceReminders";
+import HomeGoals from "@/components/HomeGoals";
+import InsuranceAssistant from "@/components/InsuranceAssistant";
 import { usePropertyValuation } from "@/hooks/usePropertyValuation";
+import { supabase } from "@/integrations/supabase/client";
 import type { ReportPageData } from "@/data/reportContent";
 
 interface HomeTabProps {
