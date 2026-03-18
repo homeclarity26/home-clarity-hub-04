@@ -273,54 +273,99 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
             </h3>
             <p className="text-xs font-sans text-muted-foreground">{format(new Date(est.created_at), "MMM d, yyyy")}</p>
           </div>
-          <div className="flex gap-2">
-            {est.status === "draft" && (
-              <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => updateStatus(est.id, "sent")}>
-                <Send className="w-3.5 h-3.5" />Send to Client
-              </Button>
-            )}
-            {est.status === "accepted" && (
-              <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => convertToInvoice(est)} disabled={converting}>
-                {converting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
-                Convert to Invoice
-              </Button>
-            )}
-          </div>
-        </div>
+           <div className="flex gap-2">
+             {est.status === "draft" && (
+               <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => updateStatus(est.id, "sent")}>
+                 <Send className="w-3.5 h-3.5" />Send to Client
+               </Button>
+             )}
+             {(est.status === "accepted" || est.status === "sent" || est.status === "draft") && lis.length > 1 && (
+               <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={() => { setSelectedLineItemIds(new Set(lis.map((l: any) => l.id))); setConvertDialogOpen(true); }}>
+                 <FileText className="w-3.5 h-3.5" />Pull to Invoice
+               </Button>
+             )}
+             {est.status === "accepted" && (
+               <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => convertToInvoice(est)} disabled={converting}>
+                 {converting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
+                 Convert All to Invoice
+               </Button>
+             )}
+           </div>
+         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="font-sans text-xs">Description</TableHead>
-              <TableHead className="font-sans text-xs text-right">Qty</TableHead>
-              <TableHead className="font-sans text-xs text-right">Unit Price</TableHead>
-              <TableHead className="font-sans text-xs text-right">Total</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {lis.map((li: any) => (
-              <TableRow key={li.id}>
-                <TableCell className="font-sans text-sm">{li.description}</TableCell>
-                <TableCell className="font-mono text-sm text-right">{li.quantity}</TableCell>
-                <TableCell className="font-mono text-sm text-right">{fmt(li.unit_price)}</TableCell>
-                <TableCell className="font-mono text-sm text-right">{fmt(li.total)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+         <Table>
+           <TableHeader>
+             <TableRow>
+               <TableHead className="font-sans text-xs">Description</TableHead>
+               <TableHead className="font-sans text-xs text-right">Qty</TableHead>
+               <TableHead className="font-sans text-xs text-right">Unit Price</TableHead>
+               <TableHead className="font-sans text-xs text-right">Total</TableHead>
+             </TableRow>
+           </TableHeader>
+           <TableBody>
+             {lis.map((li: any) => (
+               <TableRow key={li.id}>
+                 <TableCell className="font-sans text-sm">{li.description}</TableCell>
+                 <TableCell className="font-mono text-sm text-right">{li.quantity}</TableCell>
+                 <TableCell className="font-mono text-sm text-right">{fmt(li.unit_price)}</TableCell>
+                 <TableCell className="font-mono text-sm text-right">{fmt(li.total)}</TableCell>
+               </TableRow>
+             ))}
+           </TableBody>
+         </Table>
 
-        <div className="flex justify-end">
-          <div className="w-64 space-y-1 text-sm font-sans">
-            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="font-mono">{fmt(est.subtotal)}</span></div>
-            {est.discount_amount > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Discount</span><span className="font-mono text-destructive">-{fmt(est.discount_type === "percent" ? est.subtotal * est.discount_amount / 100 : est.discount_amount)}</span></div>}
-            {est.tax > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span className="font-mono">{fmt(est.tax)}</span></div>}
-            <div className="flex justify-between font-bold pt-1 border-t border-border"><span>Total</span><span className="font-mono">{fmt(est.total)}</span></div>
-          </div>
-        </div>
+         <div className="flex justify-end">
+           <div className="w-64 space-y-1 text-sm font-sans">
+             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="font-mono">{fmt(est.subtotal)}</span></div>
+             {est.discount_amount > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Discount</span><span className="font-mono text-destructive">-{fmt(est.discount_type === "percent" ? est.subtotal * est.discount_amount / 100 : est.discount_amount)}</span></div>}
+             {est.tax > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span className="font-mono">{fmt(est.tax)}</span></div>}
+             <div className="flex justify-between font-bold pt-1 border-t border-border"><span>Total</span><span className="font-mono">{fmt(est.total)}</span></div>
+           </div>
+         </div>
 
-        {est.notes && <div className="bg-muted/50 rounded-md p-3"><p className="text-xs font-sans text-muted-foreground">{est.notes}</p></div>}
-      </Card>
-    );
+         {est.notes && <div className="bg-muted/50 rounded-md p-3"><p className="text-xs font-sans text-muted-foreground">{est.notes}</p></div>}
+
+         {/* Partial Conversion Dialog */}
+         <Dialog open={convertDialogOpen} onOpenChange={setConvertDialogOpen}>
+           <DialogContent className="max-w-lg">
+             <DialogHeader><DialogTitle className="font-sans">Select Items for Invoice</DialogTitle></DialogHeader>
+             <p className="text-xs text-muted-foreground font-sans">Choose which line items to pull into a new invoice.</p>
+             <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+               {lis.map((li: any) => (
+                 <div key={li.id} className="flex items-center gap-3 p-2 rounded-md border border-border">
+                   <Checkbox
+                     checked={selectedLineItemIds.has(li.id)}
+                     onCheckedChange={(checked) => {
+                       const next = new Set(selectedLineItemIds);
+                       if (checked) next.add(li.id); else next.delete(li.id);
+                       setSelectedLineItemIds(next);
+                     }}
+                   />
+                   <div className="flex-1">
+                     <p className="text-sm font-sans">{li.description}</p>
+                     <p className="text-xs text-muted-foreground font-mono">{li.quantity} × {fmt(li.unit_price)}</p>
+                   </div>
+                   <span className="text-sm font-mono font-medium">{fmt(li.total)}</span>
+                 </div>
+               ))}
+             </div>
+             <div className="flex justify-between items-center pt-2 border-t border-border">
+               <span className="text-sm font-sans text-muted-foreground">{selectedLineItemIds.size} items selected</span>
+               <span className="text-sm font-sans font-bold">
+                 {fmt(lis.filter((li: any) => selectedLineItemIds.has(li.id)).reduce((s: number, li: any) => s + Number(li.total), 0))}
+               </span>
+             </div>
+             <DialogFooter>
+               <Button variant="outline" onClick={() => setConvertDialogOpen(false)} className="font-sans">Cancel</Button>
+               <Button onClick={() => convertPartialToInvoice(est)} disabled={converting || selectedLineItemIds.size === 0} className="gap-1.5 font-sans">
+                 {converting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
+                 Create Invoice
+               </Button>
+             </DialogFooter>
+           </DialogContent>
+         </Dialog>
+       </Card>
+     );
   }
 
   return (
