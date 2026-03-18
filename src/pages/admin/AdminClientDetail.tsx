@@ -29,13 +29,14 @@ import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 
-type ClientTab = "overview" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors";
+type ClientTab = "overview" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages";
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "report", label: "Report" },
   { id: "files", label: "Files" },
   { id: "comments", label: "Comments" },
+  { id: "messages", label: "Messages" },
   { id: "projects", label: "Projects" },
   { id: "payments", label: "Payments" },
   { id: "equipment", label: "Equipment" },
