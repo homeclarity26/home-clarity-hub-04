@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Search, Plus, Loader2 } from "lucide-react";
+import { Search, Plus, Loader2, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AdminHeader from "@/components/admin/AdminHeader";
 import ClientTable from "@/components/admin/ClientTable";
 import { useAdminClients } from "@/hooks/useAdminData";
+import { exportClientsToCSV } from "@/lib/csvExport";
 
 const AdminClients = () => {
   const [search, setSearch] = useState("");
@@ -39,6 +40,12 @@ const AdminClients = () => {
               ))}
             </div>
           </div>
+          {clients && clients.length > 0 && (
+            <Button variant="outline" size="sm" onClick={() => exportClientsToCSV(clients)} className="gap-1.5 text-xs font-sans">
+              <Download className="w-4 h-4" />
+              Export CSV
+            </Button>
+          )}
           <Button onClick={() => navigate("/admin/clients/new")} className="gap-1.5 font-sans" size="sm">
             <Plus className="w-4 h-4" />
             New Client

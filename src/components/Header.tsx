@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { Switch } from "@/components/ui/switch";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
+import PropertySelector from "@/components/PropertySelector";
 
 interface HeaderProps {
   activeTab: string;
@@ -68,7 +69,7 @@ const Header = ({ activeTab, onTabChange }: HeaderProps) => {
 
       {/* User Section */}
       <div className="hidden md:flex items-center ml-6 flex-shrink-0 gap-3">
-        {!isCreator && <AnnouncementBanner />}
+        {!isCreator && <PropertySelector />}
         {!isCreator && (
           <button
             onClick={() => onTabChange("notifications")}

@@ -9,6 +9,7 @@ import AnnualReportCard from "@/components/AnnualReportCard";
 import MaintenanceReminders from "@/components/MaintenanceReminders";
 import HomeGoals from "@/components/HomeGoals";
 import InsuranceAssistant from "@/components/InsuranceAssistant";
+import ClientActivityTimeline from "@/components/ClientActivityTimeline";
 import { usePropertyValuation } from "@/hooks/usePropertyValuation";
 import { supabase } from "@/integrations/supabase/client";
 import type { ReportPageData } from "@/data/reportContent";
@@ -303,6 +304,12 @@ const HomeTab = ({
           </div>
         </div>
 
+        {/* Activity Timeline */}
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-8">
+          <div className="bg-card rounded-lg p-8 shadow-hbc-sm border border-border">
+            <ClientActivityTimeline propertyId={propertyId} />
+          </div>
+        </div>
       </div>
 
       {/* Feedback */}

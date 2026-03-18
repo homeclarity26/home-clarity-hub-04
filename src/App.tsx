@@ -5,9 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { EditModeProvider } from "@/contexts/EditModeContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
-
+import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -114,6 +116,7 @@ const RootRedirect = () => {
 };
 
 const AppRoutes = () => {
+  useSessionMonitor();
   return (
     <Routes>
       {/* Root redirect based on role */}
@@ -169,6 +172,14 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/signup"
+        element={
+          <PublicRoute>
+            <Signup />
+          </PublicRoute>
+        }
+      />
+      <Route
         path="/forgot-password"
         element={
           <PublicRoute>
@@ -183,17 +194,19 @@ const AppRoutes = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
