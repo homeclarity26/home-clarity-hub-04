@@ -24,6 +24,7 @@ interface CreatorBarProps {
   pdfData?: PDFReportData;
   onDraftNarrative?: () => void;
   isDrafting?: boolean;
+  qaCoachSlot?: React.ReactNode;
 }
 
 const statusLabels: Record<string, string> = {
