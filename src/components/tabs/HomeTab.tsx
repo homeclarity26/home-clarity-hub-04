@@ -31,6 +31,7 @@ const HomeTab = ({
   estimatedValue,
   propertyId,
   membershipEndDate,
+  reportPages,
 }: HomeTabProps) => {
   const [valuationOpen, setValuationOpen] = useState(false);
   const { valuation, isLoading: valLoading, fetchValuation } = usePropertyValuation(propertyId, propertyAddress);
