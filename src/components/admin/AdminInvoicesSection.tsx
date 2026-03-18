@@ -689,16 +689,30 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
               <div><Label className="font-sans">Due Date</Label><Input type="date" value={invoiceForm.due_date} onChange={e => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })} /></div>
               <div><Label className="font-sans">Notes</Label><Textarea value={invoiceForm.notes} onChange={e => setInvoiceForm({ ...invoiceForm, notes: e.target.value })} placeholder="Internal or client-facing notes" /></div>
 
-              {/* AI Estimate Generator */}
+              {/* AI Assistant */}
               <Card className="p-4 bg-muted/30 space-y-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-accent" />
-                  <p className="text-sm font-sans font-medium">AI Estimate Generator</p>
+                  <p className="text-sm font-sans font-medium">AI Line Item Generator</p>
                 </div>
-                <Textarea value={aiJobDescription} onChange={e => setAiJobDescription(e.target.value)} placeholder="Describe the job (e.g. 'Full furnace replacement, 2500 sqft home, standard ductwork')..." className="text-sm" />
-                <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={handleAiGenerate} disabled={aiGenerating || !aiJobDescription.trim()}>
-                  {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} Generate Line Items
-                </Button>
+                <Tabs defaultValue="description" className="w-full">
+                  <TabsList className="w-full">
+                    <TabsTrigger value="description" className="flex-1 text-xs font-sans gap-1"><Sparkles className="w-3 h-3" />From Description</TabsTrigger>
+                    <TabsTrigger value="transcript" className="flex-1 text-xs font-sans gap-1"><MessageSquareText className="w-3 h-3" />From Transcript</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="description" className="space-y-2 mt-3">
+                    <Textarea value={aiJobDescription} onChange={e => setAiJobDescription(e.target.value)} placeholder="Describe the job (e.g. 'Full furnace replacement, 2500 sqft home, standard ductwork')..." className="text-sm" />
+                    <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={handleAiGenerate} disabled={aiGenerating || !aiJobDescription.trim()}>
+                      {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} Generate Line Items
+                    </Button>
+                  </TabsContent>
+                  <TabsContent value="transcript" className="space-y-2 mt-3">
+                    <Textarea value={aiTranscript} onChange={e => setAiTranscript(e.target.value)} placeholder="Paste meeting notes or call transcript... AI will extract scope items and generate line items with pricing." className="text-sm" rows={4} />
+                    <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={handleAiFromTranscript} disabled={aiGenerating || !aiTranscript.trim()}>
+                      {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageSquareText className="w-3.5 h-3.5" />} Extract from Transcript
+                    </Button>
+                  </TabsContent>
+                </Tabs>
               </Card>
 
               {/* Line Items */}
