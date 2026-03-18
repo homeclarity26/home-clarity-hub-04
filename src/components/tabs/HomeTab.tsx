@@ -66,12 +66,12 @@ const HomeTab = ({
   return (
     <div>
       {/* Hero */}
-      <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto">
-        <h1 className="font-display text-3xl md:text-[36px] text-foreground mb-3">
-          {propertyName}
+      <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto" style={customization?.hero_photo_url ? { backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${customization.hero_photo_url})`, backgroundSize: "cover", backgroundPosition: "center", borderRadius: "0.5rem" } : undefined}>
+        <h1 className={`font-display text-3xl md:text-[36px] mb-3 ${customization?.hero_photo_url ? "text-white" : "text-foreground"}`}>
+          {customization?.welcome_message || propertyName}
         </h1>
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-2">
-          Home Operating System
+        <p className={`font-mono text-[11px] uppercase tracking-[0.2em] mb-2 ${customization?.hero_photo_url ? "text-white/80" : "text-accent"}`}>
+          {customization?.tagline || "Home Operating System"}
         </p>
         {propertyAddress && (
           <p className="font-sans text-base text-muted-foreground">{propertyAddress}</p>
