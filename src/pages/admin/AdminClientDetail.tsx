@@ -89,6 +89,8 @@ const tabs: { id: ClientTab; label: string }[] = [
   { id: "messages", label: "Messages" },
   { id: "projects", label: "Projects" },
   { id: "payments", label: "Payments" },
+  { id: "estimates", label: "Estimates" },
+  { id: "services", label: "Services" },
   { id: "equipment", label: "Equipment" },
   { id: "schedule", label: "Schedule" },
   { id: "vendors", label: "Vendors" },
