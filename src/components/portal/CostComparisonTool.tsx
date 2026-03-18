@@ -19,16 +19,15 @@ const CostComparisonTool = ({ pages }: CostComparisonToolProps) => {
   const [deferYears, setDeferYears] = useState("3");
 
   const pagesWithTiers = useMemo(() => {
-    return Object.values(pages).filter((p) => p.tiers && p.tiers.length > 0);
+    return Object.values(pages).filter((p) => p.tiers && p.tiers.essential);
   }, [pages]);
 
   const comparison = useMemo(() => {
     const years = parseInt(deferYears);
     return pagesWithTiers.map((page) => {
-      const essentialTier = page.tiers?.find((t) => t.title?.toLowerCase().includes("essential"));
-      const baseCost = parseCost(essentialTier?.cost);
+      const baseCost = parseCost(page.tiers?.essential?.price);
       const deferredCost = baseCost * Math.pow(1 + INFLATION_RATE, years);
-      const additionalDamage = page.conditionRating === "poor" || page.conditionRating === "critical"
+      const additionalDamage = page.conditionRating === "Poor" || page.conditionRating === "Critical"
         ? baseCost * 0.3 * years
         : baseCost * 0.1 * years;
       const totalDeferred = deferredCost + additionalDamage;
