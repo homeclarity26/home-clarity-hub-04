@@ -50,6 +50,7 @@ ${Array.isArray(ctx.projects) && ctx.projects.length ? `ACTIVE PROJECTS:\n${(ctx
 
 REPORT PAGES:
 ${pagesText}
+${goalsText ? `\nCLIENT HOME GOALS:\n${goalsText}` : ""}
 
 GUIDELINES:
 - Reference specific findings from the report when answering
