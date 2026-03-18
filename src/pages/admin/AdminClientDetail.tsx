@@ -68,12 +68,14 @@ import RecurringInvoiceScheduler from "@/components/admin/RecurringInvoiceSchedu
 import InternalReportComments from "@/components/admin/InternalReportComments";
 import DragReportReorder from "@/components/admin/DragReportReorder";
 import WYSIWYGReportEditor from "@/components/wysiwyg/WYSIWYGReportEditor";
+import EstimatesSection from "@/components/admin/EstimatesSection";
+import ClientServicesTab from "@/components/admin/ClientServicesTab";
 import type { ReportBlock } from "@/components/wysiwyg/types";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 
-type ClientTab = "overview" | "timeline" | "engagement" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time";
+type ClientTab = "overview" | "timeline" | "engagement" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time" | "services" | "estimates";
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -87,6 +89,8 @@ const tabs: { id: ClientTab; label: string }[] = [
   { id: "messages", label: "Messages" },
   { id: "projects", label: "Projects" },
   { id: "payments", label: "Payments" },
+  { id: "estimates", label: "Estimates" },
+  { id: "services", label: "Services" },
   { id: "equipment", label: "Equipment" },
   { id: "schedule", label: "Schedule" },
   { id: "vendors", label: "Vendors" },
@@ -578,6 +582,16 @@ const AdminClientDetail = () => {
               }}
             />
           </div>
+        )}
+
+        {/* ESTIMATES TAB */}
+        {activeTab === "estimates" && (
+          <EstimatesSection propertyId={client.propertyId} clientName={client.name} />
+        )}
+
+        {/* SERVICES TAB */}
+        {activeTab === "services" && (
+          <ClientServicesTab propertyId={client.propertyId} clientUserId={client.clientUserId || ""} />
         )}
 
         {/* SCHEDULE TAB */}

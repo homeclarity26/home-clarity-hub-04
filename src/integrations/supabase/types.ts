@@ -1122,6 +1122,125 @@ export type Database = {
           },
         ]
       }
+      estimate_line_items: {
+        Row: {
+          created_at: string
+          description: string
+          estimate_id: string
+          id: string
+          quantity: number
+          service_id: string | null
+          sort_order: number
+          total: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          estimate_id: string
+          id?: string
+          quantity?: number
+          service_id?: string | null
+          sort_order?: number
+          total?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          estimate_id?: string
+          id?: string
+          quantity?: number
+          service_id?: string | null
+          sort_order?: number
+          total?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_line_items_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimate_line_items_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estimates: {
+        Row: {
+          admin_id: string
+          converted_invoice_id: string | null
+          created_at: string
+          discount_amount: number
+          discount_type: string
+          id: string
+          notes: string | null
+          property_id: string | null
+          responded_at: string | null
+          sent_at: string | null
+          status: string
+          subtotal: number
+          tax: number
+          title: string
+          total: number
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          admin_id: string
+          converted_invoice_id?: string | null
+          created_at?: string
+          discount_amount?: number
+          discount_type?: string
+          id?: string
+          notes?: string | null
+          property_id?: string | null
+          responded_at?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal?: number
+          tax?: number
+          title?: string
+          total?: number
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          admin_id?: string
+          converted_invoice_id?: string | null
+          created_at?: string
+          discount_amount?: number
+          discount_type?: string
+          id?: string
+          notes?: string | null
+          property_id?: string | null
+          responded_at?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal?: number
+          tax?: number
+          title?: string
+          total?: number
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimates_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback: {
         Row: {
           comment: string | null
@@ -1539,6 +1658,7 @@ export type Database = {
           invoice_id: string
           item_type: string
           quantity: number
+          service_id: string | null
           sort_order: number
           total: number
           unit_price: number
@@ -1550,6 +1670,7 @@ export type Database = {
           invoice_id: string
           item_type?: string
           quantity?: number
+          service_id?: string | null
           sort_order?: number
           total?: number
           unit_price?: number
@@ -1561,6 +1682,7 @@ export type Database = {
           invoice_id?: string
           item_type?: string
           quantity?: number
+          service_id?: string | null
           sort_order?: number
           total?: number
           unit_price?: number
@@ -1571,6 +1693,13 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_line_items_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]
@@ -1736,6 +1865,42 @@ export type Database = {
           },
         ]
       }
+      membership_tier_services: {
+        Row: {
+          created_at: string
+          id: string
+          service_id: string
+          tier_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          service_id: string
+          tier_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          service_id?: string
+          tier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_tier_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_tier_services_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "membership_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       membership_tiers: {
         Row: {
           color_hex: string
@@ -1744,12 +1909,15 @@ export type Database = {
           features_json: Json
           id: string
           is_active: boolean
+          is_featured: boolean
           max_properties: number
           name: string
           price_annually: number
           price_monthly: number
+          price_type: string
           report_frequency: string
           response_time_sla_hours: number
+          sort_order: number
           stripe_price_id_annually: string | null
           stripe_price_id_monthly: string | null
         }
@@ -1760,12 +1928,15 @@ export type Database = {
           features_json?: Json
           id?: string
           is_active?: boolean
+          is_featured?: boolean
           max_properties?: number
           name: string
           price_annually?: number
           price_monthly?: number
+          price_type?: string
           report_frequency?: string
           response_time_sla_hours?: number
+          sort_order?: number
           stripe_price_id_annually?: string | null
           stripe_price_id_monthly?: string | null
         }
@@ -1776,12 +1947,15 @@ export type Database = {
           features_json?: Json
           id?: string
           is_active?: boolean
+          is_featured?: boolean
           max_properties?: number
           name?: string
           price_annually?: number
           price_monthly?: number
+          price_type?: string
           report_frequency?: string
           response_time_sla_hours?: number
+          sort_order?: number
           stripe_price_id_annually?: string | null
           stripe_price_id_monthly?: string | null
         }
@@ -3100,6 +3274,132 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      service_request_items: {
+        Row: {
+          created_at: string
+          id: string
+          request_id: string
+          service_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          request_id: string
+          service_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          request_id?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_request_items_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_request_items_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_requests: {
+        Row: {
+          client_id: string
+          created_at: string
+          estimate_id: string | null
+          id: string
+          notes: string | null
+          property_id: string | null
+          status: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          estimate_id?: string | null
+          id?: string
+          notes?: string | null
+          property_id?: string | null
+          status?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          estimate_id?: string | null
+          id?: string
+          notes?: string | null
+          property_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          admin_id: string
+          category: string
+          created_at: string
+          description: string | null
+          duration_hours: number | null
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          price_type: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          is_active?: boolean
+          name: string
+          price?: number
+          price_type?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          price_type?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       signature_fields: {
         Row: {

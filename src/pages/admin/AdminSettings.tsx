@@ -14,6 +14,7 @@ import AuditLogSection from "@/components/admin/AuditLogSection";
 import SLASettings from "@/components/admin/SLASettings";
 import MembershipTierManager from "@/components/admin/MembershipTierManager";
 import MessageTemplateLibrary from "@/components/admin/MessageTemplateLibrary";
+import ServicesLibrary from "@/components/admin/ServicesLibrary";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -133,11 +134,12 @@ const AdminSettings = () => {
       <AdminHeader breadcrumbs={[{ label: "Settings" }]} />
       <div className="p-6 max-w-5xl space-y-6">
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="mb-4">
+          <TabsList className="mb-4 flex-wrap">
             <TabsTrigger value="general" className="font-sans text-xs">General</TabsTrigger>
+            <TabsTrigger value="services" className="font-sans text-xs">Services Library</TabsTrigger>
+            <TabsTrigger value="tiers" className="font-sans text-xs">Membership Tiers</TabsTrigger>
             <TabsTrigger value="integrations" className="font-sans text-xs">Integrations & API</TabsTrigger>
             <TabsTrigger value="sla" className="font-sans text-xs">SLA</TabsTrigger>
-            <TabsTrigger value="tiers" className="font-sans text-xs">Membership Tiers</TabsTrigger>
             <TabsTrigger value="templates" className="font-sans text-xs">Message Templates</TabsTrigger>
             <TabsTrigger value="audit" className="font-sans text-xs">Audit Log</TabsTrigger>
           </TabsList>
@@ -334,6 +336,10 @@ const AdminSettings = () => {
                 </div>
               )}
             </Card>
+          </TabsContent>
+
+          <TabsContent value="services">
+            <ServicesLibrary />
           </TabsContent>
 
           <TabsContent value="integrations">
