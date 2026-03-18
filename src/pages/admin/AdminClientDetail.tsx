@@ -67,6 +67,8 @@ import ClientRiskScore from "@/components/admin/ClientRiskScore";
 import RecurringInvoiceScheduler from "@/components/admin/RecurringInvoiceScheduler";
 import InternalReportComments from "@/components/admin/InternalReportComments";
 import DragReportReorder from "@/components/admin/DragReportReorder";
+import WYSIWYGReportEditor from "@/components/wysiwyg/WYSIWYGReportEditor";
+import type { ReportBlock } from "@/components/wysiwyg/types";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
@@ -89,6 +91,98 @@ const tabs: { id: ClientTab; label: string }[] = [
   { id: "schedule", label: "Schedule" },
   { id: "vendors", label: "Vendors" },
 ];
+
+// ─── Report Tab with WYSIWYG toggle ─────────────────────────
+
+const ReportTabContent = ({ client, reportPages, pdfData }: { client: any; reportPages: any[] | undefined; pdfData: PDFReportData | undefined }) => {
+  const [editorMode, setEditorMode] = useState<"pages" | "wysiwyg">("pages");
+
+  const { data: reportBlocks } = useQuery({
+    queryKey: ["report-blocks-main", client.reportId],
+    enabled: !!client.reportId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("reports")
+        .select("blocks_json")
+        .eq("id", client.reportId!)
+        .single();
+      return (data?.blocks_json as unknown as ReportBlock[]) || [];
+    },
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
+          <button
+            onClick={() => setEditorMode("pages")}
+            className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${editorMode === "pages" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Page Manager
+          </button>
+          <button
+            onClick={() => setEditorMode("wysiwyg")}
+            className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${editorMode === "wysiwyg" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            WYSIWYG Editor
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
+          {client.reportId && <ReportVersionHistory reportId={client.reportId} propertyId={client.propertyId} />}
+          {client.reportId && <ReportCloneDialog sourceReportId={client.reportId} sourcePropertyName={client.propertyName} />}
+          {pdfData && <PDFDownloadButton data={pdfData} variant="outline" size="sm" className="text-xs" label="Generate PDF" />}
+        </div>
+      </div>
+
+      {editorMode === "wysiwyg" && client.reportId ? (
+        <WYSIWYGReportEditor
+          reportId={client.reportId}
+          propertyAddress={client.address}
+          initialBlocks={reportBlocks || []}
+        />
+      ) : (
+        <>
+          {client.reportId && <TemplateVersioning reportId={client.reportId} />}
+          {reportPages && reportPages.length > 0 && (
+            <ReportProgressKanban pages={reportPages} propertyId={client.propertyId} />
+          )}
+          <AIDraftAssistant propertyId={client.propertyId} propertyContext={{ propertyAddress: client.address, yearBuilt: client.yearBuilt, sqft: client.sqft, propertyType: client.propertyType }} />
+          <VoiceAndPhotoTools reportId={client.reportId || ""} propertyId={client.propertyId} />
+          <ReportAITools
+            reportId={client.reportId || ""}
+            propertyId={client.propertyId}
+            propertyContext={{
+              propertyAddress: client.address,
+              yearBuilt: client.yearBuilt,
+              sqft: client.sqft,
+              bedrooms: client.bedrooms,
+              bathrooms: client.bathrooms,
+              propertyType: client.propertyType,
+            }}
+          />
+          <InternalReportComments reportId={client.reportId} />
+          {reportPages && reportPages.length > 0 && (
+            <DragReportReorder pages={reportPages.map((p: any) => ({ id: p.id, title: p.title, group_name: p.group_name, sort_order: p.sort_order, status: p.status, condition_rating: p.condition_rating }))} reportId={client.reportId!} />
+          )}
+          <ReportPageManager
+            propertyId={client.propertyId}
+            reportId={client.reportId}
+            propertyContext={{
+              propertyAddress: client.address,
+              yearBuilt: client.yearBuilt,
+              sqft: client.sqft,
+              bedrooms: client.bedrooms,
+              bathrooms: client.bathrooms,
+              propertyType: client.propertyType,
+              relationshipType: client.relationshipType,
+              clientIntelligenceSummary: client.clientIntelligenceSummary,
+            }}
+          />
+        </>
+      )}
+    </div>
+  );
+};
 
 const AdminClientDetail = () => {
   const { clientId } = useParams();
@@ -303,8 +397,6 @@ const AdminClientDetail = () => {
     setInvoiceForm({ description: inv.description, amount: String(inv.amount), due_date: inv.due_date || "", status: inv.status });
     setEditInvoiceOpen(true);
   };
-
-
   const openEditEvent = (ev: typeof events extends (infer T)[] | undefined ? T : never) => {
     if (!ev) return;
     setEditId(ev.id);
@@ -426,59 +518,11 @@ const AdminClientDetail = () => {
         {activeTab === "timeline" && <ClientTimelineTab propertyId={client.propertyId} />}
         {activeTab === "engagement" && <ClientEngagementTab clientUserId={client.clientUserId || ""} propertyId={client.propertyId} />}
         {activeTab === "report" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-end gap-2">
-              {client.reportId && <ReportVersionHistory reportId={client.reportId} propertyId={client.propertyId} />}
-              {client.reportId && (
-                <ReportCloneDialog sourceReportId={client.reportId} sourcePropertyName={client.propertyName} />
-              )}
-              {pdfData && (
-                <PDFDownloadButton
-                  data={pdfData}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
-                  label="Generate PDF"
-                />
-              )}
-            </div>
-            {client.reportId && <TemplateVersioning reportId={client.reportId} />}
-            {reportPages && reportPages.length > 0 && (
-              <ReportProgressKanban pages={reportPages} propertyId={client.propertyId} />
-            )}
-            <AIDraftAssistant propertyId={client.propertyId} propertyContext={{ propertyAddress: client.address, yearBuilt: client.yearBuilt, sqft: client.sqft, propertyType: client.propertyType }} />
-            <VoiceAndPhotoTools reportId={client.reportId || ""} propertyId={client.propertyId} />
-            <ReportAITools
-              reportId={client.reportId || ""}
-              propertyId={client.propertyId}
-              propertyContext={{
-                propertyAddress: client.address,
-                yearBuilt: client.yearBuilt,
-                sqft: client.sqft,
-                bedrooms: client.bedrooms,
-                bathrooms: client.bathrooms,
-                propertyType: client.propertyType,
-              }}
-            />
-            <InternalReportComments reportId={client.reportId} />
-            {reportPages && reportPages.length > 0 && (
-              <DragReportReorder pages={reportPages.map(p => ({ id: p.id, title: p.title, group_name: p.group_name, sort_order: p.sort_order, status: p.status, condition_rating: p.condition_rating }))} reportId={client.reportId!} />
-            )}
-            <ReportPageManager
-              propertyId={client.propertyId}
-              reportId={client.reportId}
-              propertyContext={{
-                propertyAddress: client.address,
-                yearBuilt: client.yearBuilt,
-                sqft: client.sqft,
-                bedrooms: client.bedrooms,
-                bathrooms: client.bathrooms,
-                propertyType: client.propertyType,
-                relationshipType: client.relationshipType,
-                clientIntelligenceSummary: client.clientIntelligenceSummary,
-              }}
-            />
-          </div>
+          <ReportTabContent
+            client={client}
+            reportPages={reportPages}
+            pdfData={pdfData}
+          />
         )}
         {activeTab === "files" && (
           <div className="space-y-4">

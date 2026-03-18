@@ -1,0 +1,64 @@
+// Shared Block Renderer — used in both WYSIWYG editor and client portal
+import type { ReportBlock } from "./types";
+import CoverBlock from "./blocks/CoverBlock";
+import ScoreBlock from "./blocks/ScoreBlock";
+import TextBlock from "./blocks/TextBlock";
+import FindingCardBlock from "./blocks/FindingCardBlock";
+import FindingGroupBlock from "./blocks/FindingGroupBlock";
+import PhotoBlock from "./blocks/PhotoBlock";
+import PhotoGalleryBlock from "./blocks/PhotoGalleryBlock";
+import PriorityActionBlock from "./blocks/PriorityActionBlock";
+import CostRangeBlock from "./blocks/CostRangeBlock";
+import StatCardBlock from "./blocks/StatCardBlock";
+import DividerBlock from "./blocks/DividerBlock";
+import StrategicPlanBlock from "./blocks/StrategicPlanBlock";
+import ChapterHeaderBlock from "./blocks/ChapterHeaderBlock";
+import AINarrativeBlock from "./blocks/AINarrativeBlock";
+
+interface SharedBlockRendererProps {
+  block: ReportBlock;
+  editable?: boolean;
+  onChange?: (content: Record<string, unknown>) => void;
+  reportId?: string;
+  propertyAddress?: string;
+}
+
+const SharedBlockRenderer = ({ block, editable, onChange, reportId, propertyAddress }: SharedBlockRendererProps) => {
+  const c = block.content as Record<string, unknown>;
+  const handleChange = (updated: Record<string, unknown>) => onChange?.(updated);
+
+  switch (block.type) {
+    case "cover":
+      return <CoverBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "score":
+      return <ScoreBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "text":
+      return <TextBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "finding_card":
+      return <FindingCardBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "finding_group":
+      return <FindingGroupBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "photo":
+      return <PhotoBlock content={c as any} editable={editable} onChange={handleChange as any} reportId={reportId} />;
+    case "photo_gallery":
+      return <PhotoGalleryBlock content={c as any} editable={editable} onChange={handleChange as any} reportId={reportId} />;
+    case "priority_action":
+      return <PriorityActionBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "cost_range":
+      return <CostRangeBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "stat_card":
+      return <StatCardBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "divider":
+      return <DividerBlock />;
+    case "strategic_plan":
+      return <StrategicPlanBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "chapter_header":
+      return <ChapterHeaderBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "ai_narrative":
+      return <AINarrativeBlock content={c as any} editable={editable} onChange={handleChange as any} propertyAddress={propertyAddress} pageSlug={c.pageSlug as string} />;
+    default:
+      return <div className="bg-muted rounded p-4 text-xs text-muted-foreground">Unknown block: {block.type}</div>;
+  }
+};
+
+export default SharedBlockRenderer;

@@ -1,0 +1,1 @@
+ALTER TABLE public.reports ADD COLUMN IF NOT EXISTS blocks_json jsonb DEFAULT '[]'::jsonb;

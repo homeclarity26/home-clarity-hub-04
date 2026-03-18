@@ -1,4 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
+import PortalBlockViewer from "@/components/wysiwyg/PortalBlockViewer";
+import type { ReportBlock } from "@/components/wysiwyg/types";
 import { reportPages as staticPages, reportGroups as staticGroups, type ReportPageData } from "@/data/reportContent";
 import ReportPage from "@/components/report/ReportPage";
 import FinancialRoadmapPage from "@/components/report/FinancialRoadmapPage";
@@ -58,6 +60,7 @@ interface ReportTabProps {
   iguidePdfUrl?: string | null;
   completionPercent?: number;
   estimatedValue?: number | null;
+  blocksJson?: unknown[];
 }
 
 const ReportTab = ({
@@ -81,7 +84,10 @@ const ReportTab = ({
   iguidePdfUrl,
   completionPercent = 0,
   estimatedValue,
+  blocksJson,
 }: ReportTabProps) => {
+  // If blocks_json has content, render using the WYSIWYG block viewer
+  const hasBlocks = blocksJson && Array.isArray(blocksJson) && blocksJson.length > 0;
   const reportGroups = groups || staticGroups;
   const reportPages = pages || staticPages;
   const [activeChapter, setActiveChapter] = useState("exterior");
@@ -121,6 +127,11 @@ const ReportTab = ({
   );
 
   const page = activePageId ? reportPages[activePageId] : null;
+
+  // --- WYSIWYG blocks view (when blocks_json has content) ---
+  if (hasBlocks && !activePageId) {
+    return <PortalBlockViewer blocks={blocksJson as ReportBlock[]} propertyAddress={propertyAddress} />;
+  }
 
   // --- Individual report page view ---
   if (page) {
