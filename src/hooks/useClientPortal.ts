@@ -159,6 +159,10 @@ export function useClientPortal(propertyId?: string) {
           status: rpt.status,
           created_by: rpt.created_by,
         });
+        // Store blocks_json if present
+        if ((rpt as Record<string, unknown>).blocks_json && Array.isArray((rpt as Record<string, unknown>).blocks_json)) {
+          setBlocksJson((rpt as Record<string, unknown>).blocks_json as unknown[]);
+        }
 
         // 3. Fetch creator profile
         const { data: creatorData } = await supabase
