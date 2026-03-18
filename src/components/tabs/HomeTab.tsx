@@ -40,6 +40,14 @@ const HomeTab = ({
         {propertyAddress && (
           <p className="font-sans text-base text-muted-foreground">{propertyAddress}</p>
         )}
+        <div className="flex items-center justify-center gap-2 mt-3">
+          <Home className="w-4 h-4 text-accent" />
+          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-foreground">
+            {estimatedValue
+              ? `Estimated Value: $${estimatedValue.toLocaleString()}`
+              : "Value estimate pending"}
+          </p>
+        </div>
       </section>
 
       {/* Card Grid */}

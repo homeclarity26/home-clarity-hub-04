@@ -140,6 +140,7 @@ const Index = () => {
               propertyAddress={portal.property?.address || ""}
               completionPercent={portal.completionPercent}
               creatorName={portal.creatorName}
+              estimatedValue={portal.property?.estimated_value}
             />
           )}
         </div>
