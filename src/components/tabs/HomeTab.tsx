@@ -151,8 +151,14 @@ const HomeTab = ({
       {/* Card Grid */}
       <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
 
+        {/* AI Priority Card */}
+        {propertyId && <AIPriorityCard propertyId={propertyId} reportPages={reportPages} />}
+
         {/* Interactive Home Health Dashboard */}
         {reportPages && <InteractiveHealthDashboard pages={reportPages} onNavigate={onNavigate} />}
+
+        {/* Satisfaction Survey */}
+        {propertyId && <SatisfactionSurvey propertyId={propertyId} />}
 
         {/* Cost Comparison Tool */}
         {reportPages && <CostComparisonTool pages={reportPages} />}
