@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.voice-to-narrative]
 verify_jwt = false
+
+[functions.qa-coach]
+verify_jwt = false
