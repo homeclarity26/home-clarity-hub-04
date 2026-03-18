@@ -115,6 +115,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
   const [paymentForm, setPaymentForm] = useState({ amount: "", payment_date: new Date().toISOString().split("T")[0], method: "check", notes: "" });
   const [changeOrderForm, setChangeOrderForm] = useState({ title: "", description: "", amount: "" });
   const [aiJobDescription, setAiJobDescription] = useState("");
+  const [aiTranscript, setAiTranscript] = useState("");
   const [aiChangeDescription, setAiChangeDescription] = useState("");
 
   // Edit mode
