@@ -155,7 +155,7 @@ const EquipmentSection = ({ propertyId, reportPages }: EquipmentSectionProps) =>
   };
 
   const remove = async (id: string) => {
-    const { error } = await supabase.from("equipment").delete().eq("id", id);
+    const { error } = await (supabase.from("equipment" as any) as any).delete().eq("id", id);
     if (error) { toast.error("Failed to delete"); return; }
     toast.success("Removed");
     load();
