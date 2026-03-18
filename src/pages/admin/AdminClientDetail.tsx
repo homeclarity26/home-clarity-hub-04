@@ -456,7 +456,12 @@ const AdminClientDetail = () => {
         {activeTab === "files" && <FileManager propertyId={client.propertyId} />}
         {activeTab === "comments" && <CommentsManager clientId={client.id} />}
         {activeTab === "vendors" && <VendorManager propertyId={client.propertyId} />}
-        {activeTab === "messages" && <AdminMessagesSection propertyId={client.propertyId} clientName={client.name} propertyAddress={client.address} />}
+        {activeTab === "messages" && (
+          <div className="space-y-4">
+            <AdminMessagesSection propertyId={client.propertyId} clientName={client.name} propertyAddress={client.address} />
+            <QuickReplyTemplates />
+          </div>
+        )}
         {activeTab === "equipment" && (
           <EquipmentSection
             propertyId={client.propertyId}
