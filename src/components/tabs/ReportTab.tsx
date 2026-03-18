@@ -80,6 +80,7 @@ const ReportTab = ({
   iguideUrl,
   iguidePdfUrl,
   completionPercent = 0,
+  estimatedValue,
 }: ReportTabProps) => {
   const reportGroups = groups || staticGroups;
   const reportPages = pages || staticPages;
