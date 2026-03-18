@@ -132,7 +132,7 @@ const NewReportWizard = () => {
   const [draftProgress, setDraftProgress] = useState<{ current: number; total: number; currentPage: string } | null>(null);
   const [draftAllDone, setDraftAllDone] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   // Template state
   const [templates, setTemplates] = useState<PageTemplate[]>([]);
