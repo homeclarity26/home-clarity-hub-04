@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, FileText, HelpCircle, CheckCircle, BookOpen, AlertTriangle, Plus, Loader2, DollarSign, TrendingUp, CreditCard, MessageSquare, UserPlus, Clock } from "lucide-react";
+import { Users, FileText, HelpCircle, CheckCircle, BookOpen, AlertTriangle, Plus, Loader2, DollarSign, TrendingUp, CreditCard, MessageSquare, UserPlus, Clock, Command } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,8 @@ import RevenueAnalytics from "@/components/admin/RevenueAnalytics";
 import TasksSection from "@/components/admin/TasksSection";
 import NPSOverviewCard from "@/components/admin/NPSOverviewCard";
 import PropertyMap from "@/components/admin/PropertyMap";
+import OverdueActionCenter from "@/components/admin/OverdueActionCenter";
+import CrossReportAnalytics from "@/components/admin/CrossReportAnalytics";
 import { useAdminClients, useAdminStats, useAdminActivityLog, useClientsNeedingAttention } from "@/hooks/useAdminData";
 import { useWeeklyTimeEntries } from "@/hooks/useTimeTracking";
 import { supabase } from "@/integrations/supabase/client";
