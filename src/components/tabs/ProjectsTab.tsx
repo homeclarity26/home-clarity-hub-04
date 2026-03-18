@@ -138,6 +138,35 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
   const activeProjects = projects.filter((p) => p.status !== "complete");
   const completedProjects = projects.filter((p) => p.status === "complete");
 
+  // Build recommendations from report pages
+  const recommendations = pages
+    ? Object.entries(pages).flatMap(([key, p]) =>
+        (p.recommendations || []).map((rec) => ({ pageKey: key, pageTitle: p.title, recommendation: rec, timing: p.timing }))
+      )
+    : [];
+
+  const handleRequestProject = async () => {
+    if (!selectedRecommendation || !propertyId) return;
+    setRequestSubmitting(true);
+    try {
+      const { error } = await supabase.from("projects").insert({
+        property_id: propertyId,
+        title: selectedRecommendation.recommendation.slice(0, 80),
+        description: `Client requested project based on report recommendation:\n\n"${selectedRecommendation.recommendation}"\n\nFrom: ${selectedRecommendation.pageTitle}`,
+        status: "requested",
+      });
+      if (error) throw error;
+      toast.success("Project request submitted! Your advisor will review it.");
+      setRequestDialogOpen(false);
+      setSelectedRecommendation(null);
+      loadData();
+    } catch {
+      toast.error("Failed to submit request");
+    } finally {
+      setRequestSubmitting(false);
+    }
+  };
+
   const upcoming = pages
     ? Object.entries(pages).filter(([, p]) => p.timing).map(([key, p]) => ({ key, title: p.title, timing: p.timing! }))
     : [];
