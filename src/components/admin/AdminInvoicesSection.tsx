@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Pencil, ArrowLeft, DollarSign, CreditCard, FileText, Sparkles, Loader2, Send, X } from "lucide-react";
+import { Plus, Trash2, Pencil, ArrowLeft, DollarSign, CreditCard, FileText, Sparkles, Loader2, Send, X, MessageSquareText } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface AdminInvoicesSectionProps {
