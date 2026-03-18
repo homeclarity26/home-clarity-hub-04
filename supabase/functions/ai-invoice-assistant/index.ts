@@ -161,6 +161,29 @@ function getSchema(task: string) {
         required: ["lineItems"],
         additionalProperties: false,
       };
+    case "from_transcript":
+      return {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          lineItems: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                description: { type: "string" },
+                quantity: { type: "number" },
+                unit_price: { type: "number" },
+              },
+              required: ["description", "quantity", "unit_price"],
+              additionalProperties: false,
+            },
+          },
+          notes: { type: "string" },
+        },
+        required: ["title", "lineItems", "notes"],
+        additionalProperties: false,
+      };
     case "draft_change_order":
       return {
         type: "object",
