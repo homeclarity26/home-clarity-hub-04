@@ -86,6 +86,13 @@ const AdminAutomations = () => {
     <div>
       <AdminHeader breadcrumbs={[{ label: "Settings", path: "/admin/settings" }, { label: "Automations" }]} />
       <div className="p-6 max-w-4xl space-y-6">
+        <Tabs defaultValue="rules" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="rules" className="font-sans text-xs">Automation Rules</TabsTrigger>
+            <TabsTrigger value="onboarding" className="font-sans text-xs">Onboarding Workflows</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="rules" className="space-y-6">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Smart Automations</h2>
           <p className="text-sm text-muted-foreground">Configure automatic task creation and notifications based on client activity.</p>
