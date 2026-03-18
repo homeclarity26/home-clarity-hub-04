@@ -17,10 +17,12 @@ import MembershipBanner from "@/components/MembershipBanner";
 import NotificationPreferences from "@/components/NotificationPreferences";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import NPSSurveyCard from "@/components/NPSSurveyCard";
+import PropertySelector from "@/components/PropertySelector";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import { usePortalTracking } from "@/hooks/usePortalTracking";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 
 const Index = () => {
@@ -28,13 +30,32 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isEditLink = searchParams.get("edit") === "true";
-  const portal = useClientPortal(propertyId);
-  const { profile, isCreator } = useAuth();
+  const { user, isCreator } = useAuth();
   const [activeTab, setActiveTab] = useState("home");
   const [reportPageId, setReportPageId] = useState<string | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { editMode, toggleEditMode, canEdit } = useEditMode();
+
+  // Auto-redirect to first property if none specified
+  useEffect(() => {
+    if (propertyId || isCreator) return;
+    const findProperty = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("properties")
+        .select("id")
+        .eq("client_user_id", user.id)
+        .limit(1);
+      if (data && data.length > 0) {
+        navigate(`/portal/${data[0].id}`, { replace: true });
+      }
+    };
+    findProperty();
+  }, [propertyId, user, isCreator, navigate]);
+
+  const portal = useClientPortal(propertyId);
+  const { profile } = useAuth();
   usePortalTracking(activeTab);
 
   // Check onboarding status for new clients
