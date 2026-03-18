@@ -172,6 +172,7 @@ const Index = () => {
               creatorName={portal.creatorName}
               estimatedValue={portal.property?.estimated_value}
               propertyId={propertyId || ""}
+              reportPages={portal.pages}
             />
           )}
         </div>
