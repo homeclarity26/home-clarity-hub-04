@@ -182,6 +182,7 @@ const AdminDashboard = () => {
             </Card>
 
             <NPSOverviewCard />
+            <EquipmentWarrantyCalendar />
           </div>
         </div>
 
