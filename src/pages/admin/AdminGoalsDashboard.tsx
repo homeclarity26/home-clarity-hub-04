@@ -4,12 +4,16 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Target, Search, ArrowRight } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Loader2, Target, Search, ArrowRight, Plus } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const STATUS_COLORS: Record<string, string> = { dreaming: "bg-muted text-muted-foreground", planning: "bg-accent/20 text-accent-foreground", "in_progress": "bg-primary/10 text-primary", complete: "bg-green-100 text-green-800" };
 
