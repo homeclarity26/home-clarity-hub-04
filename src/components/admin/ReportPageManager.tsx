@@ -405,9 +405,11 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
 
         {/* ASSIGNMENTS VIEW */}
         <TabsContent value="assignments" className="mt-4">
-          <PageAssignments
-            pages={pages.map((p) => ({ id: p.id, title: p.title, status: p.status }))}
-          />
+          <div className="space-y-3">
+            {pages.map((p) => (
+              <PageAssignments key={p.id} reportPageId={p.id} pageTitle={p.title} />
+            ))}
+          </div>
         </TabsContent>
 
         {/* SNIPPETS VIEW */}
