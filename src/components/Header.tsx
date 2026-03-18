@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Menu, X, Settings, Pencil } from "lucide-react";
+import { Menu, X, Settings, Pencil, Bell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { Switch } from "@/components/ui/switch";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
 
 interface HeaderProps {
   activeTab: string;
