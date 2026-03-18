@@ -60,7 +60,12 @@ const ClientTable = ({ clients, compact }: ClientTableProps) => {
 
   return (
     <div className="space-y-2">
-      <BatchOperationsBar selectedIds={selectedIds} onClear={() => setSelectedIds([])} context="clients" />
+      <BatchOperationsBar
+        selectedIds={selectedIds}
+        onClear={() => setSelectedIds([])}
+        context="clients"
+        clients={clients.map((c) => ({ id: c.id, name: c.name, email: c.email }))}
+      />
       <Table>
         <TableHeader>
           <TableRow>
