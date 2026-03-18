@@ -12,6 +12,7 @@ const navItems = [
   { label: "Inbox", path: "/admin/inbox", icon: MessageSquare },
   { label: "Calendar", path: "/admin/calendar", icon: Calendar },
   { label: "Clients", path: "/admin/clients", icon: Users },
+  { label: "Projects", path: "/admin/projects", icon: Briefcase },
   { label: "Tasks", path: "/admin/tasks", icon: CheckSquare },
   { label: "Vendors", path: "/admin/vendors", icon: Briefcase },
   { label: "Goals", path: "/admin/goals", icon: Target },
