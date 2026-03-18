@@ -105,6 +105,78 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
   const discount = discountType === "percent" ? subtotal * (discountAmount / 100) : discountAmount;
   const total = subtotal - discount + tax;
 
+  // AI: Generate from transcript
+  const handleAiFromTranscript = async () => {
+    if (!aiTranscript.trim()) return;
+    setAiGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-invoice-assistant", {
+        body: {
+          task: "from_transcript",
+          context: {
+            transcript: aiTranscript,
+            propertyAddress,
+            sqft,
+            propertyType,
+            clientName,
+          },
+        },
+      });
+      if (error) throw error;
+      if (data?.title) setTitle(data.title);
+      if (data?.notes) setNotes(data.notes);
+      if (data?.lineItems && Array.isArray(data.lineItems)) {
+        setLineItems(data.lineItems.map((li: any) => ({
+          service_id: null,
+          description: li.description || "",
+          quantity: String(li.quantity || 1),
+          unit_price: String(li.unit_price || 0),
+        })));
+        toast.success(`AI extracted ${data.lineItems.length} line items — review before saving`);
+      }
+    } catch (err: any) {
+      if (err?.status === 429) toast.error("Rate limited — try again in a moment");
+      else if (err?.status === 402) toast.error("AI credits exhausted");
+      else toast.error("AI generation failed — try again or enter items manually");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  // Partial conversion: selected line items → invoice
+  const convertPartialToInvoice = async (est: any) => {
+    if (!user || selectedLineItemIds.size === 0) return;
+    setConverting(true);
+    try {
+      const lis = estimateLineItems.filter((li: any) => li.estimate_id === est.id && selectedLineItemIds.has(li.id));
+      const partialSubtotal = lis.reduce((s: number, li: any) => s + Number(li.total), 0);
+
+      const { data: inv, error } = await (supabase.from("invoices") as any).insert({
+        property_id: propertyId, title: `${est.title} (partial)`, description: est.title,
+        amount: partialSubtotal, subtotal: partialSubtotal, tax: 0, total: partialSubtotal,
+        balance_due: partialSubtotal, status: "draft", type: "invoice", notes: est.notes,
+      }).select("id").single();
+      if (error || !inv) throw error;
+
+      await (supabase.from("invoice_line_items") as any).insert(
+        lis.map((li: any, i: number) => ({
+          invoice_id: inv.id, service_id: li.service_id, description: li.description,
+          quantity: li.quantity, unit_price: li.unit_price, total: li.total, sort_order: i,
+        }))
+      );
+
+      toast.success(`Invoice created from ${lis.length} selected items`);
+      setConvertDialogOpen(false);
+      setSelectedLineItemIds(new Set());
+      qc.invalidateQueries({ queryKey: ["estimates", propertyId] });
+      qc.invalidateQueries({ queryKey: ["admin-invoices", propertyId] });
+    } catch {
+      toast.error("Failed to create invoice from selected items");
+    } finally {
+      setConverting(false);
+    }
+  };
+
   const createEstimate = async () => {
     if (!user || lineItems.length === 0) return;
     const { data: est, error } = await (supabase.from("estimates") as any).insert({
