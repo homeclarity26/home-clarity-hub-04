@@ -10,9 +10,10 @@ interface ChatPanelProps {
   onOpenChange: (open: boolean) => void;
   reportContext: unknown;
   initialQuery?: string;
+  onNavigateToPage?: (pageTitle: string) => void;
 }
 
-const ChatPanel = ({ open, onOpenChange, reportContext, initialQuery }: ChatPanelProps) => {
+const ChatPanel = ({ open, onOpenChange, reportContext, initialQuery, onNavigateToPage }: ChatPanelProps) => {
   const { messages, isLoading, send, clearMessages } = useChat(reportContext);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -88,7 +89,7 @@ const ChatPanel = ({ open, onOpenChange, reportContext, initialQuery }: ChatPane
             </div>
           )}
           {messages.map((msg, i) => (
-            <ChatMessage key={i} message={msg} />
+            <ChatMessage key={i} message={msg} onNavigateToPage={onNavigateToPage} />
           ))}
           {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
             <div className="flex justify-start">

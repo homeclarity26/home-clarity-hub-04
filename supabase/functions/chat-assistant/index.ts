@@ -16,8 +16,19 @@ serve(async (req) => {
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
 
     const ctx = reportContext || {};
+
+    // Build a page index for citations
+    const pageIndex: { slug: string; title: string; group: string; condition: string }[] = [];
+
     const pagesText = Array.isArray(ctx.pages) && ctx.pages.length > 0
       ? ctx.pages.map((p: Record<string, unknown>) => {
+          const slug = (p.id || p.page_key || "") as string;
+          const title = (p.title || "") as string;
+          const group = (p.group || "") as string;
+          const condition = (p.conditionRating || "Not assessed") as string;
+
+          pageIndex.push({ slug, title, group, condition });
+
           const narrative = Array.isArray(p.narrative) ? p.narrative.join(" ") : (p.narrative || "");
           const specs = p.specs && typeof p.specs === "object"
             ? Object.entries(p.specs as Record<string, unknown>).map(([k, v]) => `${k}: ${v}`).join(", ")
@@ -27,7 +38,7 @@ serve(async (req) => {
             : "";
           const recs = Array.isArray(p.recommendations) ? (p.recommendations as string[]).join("; ") : "";
           return [
-            `### ${p.title} (${p.group || ""}) — Condition: ${p.conditionRating || "Not assessed"}`,
+            `### ${title} [PAGE:${slug}] (${group}) — Condition: ${condition}`,
             narrative,
             specs ? `Specs: ${specs}` : "",
             tiers ? `Cost tiers: ${tiers}` : "",
@@ -52,7 +63,13 @@ REPORT PAGES:
 ${pagesText}
 ${goalsText ? `\nCLIENT HOME GOALS:\n${goalsText}` : ""}
 
-GUIDELINES:
+CITATION GUIDELINES:
+- When referencing information from a specific report page, include a citation in the format: **[See: Page Title]** at the end of the relevant sentence or paragraph
+- Each page is tagged with [PAGE:slug] in the report data above — use the page title (not the slug) in your citations
+- You can cite multiple pages if your answer draws from several sections
+- Example: "Your roof is in Fair condition and should be budgeted for replacement in 3-5 years. **[See: Roof System]**"
+
+GENERAL GUIDELINES:
 - Reference specific findings from the report when answering
 - When discussing costs, cite the tier ranges (e.g., "Adam recommends budgeting $4,000–$8,000")
 - Flag anything rated Poor or Critical as urgent

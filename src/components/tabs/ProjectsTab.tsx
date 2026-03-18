@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight, ChevronDown, CheckCircle, Calendar, DollarSign, User, Loader2, MessageSquare } from "lucide-react";
+import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight, ChevronDown, CheckCircle, Calendar, DollarSign, User, Loader2, MessageSquare, PlusCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ContractorBidsSection from "@/components/admin/ContractorBidsSection";
 import ProjectPhotoTimeline from "@/components/admin/ProjectPhotoTimeline";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,9 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [requestDialogOpen, setRequestDialogOpen] = useState(false);
+  const [requestSubmitting, setRequestSubmitting] = useState(false);
+  const [selectedRecommendation, setSelectedRecommendation] = useState<{ pageTitle: string; recommendation: string } | null>(null);
 
   const loadData = async () => {
     if (!propertyId) { setLoading(false); return; }
@@ -133,6 +137,35 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
 
   const activeProjects = projects.filter((p) => p.status !== "complete");
   const completedProjects = projects.filter((p) => p.status === "complete");
+
+  // Build recommendations from report pages
+  const recommendations = pages
+    ? Object.entries(pages).flatMap(([key, p]) =>
+        (p.recommendations || []).map((rec) => ({ pageKey: key, pageTitle: p.title, recommendation: rec, timing: p.timing }))
+      )
+    : [];
+
+  const handleRequestProject = async () => {
+    if (!selectedRecommendation || !propertyId) return;
+    setRequestSubmitting(true);
+    try {
+      const { error } = await supabase.from("projects").insert({
+        property_id: propertyId,
+        title: selectedRecommendation.recommendation.slice(0, 80),
+        description: `Client requested project based on report recommendation:\n\n"${selectedRecommendation.recommendation}"\n\nFrom: ${selectedRecommendation.pageTitle}`,
+        status: "requested",
+      });
+      if (error) throw error;
+      toast.success("Project request submitted! Your advisor will review it.");
+      setRequestDialogOpen(false);
+      setSelectedRecommendation(null);
+      loadData();
+    } catch {
+      toast.error("Failed to submit request");
+    } finally {
+      setRequestSubmitting(false);
+    }
+  };
 
   const upcoming = pages
     ? Object.entries(pages).filter(([, p]) => p.timing).map(([key, p]) => ({ key, title: p.title, timing: p.timing! }))
@@ -389,7 +422,15 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
         {/* Quick Actions */}
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {recommendations.length > 0 && (
+              <button onClick={() => setRequestDialogOpen(true)} className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200`}>
+                <PlusCircle className="w-5 h-5 text-accent mb-3" />
+                <h2 className="font-display text-xl text-foreground mb-1">Request a Project</h2>
+                <p className="font-sans text-sm text-muted-foreground">Start a project from your report recommendations</p>
+                <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors mt-2" />
+              </button>
+            )}
             <button onClick={() => { if (onTabChange) onTabChange("report"); else onNavigate("report"); }} className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200`}>
               <FileText className="w-5 h-5 text-accent mb-3" />
               <h2 className="font-display text-xl text-foreground mb-1">Review Report Recommendations</h2>
@@ -404,6 +445,47 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
             </button>
           </div>
         </div>
+
+        {/* Request Project Dialog */}
+        <Dialog open={requestDialogOpen} onOpenChange={setRequestDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="font-display text-xl">Request a Project</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm font-sans text-muted-foreground">Select a recommendation from your report to start a project request. Your advisor will review and follow up.</p>
+            <div className="max-h-[400px] overflow-y-auto space-y-2 mt-2">
+              {recommendations.map((rec, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedRecommendation({ pageTitle: rec.pageTitle, recommendation: rec.recommendation })}
+                  className={`w-full text-left p-3 rounded-lg border transition-colors cursor-pointer ${
+                    selectedRecommendation?.recommendation === rec.recommendation
+                      ? "border-accent bg-accent/10"
+                      : "border-border hover:bg-muted/50"
+                  }`}
+                >
+                  <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-1">{rec.pageTitle}</p>
+                  <p className="text-sm font-sans text-foreground">{rec.recommendation}</p>
+                  {rec.timing && (
+                    <span className={`mt-1 inline-block font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full ${getUrgencyBadge(rec.timing).cls}`}>
+                      {rec.timing}
+                    </span>
+                  )}
+                </button>
+              ))}
+              {recommendations.length === 0 && (
+                <p className="text-sm font-sans text-muted-foreground text-center py-8">No recommendations available in your report yet.</p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRequestDialogOpen(false)} className="font-sans">Cancel</Button>
+              <Button onClick={handleRequestProject} disabled={!selectedRecommendation || requestSubmitting} className="font-sans gap-2">
+                {requestSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <PlusCircle className="w-4 h-4" />}
+                Submit Request
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
