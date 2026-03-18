@@ -138,6 +138,13 @@ const MessagesTab = ({ propertyId, creatorName = "Your HBC Advisor", creatorInit
     fetchMessages();
   }, [propertyId, user?.id]);
 
+  // Pre-fill message from other tabs
+  useEffect(() => {
+    if (initialMessage) {
+      setNewMessage(initialMessage);
+    }
+  }, [initialMessage]);
+
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
