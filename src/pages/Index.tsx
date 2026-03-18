@@ -18,6 +18,7 @@ import NotificationPreferences from "@/components/NotificationPreferences";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import NPSSurveyCard from "@/components/NPSSurveyCard";
 import { useClientPortal } from "@/hooks/useClientPortal";
+import { usePortalTracking } from "@/hooks/usePortalTracking";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
