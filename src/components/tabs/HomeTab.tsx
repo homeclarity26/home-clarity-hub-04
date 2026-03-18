@@ -1,4 +1,5 @@
 import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle } from "lucide-react";
+import FeedbackWidget from "@/components/FeedbackWidget";
 
 interface HomeTabProps {
   onNavigate: (tab: string, pageId?: string) => void;
@@ -8,6 +9,7 @@ interface HomeTabProps {
   completionPercent?: number;
   creatorName?: string;
   estimatedValue?: number | null;
+  propertyId?: string;
 }
 
 const HomeTab = ({
