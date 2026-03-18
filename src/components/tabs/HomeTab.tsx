@@ -6,6 +6,7 @@ import MembershipBanner from "@/components/MembershipBanner";
 import ValuationModal from "@/components/ValuationModal";
 import HomeHealthDiagram from "@/components/HomeHealthDiagram";
 import AnnualReportCard from "@/components/AnnualReportCard";
+import MaintenanceReminders from "@/components/MaintenanceReminders";
 import { usePropertyValuation } from "@/hooks/usePropertyValuation";
 import type { ReportPageData } from "@/data/reportContent";
 
