@@ -107,9 +107,14 @@ Core property record. Extended by `20260315000000_add_intake_fields.sql`:
 ### `projects`
 - `id`, `property_id`, `title`, `description`, `status`, `priority`, `estimated_cost`, `actual_cost`
 
+### `property_messages` ← Added `20260317100000_add_property_messages.sql`
+- `id`, `property_id` (FK → properties), `sender_id` (FK → auth.users)
+- `message` text, `is_read` boolean (default false), `created_at`
+- RLS: clients read/write their own property messages; creators read/write all
+
 ### Other Tables
 - `schedule_events` — appointments, tasks per property
-- `vendors` — vendor directory per creator
+- `vendors` — vendor directory per creator; `report_page_key` column added (`20260317000000_add_vendor_page_key.sql`) for vendor-to-page linking
 - `files` — file attachments per property
 - `comments` — threaded comments per property
 
@@ -121,6 +126,8 @@ These migrations exist in `/supabase/migrations/` but have not been applied to t
 
 1. **`20260315000000_add_intake_fields.sql`** — Adds city, state, zip, county, property_type, relationship_type, hover_url, hover_pdf_url, iguide_pdf_url, client_intelligence_summary, discovery_notes, intake_status, digital_assets_status to `properties` table
 2. **`20260316000000_add_equipment_table.sql`** — Creates full `equipment` table with RLS policies and indexes
+3. **`20260317000000_add_vendor_page_key.sql`** — Adds `report_page_key` column to `vendors` table for vendor-to-page linking
+4. **`20260317100000_add_property_messages.sql`** — Creates `property_messages` table for client↔advisor direct messaging with full RLS policies
 
 **To apply:** Run in Supabase Dashboard → SQL Editor, or via `supabase db push`
 
@@ -181,6 +188,7 @@ src/
 │   │   ├── DocumentsTab.tsx
 │   │   ├── EquipmentTab.tsx          # Read-only equipment registry
 │   │   ├── HomeTab.tsx               # Portal landing with stats + nav
+│   │   ├── MessagesTab.tsx           # Direct client↔advisor messaging
 │   │   ├── PaymentsTab.tsx           # Invoice list with due dates + overdue highlighting
 │   │   ├── ProjectsTab.tsx
 │   │   ├── ReportTab.tsx             # Full report viewer + editor
@@ -359,15 +367,16 @@ supabase/
 - `?page=slug` query param jumps to specific report page
 
 **Tab Navigation** (`Header.tsx`):
-- Home · Report · Projects · Payments · Equipment · Documents · Schedule · Contacts
+- Home · Report · Projects · Payments · Equipment · Documents · Messages · Contacts · Schedule
 
 **Tab Components:**
 - `HomeTab.tsx` — Hero with property name, report progress bar, quick nav cards, "Ask a question" button (opens chat assistant)
-- `ReportTab.tsx` — Full paginated report with sidebar navigation
+- `ReportTab.tsx` — Full paginated report with sidebar navigation; digital home section has live Hover.to/iGuide links when URLs are set, "Coming Soon" when not
 - `ProjectsTab.tsx` — Project list with status/priority/cost
 - `PaymentsTab.tsx` — Invoice table with description, due date, amount, status; overdue row highlighting (bg-destructive/5); "Paid [date]" for completed invoices
 - `EquipmentTab.tsx` — Equipment registry (see above)
 - `DocumentsTab.tsx` — File downloads
+- `MessagesTab.tsx` — Direct messaging channel between client and HBC advisor; chat-style bubble UI; mock data for dev; send on Enter; `property_messages` table
 - `ScheduleTab.tsx` — Appointment calendar
 - `ContactsTab.tsx` — Contact directory
 
@@ -426,6 +435,9 @@ Tabs: Overview · Report · Files · Comments · Projects · Payments · Equipme
 - **Dependencies editor in DependenciesList** — full rewrite supporting adding new page dependencies (before/after) via search-select UI; BlockRenderer loads all report pages to populate the picker; shows add-prompt when no dependencies exist
 - **Projects from Recommendations** (AdminProjectsSection.tsx) — "From Recommendation" button opens two-step dialog: pick a report page with recommendations → pick a specific recommendation → pre-fills the project creation form with title, description, and linked page
 - **Vendor page assignments visible** (VendorManager.tsx) — vendor cards now show "Assigned to: page-slug" badge when `report_page_key` is set
+- **Digital Asset URL wiring in ReportTab** — `hover_url`, `hover_pdf_url`, `iguide_url`, `iguide_pdf_url` threaded from `useClientPortal` → `Index.tsx` → `ReportTab`; digital home section cards are live `<a>` links when URLs set, "Coming Soon" otherwise
+- **MessagesTab + property_messages** — new `property_messages` DB table with RLS; `MessagesTab.tsx` chat-style UI with bubble layout, mock data, mark-as-read, send on Enter; Messages tab added to Header (between Documents and Contacts) and wired in `Index.tsx`
+- **Bulk AI Draft in wizard** (`NewReportWizard.tsx` Step 3) — "Auto-Draft All Pages" panel above QA check; sequential loop through all created report_pages calling `draft-page-narrative`; real-time progress bar showing current page; results saved back to DB
 
 ---
 
@@ -454,29 +466,27 @@ Tabs: Overview · Report · Files · Comments · Projects · Payments · Equipme
    - Add `VITE_GOOGLE_MAPS_API_KEY=your_key_here` to `.env`
    - Enable Places API in Google Cloud Console
 
-4. **Run Pending DB Migrations**
+4. **Run Pending DB Migrations** (all 4 pending, run in order)
    - Apply `20260315000000_add_intake_fields.sql` in Supabase SQL Editor
    - Apply `20260316000000_add_equipment_table.sql` in Supabase SQL Editor
    - Apply `20260317000000_add_vendor_page_key.sql` in Supabase SQL Editor
+   - Apply `20260317100000_add_property_messages.sql` in Supabase SQL Editor
 
 ---
 
 ### 🟠 High Priority — Core Features Not Yet Built
 
-5. ~~AI Page Recommendation Integration (NewReportWizard Step 3)~~ ✅ **Already built** — `handleAiRecommendPages` calls `recommend-report-pages` edge function from wizard Step 3 "AI Suggest" button
+5. ~~AI Page Recommendation Integration (NewReportWizard Step 3)~~ ✅ **Built**
 
-6. **Report Page Auto-Draft on Creation**
-   - When a page is added via the wizard or admin, offer to auto-draft the narrative immediately
-   - `draft-page-narrative` edge function is built but only triggered manually inside the page editor
-   - Should offer "Auto-draft all selected pages?" at the end of the wizard
+6. ~~Report Page Auto-Draft on Creation~~ ✅ **Built** — wizard Step 3 has "Auto-Draft All Pages" panel that loops all created pages through `draft-page-narrative` with progress bar
 
-7. ~~Financial Roadmap Page~~ ✅ **Built** — `FinancialRoadmapPage.tsx` aggregates all page tiers, groups by urgency phase, Essential/Balanced/Premium switcher, cost totals
+7. ~~Financial Roadmap Page~~ ✅ **Built**
 
-8. ~~Action Plan Page~~ ✅ **Built** — `ActionPlanPage.tsx` auto-generates from recommendations + conditions, collapsible priority groups
+8. ~~Action Plan Page~~ ✅ **Built**
 
-9. ~~Report Page Dependencies~~ ✅ **Built** — `DependenciesList.tsx` rewritten with add-dependency UI; admin picks pages and type (before/after) from a dropdown populated by BlockRenderer fetching all report pages
+9. ~~Report Page Dependencies~~ ✅ **Built**
 
-10. ~~Vendor Connection on Report Pages~~ ✅ **Built** — `RecommendedVendors.tsx` component; admin assigns vendors per page from the edit UI; client portal shows vendor cards; `report_page_key` column added to vendors table
+10. ~~Vendor Connection on Report Pages~~ ✅ **Built**
 
 ---
 
@@ -492,28 +502,22 @@ Tabs: Overview · Report · Files · Comments · Projects · Payments · Equipme
 
 15. ~~Equipment → Report Page Sync~~ ✅ **Built** — "Save to Equipment Registry?" prompt after serial plate scan in BlockRenderer; `handleSaveEquipment()` inserts into `equipment` table with inferred category
 
-16. **Client Portal — Report Download Button**
-    - PDFDownloadButton exists in admin
-    - Should also be accessible from the client portal Report tab
-    - Requires checking if `pdfData` is populated in `Index.tsx` (it is — already built)
+16. ~~Client Portal — Report Download Button~~ ✅ **Already built** — PDFDownloadButton is in ReportTab hero; pdfData is fully wired in Index.tsx
 
 17. ~~Schedule Tab Enhancement~~ ✅ **Built** — full rewrite with event types, relative dates, today/this-week/upcoming sections, History section, seasonal checklists, rich mock data
 
 18. ~~Projects ↔ Report Pages~~ ✅ **Built** — `AdminProjectsSection.tsx` has "From Recommendation" two-step dialog (pick page → pick recommendation → pre-fill project form); projects already have `report_page_id` FK
 
-19. **Comments Threading**
-    - `CommentsManager.tsx` exists for admin
-    - Client portal doesn't currently have a comments/messages tab
-    - Should be accessible from the portal as a communication channel
+19. ~~Comments Threading / Messages~~ ✅ **Built** — `MessagesTab.tsx` provides chat-style client↔advisor messaging in the portal; `property_messages` DB table with full RLS; Messages tab added to Header and Index.tsx
 
 ---
 
 ### 🟢 Low Priority — Nice to Have
 
-20. **Hover.to + iGuide Embed**
-    - `hover_url` and `iguide_pdf_url` are stored
-    - Client portal should display Hover.to 3D model as embedded iframe (on Home or Documents tab)
-    - iGuide should be available as a PDF download or embedded viewer
+20. **Hover.to + iGuide Full Embed** *(partial — links work, embed not done)*
+    - URLs are stored and wired as live external links in ReportTab digital home section
+    - Full iframe embed of Hover.to 3D model or iGuide tour would be a nicer experience
+    - Consider embedding on HomeTab or Documents tab (iframe with src={hover_url})
 
 21. **Property Value Tracking**
     - `lookup-property-data` returns `estimatedValue` and `lastSalePrice`
@@ -650,9 +654,21 @@ else → "Up to Date"
 ## Current Branch State
 
 - **Branch:** `claude/nostalgic-archimedes`
-- **Last commit:** `186acf9` — "Add equipment registry, property editing, and payments improvements (A/B/C)"
+- **Last commit:** `40abd75` — "Add Messages tab, bulk AI draft, digital asset URL wiring, and vendor/dependency improvements"
 - All code changes from these sessions are committed
-- 2 DB migrations pending (not yet applied to Supabase)
-- 9 edge functions pending deployment
-- 2 API keys need to be configured (Gemini, Rentcast)
-- 1 frontend env var needed (Google Maps)
+- **4 DB migrations pending** (not yet applied to Supabase):
+  - `20260315000000_add_intake_fields.sql`
+  - `20260316000000_add_equipment_table.sql`
+  - `20260317000000_add_vendor_page_key.sql`
+  - `20260317100000_add_property_messages.sql`
+- **9 edge functions pending deployment** (none deployed yet)
+- **API keys needed:**
+  - `GEMINI_API_KEY` — Supabase secret (for all AI features)
+  - `RENTCAST_API_KEY` — Supabase secret (for property auto-lookup)
+  - `VITE_GOOGLE_MAPS_API_KEY` — frontend `.env` (for address autocomplete)
+
+## Session Start Protocol
+
+**At the start of every new session, read these files first:**
+1. `CLAUDE.md` — this file (architecture, conventions, current state)
+2. `TODO.md` — full task list with priorities and completion status
