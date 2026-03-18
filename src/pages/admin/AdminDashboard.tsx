@@ -69,6 +69,8 @@ const AdminDashboard = () => {
 
         {/* Property Map */}
         <PropertyMap />
+
+        {/* Tasks + Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* My Tasks */}
           <Card className="lg:col-span-2 p-5">
