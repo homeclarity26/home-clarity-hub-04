@@ -34,6 +34,8 @@ import AdminCalendar from "./pages/admin/AdminCalendar";
 import AdminProjects from "./pages/admin/AdminProjects";
 import AdminProjectDetail from "./pages/admin/AdminProjectDetail";
 import AdminNewProject from "./pages/admin/AdminNewProject";
+import AdminCRM from "./pages/admin/AdminCRM";
+import AdminCRMClientProfile from "./pages/admin/AdminCRMClientProfile";
 import TradePartnerLayout from "./layouts/TradePartnerLayout";
 import TradePartnerDashboard from "./pages/trade/TradePartnerDashboard";
 
@@ -188,6 +190,9 @@ const AppRoutes = () => {
         <Route path="projects" element={<AdminProjects />} />
         <Route path="projects/new" element={<AdminNewProject />} />
         <Route path="projects/:projectId" element={<AdminProjectDetail />} />
+        <Route path="crm" element={<AdminCRM />} />
+        <Route path="crm/clients/:id" element={<AdminCRMClientProfile />} />
+        <Route path="crm/trade-partners/:id" element={<AdminCRMClientProfile />} />
       </Route>
 
       {/* Trade Partner routes */}
