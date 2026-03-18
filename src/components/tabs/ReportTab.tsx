@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { reportPages as staticPages, reportGroups as staticGroups, type ReportPageData } from "@/data/reportContent";
 import ReportPage from "@/components/report/ReportPage";
 import FinancialRoadmapPage from "@/components/report/FinancialRoadmapPage";
 import ActionPlanPage from "@/components/report/ActionPlanPage";
+import ReportChapterNav, { CHAPTERS } from "@/components/report/ReportChapterNav";
+import ReportOverview from "@/components/report/ReportOverview";
+import FindingsTable, { type Finding } from "@/components/report/FindingsTable";
+import LifespanBar from "@/components/report/LifespanBar";
+import InvestmentSummary from "@/components/report/InvestmentSummary";
 import ImageGrid from "@/components/editor/ImageGrid";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
-import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -15,21 +19,12 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 import {
-  Box,
-  Ruler,
-  LayoutDashboard,
-  View,
-  FileText,
-  Home,
-  Layers,
-  Settings,
-  Target,
-  Award,
-  MessageCircle,
-  Phone,
-  ChevronRight,
   ArrowLeft,
+  ChevronRight,
+  MessageSquare,
+  PlusCircle,
 } from "lucide-react";
 
 export interface PropertyContext {
@@ -46,6 +41,7 @@ interface ReportTabProps {
   activePageId: string | null;
   onNavigate?: (pageId: string) => void;
   onTabChange?: (tab: string) => void;
+  onSendMessage?: (msg: string) => void;
   groups?: PortalGroup[];
   pages?: Record<string, ReportPageData>;
   pageKeyToDbId?: Record<string, string>;
@@ -60,44 +56,19 @@ interface ReportTabProps {
   hoverPdfUrl?: string | null;
   iguideUrl?: string | null;
   iguidePdfUrl?: string | null;
+  completionPercent?: number;
 }
-
-const conditionColor: Record<string, string> = {
-  Excellent: "bg-emerald-100 text-emerald-700",
-  Good: "bg-primary/10 text-primary",
-  Fair: "bg-accent/20 text-accent-foreground",
-  Poor: "bg-orange-100 text-orange-600",
-  Critical: "bg-destructive/10 text-destructive",
-};
-
-// digitalAssets is now built dynamically inside the component using portal URLs
-
-interface SectionCardDef {
-  id: string;
-  icon: typeof FileText;
-  title: string;
-  subtitle: string;
-  groupIds: string[];
-  gold?: boolean;
-}
-
-const sectionCards: SectionCardDef[] = [
-  { id: "full", icon: FileText, title: "Full Report", subtitle: "Read the complete home assessment", groupIds: [] },
-  { id: "exterior", icon: Home, title: "Exterior Assessment", subtitle: "Roof, siding, windows, landscaping & more", groupIds: ["exterior"] },
-  { id: "interior", icon: Layers, title: "Interior Assessment", subtitle: "Kitchen, bathrooms, bedrooms & every room", groupIds: ["interior"] },
-  { id: "systems", icon: Settings, title: "Systems & Equipment", subtitle: "HVAC, electrical, plumbing & appliances", groupIds: ["systems"] },
-  { id: "strategy", icon: Target, title: "Strategic Plan", subtitle: "Your 10-year financial roadmap", groupIds: ["strategy"], gold: true },
-];
 
 const ReportTab = ({
   activePageId,
   onNavigate,
   onTabChange,
+  onSendMessage,
   groups,
   pages,
   pageKeyToDbId = {},
   pageImages = {},
-  propertyName = "The Johnson Residence",
+  propertyName = "Your Home",
   propertyAddress = "",
   propertyId,
   pdfData,
@@ -107,42 +78,45 @@ const ReportTab = ({
   hoverPdfUrl,
   iguideUrl,
   iguidePdfUrl,
+  completionPercent = 0,
 }: ReportTabProps) => {
   const reportGroups = groups || staticGroups;
   const reportPages = pages || staticPages;
-  const [showFullTOC, setShowFullTOC] = useState(false);
+  const [activeChapter, setActiveChapter] = useState("exterior");
 
-  // Digital home assets — show real links when portal URLs are configured, "Coming Soon" otherwise
-  const digitalAssets = [
-    {
-      icon: Box,
-      title: "Your Home in 3D",
-      subtitle: "Explore the full exterior model",
-      href: hoverUrl || null,
-      label: hoverUrl ? "View in Hover.to" : null,
+  // Determine chapter from active page
+  const resolvedChapter = useMemo(() => {
+    if (!activePageId) return activeChapter;
+    for (const ch of CHAPTERS) {
+      const chapterPageIds = reportGroups
+        .filter((g) => ch.groupIds.some((gid) => g.id === gid || g.id.includes(gid)))
+        .flatMap((g) => g.pages);
+      if (chapterPageIds.includes(activePageId)) return ch.id;
+    }
+    return activeChapter;
+  }, [activePageId, reportGroups, activeChapter]);
+
+  const handleChapterChange = useCallback(
+    (chapterId: string) => {
+      setActiveChapter(chapterId);
+      // Navigate to first page of that chapter
+      const ch = CHAPTERS.find((c) => c.id === chapterId);
+      if (ch) {
+        const firstPage = reportGroups
+          .filter((g) => ch.groupIds.some((gid) => g.id === gid || g.id.includes(gid)))
+          .flatMap((g) => g.pages)[0];
+        if (firstPage) onNavigate?.(firstPage);
+      }
     },
-    {
-      icon: Ruler,
-      title: "Exterior Measurements",
-      subtitle: "50-page detailed measurement report",
-      href: hoverPdfUrl || null,
-      label: hoverPdfUrl ? "Download PDF" : null,
+    [reportGroups, onNavigate]
+  );
+
+  const handlePageSelect = useCallback(
+    (pageId: string) => {
+      onNavigate?.(pageId);
     },
-    {
-      icon: LayoutDashboard,
-      title: "Interior Floor Plans",
-      subtitle: "Room-by-room layout and dimensions",
-      href: iguidePdfUrl || null,
-      label: iguidePdfUrl ? "Download PDF" : null,
-    },
-    {
-      icon: View,
-      title: "360° Photo Tour",
-      subtitle: "Walk through every room",
-      href: iguideUrl || null,
-      label: iguideUrl ? "View iGuide Tour" : null,
-    },
-  ];
+    [onNavigate]
+  );
 
   const page = activePageId ? reportPages[activePageId] : null;
 
@@ -150,19 +124,39 @@ const ReportTab = ({
   if (page) {
     const dbPageId = pageKeyToDbId[activePageId!];
     const images = pageImages[activePageId!] || [];
-    const group = reportGroups.find(g => g.pages.includes(activePageId!));
+    const group = reportGroups.find((g) => g.pages.includes(activePageId!));
 
-    // Build flat ordered list of all page IDs for prev/next navigation
-    const allPageIds = reportGroups.flatMap(g => g.pages);
+    // Flat ordered list for prev/next
+    const allPageIds = reportGroups.flatMap((g) => g.pages);
     const currentIndex = allPageIds.indexOf(activePageId!);
     const prevPageId = currentIndex > 0 ? allPageIds[currentIndex - 1] : null;
     const nextPageId = currentIndex < allPageIds.length - 1 ? allPageIds[currentIndex + 1] : null;
     const prevPage = prevPageId ? reportPages[prevPageId] : null;
     const nextPage = nextPageId ? reportPages[nextPageId] : null;
 
+    // Extended page data for new fields
+    const extPage = page as unknown as Record<string, unknown>;
+    const findings = (extPage.findings as Finding[]) || [];
+    const expectedLifespan = extPage.expected_lifespan_years as number | undefined;
+    const currentAge = extPage.current_age_years as number | undefined;
+    const replacementCost = extPage.replacement_cost_today as number | undefined;
+    const lastInspected = extPage.last_inspected_date as string | undefined;
+    const nextReview = extPage.next_review_date as string | undefined;
+
     return (
       <div>
+        {/* Sticky Chapter Nav */}
+        <ReportChapterNav
+          groups={reportGroups}
+          pages={reportPages}
+          activeChapter={resolvedChapter}
+          activePageId={activePageId}
+          onChapterChange={handleChapterChange}
+          onPageSelect={handlePageSelect}
+        />
+
         <div className="max-w-[800px] mx-auto px-6 md:px-20 pt-8">
+          {/* Breadcrumb */}
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -191,22 +185,103 @@ const ReportTab = ({
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
+
+          {/* Section header meta */}
+          <div className="flex flex-wrap items-center gap-3 mt-2 mb-6">
+            {lastInspected && (
+              <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+                Inspected: {new Date(lastInspected).toLocaleDateString()}
+              </span>
+            )}
+            {nextReview && (
+              <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+                Next Review: {new Date(nextReview).toLocaleDateString()}
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* Lifespan bar (before main content) */}
+        {expectedLifespan && currentAge && (
+          <div className="max-w-[800px] mx-auto px-6 md:px-20 mb-6">
+            <LifespanBar
+              currentAge={currentAge}
+              expectedLifespan={expectedLifespan}
+            />
+          </div>
+        )}
+
+        {/* Main page content */}
         {activePageId === "financial-roadmap" ? (
           <FinancialRoadmapPage reportId={reportId} />
         ) : activePageId === "action-plan" ? (
           <ActionPlanPage reportId={reportId} />
         ) : (
-          <>
-            <ReportPage page={page} onNavigate={onNavigate} dbPageId={dbPageId} images={images} pdfData={pdfData} reportId={reportId} propertyId={propertyId} propertyAddress={propertyAddress} propertyContext={propertyContext} />
-            {images.length > 0 && (
-              <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-16">
-                <h3 className="font-display text-2xl text-foreground mb-6">Photos</h3>
-                <ImageGrid images={images} />
-              </div>
-            )}
-          </>
+          <ReportPage
+            page={page}
+            onNavigate={onNavigate}
+            dbPageId={dbPageId}
+            images={images}
+            pdfData={pdfData}
+            reportId={reportId}
+            propertyId={propertyId}
+            propertyAddress={propertyAddress}
+            propertyContext={propertyContext}
+          />
         )}
+
+        {/* Findings Table */}
+        {findings.length > 0 && (
+          <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-8">
+            <FindingsTable findings={findings} />
+          </div>
+        )}
+
+        {/* Photos gallery */}
+        {images.length > 0 && (
+          <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-8">
+            <h3 className="font-display text-2xl text-foreground mb-6">Photos</h3>
+            <ImageGrid images={images} />
+          </div>
+        )}
+
+        {/* Investment Summary */}
+        {replacementCost && (
+          <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-8">
+            <InvestmentSummary
+              replacementCostToday={replacementCost}
+              expectedLifespan={expectedLifespan}
+              currentAge={currentAge}
+              timing={page.timing}
+            />
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-8 flex flex-wrap gap-3">
+          {onSendMessage && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 font-mono text-[10px] uppercase tracking-wider"
+              onClick={() => onSendMessage(`I have a question about the ${page.title} section of my report.`)}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              Ask About This
+            </Button>
+          )}
+          {onTabChange && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 font-mono text-[10px] uppercase tracking-wider"
+              onClick={() => onTabChange("projects")}
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              Add to Project Plan
+            </Button>
+          )}
+        </div>
 
         {/* Prev / Next Navigation */}
         <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-16">
@@ -218,288 +293,54 @@ const ReportTab = ({
               >
                 <ArrowLeft className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
                 <div>
-                  <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground mb-0.5">Previous</p>
-                  <p className="font-sans text-sm text-foreground group-hover:text-accent transition-colors">{prevPage.title}</p>
+                  <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground mb-0.5">
+                    Previous
+                  </p>
+                  <p className="font-sans text-sm text-foreground group-hover:text-accent transition-colors">
+                    {prevPage.title}
+                  </p>
                 </div>
               </button>
-            ) : <div />}
+            ) : (
+              <div />
+            )}
             {nextPage ? (
               <button
                 onClick={() => onNavigate?.(nextPageId!)}
                 className="group flex items-center gap-3 text-right hover:text-accent transition-colors"
               >
                 <div>
-                  <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground mb-0.5">Next</p>
-                  <p className="font-sans text-sm text-foreground group-hover:text-accent transition-colors">{nextPage.title}</p>
+                  <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground mb-0.5">
+                    Next
+                  </p>
+                  <p className="font-sans text-sm text-foreground group-hover:text-accent transition-colors">
+                    {nextPage.title}
+                  </p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
               </button>
-            ) : <div />}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // --- Full TOC view ---
-  if (showFullTOC) {
-    return (
-      <div className="max-w-[800px] mx-auto px-6 md:px-20 py-12">
-        <button
-          onClick={() => setShowFullTOC(false)}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8 font-mono text-[11px] uppercase tracking-[0.15em]"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Overview
-        </button>
-        <h2 className="font-display text-3xl text-foreground mb-10">Complete Report</h2>
-        <div className="space-y-10">
-          {reportGroups.map((group) => (
-            <div key={group.id}>
-              <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4 pb-2 border-b border-border">
-                {group.title}
-              </h3>
-              <div className="space-y-1">
-                {group.pages.map((pageId, index) => {
-                  const p = reportPages[pageId];
-                  if (!p) return null;
-                  return (
-                    <button
-                      key={pageId}
-                      onClick={() => onNavigate?.(pageId)}
-                      className="w-full text-left px-4 py-4 rounded-lg hover:bg-muted transition-colors flex items-center justify-between group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <span className="font-mono text-[10px] text-muted-foreground/50 w-5 text-right">
-                          {String(index + 1).padStart(2, "0")}
-                        </span>
-                        <span className="text-base text-foreground font-sans group-hover:text-accent transition-colors">
-                          {p.title}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        {p.conditionRating && (
-                          <span className={`font-mono text-[10px] px-2 py-0.5 rounded-full ${conditionColor[p.conditionRating] || ""}`}>
-                            {p.conditionRating}
-                          </span>
-                        )}
-                        <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors" />
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // Helper: get page count and first page id for a set of group ids
-  const getGroupInfo = (groupIds: string[]) => {
-    const matched = reportGroups.filter(g => groupIds.includes(g.id));
-    const allPages = matched.flatMap(g => g.pages);
-    const firstPage = allPages[0] || "";
-    // Collect condition ratings for badges
-    const ratings: Record<string, number> = {};
-    allPages.forEach(pid => {
-      const r = reportPages[pid]?.conditionRating;
-      if (r) ratings[r] = (ratings[r] || 0) + 1;
-    });
-    return { count: allPages.length, firstPage, ratings };
-  };
-
-  // --- Cover page / bento grid ---
-  return (
-    <div>
-      {/* Hero */}
-      <div className="bg-primary text-primary-foreground py-20 md:py-28 px-6 md:px-20 text-center relative">
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">
-          {propertyName}
-        </p>
-        <h1 className="font-display text-4xl md:text-[56px] leading-tight text-primary-foreground mb-3">
-          Home Clarity Report
-        </h1>
-        {propertyAddress && (
-          <p className="font-sans text-base text-primary-foreground/70 mb-4">
-            {propertyAddress}
-          </p>
-        )}
-        <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-primary-foreground/50">
-          Your complete home stewardship guide
-        </p>
-        {pdfData && (
-          <div className="absolute top-6 right-6">
-            <PDFDownloadButton
-              data={pdfData}
-              variant="ghost"
-              size="sm"
-              className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground text-xs font-mono uppercase tracking-wider"
-              label="Download PDF"
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Card Grid */}
-      <div className="max-w-[1000px] mx-auto px-6 md:px-10 py-12 md:py-16 space-y-12">
-
-        {/* Row 1: Digital Home Assets */}
-        <section>
-          <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">
-            Your Digital Home
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {digitalAssets.map((asset) =>
-              asset.href ? (
-                <a
-                  key={asset.title}
-                  href={asset.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group bg-primary rounded-lg p-6 border-l-[3px] border-accent flex flex-col gap-3 relative overflow-hidden hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200"
-                >
-                  <div className="flex items-start justify-between">
-                    <asset.icon className="w-6 h-6 text-accent" />
-                    <span className="font-mono text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent/20 text-accent">
-                      {asset.label}
-                    </span>
-                  </div>
-                  <h3 className="font-display text-lg text-primary-foreground leading-snug">
-                    {asset.title}
-                  </h3>
-                  <p className="font-sans text-sm text-primary-foreground/60 leading-relaxed">
-                    {asset.subtitle}
-                  </p>
-                </a>
-              ) : (
-                <div
-                  key={asset.title}
-                  className="group bg-primary rounded-lg p-6 border-l-[3px] border-accent flex flex-col gap-3 relative overflow-hidden"
-                >
-                  <div className="flex items-start justify-between">
-                    <asset.icon className="w-6 h-6 text-accent" />
-                    <span className="font-mono text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary-foreground/10 text-primary-foreground/50">
-                      Coming Soon
-                    </span>
-                  </div>
-                  <h3 className="font-display text-lg text-primary-foreground leading-snug">
-                    {asset.title}
-                  </h3>
-                  <p className="font-sans text-sm text-primary-foreground/60 leading-relaxed">
-                    {asset.subtitle}
-                  </p>
-                </div>
-              )
+            ) : (
+              <div />
             )}
           </div>
-        </section>
-
-        {/* Row 2: Report Navigation */}
-        <section>
-          <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">
-            Report Sections
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sectionCards.map((card) => {
-              const isFullReport = card.id === "full";
-              const info = isFullReport ? null : getGroupInfo(card.groupIds);
-
-              const handleClick = () => {
-                if (isFullReport) {
-                  setShowFullTOC(true);
-                } else if (info?.firstPage) {
-                  onNavigate?.(info.firstPage);
-                }
-              };
-
-              return (
-                <button
-                  key={card.id}
-                  onClick={handleClick}
-                  className={`group text-left bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border min-h-[180px] ${
-                    card.gold ? "border-border border-l-[3px] border-l-accent" : "border-border"
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <card.icon className={`w-5 h-5 ${card.gold ? "text-accent" : "text-muted-foreground"}`} />
-                    {info && info.count > 0 && (
-                      <span className="font-mono text-[10px] text-muted-foreground">
-                        {info.count} section{info.count !== 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="font-display text-xl text-foreground leading-snug">
-                    {card.title}
-                  </h3>
-                  <p className="font-sans text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                    {card.subtitle}
-                  </p>
-                  {/* Condition rating badges */}
-                  {info && Object.keys(info.ratings).length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                      {Object.entries(info.ratings).map(([rating, count]) => (
-                        <span
-                          key={rating}
-                          className={`font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full ${conditionColor[rating] || ""}`}
-                        >
-                          {count} {rating}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors mt-auto" />
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Row 3: Quick Access */}
-        <section>
-          <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">
-            Quick Access
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <a
-              href="https://hometownbuildersclub.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border"
-            >
-              <Award className="w-5 h-5 text-accent" />
-              <h3 className="font-display text-xl text-foreground">Your HBC Membership</h3>
-              <p className="font-sans text-sm text-muted-foreground line-clamp-2">Lifetime access & advisory services</p>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors mt-auto" />
-            </a>
-
-            <button
-              onClick={() => {
-                const fab = document.querySelector<HTMLButtonElement>('[aria-label="Open assistant"]');
-                if (fab) fab.click();
-              }}
-              className="group text-left bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border"
-            >
-              <MessageCircle className="w-5 h-5 text-accent" />
-              <h3 className="font-display text-xl text-foreground">Ask a Question</h3>
-              <p className="font-sans text-sm text-muted-foreground line-clamp-2">AI-powered answers about your home</p>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors mt-auto" />
-            </button>
-
-            <button
-              onClick={() => onTabChange?.("contacts")}
-              className="group text-left bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border"
-            >
-              <Phone className="w-5 h-5 text-accent" />
-              <h3 className="font-display text-xl text-foreground">Contact Your Advisor</h3>
-              <p className="font-sans text-sm text-muted-foreground line-clamp-2">Adam Kilgore — Founder & Lead Advisor</p>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors mt-auto" />
-            </button>
-          </div>
-        </section>
+        </div>
       </div>
-    </div>
+    );
+  }
+
+  // --- Overview / Landing Page ---
+  return (
+    <ReportOverview
+      groups={reportGroups}
+      pages={reportPages}
+      propertyName={propertyName}
+      propertyAddress={propertyAddress}
+      completionPercent={completionPercent}
+      pdfData={pdfData}
+      onChapterSelect={handleChapterChange}
+      onPageSelect={handlePageSelect}
+      onSendMessage={onSendMessage}
+    />
   );
 };
 

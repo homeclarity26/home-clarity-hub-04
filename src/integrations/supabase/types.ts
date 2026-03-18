@@ -831,16 +831,23 @@ export type Database = {
           condition_rating: string | null
           created_at: string
           creator_notes: string | null
+          current_age_years: number | null
           dependencies: Json | null
+          expected_lifespan_years: number | null
+          findings: Json | null
           group_name: string
           health_bar: Json | null
           id: string
           images: Json | null
+          is_complete: boolean | null
           key_observations: Json | null
+          last_inspected_date: string | null
           maintenance: Json | null
           narrative: Json
+          next_review_date: string | null
           page_key: string
           recommendations: Json | null
+          replacement_cost_today: number | null
           report_id: string
           risks: Json | null
           sort_order: number
@@ -857,16 +864,23 @@ export type Database = {
           condition_rating?: string | null
           created_at?: string
           creator_notes?: string | null
+          current_age_years?: number | null
           dependencies?: Json | null
+          expected_lifespan_years?: number | null
+          findings?: Json | null
           group_name: string
           health_bar?: Json | null
           id?: string
           images?: Json | null
+          is_complete?: boolean | null
           key_observations?: Json | null
+          last_inspected_date?: string | null
           maintenance?: Json | null
           narrative?: Json
+          next_review_date?: string | null
           page_key: string
           recommendations?: Json | null
+          replacement_cost_today?: number | null
           report_id: string
           risks?: Json | null
           sort_order?: number
@@ -883,16 +897,23 @@ export type Database = {
           condition_rating?: string | null
           created_at?: string
           creator_notes?: string | null
+          current_age_years?: number | null
           dependencies?: Json | null
+          expected_lifespan_years?: number | null
+          findings?: Json | null
           group_name?: string
           health_bar?: Json | null
           id?: string
           images?: Json | null
+          is_complete?: boolean | null
           key_observations?: Json | null
+          last_inspected_date?: string | null
           maintenance?: Json | null
           narrative?: Json
+          next_review_date?: string | null
           page_key?: string
           recommendations?: Json | null
+          replacement_cost_today?: number | null
           report_id?: string
           risks?: Json | null
           sort_order?: number
