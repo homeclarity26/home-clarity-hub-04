@@ -344,6 +344,7 @@ const AdminClientDetail = () => {
         </div>
 
         {activeTab === "overview" && <ClientOverview client={client} />}
+        {activeTab === "timeline" && <ClientActivityTimeline propertyId={client.propertyId} />}
         {activeTab === "report" && (
           <div className="space-y-4">
             <div className="flex items-center justify-end">
