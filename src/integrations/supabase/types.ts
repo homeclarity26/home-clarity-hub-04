@@ -582,6 +582,44 @@ export type Database = {
           },
         ]
       }
+      inspection_checklists: {
+        Row: {
+          completed_count: number
+          created_at: string
+          id: string
+          items: Json
+          report_page_id: string
+          total_count: number
+          updated_at: string
+        }
+        Insert: {
+          completed_count?: number
+          created_at?: string
+          id?: string
+          items?: Json
+          report_page_id: string
+          total_count?: number
+          updated_at?: string
+        }
+        Update: {
+          completed_count?: number
+          created_at?: string
+          id?: string
+          items?: Json
+          report_page_id?: string
+          total_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_checklists_report_page_id_fkey"
+            columns: ["report_page_id"]
+            isOneToOne: false
+            referencedRelation: "report_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_line_items: {
         Row: {
           created_at: string
@@ -821,6 +859,77 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      narrative_snippets: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          created_by: string
+          id: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          category?: string
+          content: string
+          created_at?: string
+          created_by: string
+          id?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: []
+      }
+      page_assignments: {
+        Row: {
+          assigned_to: string
+          created_at: string
+          due_date: string | null
+          id: string
+          notes: string | null
+          report_page_id: string
+        }
+        Insert: {
+          assigned_to: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          report_page_id: string
+        }
+        Update: {
+          assigned_to?: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          report_page_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_assignments_report_page_id_fkey"
+            columns: ["report_page_id"]
+            isOneToOne: false
+            referencedRelation: "report_pages"
             referencedColumns: ["id"]
           },
         ]
