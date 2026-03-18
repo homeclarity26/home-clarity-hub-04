@@ -89,7 +89,7 @@ const ChatPanel = ({ open, onOpenChange, reportContext, initialQuery, onNavigate
             </div>
           )}
           {messages.map((msg, i) => (
-            <ChatMessage key={i} message={msg} />
+            <ChatMessage key={i} message={msg} onNavigateToPage={onNavigateToPage} />
           ))}
           {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
             <div className="flex justify-start">
