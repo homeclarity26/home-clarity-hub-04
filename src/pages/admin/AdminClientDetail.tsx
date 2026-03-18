@@ -44,6 +44,15 @@ import ReportProgressKanban from "@/components/admin/ReportProgressKanban";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 import ReportAITools from "@/components/admin/ReportAITools";
 import VoiceAndPhotoTools from "@/components/admin/VoiceAndPhotoTools";
+import AIClientBrief from "@/components/admin/AIClientBrief";
+import ConditionForecast from "@/components/admin/ConditionForecast";
+import AIFollowUpSuggestions from "@/components/admin/AIFollowUpSuggestions";
+import ClientTags from "@/components/admin/ClientTags";
+import QuickReplyTemplates from "@/components/admin/QuickReplyTemplates";
+import OnboardingTracker from "@/components/admin/OnboardingTracker";
+import InspectionChecklist from "@/components/admin/InspectionChecklist";
+import PageAssignments from "@/components/admin/PageAssignments";
+import BatchOperationsBar from "@/components/admin/BatchOperationsBar";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
@@ -357,9 +366,15 @@ const AdminClientDetail = () => {
             <div>
               <h1 className="text-xl font-sans font-bold text-foreground">{client.propertyName}</h1>
               <p className="text-sm font-sans text-muted-foreground">{client.name}</p>
+              <div className="mt-1.5">
+                <ClientTags propertyId={client.propertyId} />
+              </div>
             </div>
           </div>
-          <Button onClick={() => navigate(`/portal/${client.propertyId}?edit=true`)} className="gap-1.5 font-sans"><ExternalLink className="w-4 h-4" />Open in Portal</Button>
+          <div className="flex items-center gap-2">
+            <AIClientBrief propertyId={client.propertyId} propertyName={client.propertyName} />
+            <Button onClick={() => navigate(`/portal/${client.propertyId}?edit=true`)} className="gap-1.5 font-sans"><ExternalLink className="w-4 h-4" />Open in Portal</Button>
+          </div>
         </div>
 
         <div className="flex gap-1 border-b border-border overflow-x-auto">
@@ -378,6 +393,8 @@ const AdminClientDetail = () => {
         {activeTab === "overview" && (
           <div className="space-y-6">
             <ClientHealthCard client={client} />
+            <AIFollowUpSuggestions propertyId={client.propertyId} clientName={client.name} />
+            <ConditionForecast propertyId={client.propertyId} />
             <ClientStickyNotes propertyId={client.propertyId} />
             <PortalEngagementCard clientUserId={client.clientUserId || ""} />
             <ClientOverview client={client} />
@@ -439,7 +456,12 @@ const AdminClientDetail = () => {
         {activeTab === "files" && <FileManager propertyId={client.propertyId} />}
         {activeTab === "comments" && <CommentsManager clientId={client.id} />}
         {activeTab === "vendors" && <VendorManager propertyId={client.propertyId} />}
-        {activeTab === "messages" && <AdminMessagesSection propertyId={client.propertyId} clientName={client.name} propertyAddress={client.address} />}
+        {activeTab === "messages" && (
+          <div className="space-y-4">
+            <AdminMessagesSection propertyId={client.propertyId} clientName={client.name} propertyAddress={client.address} />
+            <QuickReplyTemplates />
+          </div>
+        )}
         {activeTab === "equipment" && (
           <EquipmentSection
             propertyId={client.propertyId}
