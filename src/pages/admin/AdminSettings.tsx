@@ -5,9 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreditCard, Check } from "lucide-react";
 
 import AdminHeader from "@/components/admin/AdminHeader";
+import ApiWebhookSettings from "@/components/admin/ApiWebhookSettings";
+import AuditLogSection from "@/components/admin/AuditLogSection";
+import SLASettings from "@/components/admin/SLASettings";
+import MembershipTierManager from "@/components/admin/MembershipTierManager";
+import MessageTemplateLibrary from "@/components/admin/MessageTemplateLibrary";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
