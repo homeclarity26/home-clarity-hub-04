@@ -153,6 +153,25 @@ const HomeTab = ({
           <MaintenanceReminders propertyId={propertyId} />
         )}
 
+        {/* Home Goals */}
+        {propertyId && !propertyId.startsWith("mock-") && (
+          <HomeGoals propertyId={propertyId} />
+        )}
+
+        {/* Insurance Assistant */}
+        {propertyId && !propertyId.startsWith("mock-") && (
+          <InsuranceAssistant propertyId={propertyId} />
+        )}
+
+        {/* Advisor Signature */}
+        {customization?.advisor_signature && (
+          <div className="max-w-[1400px] mx-auto px-6 md:px-20">
+            <div className="bg-card rounded-lg p-6 border border-border shadow-hbc-sm text-center">
+              <p className="font-sans text-sm text-muted-foreground italic">{customization.advisor_signature}</p>
+            </div>
+          </div>
+        )}
+
         {/* Row 1: Portal Status */}
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Your Portal Status</p>
