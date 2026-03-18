@@ -71,6 +71,18 @@ const ClientTable = ({ clients, compact }: ClientTableProps) => {
                 )}
               </TableCell>
             )}
+            {!compact && (
+              <TableCell>
+                {client.unreadMessages > 0 ? (
+                  <span className="flex items-center gap-1.5 text-destructive">
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span className="text-sm font-sans font-medium">{client.unreadMessages}</span>
+                  </span>
+                ) : (
+                  <span className="text-sm font-sans text-muted-foreground">—</span>
+                )}
+              </TableCell>
+            )}
             <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
               <Button variant="ghost" size="sm" onClick={() => navigate(`/portal/${client.propertyId}?edit=true`)} className="gap-1.5 text-xs font-sans">
                 <ExternalLink className="w-3.5 h-3.5" />

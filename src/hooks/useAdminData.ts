@@ -122,6 +122,7 @@ export function useAdminClients() {
           reportVersion: "v1",
           lastUpdated: report?.updated_at || prop.updated_at,
           unreadComments: 0,
+          unreadMessages: unreadByProperty[prop.id] || 0,
           totalPages: pages.length,
           completePages,
           flaggedPages,
