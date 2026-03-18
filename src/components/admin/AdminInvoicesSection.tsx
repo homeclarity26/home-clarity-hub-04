@@ -289,7 +289,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
     loadData();
   };
 
-  // AI: Generate estimate line items
+  // AI: Generate estimate line items from description
   const handleAiGenerate = async () => {
     if (!aiJobDescription.trim()) return;
     setAiGenerating(true);
@@ -317,6 +317,44 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
       }
     } catch (err) {
       toast.error("AI generation failed — try again or enter items manually");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  // AI: Generate from meeting transcript
+  const handleAiFromTranscript = async () => {
+    if (!aiTranscript.trim()) return;
+    setAiGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-invoice-assistant", {
+        body: {
+          task: "from_transcript",
+          context: {
+            transcript: aiTranscript,
+            propertyAddress: propertyContext?.propertyAddress,
+            sqft: propertyContext?.sqft,
+            propertyType: propertyContext?.propertyType,
+            clientName: propertyContext?.clientName,
+          },
+        },
+      });
+      if (error) throw error;
+      if (data?.title) setInvoiceForm(f => ({ ...f, title: data.title }));
+      if (data?.notes) setInvoiceForm(f => ({ ...f, notes: data.notes }));
+      if (data?.lineItems && Array.isArray(data.lineItems)) {
+        setEditLineItems(data.lineItems.map((li: any) => ({
+          description: li.description || "",
+          quantity: String(li.quantity || 1),
+          unit_price: String(li.unit_price || 0),
+          item_type: "service",
+        })));
+        toast.success(`AI extracted ${data.lineItems.length} line items from transcript`);
+      }
+    } catch (err: any) {
+      if (err?.status === 429) toast.error("Rate limited — try again in a moment");
+      else if (err?.status === 402) toast.error("AI credits exhausted");
+      else toast.error("AI generation failed — try again or enter items manually");
     } finally {
       setAiGenerating(false);
     }
