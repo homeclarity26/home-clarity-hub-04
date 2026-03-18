@@ -70,7 +70,7 @@ const DEMO_EQUIPMENT: Equipment[] = [
   { id: "eq-5", name: "Smoke Detectors (6x)", category: "safety", brand: "Kidde", model: "i12060", serial_number: null, install_date: "2023-03-01", warranty_expiry: "2033-03-01", last_service_date: "2026-01-01", next_service_date: "2027-01-01", estimated_replacement_cost: 200, condition: "good", notes: "Replace batteries annually." },
 ];
 
-const EquipmentTab = ({ propertyId, onTabChange }: EquipmentTabProps) => {
+const EquipmentTab = ({ propertyId, onTabChange, onSendMessage }: EquipmentTabProps) => {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [loading, setLoading] = useState(true);
 
