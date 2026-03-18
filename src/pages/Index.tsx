@@ -208,7 +208,7 @@ const Index = () => {
           )}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "equipment" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "equipment" && <EquipmentTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}
+          {activeTab === "equipment" && <EquipmentTab propertyId={portal.property?.id} onTabChange={handleTabChange} onSendMessage={handleSendMessage} />}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "schedule" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "schedule" && <ScheduleTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}
