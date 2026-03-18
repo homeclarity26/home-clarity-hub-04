@@ -494,11 +494,14 @@ const AdminClientDetail = () => {
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <AdminProjectsSection
-              propertyId={client.propertyId}
-              projects={projects}
-              reportPages={reportPages?.map((rp) => ({ id: rp.id, title: rp.title, page_key: rp.page_key }))}
-            />
+            <div className="space-y-4">
+              <AICostEstimator propertyId={client.propertyId} propertyAddress={client.address} />
+              <AdminProjectsSection
+                propertyId={client.propertyId}
+                projects={projects}
+                reportPages={reportPages?.map((rp) => ({ id: rp.id, title: rp.title, page_key: rp.page_key }))}
+              />
+            </div>
           )
         )}
 
