@@ -200,10 +200,16 @@ const PropertyMap = ({ compact = false }: PropertyMapProps) => {
   if (markers.length === 0) {
     return (
       <Card className={`${height} flex flex-col items-center justify-center gap-3 p-6`}>
-        <MapPin className="w-8 h-8 text-muted-foreground/40" />
-        <p className="text-sm font-sans text-muted-foreground text-center">
-          No properties to display yet. Add clients to see them on the map.
+        <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-2">
+          <MapPin className="w-8 h-8 text-muted-foreground/30" />
+        </div>
+        <h3 className="text-sm font-sans font-semibold text-foreground">Your client properties will appear here</h3>
+        <p className="text-xs font-sans text-muted-foreground text-center max-w-sm">
+          Once you add clients with property addresses, they'll be pinned on this map with geocoded locations.
         </p>
+        <Button variant="outline" size="sm" className="font-sans gap-1.5 mt-1" onClick={() => navigate("/admin/clients/new")}>
+          <Plus className="w-3.5 h-3.5" />New Client
+        </Button>
       </Card>
     );
   }
