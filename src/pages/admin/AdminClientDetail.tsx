@@ -528,7 +528,7 @@ const AdminClientDetail = () => {
               </Button>
             </div>
 
-            <SmartScheduleDialog
+            <AIMaintenanceSchedule propertyId={client.propertyId} equipment={equipmentData || []} location={client.address} />
               open={eventOpen}
               onOpenChange={(o) => { setEventOpen(o); if (!o) setEditScheduleEvent(null); }}
               propertyId={client.propertyId}
