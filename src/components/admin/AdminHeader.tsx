@@ -55,7 +55,7 @@ const AdminHeader = ({ breadcrumbs }: AdminHeaderProps) => {
           className="gap-1.5 font-sans"
         >
           <Plus className="w-4 h-4" />
-          New Report
+          New Client
         </Button>
       </div>
     </header>

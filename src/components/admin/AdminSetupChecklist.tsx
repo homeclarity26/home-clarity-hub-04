@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ArrowRight, X, Settings, CreditCard, MapPin, UserPlus, FileText, Briefcase, Zap, Play } from "lucide-react";
+import { Check, ArrowRight, X, Settings, CreditCard, UserPlus, FileText, Crown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
