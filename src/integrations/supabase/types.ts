@@ -2450,6 +2450,484 @@ export type Database = {
         }
         Relationships: []
       }
+      project_activity_log: {
+        Row: {
+          action_type: string
+          created_at: string
+          description: string
+          id: string
+          metadata: Json | null
+          project_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          description: string
+          id?: string
+          metadata?: Json | null
+          project_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          description?: string
+          id?: string
+          metadata?: Json | null
+          project_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_activity_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_change_orders: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          cost_impact: number
+          created_at: string
+          description: string | null
+          id: string
+          invoice_id: string | null
+          project_id: string
+          reason: string | null
+          status: string
+          supporting_docs: string[] | null
+          supporting_photos: string[] | null
+          timeline_impact_days: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          cost_impact?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string | null
+          project_id: string
+          reason?: string | null
+          status?: string
+          supporting_docs?: string[] | null
+          supporting_photos?: string[] | null
+          timeline_impact_days?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          cost_impact?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string | null
+          project_id?: string
+          reason?: string | null
+          status?: string
+          supporting_docs?: string[] | null
+          supporting_photos?: string[] | null
+          timeline_impact_days?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_change_orders_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_daily_logs: {
+        Row: {
+          created_at: string
+          id: string
+          issues_encountered: string | null
+          log_date: string
+          materials_delivered: string | null
+          next_day_plan: string | null
+          photos: string[] | null
+          project_id: string
+          share_with_client: boolean | null
+          submitted_by: string | null
+          weather_conditions: string | null
+          work_completed: string | null
+          workers_on_site: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          issues_encountered?: string | null
+          log_date?: string
+          materials_delivered?: string | null
+          next_day_plan?: string | null
+          photos?: string[] | null
+          project_id: string
+          share_with_client?: boolean | null
+          submitted_by?: string | null
+          weather_conditions?: string | null
+          work_completed?: string | null
+          workers_on_site?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          issues_encountered?: string | null
+          log_date?: string
+          materials_delivered?: string | null
+          next_day_plan?: string | null
+          photos?: string[] | null
+          project_id?: string
+          share_with_client?: boolean | null
+          submitted_by?: string | null
+          weather_conditions?: string | null
+          work_completed?: string | null
+          workers_on_site?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_daily_logs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_decisions: {
+        Row: {
+          attachments: string[] | null
+          created_at: string
+          decided_at: string
+          decided_by: string | null
+          decision: string
+          id: string
+          is_client_approved: boolean | null
+          locked_at: string | null
+          project_id: string
+        }
+        Insert: {
+          attachments?: string[] | null
+          created_at?: string
+          decided_at?: string
+          decided_by?: string | null
+          decision: string
+          id?: string
+          is_client_approved?: boolean | null
+          locked_at?: string | null
+          project_id: string
+        }
+        Update: {
+          attachments?: string[] | null
+          created_at?: string
+          decided_at?: string
+          decided_by?: string | null
+          decision?: string
+          id?: string
+          is_client_approved?: boolean | null
+          locked_at?: string | null
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_decisions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_files: {
+        Row: {
+          category: string
+          created_at: string
+          file_name: string
+          file_size: string | null
+          file_type: string | null
+          file_url: string
+          id: string
+          phase_id: string | null
+          photo_tag: string | null
+          project_id: string
+          share_with_client: boolean | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          file_name: string
+          file_size?: string | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          phase_id?: string | null
+          photo_tag?: string | null
+          project_id: string
+          share_with_client?: boolean | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          file_name?: string
+          file_size?: string | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          phase_id?: string | null
+          photo_tag?: string | null
+          project_id?: string
+          share_with_client?: boolean | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_files_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "project_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_files_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_inspections: {
+        Row: {
+          created_at: string
+          id: string
+          inspection_type: string
+          inspector_name: string | null
+          next_steps: string | null
+          notes: string | null
+          permit_id: string | null
+          project_id: string
+          result: string | null
+          scheduled_date: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inspection_type: string
+          inspector_name?: string | null
+          next_steps?: string | null
+          notes?: string | null
+          permit_id?: string | null
+          project_id: string
+          result?: string | null
+          scheduled_date?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inspection_type?: string
+          inspector_name?: string | null
+          next_steps?: string | null
+          notes?: string | null
+          permit_id?: string | null
+          project_id?: string
+          result?: string | null
+          scheduled_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_inspections_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "project_permits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_inspections_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_messages: {
+        Row: {
+          attachments: string[] | null
+          created_at: string
+          id: string
+          is_read: boolean | null
+          is_urgent: boolean | null
+          message: string
+          participant_type: string
+          project_id: string
+          sender_id: string
+        }
+        Insert: {
+          attachments?: string[] | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          is_urgent?: boolean | null
+          message: string
+          participant_type?: string
+          project_id: string
+          sender_id: string
+        }
+        Update: {
+          attachments?: string[] | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          is_urgent?: boolean | null
+          message?: string
+          participant_type?: string
+          project_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_messages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_permits: {
+        Row: {
+          approved_date: string | null
+          created_at: string
+          document_url: string | null
+          expiration_date: string | null
+          id: string
+          permit_number: string | null
+          permit_type: string
+          project_id: string
+          status: string
+          submitted_date: string | null
+        }
+        Insert: {
+          approved_date?: string | null
+          created_at?: string
+          document_url?: string | null
+          expiration_date?: string | null
+          id?: string
+          permit_number?: string | null
+          permit_type: string
+          project_id: string
+          status?: string
+          submitted_date?: string | null
+        }
+        Update: {
+          approved_date?: string | null
+          created_at?: string
+          document_url?: string | null
+          expiration_date?: string | null
+          id?: string
+          permit_number?: string | null
+          permit_type?: string
+          project_id?: string
+          status?: string
+          submitted_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_permits_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_phases: {
+        Row: {
+          actual_cost: number | null
+          actual_end_date: string | null
+          actual_start_date: string | null
+          assigned_vendor_id: string | null
+          created_at: string
+          estimated_cost: number | null
+          estimated_end_date: string | null
+          estimated_start_date: string | null
+          id: string
+          name: string
+          project_id: string
+          sort_order: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          actual_end_date?: string | null
+          actual_start_date?: string | null
+          assigned_vendor_id?: string | null
+          created_at?: string
+          estimated_cost?: number | null
+          estimated_end_date?: string | null
+          estimated_start_date?: string | null
+          id?: string
+          name: string
+          project_id: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          actual_cost?: number | null
+          actual_end_date?: string | null
+          actual_start_date?: string | null
+          assigned_vendor_id?: string | null
+          created_at?: string
+          estimated_cost?: number | null
+          estimated_end_date?: string | null
+          estimated_start_date?: string | null
+          id?: string
+          name?: string
+          project_id?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_phases_assigned_vendor_id_fkey"
+            columns: ["assigned_vendor_id"]
+            isOneToOne: false
+            referencedRelation: "central_vendors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_phases_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_photos: {
         Row: {
           caption: string | null
@@ -2494,53 +2972,309 @@ export type Database = {
           },
         ]
       }
+      project_purchase_orders: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          ordered_date: string | null
+          paid_date: string | null
+          phase_id: string | null
+          po_number: string | null
+          project_id: string
+          received_date: string | null
+          status: string
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          description: string
+          id?: string
+          ordered_date?: string | null
+          paid_date?: string | null
+          phase_id?: string | null
+          po_number?: string | null
+          project_id: string
+          received_date?: string | null
+          status?: string
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          ordered_date?: string | null
+          paid_date?: string | null
+          phase_id?: string | null
+          po_number?: string | null
+          project_id?: string
+          received_date?: string | null
+          status?: string
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_purchase_orders_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "project_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_purchase_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_purchase_orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "central_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_task_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_tasks: {
+        Row: {
+          assigned_to: string | null
+          assigned_vendor_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          phase_id: string
+          priority: string | null
+          project_id: string
+          sort_order: number
+          status: string
+          time_logged_hours: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          assigned_vendor_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          phase_id: string
+          priority?: string | null
+          project_id: string
+          sort_order?: number
+          status?: string
+          time_logged_hours?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          assigned_vendor_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          phase_id?: string
+          priority?: string | null
+          project_id?: string
+          sort_order?: number
+          status?: string
+          time_logged_hours?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tasks_assigned_vendor_id_fkey"
+            columns: ["assigned_vendor_id"]
+            isOneToOne: false
+            referencedRelation: "central_vendors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "project_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_templates: {
+        Row: {
+          admin_id: string
+          budget_categories_json: Json | null
+          created_at: string
+          document_checklist: Json | null
+          id: string
+          name: string
+          phases_json: Json
+          project_type: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          budget_categories_json?: Json | null
+          created_at?: string
+          document_checklist?: Json | null
+          id?: string
+          name: string
+          phases_json?: Json
+          project_type?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          budget_categories_json?: Json | null
+          created_at?: string
+          document_checklist?: Json | null
+          id?: string
+          name?: string
+          phases_json?: Json
+          project_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
+          actual_spent: number | null
+          address: string | null
+          allow_client_messages: boolean | null
           approved_tier: string | null
+          budget: number | null
+          contingency_pct: number | null
           contractor_contact: string | null
           contractor_name: string | null
           created_at: string
           description: string | null
+          end_date: string | null
+          estimate_id: string | null
           estimated_cost: number | null
           estimated_start_date: string | null
           id: string
           notes: string | null
+          percent_complete: number | null
+          priority: string | null
+          project_manager_id: string | null
+          project_type: string | null
           property_id: string
           report_page_id: string | null
+          send_milestone_updates: boolean | null
+          show_budget_to_client: boolean | null
+          show_in_portal: boolean | null
+          start_date: string | null
           status: string
           title: string
           updated_at: string
           value_contribution_estimate: number | null
         }
         Insert: {
+          actual_spent?: number | null
+          address?: string | null
+          allow_client_messages?: boolean | null
           approved_tier?: string | null
+          budget?: number | null
+          contingency_pct?: number | null
           contractor_contact?: string | null
           contractor_name?: string | null
           created_at?: string
           description?: string | null
+          end_date?: string | null
+          estimate_id?: string | null
           estimated_cost?: number | null
           estimated_start_date?: string | null
           id?: string
           notes?: string | null
+          percent_complete?: number | null
+          priority?: string | null
+          project_manager_id?: string | null
+          project_type?: string | null
           property_id: string
           report_page_id?: string | null
+          send_milestone_updates?: boolean | null
+          show_budget_to_client?: boolean | null
+          show_in_portal?: boolean | null
+          start_date?: string | null
           status?: string
           title: string
           updated_at?: string
           value_contribution_estimate?: number | null
         }
         Update: {
+          actual_spent?: number | null
+          address?: string | null
+          allow_client_messages?: boolean | null
           approved_tier?: string | null
+          budget?: number | null
+          contingency_pct?: number | null
           contractor_contact?: string | null
           contractor_name?: string | null
           created_at?: string
           description?: string | null
+          end_date?: string | null
+          estimate_id?: string | null
           estimated_cost?: number | null
           estimated_start_date?: string | null
           id?: string
           notes?: string | null
+          percent_complete?: number | null
+          priority?: string | null
+          project_manager_id?: string | null
+          project_type?: string | null
           property_id?: string
           report_page_id?: string | null
+          send_milestone_updates?: boolean | null
+          show_budget_to_client?: boolean | null
+          show_in_portal?: boolean | null
+          start_date?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -3686,6 +4420,51 @@ export type Database = {
           },
         ]
       }
+      trade_partner_invites: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          id: string
+          invited_by: string
+          project_id: string
+          status: string
+          vendor_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          invited_by: string
+          project_id: string
+          status?: string
+          vendor_id: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          invited_by?: string
+          project_id?: string
+          status?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_partner_invites_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trade_partner_invites_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "central_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tutorial_progress: {
         Row: {
           admin_setup_dismissed: boolean
@@ -3928,7 +4707,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "creator" | "client"
+      app_role: "creator" | "client" | "trade_partner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4056,7 +4835,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["creator", "client"],
+      app_role: ["creator", "client", "trade_partner"],
     },
   },
 } as const

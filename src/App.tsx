@@ -31,6 +31,11 @@ import AdminFieldInspection from "./pages/admin/AdminFieldInspection";
 import AdminHelpCenter from "./pages/admin/AdminHelpCenter";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminCalendar from "./pages/admin/AdminCalendar";
+import AdminProjects from "./pages/admin/AdminProjects";
+import AdminProjectDetail from "./pages/admin/AdminProjectDetail";
+import AdminNewProject from "./pages/admin/AdminNewProject";
+import TradePartnerLayout from "./layouts/TradePartnerLayout";
+import TradePartnerDashboard from "./pages/trade/TradePartnerDashboard";
 
 const queryClient = new QueryClient();
 
@@ -180,6 +185,21 @@ const AppRoutes = () => {
         <Route path="settings" element={<AdminSettings />} />
         <Route path="announcements" element={<AdminAnnouncements />} />
         <Route path="calendar" element={<AdminCalendar />} />
+        <Route path="projects" element={<AdminProjects />} />
+        <Route path="projects/new" element={<AdminNewProject />} />
+        <Route path="projects/:projectId" element={<AdminProjectDetail />} />
+      </Route>
+
+      {/* Trade Partner routes */}
+      <Route
+        path="/trade"
+        element={
+          <ProtectedRoute>
+            <TradePartnerLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<TradePartnerDashboard />} />
       </Route>
 
       {/* Auth routes */}
