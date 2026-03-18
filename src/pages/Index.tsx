@@ -318,6 +318,18 @@ const Index = () => {
         <NPSSurveyCard propertyId={portal.property.id} />
       )}
 
+      {/* Help Center */}
+      {!isCreator && (
+        <>
+          <HelpFloatingButton onClick={() => setHelpOpen(true)} />
+          <HelpCenterPanel
+            open={helpOpen}
+            onClose={() => setHelpOpen(false)}
+            onNavigate={handleTabChange}
+          />
+        </>
+      )}
+
       <Footer
         activeTab={activeTab}
         onNavigate={handleNavigate}

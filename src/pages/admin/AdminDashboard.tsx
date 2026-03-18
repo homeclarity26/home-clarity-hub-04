@@ -61,6 +61,9 @@ const AdminDashboard = () => {
     <div>
       <AdminHeader breadcrumbs={[{ label: "Dashboard" }]} />
       <div className="p-6 space-y-6 max-w-7xl">
+        {/* Admin Setup Checklist */}
+        <AdminSetupChecklist />
+
         {/* Primary Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard label="Active Clients" value={stats?.activeClients ?? 0} icon={Users} />
