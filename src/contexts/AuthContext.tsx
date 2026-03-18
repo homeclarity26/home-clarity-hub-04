@@ -19,6 +19,7 @@ interface AuthContextType {
   profile: Profile | null;
   roles: AppRole[];
   isCreator: boolean;
+  isTradePartner: boolean;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
