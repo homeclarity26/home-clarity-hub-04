@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreditCard, Check, Palette } from "lucide-react";
 
 import AdminHeader from "@/components/admin/AdminHeader";
-import ApiWebhookSettings from "@/components/admin/ApiWebhookSettings";
+import IntegrationsHub from "@/components/admin/IntegrationsHub";
 import AuditLogSection from "@/components/admin/AuditLogSection";
 import SLASettings from "@/components/admin/SLASettings";
 import MembershipTierManager from "@/components/admin/MembershipTierManager";
