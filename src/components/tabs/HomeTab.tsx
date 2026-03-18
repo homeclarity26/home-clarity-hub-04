@@ -89,11 +89,20 @@ const HomeTab = ({
         </div>
       )}
 
+      {/* Membership Banner */}
+      {membershipEndDate && (
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 mb-6">
+          <MembershipBanner membershipEndDate={membershipEndDate} onSendMessage={() => onNavigate("messages")} />
+        </div>
+      )}
+
       {/* Card Grid */}
       <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
 
-        {/* Row 1: Portal Status */}
-        <div>
+        {/* Home Value Tracker */}
+        {propertyId && (
+          <HomeValueTracker propertyId={propertyId} estimatedValue={estimatedValue} />
+        )
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Your Portal Status</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
