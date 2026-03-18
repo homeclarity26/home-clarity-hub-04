@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress";
 import { ExternalLink, MessageSquare } from "lucide-react";
 import type { AdminClient } from "@/hooks/useAdminData";
+import ClientHealthBadge from "./ClientHealthBadge";
 
 const statusStyles: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
