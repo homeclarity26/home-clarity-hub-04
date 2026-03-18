@@ -347,6 +347,7 @@ const AdminClientDetail = () => {
 
         {activeTab === "overview" && (
           <div className="space-y-6">
+            <ClientHealthCard client={client} />
             <ClientOverview client={client} />
             <AdminValuationCard propertyId={client.propertyId} address={client.address} />
           </div>

@@ -67,6 +67,9 @@ const ClientTable = ({ clients, compact }: ClientTableProps) => {
           return (
             <TableRow key={client.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/admin/clients/${client.id}`)}>
               <TableCell className="font-sans text-sm font-medium">{client.name}</TableCell>
+              {!compact && (
+                <TableCell><ClientHealthBadge client={client} /></TableCell>
+              )}
               <TableCell className="font-sans text-sm text-muted-foreground">{client.address}</TableCell>
               <TableCell>
                 <Badge className={`${statusStyles[client.reportStatus] || statusStyles.draft} text-[11px] font-sans font-medium border-none`}>
