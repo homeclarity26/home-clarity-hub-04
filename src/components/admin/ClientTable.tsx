@@ -43,6 +43,7 @@ const ClientTable = ({ clients, compact }: ClientTableProps) => {
           <TableHead className="font-sans text-xs">Version</TableHead>
           {!compact && <TableHead className="font-sans text-xs">Updated</TableHead>}
           {!compact && <TableHead className="font-sans text-xs">Comments</TableHead>}
+          {!compact && <TableHead className="font-sans text-xs">Messages</TableHead>}
           <TableHead className="font-sans text-xs text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
