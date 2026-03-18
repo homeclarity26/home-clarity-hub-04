@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, Check } from "lucide-react";
+import { CreditCard, Check, Palette } from "lucide-react";
 
 import AdminHeader from "@/components/admin/AdminHeader";
 import ApiWebhookSettings from "@/components/admin/ApiWebhookSettings";
