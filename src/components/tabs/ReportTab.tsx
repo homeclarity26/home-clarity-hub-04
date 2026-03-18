@@ -346,6 +346,7 @@ const ReportTab = ({
       hoverPdfUrl={hoverPdfUrl}
       iguideUrl={iguideUrl}
       iguidePdfUrl={iguidePdfUrl}
+      estimatedValue={estimatedValue}
     />
   );
 };
