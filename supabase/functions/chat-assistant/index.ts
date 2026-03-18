@@ -36,6 +36,10 @@ serve(async (req) => {
         }).join("\n\n")
       : "No report pages available yet.";
 
+    const goalsText = Array.isArray(ctx.goals) && ctx.goals.length > 0
+      ? ctx.goals.map((g: Record<string, unknown>) => `- ${g.title} (${g.status})${g.target_year ? ` target: ${g.target_year}` : ""}${g.estimated_budget ? ` budget: $${g.estimated_budget}` : ""}`).join("\n")
+      : "";
+
     const systemPrompt = `You are a friendly, knowledgeable home advisor for Home Clarity Hub. You help homeowners understand their Home Clarity Report and answer questions about their property. Speak plainly and warmly — no jargon, real answers.
 
 PROPERTY: ${ctx.propertyName || ctx.propertyAddress || "Unknown"}
