@@ -167,12 +167,127 @@ export function useAdminStats() {
       const inProgress = reports?.filter((r) => r.status === "draft" || r.status === "review").length || 0;
       const published = reports?.filter((r) => r.status === "published").length || 0;
 
+      // Revenue metrics
+      const { data: allInvoices } = await supabase
+        .from("invoices")
+        .select("total, balance_due, status, due_date");
+
+      const totalInvoiced = allInvoices?.reduce((s, i) => s + Number(i.total), 0) || 0;
+      const totalOutstanding = allInvoices?.reduce((s, i) => s + Number(i.balance_due), 0) || 0;
+      const totalCollected = totalInvoiced - totalOutstanding;
+
+      const { data: paymentsData } = await supabase
+        .from("payments_posted")
+        .select("amount");
+      const totalPayments = paymentsData?.reduce((s, p) => s + Number(p.amount), 0) || 0;
+
+      const now = new Date().toISOString().split("T")[0];
+      const overdueInvoices = allInvoices?.filter(
+        (i) => i.due_date && i.due_date < now && Number(i.balance_due) > 0
+      ).length || 0;
+
       return {
         activeClients: totalProperties || 0,
         reportsInProgress: inProgress,
         unansweredQuestions: unansweredQuestions || 0,
         publishedReports: published,
+        totalInvoiced,
+        totalCollected: totalPayments,
+        totalOutstanding,
+        overdueInvoices,
       };
+    },
+  });
+}
+
+export function useClientsNeedingAttention() {
+  return useQuery({
+    queryKey: ["clients-needing-attention"],
+    queryFn: async () => {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) return [];
+
+      // Unread messages grouped by property
+      const { data: unreadMsgs } = await (supabase
+        .from("property_messages" as any) as any)
+        .select("property_id, sender_id")
+        .eq("is_read", false);
+
+      const msgByProp: Record<string, number> = {};
+      if (unreadMsgs) {
+        for (const m of unreadMsgs as { property_id: string; sender_id: string }[]) {
+          if (m.sender_id !== currentUser.id) {
+            msgByProp[m.property_id] = (msgByProp[m.property_id] || 0) + 1;
+          }
+        }
+      }
+
+      // Unanswered comments grouped by property
+      const { data: openComments } = await supabase
+        .from("report_comments")
+        .select("report_page_id")
+        .eq("resolved", false)
+        .eq("comment_type", "question");
+
+      // Get page→property mapping for comments
+      const commentPageIds = [...new Set(openComments?.map(c => c.report_page_id) || [])];
+      const commentsByProp: Record<string, number> = {};
+      if (commentPageIds.length > 0) {
+        const { data: pages } = await supabase
+          .from("report_pages")
+          .select("id, report_id")
+          .in("id", commentPageIds);
+        const reportIds = [...new Set(pages?.map(p => p.report_id) || [])];
+        if (reportIds.length > 0) {
+          const { data: reps } = await supabase
+            .from("reports")
+            .select("id, property_id")
+            .in("id", reportIds);
+          const reportToProp: Record<string, string> = {};
+          reps?.forEach(r => { reportToProp[r.id] = r.property_id; });
+          const pageToProp: Record<string, string> = {};
+          pages?.forEach(p => { if (reportToProp[p.report_id]) pageToProp[p.id] = reportToProp[p.report_id]; });
+          openComments?.forEach(c => {
+            const propId = pageToProp[c.report_page_id];
+            if (propId) commentsByProp[propId] = (commentsByProp[propId] || 0) + 1;
+          });
+        }
+      }
+
+      // Overdue invoices grouped by property
+      const now = new Date().toISOString().split("T")[0];
+      const { data: overdueInvs } = await supabase
+        .from("invoices")
+        .select("property_id, balance_due, due_date")
+        .gt("balance_due", 0);
+
+      const overduByProp: Record<string, number> = {};
+      overdueInvs?.forEach(i => {
+        if (i.due_date && i.due_date < now) {
+          overduByProp[i.property_id] = (overduByProp[i.property_id] || 0) + 1;
+        }
+      });
+
+      // Combine all property IDs
+      const allPropIds = new Set([...Object.keys(msgByProp), ...Object.keys(commentsByProp), ...Object.keys(overduByProp)]);
+      if (allPropIds.size === 0) return [];
+
+      const { data: props } = await supabase
+        .from("properties")
+        .select("id, property_name, address")
+        .in("id", [...allPropIds]);
+
+      return (props || []).map(p => ({
+        propertyId: p.id,
+        propertyName: p.property_name || p.address,
+        unreadMessages: msgByProp[p.id] || 0,
+        openQuestions: commentsByProp[p.id] || 0,
+        overdueInvoices: overduByProp[p.id] || 0,
+      })).sort((a, b) => {
+        const scoreA = a.unreadMessages + a.openQuestions * 2 + a.overdueInvoices * 3;
+        const scoreB = b.unreadMessages + b.openQuestions * 2 + b.overdueInvoices * 3;
+        return scoreB - scoreA;
+      });
     },
   });
 }
