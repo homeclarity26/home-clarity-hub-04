@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight, ChevronDown, CheckCircle, Calendar, DollarSign, User, Loader2 } from "lucide-react";
+import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight, ChevronDown, CheckCircle, Calendar, DollarSign, User, Loader2, MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";

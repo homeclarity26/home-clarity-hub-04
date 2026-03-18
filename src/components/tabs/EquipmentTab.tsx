@@ -241,6 +241,19 @@ const EquipmentTab = ({ propertyId, onTabChange, onSendMessage }: EquipmentTabPr
                           {item.notes}
                         </p>
                       )}
+
+                      {/* Schedule Service button for flagged items */}
+                      {(svc.label === "Service Overdue" || svc.label === "Service Due Soon" || svc.label === "Warranty Expired") && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 text-xs font-sans mt-3 w-fit"
+                          onClick={() => onSendMessage?.(`I'd like to schedule service for my ${item.name}.`)}
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          Schedule Service
+                        </Button>
+                      )}
                     </div>
                   );
                 })}
