@@ -8,6 +8,7 @@ import AdminHeader from "@/components/admin/AdminHeader";
 import StatsCard from "@/components/admin/StatsCard";
 import ActivityFeed from "@/components/admin/ActivityFeed";
 import ClientTable from "@/components/admin/ClientTable";
+import RevenueAnalytics from "@/components/admin/RevenueAnalytics";
 import { useAdminClients, useAdminStats, useAdminActivityLog, useClientsNeedingAttention } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
