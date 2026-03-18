@@ -115,13 +115,8 @@ const RootRedirect = () => {
   return <Navigate to="/portal" replace />;
 };
 
-const SessionMonitorWrapper = ({ children }: { children: React.ReactNode }) => {
-  const { useSessionMonitor } = await import("@/hooks/useSessionMonitor");
-  useSessionMonitor();
-  return <>{children}</>;
-};
-
 const AppRoutes = () => {
+  useSessionMonitor();
   return (
     <Routes>
       {/* Root redirect based on role */}
