@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Wrench, AlertTriangle, Clock, CheckCircle, ShieldAlert, ChevronRight, FileText } from "lucide-react";
+import { Wrench, AlertTriangle, Clock, CheckCircle, ShieldAlert, ChevronRight, FileText, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, isPast, isAfter, addDays } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 interface EquipmentTabProps {
   propertyId?: string;
   onTabChange?: (tab: string) => void;
+  onSendMessage?: (msg: string) => void;
 }
 
 interface Equipment {
