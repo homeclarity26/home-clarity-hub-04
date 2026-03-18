@@ -1,11 +1,13 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useOpenTaskCount } from "@/hooks/useAdminTasks";
 
 const navItems = [
-  { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
+  { label: "Dashboard", path: "/admin", icon: LayoutDashboard, showBadge: true },
   { label: "Clients", path: "/admin/clients", icon: Users },
   { label: "Knowledge Base", path: "/admin/knowledge-base", icon: BookOpen },
   { label: "Settings", path: "/admin/settings", icon: Settings },
@@ -15,6 +17,7 @@ const SidebarContent = ({ onNavClick }: { onNavClick?: () => void }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
+  const { data: taskCount } = useOpenTaskCount();
 
   const isActive = (path: string) => {
     if (path === "/admin") return location.pathname === "/admin";
@@ -23,13 +26,11 @@ const SidebarContent = ({ onNavClick }: { onNavClick?: () => void }) => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Logo */}
       <div className="h-16 flex flex-col justify-center px-6 border-b border-border">
         <span className="font-sans text-lg font-bold text-foreground tracking-tight">HBC</span>
         <span className="font-sans text-[10px] uppercase tracking-[0.15em] text-muted-foreground -mt-0.5">Creator</span>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 py-4 px-3 space-y-1">
         {navItems.map((item) => (
           <button
@@ -46,11 +47,15 @@ const SidebarContent = ({ onNavClick }: { onNavClick?: () => void }) => {
           >
             <item.icon className="w-4 h-4 shrink-0" />
             {item.label}
+            {item.showBadge && taskCount != null && taskCount > 0 && (
+              <Badge variant="destructive" className="ml-auto text-[10px] h-5 px-1.5 font-mono">
+                {taskCount}
+              </Badge>
+            )}
           </button>
         ))}
       </nav>
 
-      {/* User section */}
       <div className="p-4 border-t border-border space-y-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-sans font-medium">
@@ -80,12 +85,10 @@ const AdminSidebar = () => {
 
   return (
     <>
-      {/* Desktop sidebar */}
       <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-60 bg-muted/50 border-r border-border flex-col z-40">
         <SidebarContent />
       </aside>
 
-      {/* Mobile hamburger */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b border-border z-40 flex items-center px-4">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
