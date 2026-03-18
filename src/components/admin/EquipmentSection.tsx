@@ -92,8 +92,8 @@ const EquipmentSection = ({ propertyId, reportPages }: EquipmentSectionProps) =>
 
   const load = async () => {
     if (!propertyId) { setLoading(false); return; }
-    const { data, error } = await supabase
-      .from("equipment")
+    const { data, error } = await (supabase
+      .from("equipment" as any) as any)
       .select("*")
       .eq("property_id", propertyId)
       .order("category")
