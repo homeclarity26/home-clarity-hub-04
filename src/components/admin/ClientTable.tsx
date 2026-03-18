@@ -51,6 +51,7 @@ const ClientTable = ({ clients, compact }: ClientTableProps) => {
       <TableHeader>
         <TableRow>
           <TableHead className="font-sans text-xs">Client</TableHead>
+          {!compact && <TableHead className="font-sans text-xs">Health</TableHead>}
           <TableHead className="font-sans text-xs">Address</TableHead>
           <TableHead className="font-sans text-xs">Status</TableHead>
           {!compact && <TableHead className="font-sans text-xs">Onboarding</TableHead>}
