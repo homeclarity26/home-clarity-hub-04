@@ -91,7 +91,7 @@ export function useMyAssignedProjects() {
       const { data: vendor } = await (supabase.from("central_vendors") as any).select("id").eq("user_id", user!.id).single();
       if (!vendor) return [];
       const { data: tasks } = await (supabase.from("project_tasks") as any).select("project_id").eq("assigned_vendor_id", vendor.id);
-      const projectIds = [...new Set((tasks || []).map((t: any) => t.project_id))];
+      const projectIds = [...new Set((tasks || []).map((t: any) => t.project_id))] as string[];
       if (projectIds.length === 0) return [];
       const { data: projects } = await supabase.from("projects").select("*").in("id", projectIds).order("created_at", { ascending: false });
       return projects || [];
