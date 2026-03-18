@@ -37,6 +37,8 @@ const AdminMessagesSection = ({ propertyId, clientName, propertyAddress }: Admin
   const [isSending, setIsSending] = useState(false);
   const [videoDialogOpen, setVideoDialogOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
+  const [smartReplies, setSmartReplies] = useState<{ label: string; message: string }[]>([]);
+  const [loadingReplies, setLoadingReplies] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const fetchMessages = async () => {
