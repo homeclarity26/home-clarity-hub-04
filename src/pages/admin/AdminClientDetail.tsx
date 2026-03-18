@@ -418,6 +418,7 @@ const AdminClientDetail = () => {
         {activeTab === "report" && (
           <div className="space-y-4">
             <div className="flex items-center justify-end gap-2">
+              {client.reportId && <ReportVersionHistory reportId={client.reportId} propertyId={client.propertyId} />}
               {client.reportId && (
                 <ReportCloneDialog sourceReportId={client.reportId} sourcePropertyName={client.propertyName} />
               )}
