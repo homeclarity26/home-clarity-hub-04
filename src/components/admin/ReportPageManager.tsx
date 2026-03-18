@@ -3,11 +3,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ExternalLink, CheckCircle, Edit, AlertTriangle, XCircle, Loader2 } from "lucide-react";
+import { ExternalLink, CheckCircle, Edit, AlertTriangle, XCircle, Loader2, Sparkles } from "lucide-react";
 import { useAdminReportPages } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
+
+interface PropertyContext {
+  propertyAddress?: string;
+  yearBuilt?: number | null;
+  sqft?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  propertyType?: string | null;
+  relationshipType?: string | null;
+  clientIntelligenceSummary?: string | null;
+}
 
 const statusConfig: Record<string, { icon: typeof CheckCircle; label: string; className: string }> = {
   complete: { icon: CheckCircle, label: "Complete", className: "bg-emerald-100 text-emerald-700" },
@@ -28,6 +40,7 @@ const STATUS_OPTIONS = [
 interface ReportPageManagerProps {
   propertyId?: string;
   reportId?: string | null;
+  propertyContext?: PropertyContext;
 }
 
 async function recalculateCompletion(reportId: string) {
@@ -48,10 +61,12 @@ async function recalculateCompletion(reportId: string) {
   }
 }
 
-const ReportPageManager = ({ propertyId, reportId }: ReportPageManagerProps) => {
+const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPageManagerProps) => {
   const { data: pages, isLoading } = useAdminReportPages(reportId);
   const queryClient = useQueryClient();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [isDraftingAll, setIsDraftingAll] = useState(false);
+  const [draftProgress, setDraftProgress] = useState<{ current: number; total: number; currentTitle: string } | null>(null);
 
   const handleStatusChange = async (pageId: string, newStatus: string) => {
     setUpdatingId(pageId);
@@ -77,6 +92,73 @@ const ReportPageManager = ({ propertyId, reportId }: ReportPageManagerProps) => 
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  const handleBulkDraft = async () => {
+    if (!pages || pages.length === 0) return;
+
+    // Only draft pages with empty or very short narrative
+    const draftable = pages.filter((p) => {
+      const narr = (p.narrative as unknown as string[] | null) || [];
+      const wordCount = narr.join(" ").split(/\s+/).filter(Boolean).length;
+      return wordCount < 30;
+    });
+
+    if (draftable.length === 0) {
+      toast.info("All pages already have narrative content.");
+      return;
+    }
+
+    setIsDraftingAll(true);
+    setDraftProgress({ current: 0, total: draftable.length, currentTitle: "" });
+
+    const intelligenceParsed = (() => {
+      try { return JSON.parse(propertyContext?.clientIntelligenceSummary || ""); } catch { return null; }
+    })();
+
+    let successCount = 0;
+    for (let i = 0; i < draftable.length; i++) {
+      const page = draftable[i];
+      setDraftProgress({ current: i + 1, total: draftable.length, currentTitle: page.title });
+
+      try {
+        const { data, error } = await supabase.functions.invoke("draft-page-narrative", {
+          body: {
+            pageSlug: page.page_key,
+            pageName: page.title,
+            propertyAddress: propertyContext?.propertyAddress || "",
+            yearBuilt: propertyContext?.yearBuilt,
+            sqft: propertyContext?.sqft,
+            bedrooms: propertyContext?.bedrooms,
+            bathrooms: propertyContext?.bathrooms,
+            propertyType: propertyContext?.propertyType,
+            relationshipType: propertyContext?.relationshipType,
+            clientIntelligenceSummary: intelligenceParsed?.summary || propertyContext?.clientIntelligenceSummary || "",
+            clientGoals: intelligenceParsed?.goals || [],
+            clientPriorities: intelligenceParsed?.priorities || [],
+            existingConditionRating: page.condition_rating,
+            existingSpecs: page.specs,
+          },
+        });
+
+        if (error) { console.warn(`Draft failed for ${page.title}:`, error); continue; }
+
+        const updates: Record<string, Json> = {};
+        if (data.narrative?.length) updates.narrative = data.narrative as Json;
+        if (data.key_observations?.length) updates.key_observations = data.key_observations as Json;
+        if (Object.keys(updates).length > 0) {
+          await supabase.from("report_pages").update(updates).eq("id", page.id);
+          successCount++;
+        }
+      } catch (err) {
+        console.warn(`Draft error for ${page.title}:`, err);
+      }
+    }
+
+    await queryClient.invalidateQueries({ queryKey: ["admin-report-pages", reportId] });
+    setIsDraftingAll(false);
+    setDraftProgress(null);
+    toast.success(`Drafted ${successCount} of ${draftable.length} pages. Open the portal to review.`);
   };
 
   if (isLoading) {
@@ -109,8 +191,8 @@ const ReportPageManager = ({ propertyId, reportId }: ReportPageManagerProps) => 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
           <h3 className="text-sm font-sans font-semibold text-foreground">Report Pages</h3>
           <div className="flex items-center gap-2">
             <span className="font-mono text-[11px] text-muted-foreground">
@@ -130,10 +212,30 @@ const ReportPageManager = ({ propertyId, reportId }: ReportPageManagerProps) => 
             <span className="font-mono text-[10px] text-muted-foreground">{completionPct}%</span>
           </div>
         </div>
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans" onClick={() => window.open(`/portal/${propertyId}?edit=true`, "_blank")}>
-          <ExternalLink className="w-3.5 h-3.5" />
-          Open in Portal
-        </Button>
+        <div className="flex items-center gap-2">
+          {isDraftingAll && draftProgress ? (
+            <div className="flex items-center gap-2 text-xs font-sans text-muted-foreground">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Drafting {draftProgress.current}/{draftProgress.total}: {draftProgress.currentTitle}</span>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs font-sans"
+              onClick={handleBulkDraft}
+              disabled={isDraftingAll}
+              title="Auto-draft narrative for all empty pages using AI"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Draft All with AI
+            </Button>
+          )}
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans" onClick={() => window.open(`/portal/${propertyId}?edit=true`, "_blank")}>
+            <ExternalLink className="w-3.5 h-3.5" />
+            Open in Portal
+          </Button>
+        </div>
       </div>
 
       {groups.map((group) => (

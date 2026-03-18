@@ -330,7 +330,20 @@ const AdminClientDetail = () => {
                 />
               )}
             </div>
-            <ReportPageManager propertyId={client.propertyId} reportId={client.reportId} />
+            <ReportPageManager
+              propertyId={client.propertyId}
+              reportId={client.reportId}
+              propertyContext={{
+                propertyAddress: client.address,
+                yearBuilt: client.yearBuilt,
+                sqft: client.sqft,
+                bedrooms: client.bedrooms,
+                bathrooms: client.bathrooms,
+                propertyType: client.propertyType,
+                relationshipType: client.relationshipType,
+                clientIntelligenceSummary: client.clientIntelligenceSummary,
+              }}
+            />
           </div>
         )}
         {activeTab === "files" && <FileManager propertyId={client.propertyId} />}

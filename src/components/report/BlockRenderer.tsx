@@ -18,7 +18,31 @@ import CommentsSection from "./CommentsSection";
 import ImageGrid from "@/components/editor/ImageGrid";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { ScanLine, Loader2 } from "lucide-react";
+import { ScanLine, Loader2, Save, X, CheckCircle2 } from "lucide-react";
+
+interface ScanResult {
+  brand?: string;
+  model?: string;
+  serial?: string;
+  manufactured?: string;
+  efficiency?: string;
+  capacity?: string;
+  voltage?: string;
+  refrigerant?: string;
+  [key: string]: string | undefined;
+}
+
+function inferCategory(slug?: string): string {
+  if (!slug) return "other";
+  const s = slug.toLowerCase();
+  if (s.includes("furnace") || s.includes("hvac") || s.includes("air-condition") || s.includes("heat-pump") || s.includes("boiler") || s.includes("duct")) return "hvac";
+  if (s.includes("electric")) return "electrical";
+  if (s.includes("water-heater") || s.includes("plumbing") || s.includes("softener")) return "plumbing";
+  if (s.includes("appliance") || s.includes("kitchen") || s.includes("refrigerator") || s.includes("washer") || s.includes("dryer")) return "appliances";
+  if (s.includes("roof") || s.includes("siding") || s.includes("window") || s.includes("door") || s.includes("gutter")) return "exterior";
+  if (s.includes("smoke") || s.includes("detector") || s.includes("alarm") || s.includes("fire") || s.includes("co2")) return "safety";
+  return "other";
+}
 
 const conditionOptions = ["Excellent", "Good", "Fair", "Poor", "Critical", "N/A"];
 
@@ -43,6 +67,7 @@ interface BlockRendererProps {
   };
   images?: string[];
   dbPageId?: string;
+  propertyId?: string;
   onUpdate: (updates: Partial<PageContent>) => void;
   onNavigate?: (pageKey: string) => void;
 }
@@ -52,12 +77,16 @@ const BlockRenderer = ({
   pageData,
   images = [],
   dbPageId,
+  propertyId,
   onUpdate,
   onNavigate,
 }: BlockRendererProps) => {
   const { canEdit } = useEditMode();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [isSavingEquipment, setIsSavingEquipment] = useState(false);
+  const [equipmentSaved, setEquipmentSaved] = useState(false);
 
   const handleScanSerialPlate = async (file: File) => {
     setIsScanning(true);
@@ -111,6 +140,11 @@ const BlockRenderer = ({
       });
 
       onUpdate({ specs: newSpecs });
+
+      // Store scan result for optional "Save to Equipment Registry" prompt
+      setScanResult(data as ScanResult);
+      setEquipmentSaved(false);
+
       const fields = Object.keys(specKeyMap).filter((k) => data[k]).length;
       toast({
         title: "Serial plate scanned",
@@ -126,6 +160,42 @@ const BlockRenderer = ({
     } finally {
       setIsScanning(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleSaveEquipment = async () => {
+    if (!scanResult || !propertyId) return;
+    setIsSavingEquipment(true);
+    try {
+      const slug = pageData.pageSlug || pageData.title?.toLowerCase().replace(/\s+/g, "-");
+      const name = [scanResult.brand, scanResult.model].filter(Boolean).join(" ") || pageData.title || "Equipment";
+
+      const { error } = await supabase.from("equipment").insert({
+        property_id: propertyId,
+        name,
+        category: inferCategory(slug),
+        brand: scanResult.brand || null,
+        model: scanResult.model || null,
+        serial_number: scanResult.serial || null,
+        condition: "unknown",
+        report_page_id: dbPageId || null,
+        notes: [
+          scanResult.efficiency ? `Efficiency: ${scanResult.efficiency}` : null,
+          scanResult.capacity ? `Capacity: ${scanResult.capacity}` : null,
+          scanResult.voltage ? `Voltage: ${scanResult.voltage}` : null,
+          scanResult.refrigerant ? `Refrigerant: ${scanResult.refrigerant}` : null,
+          scanResult.manufactured ? `Manufactured: ${scanResult.manufactured}` : null,
+        ].filter(Boolean).join(" · ") || null,
+      });
+
+      if (error) throw error;
+      setEquipmentSaved(true);
+      toast({ title: "Saved to Equipment Registry", description: `${name} added to this property's registry.` });
+    } catch (err) {
+      console.error("Save equipment failed:", err);
+      toast({ title: "Save failed", description: "Could not save to equipment registry.", variant: "destructive" });
+    } finally {
+      setIsSavingEquipment(false);
     }
   };
 
@@ -269,6 +339,46 @@ const BlockRenderer = ({
             specs={pageData.specs}
             onSave={(specs) => onUpdate({ specs })}
           />
+
+          {/* Save to Equipment Registry prompt — shown after a successful scan */}
+          {canEdit && scanResult && propertyId && (
+            <div className={`mt-4 flex items-center justify-between gap-3 px-4 py-3 rounded-lg border text-sm font-sans transition-colors ${
+              equipmentSaved
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-accent/30 bg-accent/5 text-foreground"
+            }`}>
+              {equipmentSaved ? (
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span>Saved to Equipment Registry</span>
+                </div>
+              ) : (
+                <>
+                  <span className="text-muted-foreground">
+                    Save <strong className="text-foreground">
+                      {[scanResult.brand, scanResult.model].filter(Boolean).join(" ") || "this equipment"}
+                    </strong> to the Equipment Registry?
+                  </span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={handleSaveEquipment}
+                      disabled={isSavingEquipment}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-accent text-accent-foreground text-xs font-mono uppercase tracking-wider hover:bg-accent/90 transition-colors disabled:opacity-50"
+                    >
+                      {isSavingEquipment ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                      {isSavingEquipment ? "Saving…" : "Save"}
+                    </button>
+                    <button
+                      onClick={() => setScanResult(null)}
+                      className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
 

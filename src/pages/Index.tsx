@@ -154,6 +154,7 @@ const Index = () => {
               pageImages={portal.pageImages}
               propertyName={propertyName}
               propertyAddress={portal.property?.address || ""}
+              propertyId={portal.property?.id}
               pdfData={pdfData}
               reportId={portal.report?.id}
               propertyContext={portal.property ? {

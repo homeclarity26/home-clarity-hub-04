@@ -52,6 +52,7 @@ interface ReportTabProps {
   pageImages?: Record<string, string[]>;
   propertyName?: string;
   propertyAddress?: string;
+  propertyId?: string;
   pdfData?: PDFReportData;
   reportId?: string;
   propertyContext?: PropertyContext;
@@ -99,6 +100,7 @@ const ReportTab = ({
   pageImages = {},
   propertyName = "The Johnson Residence",
   propertyAddress = "",
+  propertyId,
   pdfData,
   reportId,
   propertyContext,
@@ -161,7 +163,7 @@ const ReportTab = ({
           <ActionPlanPage reportId={reportId} />
         ) : (
           <>
-            <ReportPage page={page} onNavigate={onNavigate} dbPageId={dbPageId} images={images} pdfData={pdfData} reportId={reportId} propertyAddress={propertyAddress} propertyContext={propertyContext} />
+            <ReportPage page={page} onNavigate={onNavigate} dbPageId={dbPageId} images={images} pdfData={pdfData} reportId={reportId} propertyId={propertyId} propertyAddress={propertyAddress} propertyContext={propertyContext} />
             {images.length > 0 && (
               <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-16">
                 <h3 className="font-display text-2xl text-foreground mb-6">Photos</h3>

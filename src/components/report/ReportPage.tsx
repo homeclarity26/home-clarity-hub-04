@@ -17,11 +17,12 @@ interface ReportPageProps {
   images?: string[];
   pdfData?: PDFReportData;
   reportId?: string;
+  propertyId?: string;
   propertyAddress?: string;
   propertyContext?: PropertyContext;
 }
 
-const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, reportId, propertyAddress, propertyContext }: ReportPageProps) => {
+const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, reportId, propertyId, propertyAddress, propertyContext }: ReportPageProps) => {
   const { canEdit } = useEditMode();
   const { pageData, blockConfig, status, saveStatus, updatePageData, updateStatus, isLoading } = useReportPage(page.id, page, reportId);
   const [isDrafting, setIsDrafting] = useState(false);
@@ -122,6 +123,7 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
           pageData={extendedPageData}
           images={resolvedImages}
           dbPageId={dbPageId}
+          propertyId={propertyId}
           onUpdate={handleUpdate}
           onNavigate={onNavigate}
         />
