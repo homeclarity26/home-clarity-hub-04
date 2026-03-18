@@ -150,12 +150,12 @@ const BlockRenderer = ({
       Object.entries(specKeyMap).forEach(([key, label]) => {
         if (data[key]) {
           const existingIndex = newSpecs.findIndex(
-            (s: { key: string }) => s.key?.toLowerCase() === label.toLowerCase()
+            (s: any) => s.key?.toLowerCase() === label.toLowerCase() || s.label?.toLowerCase() === label.toLowerCase()
           );
           if (existingIndex >= 0) {
             newSpecs[existingIndex] = { ...newSpecs[existingIndex], value: data[key] };
           } else {
-            newSpecs.push({ key: label, value: data[key] });
+            newSpecs.push({ label: label, value: data[key] } as any);
           }
         }
       });
