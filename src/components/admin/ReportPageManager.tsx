@@ -69,6 +69,16 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isDraftingAll, setIsDraftingAll] = useState(false);
   const [draftProgress, setDraftProgress] = useState<{ current: number; total: number; currentTitle: string } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  };
+
+  const toggleAll = () => {
+    if (!pages) return;
+    setSelectedIds((prev) => prev.length === pages.length ? [] : pages.map((p) => p.id));
+  };
 
   const handleStatusChange = async (pageId: string, newStatus: string) => {
     setUpdatingId(pageId);
