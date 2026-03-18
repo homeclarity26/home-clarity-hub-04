@@ -164,6 +164,12 @@ const AdminAutomations = () => {
             </Card>
           </div>
         )}
+          </TabsContent>
+
+          <TabsContent value="onboarding">
+            <OnboardingWorkflowBuilder />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
