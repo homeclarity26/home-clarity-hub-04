@@ -53,15 +53,24 @@ import OnboardingTracker from "@/components/admin/OnboardingTracker";
 import InspectionChecklist from "@/components/admin/InspectionChecklist";
 import PageAssignments from "@/components/admin/PageAssignments";
 import BatchOperationsBar from "@/components/admin/BatchOperationsBar";
+import AIDraftAssistant from "@/components/admin/AIDraftAssistant";
+import AICostEstimator from "@/components/admin/AICostEstimator";
+import AIClientInsightsCard from "@/components/admin/AIClientInsightsCard";
+import AIMaintenanceSchedule from "@/components/admin/AIMaintenanceSchedule";
+import AITranscriptSummarizer from "@/components/admin/AITranscriptSummarizer";
+import ClientTimelineTab from "@/components/admin/ClientTimelineTab";
+import ClientEngagementTab from "@/components/admin/ClientEngagementTab";
+import ReportVersionHistory from "@/components/admin/ReportVersionHistory";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 
-type ClientTab = "overview" | "timeline" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time";
+type ClientTab = "overview" | "timeline" | "engagement" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time";
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "timeline", label: "Timeline" },
+  { id: "engagement", label: "Engagement" },
   { id: "tasks", label: "Tasks" },
   { id: "time", label: "Time" },
   { id: "report", label: "Report" },
@@ -392,6 +401,7 @@ const AdminClientDetail = () => {
 
         {activeTab === "overview" && (
           <div className="space-y-6">
+            <AIClientInsightsCard propertyId={client.propertyId} clientData={{ name: client.name, address: client.address, propertyType: client.propertyType, yearBuilt: client.yearBuilt }} />
             <ClientHealthCard client={client} />
             <AIFollowUpSuggestions propertyId={client.propertyId} clientName={client.name} />
             <ConditionForecast propertyId={client.propertyId} />
@@ -403,10 +413,12 @@ const AdminClientDetail = () => {
             <AdminValuationCard propertyId={client.propertyId} address={client.address} />
           </div>
         )}
-        {activeTab === "timeline" && <ClientActivityTimeline propertyId={client.propertyId} />}
+        {activeTab === "timeline" && <ClientTimelineTab propertyId={client.propertyId} />}
+        {activeTab === "engagement" && <ClientEngagementTab clientUserId={client.clientUserId || ""} propertyId={client.propertyId} />}
         {activeTab === "report" && (
           <div className="space-y-4">
             <div className="flex items-center justify-end gap-2">
+              {client.reportId && <ReportVersionHistory reportId={client.reportId} propertyId={client.propertyId} />}
               {client.reportId && (
                 <ReportCloneDialog sourceReportId={client.reportId} sourcePropertyName={client.propertyName} />
               )}
@@ -424,6 +436,7 @@ const AdminClientDetail = () => {
             {reportPages && reportPages.length > 0 && (
               <ReportProgressKanban pages={reportPages} propertyId={client.propertyId} />
             )}
+            <AIDraftAssistant propertyId={client.propertyId} propertyContext={{ propertyAddress: client.address, yearBuilt: client.yearBuilt, sqft: client.sqft, propertyType: client.propertyType }} />
             <VoiceAndPhotoTools reportId={client.reportId || ""} propertyId={client.propertyId} />
             <ReportAITools
               reportId={client.reportId || ""}
@@ -453,7 +466,12 @@ const AdminClientDetail = () => {
             />
           </div>
         )}
-        {activeTab === "files" && <FileManager propertyId={client.propertyId} />}
+        {activeTab === "files" && (
+          <div className="space-y-4">
+            <AITranscriptSummarizer propertyId={client.propertyId} />
+            <FileManager propertyId={client.propertyId} />
+          </div>
+        )}
         {activeTab === "comments" && <CommentsManager clientId={client.id} />}
         {activeTab === "vendors" && <VendorManager propertyId={client.propertyId} />}
         {activeTab === "messages" && (
@@ -476,11 +494,14 @@ const AdminClientDetail = () => {
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <AdminProjectsSection
-              propertyId={client.propertyId}
-              projects={projects}
-              reportPages={reportPages?.map((rp) => ({ id: rp.id, title: rp.title, page_key: rp.page_key }))}
-            />
+            <div className="space-y-4">
+              <AICostEstimator propertyId={client.propertyId} propertyAddress={client.address} />
+              <AdminProjectsSection
+                propertyId={client.propertyId}
+                projects={projects}
+                reportPages={reportPages?.map((rp) => ({ id: rp.id, title: rp.title, page_key: rp.page_key }))}
+              />
+            </div>
           )
         )}
 
@@ -506,6 +527,8 @@ const AdminClientDetail = () => {
                 <Plus className="w-3.5 h-3.5" />Add Event
               </Button>
             </div>
+
+            <AIMaintenanceSchedule propertyId={client.propertyId} equipment={equipmentData || []} location={client.address} />
 
             <SmartScheduleDialog
               open={eventOpen}
