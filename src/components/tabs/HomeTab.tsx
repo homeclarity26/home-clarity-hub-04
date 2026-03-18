@@ -5,6 +5,7 @@ import HomeValueTracker from "@/components/HomeValueTracker";
 import MembershipBanner from "@/components/MembershipBanner";
 import ValuationModal from "@/components/ValuationModal";
 import HomeHealthDiagram from "@/components/HomeHealthDiagram";
+import AnnualReportCard from "@/components/AnnualReportCard";
 import { usePropertyValuation } from "@/hooks/usePropertyValuation";
 import type { ReportPageData } from "@/data/reportContent";
 
