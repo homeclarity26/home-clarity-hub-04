@@ -24,6 +24,7 @@ const HomeTab = ({
   creatorName = "Your HBC Team",
   estimatedValue,
   propertyId,
+  membershipEndDate,
 }: HomeTabProps) => {
   const handleAskQuestion = () => {
     // Click the FAB button to open the assistant popup
