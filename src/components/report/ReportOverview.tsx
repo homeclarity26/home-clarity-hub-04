@@ -3,6 +3,7 @@ import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
+import DigitalHomePanel from "./DigitalHomePanel";
 import { CHAPTERS } from "./ReportChapterNav";
 import {
   Home,
