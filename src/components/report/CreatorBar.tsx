@@ -48,6 +48,7 @@ const CreatorBar = ({
   pdfData,
   onDraftNarrative,
   isDrafting,
+  qaCoachSlot,
 }: CreatorBarProps) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
