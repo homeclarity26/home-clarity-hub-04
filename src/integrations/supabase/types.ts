@@ -649,13 +649,19 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          insurance_expiry: string | null
           lead_time: string | null
+          license_number: string | null
           notes: string | null
           phone: string | null
           rating: number | null
           service_area: string | null
           specialties: string[] | null
           status: string
+          tier: string | null
+          user_id: string | null
+          vetting_checklist: Json | null
+          website: string | null
         }
         Insert: {
           admin_id: string
@@ -665,13 +671,19 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          insurance_expiry?: string | null
           lead_time?: string | null
+          license_number?: string | null
           notes?: string | null
           phone?: string | null
           rating?: number | null
           service_area?: string | null
           specialties?: string[] | null
           status?: string
+          tier?: string | null
+          user_id?: string | null
+          vetting_checklist?: Json | null
+          website?: string | null
         }
         Update: {
           admin_id?: string
@@ -681,13 +693,19 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          insurance_expiry?: string | null
           lead_time?: string | null
+          license_number?: string | null
           notes?: string | null
           phone?: string | null
           rating?: number | null
           service_area?: string | null
           specialties?: string[] | null
           status?: string
+          tier?: string | null
+          user_id?: string | null
+          vetting_checklist?: Json | null
+          website?: string | null
         }
         Relationships: []
       }
@@ -1013,6 +1031,232 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      crm_activity_log: {
+        Row: {
+          activity_type: string
+          channel: string | null
+          contact_id: string
+          content_preview: string | null
+          id: string
+          logged_at: string
+          logged_by: string | null
+          metadata: Json | null
+        }
+        Insert: {
+          activity_type: string
+          channel?: string | null
+          contact_id: string
+          content_preview?: string | null
+          id?: string
+          logged_at?: string
+          logged_by?: string | null
+          metadata?: Json | null
+        }
+        Update: {
+          activity_type?: string
+          channel?: string | null
+          contact_id?: string
+          content_preview?: string | null
+          id?: string
+          logged_at?: string
+          logged_by?: string | null
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_activity_log_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_contacts: {
+        Row: {
+          client_stage: Database["public"]["Enums"]["crm_client_stage"] | null
+          contact_type: Database["public"]["Enums"]["crm_contact_type"]
+          created_at: string
+          created_by: string | null
+          id: string
+          last_contact_date: string | null
+          lifetime_value: number | null
+          notes: string | null
+          partner_stage: Database["public"]["Enums"]["crm_partner_stage"] | null
+          property_id: string | null
+          referral_source: string | null
+          since_date: string | null
+          tags: string[] | null
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          client_stage?: Database["public"]["Enums"]["crm_client_stage"] | null
+          contact_type: Database["public"]["Enums"]["crm_contact_type"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_contact_date?: string | null
+          lifetime_value?: number | null
+          notes?: string | null
+          partner_stage?:
+            | Database["public"]["Enums"]["crm_partner_stage"]
+            | null
+          property_id?: string | null
+          referral_source?: string | null
+          since_date?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          client_stage?: Database["public"]["Enums"]["crm_client_stage"] | null
+          contact_type?: Database["public"]["Enums"]["crm_contact_type"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_contact_date?: string | null
+          lifetime_value?: number | null
+          notes?: string | null
+          partner_stage?:
+            | Database["public"]["Enums"]["crm_partner_stage"]
+            | null
+          property_id?: string | null
+          referral_source?: string | null
+          since_date?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_contacts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contacts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "central_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_contacts_people: {
+        Row: {
+          birthday: string | null
+          contact_id: string
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          preferred_method: string | null
+          relationship: string | null
+        }
+        Insert: {
+          birthday?: string | null
+          contact_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          preferred_method?: string | null
+          relationship?: string | null
+        }
+        Update: {
+          birthday?: string | null
+          contact_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          preferred_method?: string | null
+          relationship?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_contacts_people_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_pipeline_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          contact_id: string
+          from_stage: string | null
+          id: string
+          notes: string | null
+          to_stage: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          contact_id: string
+          from_stage?: string | null
+          id?: string
+          notes?: string | null
+          to_stage: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          contact_id?: string
+          from_stage?: string | null
+          id?: string
+          notes?: string | null
+          to_stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_pipeline_history_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_saved_filters: {
+        Row: {
+          contact_type: Database["public"]["Enums"]["crm_contact_type"] | null
+          created_at: string
+          created_by: string | null
+          filter_json: Json
+          id: string
+          name: string
+        }
+        Insert: {
+          contact_type?: Database["public"]["Enums"]["crm_contact_type"] | null
+          created_at?: string
+          created_by?: string | null
+          filter_json?: Json
+          id?: string
+          name: string
+        }
+        Update: {
+          contact_type?: Database["public"]["Enums"]["crm_contact_type"] | null
+          created_at?: string
+          created_by?: string | null
+          filter_json?: Json
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       dashboard_widget_configs: {
         Row: {
@@ -4708,6 +4952,23 @@ export type Database = {
     }
     Enums: {
       app_role: "creator" | "client" | "trade_partner"
+      crm_client_stage:
+        | "lead"
+        | "onboarding"
+        | "active"
+        | "proposal_out"
+        | "project_running"
+        | "completed"
+        | "at_risk"
+        | "churned"
+      crm_contact_type: "client" | "trade_partner"
+      crm_partner_stage:
+        | "prospecting"
+        | "vetting"
+        | "approved"
+        | "active"
+        | "preferred"
+        | "inactive"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4836,6 +5097,25 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["creator", "client", "trade_partner"],
+      crm_client_stage: [
+        "lead",
+        "onboarding",
+        "active",
+        "proposal_out",
+        "project_running",
+        "completed",
+        "at_risk",
+        "churned",
+      ],
+      crm_contact_type: ["client", "trade_partner"],
+      crm_partner_stage: [
+        "prospecting",
+        "vetting",
+        "approved",
+        "active",
+        "preferred",
+        "inactive",
+      ],
     },
   },
 } as const
