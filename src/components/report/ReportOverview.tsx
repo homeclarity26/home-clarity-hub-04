@@ -83,6 +83,7 @@ const ReportOverview = ({
   hoverPdfUrl,
   iguideUrl,
   iguidePdfUrl,
+  estimatedValue,
 }: ReportOverviewProps) => {
   // Calculate health scores
   const allPagesList = useMemo(() => Object.values(pages), [pages]);
