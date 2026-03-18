@@ -600,6 +600,33 @@ const NewReportWizard = () => {
     }
   };
 
+  const copyInviteMessage = () => {
+    const firstName = form.fullName.split(" ")[0] || form.fullName;
+    const portalUrl = publishResult?.portalUrl
+      ? `${window.location.origin}${publishResult.portalUrl.startsWith("/") ? "" : "/"}${publishResult.portalUrl}`
+      : `${window.location.origin}/portal/${createdPropertyId}`;
+
+    const lines: string[] = [
+      `Hi ${firstName},`,
+      ``,
+      `Your Home Clarity Hub portal is ready! Here's how to access it:`,
+      ``,
+      `Portal: ${portalUrl}`,
+      `Email: ${form.email}`,
+    ];
+
+    if (publishResult?.tempPassword && !publishResult?.isExisting) {
+      lines.push(`Temporary password: ${publishResult.tempPassword}`);
+      lines.push(`(You'll be prompted to set your own password on first login.)`);
+    }
+
+    lines.push(``);
+    lines.push(`Your personalized home report is ready to review. Reach out anytime if you have questions!`);
+
+    navigator.clipboard.writeText(lines.join("\n"));
+    toast({ title: "Copied!", description: "Invite message copied to clipboard — paste into email or text." });
+  };
+
   return (
     <div className="space-y-6">
       {/* Step indicator */}
@@ -1066,7 +1093,18 @@ const NewReportWizard = () => {
                 </div>
               )}
 
-              <div className="flex gap-3">
+              <div className="p-3 rounded-lg bg-muted/40 border border-border">
+                <p className="text-xs font-sans font-medium text-foreground mb-1.5">Share with client:</p>
+                <p className="text-xs font-sans text-muted-foreground mb-2.5 leading-relaxed">
+                  Copy a formatted message with the portal link and login credentials to send via email or text.
+                </p>
+                <Button variant="outline" size="sm" className="gap-1.5 font-sans text-xs w-full" onClick={copyInviteMessage}>
+                  <Mail className="w-3.5 h-3.5" />
+                  Copy Invite Message
+                </Button>
+              </div>
+
+              <div className="flex gap-3 flex-wrap">
                 <Button variant="outline" className="gap-1.5 font-sans" onClick={copyPortalLink}>
                   <Copy className="w-4 h-4" />
                   Copy Portal Link

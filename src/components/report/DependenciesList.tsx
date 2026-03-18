@@ -12,17 +12,17 @@ interface Dependency {
 
 interface DependenciesListProps {
   dependencies: Dependency[];
+  allPages?: { pageKey: string; title: string }[];
   onSave?: (dependencies: Dependency[]) => void;
   onNavigate?: (pageKey: string) => void;
 }
 
-const DependenciesList = ({ dependencies, onSave, onNavigate }: DependenciesListProps) => {
+const DependenciesList = ({ dependencies, allPages, onSave, onNavigate }: DependenciesListProps) => {
   const { canEdit } = useEditMode();
   const [isEditing, setIsEditing] = useState(false);
-  const [items, setItems] = useState(dependencies);
-
-  const beforeDeps = dependencies.filter((d) => d.type === "before");
-  const afterDeps = dependencies.filter((d) => d.type === "after");
+  const [items, setItems] = useState<Dependency[]>(dependencies);
+  const [newPageKey, setNewPageKey] = useState("");
+  const [newDepType, setNewDepType] = useState<"before" | "after">("before");
 
   const handleSave = () => {
     onSave?.(items);
@@ -33,6 +33,24 @@ const DependenciesList = ({ dependencies, onSave, onNavigate }: DependenciesList
     setItems(items.filter((_, i) => i !== index));
   };
 
+  const addItem = () => {
+    if (!newPageKey) return;
+    const page = allPages?.find((p) => p.pageKey === newPageKey);
+    if (!page) return;
+    // Avoid duplicates
+    if (items.find((i) => i.pageKey === newPageKey)) return;
+    setItems([...items, { pageKey: page.pageKey, title: page.title, type: newDepType }]);
+    setNewPageKey("");
+  };
+
+  // Pages available to add: all pages not already in items
+  const addablePages = (allPages || []).filter(
+    (p) => !items.find((i) => i.pageKey === p.pageKey)
+  );
+
+  const beforeDeps = dependencies.filter((d) => d.type === "before");
+  const afterDeps = dependencies.filter((d) => d.type === "after");
+
   if (isEditing && canEdit) {
     return (
       <div className="space-y-3 p-4 border border-border rounded-lg bg-muted/30">
@@ -40,33 +58,100 @@ const DependenciesList = ({ dependencies, onSave, onNavigate }: DependenciesList
           <Link2 className="w-4 h-4" />
           <span className="font-mono text-[11px] uppercase tracking-[0.15em]">Dependencies</span>
         </div>
-        <div className="space-y-2">
-          {items.map((item, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">
-                {item.type === "before" ? "Must do first" : "Do after"}
-              </Badge>
-              <span className="text-sm">{item.title}</span>
-              <button onClick={() => removeItem(i)} className="ml-auto p-1 text-muted-foreground hover:text-destructive">
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
+
+        {/* Existing items */}
+        {items.length > 0 ? (
+          <div className="space-y-2">
+            {items.map((item, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs flex-shrink-0">
+                  {item.type === "before" ? "Must do first" : "Do after"}
+                </Badge>
+                <span className="text-sm flex-1">{item.title}</span>
+                <button
+                  onClick={() => removeItem(i)}
+                  className="ml-auto p-1 text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground italic">No dependencies added yet.</p>
+        )}
+
+        {/* Add new dependency */}
+        {addablePages.length > 0 && (
+          <div className="flex items-center gap-2 pt-1">
+            <select
+              value={newPageKey}
+              onChange={(e) => setNewPageKey(e.target.value)}
+              className="flex-1 text-xs font-sans bg-background border border-input rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="">Add a page...</option>
+              {addablePages.map((p) => (
+                <option key={p.pageKey} value={p.pageKey}>
+                  {p.title}
+                </option>
+              ))}
+            </select>
+            <select
+              value={newDepType}
+              onChange={(e) => setNewDepType(e.target.value as "before" | "after")}
+              className="text-xs font-sans bg-background border border-input rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="before">Must do first</option>
+              <option value="after">Do after</option>
+            </select>
+            <button
+              onClick={addItem}
+              disabled={!newPageKey}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-muted border border-border text-xs font-sans text-foreground hover:bg-muted/80 transition-colors disabled:opacity-40"
+            >
+              <Plus className="w-3 h-3" />
+              Add
+            </button>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 pt-1">
+          <button
+            onClick={handleSave}
+            className="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Save
+          </button>
+          <button
+            onClick={() => {
+              setItems(dependencies);
+              setIsEditing(false);
+            }}
+            className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Cancel
+          </button>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Dependencies are managed through the project planning interface.
-        </p>
-        <button
-          onClick={handleSave}
-          className="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-md"
-        >
-          Done
-        </button>
       </div>
     );
   }
 
-  if (dependencies.length === 0) return null;
+  if (dependencies.length === 0) {
+    // In edit mode, show an "Add dependencies" prompt even when empty
+    if (canEdit && (allPages?.length ?? 0) > 0) {
+      return (
+        <div
+          className="flex items-center gap-2 py-2 px-4 border border-dashed border-border rounded-lg text-muted-foreground cursor-pointer hover:border-primary/40 hover:text-foreground transition-colors"
+          onClick={() => setIsEditing(true)}
+        >
+          <Link2 className="w-3.5 h-3.5" />
+          <span className="text-xs font-mono uppercase tracking-[0.12em]">Add page dependencies</span>
+          <Plus className="w-3.5 h-3.5 ml-auto" />
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div
@@ -79,8 +164,9 @@ const DependenciesList = ({ dependencies, onSave, onNavigate }: DependenciesList
       <div className="flex items-center gap-2 text-muted-foreground">
         <Link2 className="w-4 h-4" />
         <span className="font-mono text-[11px] uppercase tracking-[0.15em]">Dependencies</span>
+        {canEdit && <Plus className="w-3.5 h-3.5 ml-auto opacity-50" />}
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-3">
         {beforeDeps.length > 0 && (
           <div className="space-y-1">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Must complete first:</span>

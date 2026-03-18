@@ -124,6 +124,7 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
           images={resolvedImages}
           dbPageId={dbPageId}
           propertyId={propertyId}
+          reportId={reportId}
           onUpdate={handleUpdate}
           onNavigate={onNavigate}
         />

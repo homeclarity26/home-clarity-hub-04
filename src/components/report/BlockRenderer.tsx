@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import type { ReportPageData } from "@/data/reportContent";
 import { useEditMode } from "@/contexts/EditModeContext";
 import type { BlockConfig, PageContent } from "@/lib/templateUtils";
@@ -15,6 +15,7 @@ import RisksConcerns from "./RisksConcerns";
 import MaintenanceNotes from "./MaintenanceNotes";
 import CreatorNotes from "./CreatorNotes";
 import CommentsSection from "./CommentsSection";
+import RecommendedVendors from "./RecommendedVendors";
 import ImageGrid from "@/components/editor/ImageGrid";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -68,6 +69,7 @@ interface BlockRendererProps {
   images?: string[];
   dbPageId?: string;
   propertyId?: string;
+  reportId?: string;
   onUpdate: (updates: Partial<PageContent>) => void;
   onNavigate?: (pageKey: string) => void;
 }
@@ -78,6 +80,7 @@ const BlockRenderer = ({
   images = [],
   dbPageId,
   propertyId,
+  reportId,
   onUpdate,
   onNavigate,
 }: BlockRendererProps) => {
@@ -87,6 +90,24 @@ const BlockRenderer = ({
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [isSavingEquipment, setIsSavingEquipment] = useState(false);
   const [equipmentSaved, setEquipmentSaved] = useState(false);
+  const [allReportPages, setAllReportPages] = useState<{ pageKey: string; title: string }[]>([]);
+
+  // Load all pages in this report so the admin can set page dependencies
+  useEffect(() => {
+    if (!reportId || !canEdit) return;
+    supabase
+      .from("report_pages")
+      .select("page_key, title")
+      .eq("report_id", reportId)
+      .order("sort_order", { ascending: true })
+      .then(({ data }) => {
+        if (data) {
+          setAllReportPages(
+            data.map((p) => ({ pageKey: p.page_key, title: p.title }))
+          );
+        }
+      });
+  }, [reportId, canEdit]);
 
   const handleScanSerialPlate = async (file: File) => {
     setIsScanning(true);
@@ -415,9 +436,10 @@ const BlockRenderer = ({
       )}
 
       {/* Dependencies Block */}
-      {shouldRender("dependencies") && pageData.dependencies && (
+      {shouldRender("dependencies") && (
         <DependenciesList
-          dependencies={pageData.dependencies}
+          dependencies={pageData.dependencies || []}
+          allPages={allReportPages.filter((p) => p.pageKey !== pageData.id)}
           onSave={(dependencies) => onUpdate({ dependencies })}
           onNavigate={onNavigate}
         />
@@ -472,6 +494,14 @@ const BlockRenderer = ({
             </ul>
           </EditableSection>
         </div>
+      )}
+
+      {/* Recommended Vendors Block */}
+      {propertyId && (
+        <RecommendedVendors
+          propertyId={propertyId}
+          pageSlug={pageData.id}
+        />
       )}
 
       {/* Creator Notes Block (only visible to creators) */}
