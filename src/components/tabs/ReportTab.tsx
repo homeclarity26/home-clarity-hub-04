@@ -28,6 +28,7 @@ import {
   ChevronRight,
   MessageSquare,
   PlusCircle,
+  Share2,
 } from "lucide-react";
 
 export interface PropertyContext {
