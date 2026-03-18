@@ -37,7 +37,7 @@ const AdminProjectDetail = () => {
   if (isLoading) {
     return (
       <div>
-        <AdminHeader breadcrumbs={[{ label: "Projects", href: "/admin/projects" }, { label: "Loading..." }]} />
+        <AdminHeader breadcrumbs={[{ label: "Projects", path: "/admin/projects" }, { label: "Loading..." }]} />
         <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
       </div>
     );
