@@ -46,7 +46,7 @@ export function useAdminClients() {
       const { data: properties, error: propErr } = await supabase
         .from("properties")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false }) as { data: any[] | null; error: any };
 
       if (propErr) throw propErr;
       if (!properties || properties.length === 0) return [];
