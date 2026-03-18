@@ -58,7 +58,7 @@ const getUrgencyBadge = (timing: string) => {
   return { label: "FUTURE", cls: "bg-muted text-muted-foreground" };
 };
 
-const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages }: ProjectsTabProps) => {
+const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage }: ProjectsTabProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [milestones, setMilestones] = useState<Record<string, Milestone[]>>({});
   const [loading, setLoading] = useState(true);
