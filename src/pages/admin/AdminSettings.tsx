@@ -35,6 +35,12 @@ const AdminSettings = () => {
   const [region, setRegion] = useState("Summit County, OH");
   const [savingRegion, setSavingRegion] = useState(false);
 
+  // Branding
+  const [businessName, setBusinessName] = useState("Hometown Builders Club");
+  const [tagline, setTagline] = useState("Home Clarity, Delivered.");
+  const [brandColor, setBrandColor] = useState("#C9A84C");
+  const [savingBranding, setSavingBranding] = useState(false);
+
   // Stripe
   const [stripeConnected, setStripeConnected] = useState(false);
   const [stripeKey, setStripeKey] = useState("");
