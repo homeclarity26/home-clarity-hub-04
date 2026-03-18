@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, Check } from "lucide-react";
+import { CreditCard, Check, Palette } from "lucide-react";
 
 import AdminHeader from "@/components/admin/AdminHeader";
 import ApiWebhookSettings from "@/components/admin/ApiWebhookSettings";
@@ -34,6 +34,12 @@ const AdminSettings = () => {
   const [saving, setSaving] = useState(false);
   const [region, setRegion] = useState("Summit County, OH");
   const [savingRegion, setSavingRegion] = useState(false);
+
+  // Branding
+  const [businessName, setBusinessName] = useState("Hometown Builders Club");
+  const [tagline, setTagline] = useState("Home Clarity, Delivered.");
+  const [brandColor, setBrandColor] = useState("#C9A84C");
+  const [savingBranding, setSavingBranding] = useState(false);
 
   // Stripe
   const [stripeConnected, setStripeConnected] = useState(false);
@@ -137,6 +143,47 @@ const AdminSettings = () => {
           </TabsList>
 
           <TabsContent value="general" className="space-y-6">
+            {/* Branding */}
+            <Card className="p-6 space-y-5">
+              <div className="flex items-center gap-2">
+                <Palette className="w-5 h-5 text-accent" />
+                <h3 className="text-base font-sans font-semibold text-foreground">Branding</h3>
+              </div>
+              <p className="text-sm font-sans text-muted-foreground">Customize your business name, tagline, and brand color. These appear across the admin and client portal.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-sans">Business Name</Label>
+                  <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="font-sans" placeholder="Your Business Name" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-sans">Tagline / Subtitle</Label>
+                  <Input value={tagline} onChange={(e) => setTagline(e.target.value)} className="font-sans" placeholder="Your tagline..." />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-sans">Brand Color</Label>
+                  <div className="flex items-center gap-3">
+                    <Input type="color" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="h-9 w-14 p-1 cursor-pointer" />
+                    <Input value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="font-mono text-sm w-28" />
+                    <div className="w-8 h-8 rounded-md border border-border" style={{ backgroundColor: brandColor }} />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-sans">Logo Upload</Label>
+                  <Input type="file" accept="image/*" className="font-sans text-sm" disabled />
+                  <p className="text-[10px] font-sans text-muted-foreground">Coming soon — logo will appear in the sidebar and client portal header.</p>
+                </div>
+              </div>
+              <Button size="sm" className="font-sans" disabled={savingBranding} onClick={() => {
+                setSavingBranding(true);
+                localStorage.setItem("hbc_business_name", businessName);
+                localStorage.setItem("hbc_tagline", tagline);
+                localStorage.setItem("hbc_brand_color", brandColor);
+                setTimeout(() => { setSavingBranding(false); toast.success("Branding saved"); }, 300);
+              }}>
+                {savingBranding ? "Saving..." : "Save Branding"}
+              </Button>
+            </Card>
+
             {/* Account */}
             <Card className="p-6 space-y-5">
               <h3 className="text-base font-sans font-semibold text-foreground">Account</h3>

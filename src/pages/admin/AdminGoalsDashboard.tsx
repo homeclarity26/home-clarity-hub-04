@@ -4,19 +4,26 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Target, Search, ArrowRight } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Loader2, Target, Search, ArrowRight, Plus } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const STATUS_COLORS: Record<string, string> = { dreaming: "bg-muted text-muted-foreground", planning: "bg-accent/20 text-accent-foreground", "in_progress": "bg-primary/10 text-primary", complete: "bg-green-100 text-green-800" };
 
 const AdminGoalsDashboard = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newGoal, setNewGoal] = useState({ title: "", description: "", status: "dreaming", target_year: "", estimated_budget: "" });
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-all-goals"],
@@ -53,6 +60,12 @@ const AdminGoalsDashboard = () => {
     <div>
       <AdminHeader breadcrumbs={[{ label: "Goals" }]} />
       <div className="p-6 max-w-7xl space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-sans font-bold text-foreground">Client Goals</h1>
+          <Button size="sm" className="gap-1.5 font-sans" onClick={() => setCreateOpen(true)}>
+            <Plus className="w-3.5 h-3.5" />New Goal
+          </Button>
+        </div>
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           <Card className="p-4 text-center">
@@ -130,6 +143,63 @@ const AdminGoalsDashboard = () => {
             </Table>
           </Card>
         )}
+
+        {/* Create Goal Dialog */}
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle className="font-sans">New Goal</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-sans">Title</Label>
+                <Input value={newGoal.title} onChange={e => setNewGoal({ ...newGoal, title: e.target.value })} placeholder="e.g., Finish basement" className="font-sans" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-sans">Description</Label>
+                <Textarea value={newGoal.description} onChange={e => setNewGoal({ ...newGoal, description: e.target.value })} placeholder="Details..." className="font-sans" rows={3} />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-sans">Status</Label>
+                  <Select value={newGoal.status} onValueChange={v => setNewGoal({ ...newGoal, status: v })}>
+                    <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dreaming">Dreaming</SelectItem>
+                      <SelectItem value="planning">Planning</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-sans">Target Year</Label>
+                  <Input type="number" value={newGoal.target_year} onChange={e => setNewGoal({ ...newGoal, target_year: e.target.value })} placeholder="2026" className="font-mono text-sm" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-sans">Budget ($)</Label>
+                  <Input type="number" value={newGoal.estimated_budget} onChange={e => setNewGoal({ ...newGoal, estimated_budget: e.target.value })} placeholder="5000" className="font-mono text-sm" />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button disabled={!newGoal.title.trim()} className="font-sans" onClick={async () => {
+                // For now, goals need a client_id — pick the first available client
+                const { data: props } = await supabase.from("properties").select("client_user_id").limit(1).single();
+                if (!props) { toast.error("No clients found — add a client first"); return; }
+                await supabase.from("home_goals").insert({
+                  client_id: props.client_user_id,
+                  title: newGoal.title,
+                  description: newGoal.description || null,
+                  status: newGoal.status,
+                  target_year: newGoal.target_year ? Number(newGoal.target_year) : null,
+                  estimated_budget: newGoal.estimated_budget ? Number(newGoal.estimated_budget) : null,
+                });
+                setCreateOpen(false);
+                setNewGoal({ title: "", description: "", status: "dreaming", target_year: "", estimated_budget: "" });
+                queryClient.invalidateQueries({ queryKey: ["admin-all-goals"] });
+                toast.success("Goal created");
+              }}>Create Goal</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

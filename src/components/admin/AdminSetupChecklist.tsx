@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ArrowRight, X, Settings, CreditCard, MapPin, UserPlus, FileText, Briefcase, Zap, Play } from "lucide-react";
+import { Check, ArrowRight, X, Settings, CreditCard, UserPlus, FileText, Crown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -7,14 +7,11 @@ import { useTutorialProgress } from "@/hooks/useTutorialProgress";
 import { useNavigate } from "react-router-dom";
 
 const checklistItems = [
-  { key: "update_profile", title: "Update your name and email in Settings", icon: Settings, path: "/admin/settings" },
-  { key: "connect_stripe", title: "Connect Stripe for online payments", icon: CreditCard, path: "/admin/settings" },
-  { key: "set_service_area", title: "Set your service area", icon: MapPin, path: "/admin/settings" },
   { key: "add_first_client", title: "Add your first client", icon: UserPlus, path: "/admin/clients/new" },
-  { key: "publish_first_report", title: "Publish your first report", icon: FileText, path: "/admin/clients" },
-  { key: "add_vendor", title: "Add at least one vendor to your directory", icon: Briefcase, path: "/admin/vendors" },
-  { key: "enable_automation", title: "Enable at least one automation rule", icon: Zap, path: "/admin/automations" },
-  { key: "complete_dashboard_tour", title: "Complete the Admin Dashboard Tour", icon: Play, path: "/admin/help" },
+  { key: "connect_stripe", title: "Connect Stripe for online payments", icon: CreditCard, path: "/admin/settings" },
+  { key: "set_branding", title: "Set up your branding", icon: Settings, path: "/admin/settings" },
+  { key: "publish_first_report", title: "Create your first report", icon: FileText, path: "/admin/clients" },
+  { key: "configure_tiers", title: "Configure your membership tiers", icon: Crown, path: "/admin/settings?tab=tiers" },
 ];
 
 const AdminSetupChecklist = () => {

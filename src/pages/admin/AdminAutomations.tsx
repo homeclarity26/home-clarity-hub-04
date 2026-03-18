@@ -16,13 +16,13 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 const DEFAULT_RULES = [
-  { rule_type: "inactive_client", rule_name: "Inactive Client Check-In", rule_description: "Send a check-in message when a client hasn't logged in for X days.", icon: Clock, config: { days: 30 } },
-  { rule_type: "equipment_service", rule_name: "Equipment Service Alert", rule_description: "Create a task when equipment service date is within X days and no project exists.", icon: AlertTriangle, config: { days: 60 } },
-  { rule_type: "overdue_invoice", rule_name: "Overdue Invoice Follow-Up", rule_description: "Create a task and optionally message client when invoice is X days past due.", icon: FileText, config: { days: 14 } },
+  { rule_type: "welcome_email", rule_name: "Send Welcome Email", rule_description: "Automatically send a welcome email when a new client is created.", icon: MessageSquare, config: {} },
+  { rule_type: "post_report_followup", rule_name: "Post-Report Follow-Up Task", rule_description: "Create a follow-up task 7 days after a report is published.", icon: Calendar, config: { days: 7 } },
+  { rule_type: "invoice_reminder", rule_name: "Invoice Due Reminder", rule_description: "Send an invoice reminder 3 days before the due date.", icon: FileText, config: { days: 3 } },
+  { rule_type: "inactive_client", rule_name: "Flag At-Risk Client", rule_description: "Flag client as 'at risk' if no portal activity in 60 days.", icon: AlertTriangle, config: { days: 60 } },
+  { rule_type: "unanswered_message", rule_name: "Unanswered Message Alert", rule_description: "Notify admin when a client message goes unanswered for 24 hours.", icon: MessageSquare, config: { hours: 24 } },
+  { rule_type: "equipment_service", rule_name: "Equipment Service Alert", rule_description: "Create a task when equipment service date is within X days.", icon: AlertTriangle, config: { days: 60 } },
   { rule_type: "stale_project", rule_name: "Stale Project Reminder", rule_description: "Create a task when a project has been in 'Planned' status for X days.", icon: Calendar, config: { days: 45 } },
-  { rule_type: "unanswered_message", rule_name: "Unanswered Message Alert", rule_description: "Create a task when client message has no admin reply within X hours.", icon: MessageSquare, config: { hours: 24 } },
-  { rule_type: "poor_score", rule_name: "Poor Health Score Alert", rule_description: "Create a task when health score is Poor/Critical with no related project.", icon: Heart, config: {} },
-  { rule_type: "anniversary", rule_name: "Client Anniversary", rule_description: "Create a task for annual renewal check-in.", icon: Calendar, config: {} },
 ];
 
 const AdminAutomations = () => {
