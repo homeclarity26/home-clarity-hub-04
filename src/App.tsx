@@ -212,6 +212,12 @@ const AppRoutes = () => {
         }
       >
         <Route index element={<TradePartnerDashboard />} />
+        <Route path="projects" element={<TradePartnerProjects />} />
+        <Route path="tasks" element={<TradePartnerTasks />} />
+        <Route path="schedule" element={<TradePartnerSchedule />} />
+        <Route path="messages" element={<TradePartnerMessages />} />
+        <Route path="documents" element={<TradePartnerDocuments />} />
+        <Route path="bids" element={<TradePartnerBids />} />
       </Route>
 
       {/* Auth routes */}
