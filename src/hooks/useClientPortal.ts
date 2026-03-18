@@ -55,6 +55,13 @@ interface DbPage {
   dependencies: unknown;
   maintenance: unknown;
   creator_notes: string | null;
+  last_inspected_date: string | null;
+  next_review_date: string | null;
+  expected_lifespan_years: number | null;
+  current_age_years: number | null;
+  replacement_cost_today: number | null;
+  findings: unknown;
+  is_complete: boolean | null;
 }
 
 export function useClientPortal(propertyId?: string) {
