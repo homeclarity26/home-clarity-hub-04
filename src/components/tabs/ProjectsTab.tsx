@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight, ChevronDown, CheckCircle, Calendar, DollarSign, User, Loader2, MessageSquare } from "lucide-react";
+import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight, ChevronDown, CheckCircle, Calendar, DollarSign, User, Loader2, MessageSquare, PlusCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ContractorBidsSection from "@/components/admin/ContractorBidsSection";
 import ProjectPhotoTimeline from "@/components/admin/ProjectPhotoTimeline";
 import { Button } from "@/components/ui/button";
