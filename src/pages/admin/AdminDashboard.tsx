@@ -49,13 +49,8 @@ const AdminDashboard = () => {
           <StatsCard label="Published Reports" value={stats?.publishedReports ?? 0} icon={CheckCircle} />
         </div>
 
-        {/* Revenue Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatsCard label="Total Invoiced" value={fmt(stats?.totalInvoiced ?? 0)} icon={DollarSign} />
-          <StatsCard label="Total Collected" value={fmt(stats?.totalCollected ?? 0)} icon={TrendingUp} />
-          <StatsCard label="Outstanding" value={fmt(stats?.totalOutstanding ?? 0)} icon={CreditCard} alert={!!stats && stats.totalOutstanding > 0} />
-          <StatsCard label="Overdue Invoices" value={stats?.overdueInvoices ?? 0} icon={AlertTriangle} alert={!!stats && stats.overdueInvoices > 0} />
-        </div>
+        {/* Revenue Analytics */}
+        <RevenueAnalytics />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Activity */}
