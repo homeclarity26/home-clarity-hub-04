@@ -57,6 +57,7 @@ interface ReportTabProps {
   iguideUrl?: string | null;
   iguidePdfUrl?: string | null;
   completionPercent?: number;
+  estimatedValue?: number | null;
 }
 
 const ReportTab = ({
