@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreditCard, Check, Palette } from "lucide-react";
 
 import AdminHeader from "@/components/admin/AdminHeader";
-import ApiWebhookSettings from "@/components/admin/ApiWebhookSettings";
+import IntegrationsHub from "@/components/admin/IntegrationsHub";
 import AuditLogSection from "@/components/admin/AuditLogSection";
 import SLASettings from "@/components/admin/SLASettings";
 import MembershipTierManager from "@/components/admin/MembershipTierManager";
@@ -138,7 +138,7 @@ const AdminSettings = () => {
             <TabsTrigger value="general" className="font-sans text-xs">General</TabsTrigger>
             <TabsTrigger value="services" className="font-sans text-xs">Services Library</TabsTrigger>
             <TabsTrigger value="tiers" className="font-sans text-xs">Membership Tiers</TabsTrigger>
-            <TabsTrigger value="integrations" className="font-sans text-xs">Integrations & API</TabsTrigger>
+            <TabsTrigger value="integrations" className="font-sans text-xs">Integrations</TabsTrigger>
             <TabsTrigger value="sla" className="font-sans text-xs">SLA</TabsTrigger>
             <TabsTrigger value="templates" className="font-sans text-xs">Message Templates</TabsTrigger>
             <TabsTrigger value="audit" className="font-sans text-xs">Audit Log</TabsTrigger>
@@ -343,7 +343,7 @@ const AdminSettings = () => {
           </TabsContent>
 
           <TabsContent value="integrations">
-            <ApiWebhookSettings />
+            <IntegrationsHub />
           </TabsContent>
 
           <TabsContent value="sla">
