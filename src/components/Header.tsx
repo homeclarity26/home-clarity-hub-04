@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { Switch } from "@/components/ui/switch";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
+import PropertySelector from "@/components/PropertySelector";
 
 interface HeaderProps {
   activeTab: string;
