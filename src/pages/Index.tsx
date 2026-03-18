@@ -308,6 +308,12 @@ const Index = () => {
         <div className={`transition-opacity duration-300 ${activeTab === "equipment" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "equipment" && <EquipmentTab propertyId={portal.property?.id} onTabChange={handleTabChange} onSendMessage={handleSendMessage} />}
         </div>
+        <div className={`transition-opacity duration-300 ${activeTab === "services" ? "opacity-100" : "opacity-0 hidden"}`}>
+          {activeTab === "services" && <ServicesMenu propertyId={portal.property?.id} />}
+        </div>
+        <div className={`transition-opacity duration-300 ${activeTab === "estimates" ? "opacity-100" : "opacity-0 hidden"}`}>
+          {activeTab === "estimates" && <EstimatesPortal propertyId={portal.property?.id} />}
+        </div>
         <div className={`transition-opacity duration-300 ${activeTab === "schedule" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "schedule" && <ScheduleTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}
         </div>
