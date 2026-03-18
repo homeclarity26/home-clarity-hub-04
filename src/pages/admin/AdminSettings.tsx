@@ -338,6 +338,10 @@ const AdminSettings = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="services">
+            <ServicesLibrary />
+          </TabsContent>
+
           <TabsContent value="integrations">
             <ApiWebhookSettings />
           </TabsContent>
