@@ -226,7 +226,7 @@ const WYSIWYGReportEditor = ({ reportId, propertyAddress, initialBlocks }: WYSIW
     try {
       const { error } = await supabase
         .from("reports")
-        .update({ blocks_json: blocksToSave as unknown as Record<string, unknown>[] })
+        .update({ blocks_json: JSON.parse(JSON.stringify(blocksToSave)) })
         .eq("id", reportId);
       if (error) throw error;
       setLastSaved(new Date());
