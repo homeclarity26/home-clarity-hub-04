@@ -410,6 +410,7 @@ const AdminClientDetail = () => {
           <div className="space-y-6">
             <AIClientInsightsCard propertyId={client.propertyId} clientData={{ name: client.name, address: client.address, propertyType: client.propertyType, yearBuilt: client.yearBuilt }} />
             <HealthScoreTrend clientId={client.propertyId} />
+            <ClientRiskScore client={client} invoices={invoices?.map(i => ({ status: i.status, due_date: i.due_date, balance_due: Number(i.balance_due) }))} />
             <ClientHealthCard client={client} />
             <AIFollowUpSuggestions propertyId={client.propertyId} clientName={client.name} />
             <ConditionForecast propertyId={client.propertyId} />
