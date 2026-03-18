@@ -398,8 +398,8 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
         {/* KANBAN VIEW */}
         <TabsContent value="kanban" className="mt-4">
           <ReportProgressKanban
-            pages={pages.map((p) => ({ id: p.id, title: p.title, status: p.status, group: p.group_name }))}
-            onStatusChange={handleStatusChange}
+            pages={pages.map((p) => ({ id: p.id, title: p.title, status: p.status, page_key: p.page_key, group_name: p.group_name, updated_at: p.updated_at, condition_rating: p.condition_rating }))}
+            propertyId={propertyId}
           />
         </TabsContent>
 
