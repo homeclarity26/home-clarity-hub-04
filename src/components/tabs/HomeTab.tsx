@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle, Info, Wrench } from "lucide-react";
+import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle, Info, Wrench, CalendarPlus } from "lucide-react";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import HomeValueTracker from "@/components/HomeValueTracker";
 import MembershipBanner from "@/components/MembershipBanner";
@@ -15,7 +15,10 @@ import AnnualReportCard from "@/components/AnnualReportCard";
 import MaintenanceReminders from "@/components/MaintenanceReminders";
 import HomeGoals from "@/components/HomeGoals";
 import InsuranceAssistant from "@/components/InsuranceAssistant";
-import ClientActivityTimeline from "@/components/ClientActivityTimeline";
+import PropertyTimeline from "@/components/portal/PropertyTimeline";
+import AIPriorityCard from "@/components/portal/AIPriorityCard";
+import SatisfactionSurvey from "@/components/portal/SatisfactionSurvey";
+import AppointmentRequestModal from "@/components/portal/AppointmentRequestModal";
 import { usePropertyValuation } from "@/hooks/usePropertyValuation";
 import { supabase } from "@/integrations/supabase/client";
 import type { ReportPageData } from "@/data/reportContent";
@@ -47,6 +50,7 @@ const HomeTab = ({
 }: HomeTabProps) => {
   const [valuationOpen, setValuationOpen] = useState(false);
   const [showServiceRequest, setShowServiceRequest] = useState(false);
+  const [showAppointment, setShowAppointment] = useState(false);
   const { valuation, isLoading: valLoading, fetchValuation } = usePropertyValuation(propertyId, propertyAddress);
   const [customization, setCustomization] = useState<{ welcome_message?: string; tagline?: string; hero_photo_url?: string; advisor_signature?: string } | null>(null);
 
@@ -147,8 +151,14 @@ const HomeTab = ({
       {/* Card Grid */}
       <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
 
+        {/* AI Priority Card */}
+        {propertyId && <AIPriorityCard propertyId={propertyId} reportPages={reportPages} />}
+
         {/* Interactive Home Health Dashboard */}
         {reportPages && <InteractiveHealthDashboard pages={reportPages} onNavigate={onNavigate} />}
+
+        {/* Satisfaction Survey */}
+        {propertyId && <SatisfactionSurvey propertyId={propertyId} />}
 
         {/* Cost Comparison Tool */}
         {reportPages && <CostComparisonTool pages={reportPages} />}
@@ -357,12 +367,30 @@ const HomeTab = ({
           </div>
         </div>
 
-        {/* Activity Timeline */}
+        {/* Property Timeline */}
         <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-8">
           <div className="bg-card rounded-lg p-8 shadow-hbc-sm border border-border">
-            <ClientActivityTimeline propertyId={propertyId} />
+            <PropertyTimeline propertyId={propertyId} />
           </div>
         </div>
+
+        {/* Schedule Consultation Button */}
+        {propertyId && (
+          <div className="max-w-[1400px] mx-auto px-6 md:px-20">
+            <button
+              onClick={() => setShowAppointment(true)}
+              className="w-full group bg-card rounded-lg p-6 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4 border border-border text-left"
+            >
+              <CalendarPlus className="w-5 h-5 text-accent" />
+              <div className="flex-1">
+                <h3 className="font-display text-lg text-foreground">Schedule a Consultation</h3>
+                <p className="font-sans text-sm text-muted-foreground">Pick a time to speak with your advisor</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors" />
+            </button>
+            <AppointmentRequestModal open={showAppointment} onOpenChange={setShowAppointment} propertyId={propertyId} />
+          </div>
+        )}
       </div>
 
       {/* Feedback */}
