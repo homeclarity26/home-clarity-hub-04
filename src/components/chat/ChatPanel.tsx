@@ -13,7 +13,7 @@ interface ChatPanelProps {
   onNavigateToPage?: (pageTitle: string) => void;
 }
 
-const ChatPanel = ({ open, onOpenChange, reportContext, initialQuery }: ChatPanelProps) => {
+const ChatPanel = ({ open, onOpenChange, reportContext, initialQuery, onNavigateToPage }: ChatPanelProps) => {
   const { messages, isLoading, send, clearMessages } = useChat(reportContext);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
