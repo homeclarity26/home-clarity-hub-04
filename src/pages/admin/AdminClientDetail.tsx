@@ -382,6 +382,7 @@ const AdminClientDetail = () => {
           </div>
           <div className="flex items-center gap-2">
             <AIClientBrief propertyId={client.propertyId} propertyName={client.propertyName} />
+            <Button onClick={() => navigate(`/admin/inspect/${client.propertyId}`)} variant="outline" className="gap-1.5 font-sans"><MapPin className="w-4 h-4" />Inspect</Button>
             <Button onClick={() => navigate(`/portal/${client.propertyId}?edit=true`)} className="gap-1.5 font-sans"><ExternalLink className="w-4 h-4" />Open in Portal</Button>
           </div>
         </div>
