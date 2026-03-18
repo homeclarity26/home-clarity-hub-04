@@ -39,6 +39,8 @@ const Index = () => {
   const [reportPageId, setReportPageId] = useState<string | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [showTutorialModal, setShowTutorialModal] = useState(false);
   const { editMode, toggleEditMode, canEdit } = useEditMode();
 
   // Auto-redirect to first property if none specified
