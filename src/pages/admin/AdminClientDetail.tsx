@@ -38,6 +38,8 @@ import PortalPersonalization from "@/components/admin/PortalPersonalization";
 import PortalEngagementCard from "@/components/admin/PortalEngagementCard";
 import HomeGoalsAdmin from "@/components/admin/HomeGoalsAdmin";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
+import ReportAITools from "@/components/admin/ReportAITools";
+import VoiceAndPhotoTools from "@/components/admin/VoiceAndPhotoTools";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
@@ -382,7 +384,7 @@ const AdminClientDetail = () => {
         {activeTab === "timeline" && <ClientActivityTimeline propertyId={client.propertyId} />}
         {activeTab === "report" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-end gap-2">
               {pdfData && (
                 <PDFDownloadButton
                   data={pdfData}
@@ -393,6 +395,19 @@ const AdminClientDetail = () => {
                 />
               )}
             </div>
+            <VoiceAndPhotoTools reportId={client.reportId || ""} propertyId={client.propertyId} />
+            <ReportAITools
+              reportId={client.reportId || ""}
+              propertyId={client.propertyId}
+              propertyContext={{
+                propertyAddress: client.address,
+                yearBuilt: client.yearBuilt,
+                sqft: client.sqft,
+                bedrooms: client.bedrooms,
+                bathrooms: client.bathrooms,
+                propertyType: client.propertyType,
+              }}
+            />
             <ReportPageManager
               propertyId={client.propertyId}
               reportId={client.reportId}
