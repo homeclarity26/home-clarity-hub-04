@@ -271,6 +271,22 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
                               <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent">{project.approved_tier} tier approved</span>
                             </div>
                           )}
+
+                          {/* Ask About This Project */}
+                          {project.status !== "complete" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-xs font-sans mt-2 w-fit"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onSendMessage?.(`I have a question about my ${project.title} project.`);
+                              }}
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                              Ask About This Project
+                            </Button>
+                          )}
                         </div>
                       </CollapsibleContent>
                     </div>
