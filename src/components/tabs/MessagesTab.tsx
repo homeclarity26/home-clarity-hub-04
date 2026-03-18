@@ -78,8 +78,8 @@ const MessagesTab = ({ propertyId, creatorName = "Your HBC Advisor", creatorInit
     }
 
     try {
-      const { data: msgs, error } = await supabase
-        .from("property_messages" as "properties")
+      const { data: msgs, error } = await (supabase
+        .from("property_messages" as any) as any)
         .select("*")
         .eq("property_id", propertyId)
         .order("created_at", { ascending: true });
@@ -164,13 +164,13 @@ const MessagesTab = ({ propertyId, creatorName = "Your HBC Advisor", creatorInit
 
     setIsSending(true);
     try {
-      const { error } = await supabase
-        .from("property_messages" as "properties")
+      const { error } = await (supabase
+        .from("property_messages" as any) as any)
         .insert({
           property_id: propertyId,
           sender_id: user.id,
           message: newMessage.trim(),
-        } as Record<string, unknown>);
+        });
 
       if (error) throw error;
 

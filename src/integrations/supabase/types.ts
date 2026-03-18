@@ -93,6 +93,84 @@ export type Database = {
           },
         ]
       }
+      equipment: {
+        Row: {
+          brand: string | null
+          category: string | null
+          condition: string | null
+          created_at: string | null
+          estimated_replacement_cost: number | null
+          id: string
+          install_date: string | null
+          last_service_date: string | null
+          model: string | null
+          name: string
+          next_service_date: string | null
+          notes: string | null
+          property_id: string
+          report_page_id: string | null
+          serial_number: string | null
+          sort_order: number | null
+          updated_at: string | null
+          warranty_expiry: string | null
+        }
+        Insert: {
+          brand?: string | null
+          category?: string | null
+          condition?: string | null
+          created_at?: string | null
+          estimated_replacement_cost?: number | null
+          id?: string
+          install_date?: string | null
+          last_service_date?: string | null
+          model?: string | null
+          name: string
+          next_service_date?: string | null
+          notes?: string | null
+          property_id: string
+          report_page_id?: string | null
+          serial_number?: string | null
+          sort_order?: number | null
+          updated_at?: string | null
+          warranty_expiry?: string | null
+        }
+        Update: {
+          brand?: string | null
+          category?: string | null
+          condition?: string | null
+          created_at?: string | null
+          estimated_replacement_cost?: number | null
+          id?: string
+          install_date?: string | null
+          last_service_date?: string | null
+          model?: string | null
+          name?: string
+          next_service_date?: string | null
+          notes?: string | null
+          property_id?: string
+          report_page_id?: string | null
+          serial_number?: string | null
+          sort_order?: number | null
+          updated_at?: string | null
+          warranty_expiry?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipment_report_page_id_fkey"
+            columns: ["report_page_id"]
+            isOneToOne: false
+            referencedRelation: "report_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
@@ -430,6 +508,41 @@ export type Database = {
         }
         Relationships: []
       }
+      property_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          property_id: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          property_id: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          property_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_messages_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_comments: {
         Row: {
           comment_text: string
@@ -716,6 +829,7 @@ export type Database = {
           id: string
           phone: string | null
           property_id: string
+          report_page_key: string | null
           specialty: string
           title: string
         }
@@ -726,6 +840,7 @@ export type Database = {
           id?: string
           phone?: string | null
           property_id: string
+          report_page_key?: string | null
           specialty?: string
           title: string
         }
@@ -736,6 +851,7 @@ export type Database = {
           id?: string
           phone?: string | null
           property_id?: string
+          report_page_key?: string | null
           specialty?: string
           title?: string
         }

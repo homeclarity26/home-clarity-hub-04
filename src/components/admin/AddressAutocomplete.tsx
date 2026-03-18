@@ -54,7 +54,7 @@ export default function AddressAutocomplete({
   onPropertyDataFetched,
 }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const autocompleteRef = useRef<any>(null);
   const scriptLoaded = useRef(false);
 
   const [parsedAddress, setParsedAddress] = useState<ParsedAddress | null>(null);
@@ -186,9 +186,9 @@ export default function AddressAutocomplete({
   }, []);
 
   function initAutocomplete() {
-    if (!inputRef.current || !window.google?.maps?.places) return;
+    if (!inputRef.current || !(window as any).google?.maps?.places) return;
 
-    autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
+    autocompleteRef.current = new (window as any).google.maps.places.Autocomplete(inputRef.current, {
       types: ["address"],
       componentRestrictions: { country: "us" },
       fields: ["address_components", "formatted_address", "geometry", "place_id"],

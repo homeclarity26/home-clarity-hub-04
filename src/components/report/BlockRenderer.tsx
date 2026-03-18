@@ -150,12 +150,12 @@ const BlockRenderer = ({
       Object.entries(specKeyMap).forEach(([key, label]) => {
         if (data[key]) {
           const existingIndex = newSpecs.findIndex(
-            (s: { key: string }) => s.key?.toLowerCase() === label.toLowerCase()
+            (s: any) => s.key?.toLowerCase() === label.toLowerCase() || s.label?.toLowerCase() === label.toLowerCase()
           );
           if (existingIndex >= 0) {
             newSpecs[existingIndex] = { ...newSpecs[existingIndex], value: data[key] };
           } else {
-            newSpecs.push({ key: label, value: data[key] });
+            newSpecs.push({ label: label, value: data[key] } as any);
           }
         }
       });
@@ -191,7 +191,7 @@ const BlockRenderer = ({
       const slug = pageData.pageSlug || pageData.title?.toLowerCase().replace(/\s+/g, "-");
       const name = [scanResult.brand, scanResult.model].filter(Boolean).join(" ") || pageData.title || "Equipment";
 
-      const { error } = await supabase.from("equipment").insert({
+      const { error } = await (supabase.from("equipment" as any) as any).insert({
         property_id: propertyId,
         name,
         category: inferCategory(slug),

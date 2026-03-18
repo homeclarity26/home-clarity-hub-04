@@ -59,8 +59,8 @@ export default function ClientIntelligenceCard({
       setAccepted(false);
 
       if (propertyId) {
-        await supabase
-          .from("properties")
+        await (supabase
+          .from("properties") as any)
           .update({ client_intelligence_summary: JSON.stringify(parsed) })
           .eq("id", propertyId);
       }

@@ -79,13 +79,13 @@ const EquipmentTab = ({ propertyId, onTabChange }: EquipmentTabProps) => {
       setLoading(false);
       return;
     }
-    supabase
-      .from("equipment")
+    (supabase
+      .from("equipment" as any) as any)
       .select("*")
       .eq("property_id", propertyId)
       .order("category")
       .order("sort_order")
-      .then(({ data }) => {
+      .then(({ data }: any) => {
         setEquipment((data || []) as Equipment[]);
         setLoading(false);
       });
