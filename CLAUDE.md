@@ -418,6 +418,14 @@ Tabs: Overview · Report · Files · Comments · Projects · Payments · Equipme
 - **Action Plan page** (`src/components/report/ActionPlanPage.tsx`) — auto-generates prioritized to-do list from all pages' recommendations + condition ratings; collapsible groups (Urgent/Near-Term/Planned); expand/collapse per item; count summary strip
 - Both special pages hooked into `ReportTab.tsx` — detected by page slug and rendered instead of standard `ReportPage` when `activePageId` is `"financial-roadmap"` or `"action-plan"`
 - AI page recommendation in wizard (Step 3) was already wired via `handleAiRecommendPages` calling `recommend-report-pages` edge function
+- **Serial plate scanner → Equipment Registry** — after a successful scan in BlockRenderer, a "Save to Equipment Registry?" prompt appears; `handleSaveEquipment()` inserts into `equipment` table with inferred category from page slug
+- **Schedule tab full enhancement** (`ScheduleTab.tsx`) — rewritten with event type config (appointment/milestone/task/inspection/reminder), relative date labels (Today/Tomorrow/In X days), EventCard component, today/this-week/upcoming grouping, History section, seasonal checklist expansion, rich mock data
+- **Bulk AI Draft All Pages** (ReportPageManager.tsx) — "Draft All with AI" button sequentially calls `draft-page-narrative` for all pages with < 30 words of narrative; live progress display `"Drafting 2/7: Roof System"`
+- **Copy Invite Message** (NewReportWizard.tsx Step 4) — after publish, "Copy Invite Message" button generates a formatted message with portal URL, email, and temp password ready to paste into email/text
+- **Recommended Vendors on Report Pages** (`RecommendedVendors.tsx`) — admin assigns property vendors to specific pages; client portal shows vendor cards (name, specialty, phone/email); migration adds `report_page_key` column to `vendors` table
+- **Dependencies editor in DependenciesList** — full rewrite supporting adding new page dependencies (before/after) via search-select UI; BlockRenderer loads all report pages to populate the picker; shows add-prompt when no dependencies exist
+- **Projects from Recommendations** (AdminProjectsSection.tsx) — "From Recommendation" button opens two-step dialog: pick a report page with recommendations → pick a specific recommendation → pre-fills the project creation form with title, description, and linked page
+- **Vendor page assignments visible** (VendorManager.tsx) — vendor cards now show "Assigned to: page-slug" badge when `report_page_key` is set
 
 ---
 
@@ -449,6 +457,7 @@ Tabs: Overview · Report · Files · Comments · Projects · Payments · Equipme
 4. **Run Pending DB Migrations**
    - Apply `20260315000000_add_intake_fields.sql` in Supabase SQL Editor
    - Apply `20260316000000_add_equipment_table.sql` in Supabase SQL Editor
+   - Apply `20260317000000_add_vendor_page_key.sql` in Supabase SQL Editor
 
 ---
 
@@ -465,59 +474,32 @@ Tabs: Overview · Report · Files · Comments · Projects · Payments · Equipme
 
 8. ~~Action Plan Page~~ ✅ **Built** — `ActionPlanPage.tsx` auto-generates from recommendations + conditions, collapsible priority groups
 
-9. **Report Page Dependencies**
-   - The `DependenciesList.tsx` component exists and `dependencies` field exists in DB schema
-   - Admin UI to set "complete X before Y" relationships between pages
-   - Visual dependency graph or ordered list showing sequencing logic
+9. ~~Report Page Dependencies~~ ✅ **Built** — `DependenciesList.tsx` rewritten with add-dependency UI; admin picks pages and type (before/after) from a dropdown populated by BlockRenderer fetching all report pages
 
-10. **Vendor Connection on Report Pages**
-    - Each report page should allow linking 1+ vendors from the VendorManager
-    - Client portal: "Recommended Vendors" section on each report page
-    - Admin: assign vendors to pages via dropdown or search
+10. ~~Vendor Connection on Report Pages~~ ✅ **Built** — `RecommendedVendors.tsx` component; admin assigns vendors per page from the edit UI; client portal shows vendor cards; `report_page_key` column added to vendors table
 
 ---
 
 ### 🟡 Medium Priority — Polish & Enhancement
 
-11. **Report Sharing / Client Portal Access Control**
-    - Current publish flow creates the DB records and sends an email
-    - Email template for client invitation is not fully built (check `create-client-account` function)
-    - Need a clean onboarding email: portal link, what to expect, contact info
-    - Consider magic link vs. password auth for clients
+11. ~~Report Sharing / Client Portal Access Control~~ ✅ **Partially built** — wizard Step 4 success state now shows "Copy Invite Message" button that generates a formatted message with portal URL, email, and temp password; Resend email still placeholder for future
 
-12. **Report Completion Tracking**
-    - `completion_percent` field exists in `reports` table
-    - No logic currently calculates it from page statuses
-    - Should be: (pages with status = 'complete' or 'published') / (total pages) * 100
-    - HomeTab progress bar reads this value — it needs to be kept current
+12. ~~Report Completion Tracking~~ ✅ **Built** — `recalculateCompletion()` in ReportPageManager calculates and writes `completion_percent` to `reports` table on every status change
 
-13. **Bulk AI Draft All Pages**
-    - "Draft All with AI" button in the wizard review step or report manager
-    - Calls `draft-page-narrative` sequentially for each selected page
-    - Progress indicator showing page-by-page completion
+13. ~~Bulk AI Draft All Pages~~ ✅ **Built** — "Draft All with AI" button in ReportPageManager header; sequential loop with live progress display
 
 14. ~~Report Page Status Workflow~~ ✅ **Built** — inline Select dropdown in ReportPageManager table; status changes instantly update DB + trigger completion % recalc
 
-15. **Equipment → Report Page Sync**
-    - Equipment items can be linked to a report page via `report_page_id`
-    - The serial plate scanner in `BlockRenderer.tsx` writes to the page specs, but doesn't create/update an equipment record
-    - Should offer: "Save to Equipment Registry?" after a successful scan
-    - Would auto-create an equipment item with extracted brand/model/serial
+15. ~~Equipment → Report Page Sync~~ ✅ **Built** — "Save to Equipment Registry?" prompt after serial plate scan in BlockRenderer; `handleSaveEquipment()` inserts into `equipment` table with inferred category
 
 16. **Client Portal — Report Download Button**
     - PDFDownloadButton exists in admin
     - Should also be accessible from the client portal Report tab
     - Requires checking if `pdfData` is populated in `Index.tsx` (it is — already built)
 
-17. **Schedule Tab Enhancement**
-    - `ScheduleTab.tsx` — minimal current state
-    - Should show appointments with calendar view or sorted list
-    - Admin ability to create events linked to a property (already has `schedule_events` table + hooks)
+17. ~~Schedule Tab Enhancement~~ ✅ **Built** — full rewrite with event types, relative dates, today/this-week/upcoming sections, History section, seasonal checklists, rich mock data
 
-18. **Projects ↔ Report Pages**
-    - Projects should be linkable to specific report pages/recommendations
-    - "Create Project from Tier" flow similar to the existing "From Report Tier" invoice flow
-    - Client portal ProjectsTab should group by report section
+18. ~~Projects ↔ Report Pages~~ ✅ **Built** — `AdminProjectsSection.tsx` has "From Recommendation" two-step dialog (pick page → pick recommendation → pre-fill project form); projects already have `report_page_id` FK
 
 19. **Comments Threading**
     - `CommentsManager.tsx` exists for admin

@@ -21,6 +21,10 @@ export interface PortalProperty {
   property_type?: string | null;
   relationship_type?: string | null;
   client_intelligence_summary?: string | null;
+  hover_url?: string | null;
+  hover_pdf_url?: string | null;
+  iguide_url?: string | null;
+  iguide_pdf_url?: string | null;
 }
 
 export interface PortalReport {
@@ -122,6 +126,10 @@ export function useClientPortal(propertyId?: string) {
           property_type: (prop as Record<string, unknown>).property_type as string | null ?? null,
           relationship_type: (prop as Record<string, unknown>).relationship_type as string | null ?? null,
           client_intelligence_summary: (prop as Record<string, unknown>).client_intelligence_summary as string | null ?? null,
+          hover_url: (prop as Record<string, unknown>).hover_url as string | null ?? null,
+          hover_pdf_url: (prop as Record<string, unknown>).hover_pdf_url as string | null ?? null,
+          iguide_url: (prop as Record<string, unknown>).iguide_url as string | null ?? null,
+          iguide_pdf_url: (prop as Record<string, unknown>).iguide_pdf_url as string | null ?? null,
         });
 
         // 2. Fetch report for this property

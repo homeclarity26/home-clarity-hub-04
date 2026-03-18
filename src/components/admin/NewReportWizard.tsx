@@ -128,6 +128,9 @@ const NewReportWizard = () => {
   const [qaScore, setQaScore] = useState<number | null>(null);
   const [qaSummary, setQaSummary] = useState<string | null>(null);
   const [isRunningQa, setIsRunningQa] = useState(false);
+  const [isDraftingAll, setIsDraftingAll] = useState(false);
+  const [draftProgress, setDraftProgress] = useState<{ current: number; total: number; currentPage: string } | null>(null);
+  const [draftAllDone, setDraftAllDone] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -326,6 +329,105 @@ const NewReportWizard = () => {
       toast({ title: "Recommendation failed", description: "Could not get AI recommendations. You can select pages manually.", variant: "destructive" });
     } finally {
       setIsRecommending(false);
+    }
+  };
+
+  const handleDraftAllPages = async () => {
+    if (!createdPropertyId) {
+      toast({ title: "No report yet", description: "The report hasn't been created yet.", variant: "destructive" });
+      return;
+    }
+    // DEV bypass
+    if (user?.id === "00000000-0000-0000-0000-000000000000") {
+      toast({ title: "Dev mode", description: "Bulk draft skipped — using mock auth." });
+      setDraftAllDone(true);
+      return;
+    }
+
+    setIsDraftingAll(true);
+    setDraftAllDone(false);
+    setDraftProgress(null);
+
+    try {
+      // Fetch the created report_pages
+      const { data: reportData } = await supabase
+        .from("reports")
+        .select("id")
+        .eq("property_id", createdPropertyId)
+        .single();
+
+      if (!reportData) throw new Error("Report not found");
+
+      const { data: pages } = await supabase
+        .from("report_pages")
+        .select("id, page_key, title")
+        .eq("report_id", reportData.id)
+        .order("sort_order", { ascending: true });
+
+      if (!pages || pages.length === 0) {
+        toast({ title: "No pages found", description: "No report pages to draft.", variant: "destructive" });
+        return;
+      }
+
+      const intelligenceParsed = (() => {
+        try { return JSON.parse(clientIntelligenceSummary || ""); } catch { return null; }
+      })();
+
+      let successCount = 0;
+      let failCount = 0;
+
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        setDraftProgress({ current: i + 1, total: pages.length, currentPage: page.title });
+
+        try {
+          const { data, error } = await supabase.functions.invoke("draft-page-narrative", {
+            body: {
+              pageSlug: page.page_key,
+              pageName: page.title,
+              propertyAddress: form.address,
+              yearBuilt: form.yearBuilt ? parseInt(form.yearBuilt) : undefined,
+              sqft: form.sqft ? parseInt(form.sqft) : undefined,
+              bedrooms: form.bedrooms ? parseInt(form.bedrooms) : undefined,
+              bathrooms: form.bathrooms ? parseInt(form.bathrooms) : undefined,
+              propertyType: form.propertyType || undefined,
+              relationshipType: form.relationshipType || undefined,
+              clientIntelligenceSummary: intelligenceParsed?.summary || clientIntelligenceSummary || "",
+              clientGoals: intelligenceParsed?.goals || [],
+              clientPriorities: intelligenceParsed?.priorities || [],
+            },
+          });
+
+          if (error) throw error;
+
+          const updates: Record<string, unknown> = {};
+          if (data.narrative?.length) updates.narrative = data.narrative;
+          if (data.key_observations?.length) updates.key_observations = data.key_observations;
+
+          if (Object.keys(updates).length > 0) {
+            await supabase.from("report_pages").update(updates).eq("id", page.id);
+          }
+
+          successCount++;
+        } catch (pageErr) {
+          console.error(`Failed to draft page ${page.title}:`, pageErr);
+          failCount++;
+        }
+      }
+
+      setDraftAllDone(true);
+      toast({
+        title: `Drafted ${successCount} of ${pages.length} pages`,
+        description: failCount > 0
+          ? `${failCount} page(s) failed — check edge function deployment.`
+          : "All pages drafted successfully. Review in the portal editor.",
+      });
+    } catch (err) {
+      console.error("Bulk draft failed:", err);
+      toast({ title: "Bulk draft failed", description: "Could not draft pages. Ensure edge functions are deployed.", variant: "destructive" });
+    } finally {
+      setIsDraftingAll(false);
+      setDraftProgress(null);
     }
   };
 
@@ -951,6 +1053,75 @@ const NewReportWizard = () => {
               <p className="text-sm font-sans text-muted-foreground">
                 Review the generated content in the portal before publishing. Publishing will create a client account for <strong className="text-foreground">{form.email || "—"}</strong> and send them login credentials.
               </p>
+
+              {/* Bulk AI Draft Panel */}
+              <div className="border border-border rounded-lg overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b border-border">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-sans font-medium">Auto-Draft All Pages</span>
+                    {draftAllDone && (
+                      <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-accent/20 text-accent">
+                        Done
+                      </span>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="font-mono text-[11px] gap-1.5 h-8"
+                    onClick={handleDraftAllPages}
+                    disabled={isDraftingAll || !createdPropertyId}
+                  >
+                    {isDraftingAll ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5" />
+                    )}
+                    {isDraftingAll ? "Drafting..." : draftAllDone ? "Re-Draft All" : "Draft All with AI"}
+                  </Button>
+                </div>
+
+                {!isDraftingAll && !draftAllDone && (
+                  <div className="px-4 py-5 text-center">
+                    <p className="text-xs font-sans text-muted-foreground">
+                      Let AI write a starter narrative for every page based on the property details and client intelligence. Review and edit each page in the portal editor afterward.
+                    </p>
+                    {!clientIntelligenceSummary && (
+                      <p className="text-[10px] font-sans text-muted-foreground/70 mt-1.5 italic">
+                        Tip: Accept the Client Intelligence Summary in Step 1 for higher-quality drafts.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {isDraftingAll && draftProgress && (
+                  <div className="px-4 py-5 space-y-3">
+                    <div className="flex items-center justify-between text-xs font-sans text-muted-foreground">
+                      <span>Drafting: <strong className="text-foreground">{draftProgress.currentPage}</strong></span>
+                      <span>{draftProgress.current} / {draftProgress.total}</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary transition-all duration-300 rounded-full"
+                        style={{ width: `${(draftProgress.current / draftProgress.total) * 100}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] font-sans text-muted-foreground text-center">
+                      This may take a minute — each page is drafted individually.
+                    </p>
+                  </div>
+                )}
+
+                {draftAllDone && !isDraftingAll && (
+                  <div className="px-4 py-5 flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-accent shrink-0" />
+                    <p className="text-sm font-sans text-foreground">
+                      AI drafts complete! Open the portal to review and refine each page before publishing.
+                    </p>
+                  </div>
+                )}
+              </div>
 
               {/* QA Panel */}
               <div className="border border-border rounded-lg overflow-hidden">

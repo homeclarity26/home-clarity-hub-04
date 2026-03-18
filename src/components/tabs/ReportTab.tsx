@@ -56,6 +56,10 @@ interface ReportTabProps {
   pdfData?: PDFReportData;
   reportId?: string;
   propertyContext?: PropertyContext;
+  hoverUrl?: string | null;
+  hoverPdfUrl?: string | null;
+  iguideUrl?: string | null;
+  iguidePdfUrl?: string | null;
 }
 
 const conditionColor: Record<string, string> = {
@@ -66,12 +70,7 @@ const conditionColor: Record<string, string> = {
   Critical: "bg-destructive/10 text-destructive",
 };
 
-const digitalAssets = [
-  { icon: Box, title: "Your Home in 3D", subtitle: "Explore the full exterior model", href: "#" },
-  { icon: Ruler, title: "Exterior Measurements", subtitle: "50-page detailed measurement report", href: "#" },
-  { icon: LayoutDashboard, title: "Interior Floor Plans", subtitle: "Room-by-room layout and dimensions", href: "#" },
-  { icon: View, title: "360° Photo Tour", subtitle: "Walk through every room", href: "#" },
-];
+// digitalAssets is now built dynamically inside the component using portal URLs
 
 interface SectionCardDef {
   id: string;
@@ -104,10 +103,46 @@ const ReportTab = ({
   pdfData,
   reportId,
   propertyContext,
+  hoverUrl,
+  hoverPdfUrl,
+  iguideUrl,
+  iguidePdfUrl,
 }: ReportTabProps) => {
   const reportGroups = groups || staticGroups;
   const reportPages = pages || staticPages;
   const [showFullTOC, setShowFullTOC] = useState(false);
+
+  // Digital home assets — show real links when portal URLs are configured, "Coming Soon" otherwise
+  const digitalAssets = [
+    {
+      icon: Box,
+      title: "Your Home in 3D",
+      subtitle: "Explore the full exterior model",
+      href: hoverUrl || null,
+      label: hoverUrl ? "View in Hover.to" : null,
+    },
+    {
+      icon: Ruler,
+      title: "Exterior Measurements",
+      subtitle: "50-page detailed measurement report",
+      href: hoverPdfUrl || null,
+      label: hoverPdfUrl ? "Download PDF" : null,
+    },
+    {
+      icon: LayoutDashboard,
+      title: "Interior Floor Plans",
+      subtitle: "Room-by-room layout and dimensions",
+      href: iguidePdfUrl || null,
+      label: iguidePdfUrl ? "Download PDF" : null,
+    },
+    {
+      icon: View,
+      title: "360° Photo Tour",
+      subtitle: "Walk through every room",
+      href: iguideUrl || null,
+      label: iguideUrl ? "View iGuide Tour" : null,
+    },
+  ];
 
   const page = activePageId ? reportPages[activePageId] : null;
 
@@ -316,25 +351,48 @@ const ReportTab = ({
             Your Digital Home
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {digitalAssets.map((asset) => (
-              <div
-                key={asset.title}
-                className="group bg-primary rounded-lg p-6 border-l-[3px] border-accent flex flex-col gap-3 relative overflow-hidden"
-              >
-                <div className="flex items-start justify-between">
-                  <asset.icon className="w-6 h-6 text-accent" />
-                  <span className="font-mono text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary-foreground/10 text-primary-foreground/50">
-                    Coming Soon
-                  </span>
+            {digitalAssets.map((asset) =>
+              asset.href ? (
+                <a
+                  key={asset.title}
+                  href={asset.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group bg-primary rounded-lg p-6 border-l-[3px] border-accent flex flex-col gap-3 relative overflow-hidden hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200"
+                >
+                  <div className="flex items-start justify-between">
+                    <asset.icon className="w-6 h-6 text-accent" />
+                    <span className="font-mono text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent/20 text-accent">
+                      {asset.label}
+                    </span>
+                  </div>
+                  <h3 className="font-display text-lg text-primary-foreground leading-snug">
+                    {asset.title}
+                  </h3>
+                  <p className="font-sans text-sm text-primary-foreground/60 leading-relaxed">
+                    {asset.subtitle}
+                  </p>
+                </a>
+              ) : (
+                <div
+                  key={asset.title}
+                  className="group bg-primary rounded-lg p-6 border-l-[3px] border-accent flex flex-col gap-3 relative overflow-hidden"
+                >
+                  <div className="flex items-start justify-between">
+                    <asset.icon className="w-6 h-6 text-accent" />
+                    <span className="font-mono text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary-foreground/10 text-primary-foreground/50">
+                      Coming Soon
+                    </span>
+                  </div>
+                  <h3 className="font-display text-lg text-primary-foreground leading-snug">
+                    {asset.title}
+                  </h3>
+                  <p className="font-sans text-sm text-primary-foreground/60 leading-relaxed">
+                    {asset.subtitle}
+                  </p>
                 </div>
-                <h3 className="font-display text-lg text-primary-foreground leading-snug">
-                  {asset.title}
-                </h3>
-                <p className="font-sans text-sm text-primary-foreground/60 leading-relaxed">
-                  {asset.subtitle}
-                </p>
-              </div>
-            ))}
+              )
+            )}
           </div>
         </section>
 
