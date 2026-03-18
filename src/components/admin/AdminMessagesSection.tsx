@@ -104,6 +104,19 @@ const AdminMessagesSection = ({ propertyId, clientName, propertyAddress }: Admin
     finally { setIsSending(false); }
   };
 
+  const handleAIReply = async () => {
+    setLoadingReplies(true);
+    setSmartReplies([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-smart-reply", {
+        body: { messages: messages.slice(-10), clientName, propertyAddress },
+      });
+      if (error) throw error;
+      setSmartReplies(data?.replies || []);
+    } catch { toast.error("Failed to generate replies"); }
+    finally { setLoadingReplies(false); }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
