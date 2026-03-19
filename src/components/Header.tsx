@@ -14,7 +14,7 @@ interface HeaderProps {
   propertyId?: string;
 }
 
-const Header = ({ activeTab, onTabChange }: HeaderProps) => {
+const Header = ({ activeTab, onTabChange, propertyId }: HeaderProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { profile, isCreator, signOut } = useAuth();
