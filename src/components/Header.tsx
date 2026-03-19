@@ -5,6 +5,7 @@ import { useEditMode } from "@/contexts/EditModeContext";
 import { Switch } from "@/components/ui/switch";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import PropertySelector from "@/components/PropertySelector";
+import VoiceNavButton from "@/components/portal/VoiceNavButton";
 
 interface HeaderProps {
   activeTab: string;
