@@ -70,12 +70,13 @@ import DragReportReorder from "@/components/admin/DragReportReorder";
 import WYSIWYGReportEditor from "@/components/wysiwyg/WYSIWYGReportEditor";
 import EstimatesSection from "@/components/admin/EstimatesSection";
 import ClientServicesTab from "@/components/admin/ClientServicesTab";
+import PredictiveMaintenanceTab from "@/components/admin/PredictiveMaintenanceTab";
 import type { ReportBlock } from "@/components/wysiwyg/types";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 
-type ClientTab = "overview" | "timeline" | "engagement" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time" | "services" | "estimates";
+type ClientTab = "overview" | "timeline" | "engagement" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time" | "services" | "estimates" | "predictions";
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -92,6 +93,7 @@ const tabs: { id: ClientTab; label: string }[] = [
   { id: "estimates", label: "Estimates" },
   { id: "services", label: "Services" },
   { id: "equipment", label: "Equipment" },
+  { id: "predictions", label: "Predictions" },
   { id: "schedule", label: "Schedule" },
   { id: "vendors", label: "Vendors" },
 ];
@@ -671,6 +673,11 @@ const AdminClientDetail = () => {
             <TimeTrackingSection clientId={client.propertyId} totalRevenue={0} />
             <ProfitabilityCard data={{ totalRevenue: 0, totalHours: 0, targetHourlyRate: 150, messageCount: 0, messageCostPerMsg: 5 }} />
           </div>
+        )}
+
+        {/* PREDICTIONS TAB */}
+        {activeTab === "predictions" && (
+          <PredictiveMaintenanceTab clientId={clientId!} propertyId={client.propertyId} />
         )}
       </div>
     </div>

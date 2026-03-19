@@ -19,7 +19,9 @@ import PropertyTimeline from "@/components/portal/PropertyTimeline";
 import AIPriorityCard from "@/components/portal/AIPriorityCard";
 import SatisfactionSurvey from "@/components/portal/SatisfactionSurvey";
 import AppointmentRequestModal from "@/components/portal/AppointmentRequestModal";
+import PredictiveMaintenanceCard from "@/components/portal/PredictiveMaintenanceCard";
 import { usePropertyValuation } from "@/hooks/usePropertyValuation";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { ReportPageData } from "@/data/reportContent";
 
@@ -48,6 +50,7 @@ const HomeTab = ({
   membershipEndDate,
   reportPages,
 }: HomeTabProps) => {
+  const { user } = useAuth();
   const [valuationOpen, setValuationOpen] = useState(false);
   const [showServiceRequest, setShowServiceRequest] = useState(false);
   const [showAppointment, setShowAppointment] = useState(false);
@@ -153,6 +156,9 @@ const HomeTab = ({
 
         {/* AI Priority Card */}
         {propertyId && <AIPriorityCard propertyId={propertyId} reportPages={reportPages} />}
+
+        {/* Predictive Maintenance */}
+        {propertyId && <PredictiveMaintenanceCard propertyId={propertyId} clientId={user?.id} />}
 
         {/* Interactive Home Health Dashboard */}
         {reportPages && <InteractiveHealthDashboard pages={reportPages} onNavigate={onNavigate} />}
