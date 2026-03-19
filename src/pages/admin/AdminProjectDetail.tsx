@@ -80,9 +80,17 @@ const AdminProjectDetail = () => {
               {project.project_type && project.project_type !== "custom" && ` · ${project.project_type.replace("_", " ")}`}
             </p>
           </div>
-          <Button variant="outline" onClick={() => navigate("/admin/projects")} className="gap-2 text-sm font-sans">
-            <ArrowLeft className="w-4 h-4" />Back to Projects
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setScopeOpen(true)} className="gap-1.5 text-xs font-sans">
+              <FileText className="w-3.5 h-3.5" />Scope of Work
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setBidOpen(true)} className="gap-1.5 text-xs font-sans">
+              <Send className="w-3.5 h-3.5" />Send for Bids
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/admin/projects")} className="gap-2 text-sm font-sans">
+              <ArrowLeft className="w-4 h-4" />Back
+            </Button>
+          </div>
         </div>
 
         {/* Progress Bar */}
