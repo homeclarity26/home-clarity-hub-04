@@ -218,6 +218,9 @@ const VoiceNavButton = ({ propertyId, currentPage, onNavigate }: VoiceNavButtonP
     return () => window.removeEventListener("keydown", handler);
   }, [state, startListening]);
 
+  // Don't render if browser doesn't support speech recognition
+  if (!hasSpeechRecognition) return null;
+
   const suggestedCommands = [
     "Show me my roof report",
     "What warranties are expiring soon?",
