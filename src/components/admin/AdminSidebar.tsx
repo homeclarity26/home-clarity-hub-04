@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X, MessageSquare, CheckSquare, Briefcase, Target, Share2, Megaphone, Zap, GraduationCap, BarChart3, Calendar } from "lucide-react";
+import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X, MessageSquare, CheckSquare, Briefcase, Target, Share2, Megaphone, Zap, GraduationCap, BarChart3, Calendar, Award } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
