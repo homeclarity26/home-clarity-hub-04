@@ -20,6 +20,7 @@ import EstimatesPortal from "@/components/portal/EstimatesPortal";
 import OnboardingOverlay from "@/components/OnboardingOverlay";
 import MembershipBanner from "@/components/MembershipBanner";
 import NotificationPreferences from "@/components/NotificationPreferences";
+import ClientReferralPortal from "@/components/portal/ClientReferralPortal";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import PushNotificationBanner from "@/components/PushNotificationBanner";
 import NPSSurveyCard from "@/components/NPSSurveyCard";
