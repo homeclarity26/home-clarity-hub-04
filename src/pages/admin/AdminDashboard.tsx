@@ -81,11 +81,13 @@ const AdminDashboard = () => {
     <div>
       <AdminHeader breadcrumbs={[{ label: "Dashboard" }]} />
       <div className="p-6 space-y-6 max-w-7xl">
-        {/* Daily Brief */}
-        <DailyBrief />
+        <WidgetErrorBoundary name="DailyBrief">
+          <DailyBrief />
+        </WidgetErrorBoundary>
 
-        {/* Admin Setup Checklist */}
-        <AdminSetupChecklist />
+        <WidgetErrorBoundary name="AdminSetupChecklist">
+          <AdminSetupChecklist />
+        </WidgetErrorBoundary>
 
         {/* Primary Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -95,23 +97,31 @@ const AdminDashboard = () => {
           <StatsCard label="Published Reports" value={stats?.publishedReports ?? 0} icon={CheckCircle} />
         </div>
 
-        {/* Overdue Action Center */}
-        <OverdueActionCenter />
+        <WidgetErrorBoundary name="OverdueActionCenter">
+          <OverdueActionCenter />
+        </WidgetErrorBoundary>
 
-        {/* Revenue Analytics */}
-        <RevenueAnalytics />
+        <WidgetErrorBoundary name="RevenueAnalytics">
+          <RevenueAnalytics />
+        </WidgetErrorBoundary>
 
-        {/* Weekly AI Digest */}
-        <WeeklyDigestWidget />
+        <WidgetErrorBoundary name="WeeklyDigestWidget">
+          <WeeklyDigestWidget />
+        </WidgetErrorBoundary>
 
-        {/* CRM Dashboard Widget */}
-        <CRMDashboardWidget />
+        <WidgetErrorBoundary name="CRMDashboardWidget">
+          <CRMDashboardWidget />
+        </WidgetErrorBoundary>
 
-        {/* Cross-Report Analytics */}
-        <CrossReportAnalytics />
+        <WidgetErrorBoundary name="CrossReportAnalytics">
+          <CrossReportAnalytics />
+        </WidgetErrorBoundary>
 
-        {/* Property Map */}
-        <PropertyMap />
+        <WidgetErrorBoundary name="PropertyMap">
+          <Suspense fallback={<Card className="p-5 h-64 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></Card>}>
+            <PropertyMap />
+          </Suspense>
+        </WidgetErrorBoundary>
 
         {/* Tasks + Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
