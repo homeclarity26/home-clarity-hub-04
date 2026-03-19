@@ -19,6 +19,7 @@ interface Thread {
   propertyName: string;
   clientName: string;
   clientInitials: string;
+  clientId: string;
   lastMessage: string;
   lastMessageAt: string;
   unreadCount: number;
