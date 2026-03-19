@@ -65,6 +65,7 @@ const MembershipTierManager = () => {
   const openCreate = () => {
     setEditId(null); setName(""); setDesc(""); setMonthly(0); setAnnually(0);
     setColor("#C9A84C"); setPriceType("annual"); setIsFeatured(false); setSelectedServiceIds([]);
+    setStripePriceMonthly(""); setStripePriceAnnual("");
     setDialogOpen(true);
   };
 
