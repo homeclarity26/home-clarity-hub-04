@@ -31,9 +31,6 @@ const VoiceNavButton = ({ propertyId, currentPage, onNavigate }: VoiceNavButtonP
   const animFrameRef = useRef<number>(0);
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
-  // Don't render if browser doesn't support speech recognition
-  if (!hasSpeechRecognition) return null;
-
   // Check if suggestions were dismissed
   useEffect(() => {
     const d = localStorage.getItem(`voice-suggestions-dismissed-${propertyId}`);
