@@ -495,6 +495,62 @@ export type Database = {
           },
         ]
       }
+      annual_reviews: {
+        Row: {
+          admin_notes: Json | null
+          briefing_json: Json
+          client_id: string
+          completed_at: string | null
+          created_at: string
+          generated_at: string | null
+          id: string
+          outcome_notes: string | null
+          property_id: string | null
+          review_call_date: string | null
+          review_year: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: Json | null
+          briefing_json?: Json
+          client_id: string
+          completed_at?: string | null
+          created_at?: string
+          generated_at?: string | null
+          id?: string
+          outcome_notes?: string | null
+          property_id?: string | null
+          review_call_date?: string | null
+          review_year: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: Json | null
+          briefing_json?: Json
+          client_id?: string
+          completed_at?: string | null
+          created_at?: string
+          generated_at?: string | null
+          id?: string
+          outcome_notes?: string | null
+          property_id?: string | null
+          review_call_date?: string | null
+          review_year?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "annual_reviews_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_keys: {
         Row: {
           admin_id: string
