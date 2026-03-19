@@ -332,6 +332,9 @@ const Index = () => {
         <div className={`transition-opacity duration-300 ${activeTab === "notifications" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "notifications" && <NotificationPreferences />}
         </div>
+        <div className={`transition-opacity duration-300 ${activeTab === "refer" ? "opacity-100" : "opacity-0 hidden"}`}>
+          {activeTab === "refer" && <ClientReferralPortal propertyId={portal.property?.id} />}
+        </div>
       </main>
 
       {/* NPS Survey */}
