@@ -1,7 +1,8 @@
-import { useCallback, useRef } from "react";
-import { ImagePlus } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import { ImagePlus, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import type { PhotoContent } from "../types";
 
 interface PhotoBlockProps {
@@ -9,9 +10,12 @@ interface PhotoBlockProps {
   editable?: boolean;
   onChange?: (content: PhotoContent) => void;
   reportId?: string;
+  isAnalyzing?: boolean;
+  hasAnalysis?: boolean;
+  onPhotoUploaded?: (url: string) => void;
 }
 
-const PhotoBlock = ({ content, editable, onChange, reportId }: PhotoBlockProps) => {
+const PhotoBlock = ({ content, editable, onChange, reportId, isAnalyzing, hasAnalysis, onPhotoUploaded }: PhotoBlockProps) => {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,8 +29,10 @@ const PhotoBlock = ({ content, editable, onChange, reportId }: PhotoBlockProps) 
       return;
     }
     const { data: urlData } = supabase.storage.from("report-images").getPublicUrl(path);
-    onChange?.({ ...content, url: urlData.publicUrl });
-  }, [content, onChange, reportId]);
+    const url = urlData.publicUrl;
+    onChange?.({ ...content, url });
+    onPhotoUploaded?.(url);
+  }, [content, onChange, reportId, onPhotoUploaded]);
 
   if (!content.url) {
     return editable ? (
@@ -49,6 +55,21 @@ const PhotoBlock = ({ content, editable, onChange, reportId }: PhotoBlockProps) 
     <div className="space-y-2">
       <div className="relative group">
         <img src={content.url} alt={content.caption || ""} className="w-full rounded-lg object-cover" />
+        {/* Analysis overlay indicators */}
+        {isAnalyzing && (
+          <div className="absolute top-2 left-2">
+            <Badge className="bg-accent/90 text-accent-foreground text-[9px] gap-1 animate-pulse">
+              <Loader2 className="h-2.5 w-2.5 animate-spin" /> Analyzing
+            </Badge>
+          </div>
+        )}
+        {!isAnalyzing && hasAnalysis && !editable && (
+          <div className="absolute top-2 left-2">
+            <Badge className="bg-accent/80 text-accent-foreground text-[9px] gap-1">
+              <Sparkles className="h-2.5 w-2.5" /> Inspected
+            </Badge>
+          </div>
+        )}
         {editable && (
           <div
             onClick={() => fileRef.current?.click()}
