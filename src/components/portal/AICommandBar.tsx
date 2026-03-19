@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Sparkles } from "lucide-react";
 
 interface AICommandBarProps {
@@ -15,6 +15,7 @@ const SUGGESTED_PROMPTS = [
 
 const AICommandBar = ({ onSubmit }: AICommandBarProps) => {
   const [value, setValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +27,8 @@ const AICommandBar = ({ onSubmit }: AICommandBarProps) => {
 
   const handleChipClick = (prompt: string) => {
     setValue(prompt);
-    onSubmit(prompt);
+    // Focus the input so user can see the text and edit/send
+    setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   return (
@@ -35,6 +37,7 @@ const AICommandBar = ({ onSubmit }: AICommandBarProps) => {
         <form onSubmit={handleSubmit} className="relative">
           <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-accent" />
           <input
+            ref={inputRef}
             type="text"
             value={value}
             onChange={(e) => setValue(e.target.value)}
