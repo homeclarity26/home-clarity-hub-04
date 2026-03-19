@@ -124,7 +124,7 @@ const MessagesTab = ({ propertyId, creatorName = "Your HBC Advisor", creatorInit
       if (error) throw error;
       
       // Notify the admin/creator about the new client message
-      const { data: prop } = await supabase.from("properties").select("creator_user_id").eq("id", propertyId).single();
+      const { data: prop } = await (supabase.from("properties") as any).select("creator_user_id").eq("id", propertyId).single();
       if (prop?.creator_user_id) {
         const senderName = profile?.full_name || "A client";
         sendPushNotification(pushTemplates.newMessage(prop.creator_user_id, senderName, newMessage.trim()));

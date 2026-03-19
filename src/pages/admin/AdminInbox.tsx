@@ -62,6 +62,7 @@ const AdminInbox = () => {
             propertyName: prop.property_name || prop.address,
             clientName: clientProfile?.full_name || "Client",
             clientInitials: clientProfile?.avatar_initials || "??",
+            clientId: prop.client_user_id,
             lastMessage: msg.message,
             lastMessageAt: msg.created_at,
             unreadCount: 0,
