@@ -56,6 +56,8 @@ type PropertyPhoto = {
   file_url: string;
   thumbnail_url: string | null;
   taken_at: string;
+  gps_lat: number | null;
+  gps_lng: number | null;
   taken_by: string | null;
   is_client_visible: boolean;
   tags: string[];
