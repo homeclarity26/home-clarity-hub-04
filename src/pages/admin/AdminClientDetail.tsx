@@ -75,7 +75,7 @@ import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 
-type ClientTab = "overview" | "timeline" | "engagement" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time" | "services" | "estimates";
+type ClientTab = "overview" | "timeline" | "engagement" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time" | "services" | "estimates" | "predictions";
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -92,6 +92,7 @@ const tabs: { id: ClientTab; label: string }[] = [
   { id: "estimates", label: "Estimates" },
   { id: "services", label: "Services" },
   { id: "equipment", label: "Equipment" },
+  { id: "predictions", label: "Predictions" },
   { id: "schedule", label: "Schedule" },
   { id: "vendors", label: "Vendors" },
 ];
