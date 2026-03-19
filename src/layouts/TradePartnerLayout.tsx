@@ -25,6 +25,7 @@ const TradePartnerLayout = () => {
 
   return (
     <div className="min-h-screen bg-muted/30 font-sans">
+      <PushNotificationBanner />
       <header className="bg-card border-b border-border px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div>
