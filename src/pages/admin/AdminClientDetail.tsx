@@ -70,6 +70,7 @@ import DragReportReorder from "@/components/admin/DragReportReorder";
 import WYSIWYGReportEditor from "@/components/wysiwyg/WYSIWYGReportEditor";
 import EstimatesSection from "@/components/admin/EstimatesSection";
 import ClientServicesTab from "@/components/admin/ClientServicesTab";
+import PredictiveMaintenanceTab from "@/components/admin/PredictiveMaintenanceTab";
 import type { ReportBlock } from "@/components/wysiwyg/types";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
