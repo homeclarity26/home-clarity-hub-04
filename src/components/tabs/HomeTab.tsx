@@ -19,6 +19,7 @@ import PropertyTimeline from "@/components/portal/PropertyTimeline";
 import AIPriorityCard from "@/components/portal/AIPriorityCard";
 import SatisfactionSurvey from "@/components/portal/SatisfactionSurvey";
 import AppointmentRequestModal from "@/components/portal/AppointmentRequestModal";
+import PredictiveMaintenanceCard from "@/components/portal/PredictiveMaintenanceCard";
 import { usePropertyValuation } from "@/hooks/usePropertyValuation";
 import { supabase } from "@/integrations/supabase/client";
 import type { ReportPageData } from "@/data/reportContent";

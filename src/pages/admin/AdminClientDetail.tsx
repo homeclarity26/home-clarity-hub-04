@@ -674,6 +674,11 @@ const AdminClientDetail = () => {
             <ProfitabilityCard data={{ totalRevenue: 0, totalHours: 0, targetHourlyRate: 150, messageCount: 0, messageCostPerMsg: 5 }} />
           </div>
         )}
+
+        {/* PREDICTIONS TAB */}
+        {activeTab === "predictions" && (
+          <PredictiveMaintenanceTab clientId={clientId!} propertyId={client.propertyId} />
+        )}
       </div>
     </div>
   );
