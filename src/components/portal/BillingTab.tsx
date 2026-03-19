@@ -27,8 +27,7 @@ const BillingTab = ({ propertyId }: BillingTabProps) => {
     queryKey: ["my-subscription", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
+      const { data } = await (supabase.from("profiles") as any)
         .select("subscription_status, subscription_current_period_end, stripe_customer_id, trial_ends_at")
         .eq("user_id", user!.id)
         .single();
