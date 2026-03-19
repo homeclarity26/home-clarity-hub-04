@@ -145,6 +145,7 @@ const AdminSettings = () => {
             <TabsTrigger value="templates" className="font-sans text-xs">Message Templates</TabsTrigger>
             <TabsTrigger value="exports" className="font-sans text-xs">Reports & Exports</TabsTrigger>
             <TabsTrigger value="audit" className="font-sans text-xs">Audit Log</TabsTrigger>
+            <TabsTrigger value="referrals" className="font-sans text-xs">Referrals</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-6">
