@@ -4,6 +4,7 @@ import AdminSidebar from "@/components/admin/AdminSidebar";
 import CommandPalette from "@/components/admin/CommandPalette";
 import QuickAddFAB from "@/components/admin/QuickAddFAB";
 import AgentPanel from "@/components/agent/AgentPanel";
+import PushNotificationBanner from "@/components/PushNotificationBanner";
 import useAdminShortcuts from "@/hooks/useAdminShortcuts";
 
 class SafeWrapper extends Component<{ name: string; children: ReactNode }, { hasError: boolean }> {
@@ -18,6 +19,7 @@ const AdminLayout = () => {
 
   return (
     <div className="min-h-screen bg-muted/30 font-sans">
+      <SafeWrapper name="PushBanner"><PushNotificationBanner /></SafeWrapper>
       <AdminSidebar />
       <SafeWrapper name="CommandPalette"><CommandPalette /></SafeWrapper>
       <SafeWrapper name="QuickAddFAB"><QuickAddFAB /></SafeWrapper>
@@ -30,3 +32,4 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
+
