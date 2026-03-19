@@ -127,6 +127,9 @@ const AdminProjectDetail = () => {
           <TabsContent value="decisions"><NotesDecisionsTab projectId={project.id} /></TabsContent>
           <TabsContent value="activity"><ProjectActivityLogTab projectId={project.id} /></TabsContent>
         </Tabs>
+
+        <ScopeGeneratorModal open={scopeOpen} onOpenChange={setScopeOpen} projectId={project.id} projectTitle={project.title} />
+        <BidRequestFlow open={bidOpen} onOpenChange={setBidOpen} projectId={project.id} projectTitle={project.title} />
       </div>
     </div>
   );
