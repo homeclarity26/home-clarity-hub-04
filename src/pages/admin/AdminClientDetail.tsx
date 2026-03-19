@@ -71,15 +71,17 @@ import WYSIWYGReportEditor from "@/components/wysiwyg/WYSIWYGReportEditor";
 import EstimatesSection from "@/components/admin/EstimatesSection";
 import ClientServicesTab from "@/components/admin/ClientServicesTab";
 import PredictiveMaintenanceTab from "@/components/admin/PredictiveMaintenanceTab";
+import DigitalTwinTab from "@/components/admin/DigitalTwinTab";
 import type { ReportBlock } from "@/components/wysiwyg/types";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 
-type ClientTab = "overview" | "timeline" | "engagement" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time" | "services" | "estimates" | "predictions";
+type ClientTab = "overview" | "digital-twin" | "timeline" | "engagement" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time" | "services" | "estimates" | "predictions";
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
+  { id: "digital-twin", label: "Digital Twin" },
   { id: "timeline", label: "Timeline" },
   { id: "engagement", label: "Engagement" },
   { id: "tasks", label: "Tasks" },
@@ -521,6 +523,7 @@ const AdminClientDetail = () => {
             <AdminValuationCard propertyId={client.propertyId} address={client.address} />
           </div>
         )}
+        {activeTab === "digital-twin" && <DigitalTwinTab clientId={clientId!} propertyId={client.propertyId} />}
         {activeTab === "timeline" && <ClientTimelineTab propertyId={client.propertyId} />}
         {activeTab === "engagement" && <ClientEngagementTab clientUserId={client.clientUserId || ""} propertyId={client.propertyId} />}
         {activeTab === "report" && (

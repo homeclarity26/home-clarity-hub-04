@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle, Info, Wrench, CalendarPlus } from "lucide-react";
+import MyHomeStory from "@/components/portal/MyHomeStory";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import HomeValueTracker from "@/components/HomeValueTracker";
 import MembershipBanner from "@/components/MembershipBanner";
@@ -395,6 +396,13 @@ const HomeTab = ({
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors" />
             </button>
             <AppointmentRequestModal open={showAppointment} onOpenChange={setShowAppointment} propertyId={propertyId} />
+          </div>
+        )}
+
+        {/* My Home's Story */}
+        {propertyId && !propertyId.startsWith("mock-") && (
+          <div className="max-w-[1400px] mx-auto px-6 md:px-20">
+            <MyHomeStory propertyId={propertyId} propertyName={propertyName} />
           </div>
         )}
       </div>

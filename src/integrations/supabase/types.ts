@@ -1392,6 +1392,51 @@ export type Database = {
         }
         Relationships: []
       }
+      document_extractions: {
+        Row: {
+          client_id: string
+          confidence_score: number | null
+          created_at: string
+          document_id: string | null
+          document_type: string | null
+          equipment_ids_created: Json | null
+          extraction_status: string
+          findings_created: Json | null
+          id: string
+          processed_at: string | null
+          raw_extracted_text: string | null
+          structured_data: Json | null
+        }
+        Insert: {
+          client_id: string
+          confidence_score?: number | null
+          created_at?: string
+          document_id?: string | null
+          document_type?: string | null
+          equipment_ids_created?: Json | null
+          extraction_status?: string
+          findings_created?: Json | null
+          id?: string
+          processed_at?: string | null
+          raw_extracted_text?: string | null
+          structured_data?: Json | null
+        }
+        Update: {
+          client_id?: string
+          confidence_score?: number | null
+          created_at?: string
+          document_id?: string | null
+          document_type?: string | null
+          equipment_ids_created?: Json | null
+          extraction_status?: string
+          findings_created?: Json | null
+          id?: string
+          processed_at?: string | null
+          raw_extracted_text?: string | null
+          structured_data?: Json | null
+        }
+        Relationships: []
+      }
       equipment: {
         Row: {
           brand: string | null
@@ -1781,6 +1826,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      home_knowledge_base: {
+        Row: {
+          client_id: string
+          confidence: string
+          content: string
+          created_at: string
+          date_of_fact: string | null
+          date_recorded: string
+          id: string
+          is_current: boolean
+          knowledge_type: string
+          source_document_id: string | null
+          source_type: string
+          subject: string
+          superseded_by_id: string | null
+          tags: Json | null
+        }
+        Insert: {
+          client_id: string
+          confidence?: string
+          content: string
+          created_at?: string
+          date_of_fact?: string | null
+          date_recorded?: string
+          id?: string
+          is_current?: boolean
+          knowledge_type?: string
+          source_document_id?: string | null
+          source_type?: string
+          subject: string
+          superseded_by_id?: string | null
+          tags?: Json | null
+        }
+        Update: {
+          client_id?: string
+          confidence?: string
+          content?: string
+          created_at?: string
+          date_of_fact?: string | null
+          date_recorded?: string
+          id?: string
+          is_current?: boolean
+          knowledge_type?: string
+          source_document_id?: string | null
+          source_type?: string
+          subject?: string
+          superseded_by_id?: string | null
+          tags?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_knowledge_base_superseded_by_id_fkey"
+            columns: ["superseded_by_id"]
+            isOneToOne: false
+            referencedRelation: "home_knowledge_base"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       home_value_history: {
         Row: {
@@ -2776,6 +2880,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      permit_registry: {
+        Row: {
+          client_id: string
+          contractor_name: string | null
+          created_at: string
+          description: string | null
+          document_id: string | null
+          estimated_cost: number | null
+          expiration_date: string | null
+          final_cost: number | null
+          id: string
+          inspection_dates: Json | null
+          issue_date: string | null
+          issued_by: string | null
+          notes: string | null
+          permit_number: string | null
+          permit_type: string | null
+          status: string
+        }
+        Insert: {
+          client_id: string
+          contractor_name?: string | null
+          created_at?: string
+          description?: string | null
+          document_id?: string | null
+          estimated_cost?: number | null
+          expiration_date?: string | null
+          final_cost?: number | null
+          id?: string
+          inspection_dates?: Json | null
+          issue_date?: string | null
+          issued_by?: string | null
+          notes?: string | null
+          permit_number?: string | null
+          permit_type?: string | null
+          status?: string
+        }
+        Update: {
+          client_id?: string
+          contractor_name?: string | null
+          created_at?: string
+          description?: string | null
+          document_id?: string | null
+          estimated_cost?: number | null
+          expiration_date?: string | null
+          final_cost?: number | null
+          id?: string
+          inspection_dates?: Json | null
+          issue_date?: string | null
+          issued_by?: string | null
+          notes?: string | null
+          permit_number?: string | null
+          permit_type?: string | null
+          status?: string
+        }
+        Relationships: []
       }
       photo_analyses: {
         Row: {
@@ -4035,6 +4196,54 @@ export type Database = {
           },
         ]
       }
+      property_timeline: {
+        Row: {
+          client_id: string
+          contractor_name: string | null
+          cost: number | null
+          created_at: string
+          created_by: string
+          description: string | null
+          event_date: string
+          event_type: string
+          id: string
+          permit_number: string | null
+          source_document_id: string | null
+          title: string
+          verified: boolean
+        }
+        Insert: {
+          client_id: string
+          contractor_name?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          event_date: string
+          event_type: string
+          id?: string
+          permit_number?: string | null
+          source_document_id?: string | null
+          title: string
+          verified?: boolean
+        }
+        Update: {
+          client_id?: string
+          contractor_name?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          event_date?: string
+          event_type?: string
+          id?: string
+          permit_number?: string | null
+          source_document_id?: string | null
+          title?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
       property_valuations: {
         Row: {
           address: string
@@ -4622,6 +4831,60 @@ export type Database = {
           },
         ]
       }
+      service_history: {
+        Row: {
+          client_id: string
+          contractor_name: string | null
+          contractor_phone: string | null
+          cost: number | null
+          created_at: string
+          description: string | null
+          document_id: string | null
+          equipment_id: string | null
+          id: string
+          invoice_number: string | null
+          next_service_recommended_date: string | null
+          notes: string | null
+          service_date: string
+          service_type: string
+          warranty_on_work_months: number | null
+        }
+        Insert: {
+          client_id: string
+          contractor_name?: string | null
+          contractor_phone?: string | null
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          document_id?: string | null
+          equipment_id?: string | null
+          id?: string
+          invoice_number?: string | null
+          next_service_recommended_date?: string | null
+          notes?: string | null
+          service_date: string
+          service_type: string
+          warranty_on_work_months?: number | null
+        }
+        Update: {
+          client_id?: string
+          contractor_name?: string | null
+          contractor_phone?: string | null
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          document_id?: string | null
+          equipment_id?: string | null
+          id?: string
+          invoice_number?: string | null
+          next_service_recommended_date?: string | null
+          notes?: string | null
+          service_date?: string
+          service_type?: string
+          warranty_on_work_months?: number | null
+        }
+        Relationships: []
+      }
       service_request_items: {
         Row: {
           created_at: string
@@ -4942,6 +5205,42 @@ export type Database = {
         }
         Relationships: []
       }
+      structural_specifications: {
+        Row: {
+          client_id: string
+          id: string
+          notes: string | null
+          recorded_at: string
+          source_document_id: string | null
+          spec_category: string
+          specification_name: string
+          specification_value: string
+          unit: string | null
+        }
+        Insert: {
+          client_id: string
+          id?: string
+          notes?: string | null
+          recorded_at?: string
+          source_document_id?: string | null
+          spec_category: string
+          specification_name: string
+          specification_value: string
+          unit?: string | null
+        }
+        Update: {
+          client_id?: string
+          id?: string
+          notes?: string | null
+          recorded_at?: string
+          source_document_id?: string | null
+          spec_category?: string
+          specification_name?: string
+          specification_value?: string
+          unit?: string | null
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           admin_id: string
@@ -5225,6 +5524,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      warranty_registry: {
+        Row: {
+          claim_process: string | null
+          client_id: string
+          coverage_description: string | null
+          created_at: string
+          document_id: string | null
+          equipment_id: string | null
+          expiration_date: string | null
+          id: string
+          is_active: boolean
+          item_name: string
+          manufacturer: string | null
+          model_number: string | null
+          notes: string | null
+          purchase_date: string | null
+          serial_number: string | null
+          support_email: string | null
+          support_phone: string | null
+          support_url: string | null
+          warranty_duration_months: number | null
+          warranty_type: string | null
+        }
+        Insert: {
+          claim_process?: string | null
+          client_id: string
+          coverage_description?: string | null
+          created_at?: string
+          document_id?: string | null
+          equipment_id?: string | null
+          expiration_date?: string | null
+          id?: string
+          is_active?: boolean
+          item_name: string
+          manufacturer?: string | null
+          model_number?: string | null
+          notes?: string | null
+          purchase_date?: string | null
+          serial_number?: string | null
+          support_email?: string | null
+          support_phone?: string | null
+          support_url?: string | null
+          warranty_duration_months?: number | null
+          warranty_type?: string | null
+        }
+        Update: {
+          claim_process?: string | null
+          client_id?: string
+          coverage_description?: string | null
+          created_at?: string
+          document_id?: string | null
+          equipment_id?: string | null
+          expiration_date?: string | null
+          id?: string
+          is_active?: boolean
+          item_name?: string
+          manufacturer?: string | null
+          model_number?: string | null
+          notes?: string | null
+          purchase_date?: string | null
+          serial_number?: string | null
+          support_email?: string | null
+          support_phone?: string | null
+          support_url?: string | null
+          warranty_duration_months?: number | null
+          warranty_type?: string | null
+        }
+        Relationships: []
       }
       webhook_logs: {
         Row: {
