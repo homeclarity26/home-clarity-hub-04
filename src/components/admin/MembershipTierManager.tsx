@@ -74,6 +74,8 @@ const MembershipTierManager = () => {
     setMonthly(tier.price_monthly || 0); setAnnually(tier.price_annually || 0);
     setColor(tier.color_hex || "#C9A84C"); setPriceType(tier.price_type || "annual");
     setIsFeatured(tier.is_featured || false);
+    setStripePriceMonthly(tier.stripe_price_monthly || "");
+    setStripePriceAnnual(tier.stripe_price_annual || "");
     const ids = tierServices.filter((ts: any) => ts.tier_id === tier.id).map((ts: any) => ts.service_id);
     setSelectedServiceIds(ids);
     setDialogOpen(true);
