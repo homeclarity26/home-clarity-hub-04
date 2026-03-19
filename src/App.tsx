@@ -256,6 +256,10 @@ const AppRoutes = () => {
         }
       />
       <Route path="/reset-password" element={<ResetPassword />} />
+      {/* Public proposal & invoice views (no auth required) */}
+      <Route path="/proposal/:token" element={<ProposalView />} />
+      <Route path="/invoice/:token" element={<InvoiceView />} />
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
