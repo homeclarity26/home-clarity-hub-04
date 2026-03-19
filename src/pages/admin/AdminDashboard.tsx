@@ -221,8 +221,12 @@ const AdminDashboard = () => {
               </div>
             </Card>
 
-            <NPSOverviewCard />
-            <EquipmentWarrantyCalendar />
+            <WidgetErrorBoundary name="NPSOverviewCard">
+              <NPSOverviewCard />
+            </WidgetErrorBoundary>
+            <WidgetErrorBoundary name="EquipmentWarrantyCalendar">
+              <EquipmentWarrantyCalendar />
+            </WidgetErrorBoundary>
           </div>
         </div>
 
