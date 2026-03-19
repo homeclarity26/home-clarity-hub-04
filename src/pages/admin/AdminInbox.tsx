@@ -130,6 +130,14 @@ const AdminInbox = () => {
     setIsSending(true);
     const { error } = await (supabase.from("property_messages" as any) as any).insert({ property_id: activeThread, sender_id: user.id, message: newMessage.trim() });
     if (error) { toast.error("Failed to send"); setIsSending(false); return; }
+    
+    // Send push notification to client
+    const thread = threads?.find(t => t.propertyId === activeThread);
+    if (thread?.clientId) {
+      const adminName = profile?.full_name || "Your advisor";
+      sendPushNotification(pushTemplates.newMessage(thread.clientId, adminName, newMessage.trim()));
+    }
+    
     setNewMessage("");
     setIsSending(false);
     loadThreadMessages(activeThread);
