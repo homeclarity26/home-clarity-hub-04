@@ -157,6 +157,9 @@ const HomeTab = ({
         {/* AI Priority Card */}
         {propertyId && <AIPriorityCard propertyId={propertyId} reportPages={reportPages} />}
 
+        {/* Predictive Maintenance */}
+        {propertyId && <PredictiveMaintenanceCard propertyId={propertyId} clientId={user?.id} />}
+
         {/* Interactive Home Health Dashboard */}
         {reportPages && <InteractiveHealthDashboard pages={reportPages} onNavigate={onNavigate} />}
 
