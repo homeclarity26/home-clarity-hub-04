@@ -50,6 +50,7 @@ const HomeTab = ({
   membershipEndDate,
   reportPages,
 }: HomeTabProps) => {
+  const { user } = useAuth();
   const [valuationOpen, setValuationOpen] = useState(false);
   const [showServiceRequest, setShowServiceRequest] = useState(false);
   const [showAppointment, setShowAppointment] = useState(false);
