@@ -168,6 +168,7 @@ const AdminAnalytics = () => {
                 <SelectItem value="0">All Time</SelectItem>
               </SelectContent>
             </Select>
+            <ExportMenu />
             <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans">
               <Download className="w-3.5 h-3.5" />Export Report
             </Button>

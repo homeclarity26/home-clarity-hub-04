@@ -360,6 +360,10 @@ const AdminSettings = () => {
             <MessageTemplateLibrary />
           </TabsContent>
 
+          <TabsContent value="exports">
+            <ReportsExportsSettings />
+          </TabsContent>
+
           <TabsContent value="audit">
             <AuditLogSection />
           </TabsContent>
