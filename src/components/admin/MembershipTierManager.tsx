@@ -86,6 +86,7 @@ const MembershipTierManager = () => {
     const payload = {
       name: name.trim(), description: desc.trim(), price_monthly: monthly, price_annually: annually,
       color_hex: color, price_type: priceType, is_featured: isFeatured,
+      stripe_price_monthly: stripePriceMonthly.trim() || null, stripe_price_annual: stripePriceAnnual.trim() || null,
     };
 
     let tierId = editId;
