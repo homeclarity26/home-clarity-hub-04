@@ -16,6 +16,7 @@ import MembershipTierManager from "@/components/admin/MembershipTierManager";
 import ReportsExportsSettings from "@/components/admin/ReportsExportsSettings";
 import MessageTemplateLibrary from "@/components/admin/MessageTemplateLibrary";
 import ServicesLibrary from "@/components/admin/ServicesLibrary";
+import PushNotificationSettings from "@/components/admin/PushNotificationSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -230,7 +231,9 @@ const AdminSettings = () => {
               </Button>
             </Card>
 
-            {/* Region */}
+            {/* Push Notifications */}
+            <PushNotificationSettings />
+
             <Card className="p-6 space-y-5">
               <h3 className="text-base font-sans font-semibold text-foreground">Default Region</h3>
               <div className="space-y-1.5">

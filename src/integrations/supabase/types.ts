@@ -4607,6 +4607,36 @@ export type Database = {
           },
         ]
       }
+      push_notification_log: {
+        Row: {
+          body: string | null
+          clicked_at: string | null
+          id: string
+          sent_at: string
+          title: string
+          url: string | null
+          user_id: string | null
+        }
+        Insert: {
+          body?: string | null
+          clicked_at?: string | null
+          id?: string
+          sent_at?: string
+          title: string
+          url?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          body?: string | null
+          clicked_at?: string | null
+          id?: string
+          sent_at?: string
+          title?: string
+          url?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           admin_id: string | null
@@ -4616,7 +4646,10 @@ export type Database = {
           device_label: string | null
           endpoint: string
           id: string
+          last_used_at: string | null
           p256dh_key: string
+          user_agent: string | null
+          user_id: string | null
         }
         Insert: {
           admin_id?: string | null
@@ -4626,7 +4659,10 @@ export type Database = {
           device_label?: string | null
           endpoint: string
           id?: string
+          last_used_at?: string | null
           p256dh_key: string
+          user_agent?: string | null
+          user_id?: string | null
         }
         Update: {
           admin_id?: string | null
@@ -4636,7 +4672,10 @@ export type Database = {
           device_label?: string | null
           endpoint?: string
           id?: string
+          last_used_at?: string | null
           p256dh_key?: string
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

@@ -1,6 +1,7 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { LayoutDashboard, CheckSquare, Calendar, FileText, MessageSquare, DollarSign, Briefcase, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import PushNotificationBanner from "@/components/PushNotificationBanner";
 
 const navItems = [
   { label: "Dashboard", path: "/trade", icon: LayoutDashboard },
@@ -24,6 +25,7 @@ const TradePartnerLayout = () => {
 
   return (
     <div className="min-h-screen bg-muted/30 font-sans">
+      <PushNotificationBanner />
       <header className="bg-card border-b border-border px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div>

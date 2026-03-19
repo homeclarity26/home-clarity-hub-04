@@ -10,6 +10,7 @@ import AdminHeader from "@/components/admin/AdminHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { sendPushNotification, pushTemplates } from "@/lib/pushNotifications";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
@@ -18,6 +19,7 @@ interface Thread {
   propertyName: string;
   clientName: string;
   clientInitials: string;
+  clientId: string;
   lastMessage: string;
   lastMessageAt: string;
   unreadCount: number;
@@ -60,6 +62,7 @@ const AdminInbox = () => {
             propertyName: prop.property_name || prop.address,
             clientName: clientProfile?.full_name || "Client",
             clientInitials: clientProfile?.avatar_initials || "??",
+            clientId: prop.client_user_id,
             lastMessage: msg.message,
             lastMessageAt: msg.created_at,
             unreadCount: 0,
@@ -129,6 +132,14 @@ const AdminInbox = () => {
     setIsSending(true);
     const { error } = await (supabase.from("property_messages" as any) as any).insert({ property_id: activeThread, sender_id: user.id, message: newMessage.trim() });
     if (error) { toast.error("Failed to send"); setIsSending(false); return; }
+    
+    // Send push notification to client
+    const thread = threads?.find(t => t.propertyId === activeThread);
+    if (thread?.clientId) {
+      const adminName = profile?.full_name || "Your advisor";
+      sendPushNotification(pushTemplates.newMessage(thread.clientId, adminName, newMessage.trim()));
+    }
+    
     setNewMessage("");
     setIsSending(false);
     loadThreadMessages(activeThread);

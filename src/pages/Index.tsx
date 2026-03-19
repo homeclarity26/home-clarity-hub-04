@@ -21,6 +21,7 @@ import OnboardingOverlay from "@/components/OnboardingOverlay";
 import MembershipBanner from "@/components/MembershipBanner";
 import NotificationPreferences from "@/components/NotificationPreferences";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
+import PushNotificationBanner from "@/components/PushNotificationBanner";
 import NPSSurveyCard from "@/components/NPSSurveyCard";
 import PropertySelector from "@/components/PropertySelector";
 import HelpFloatingButton from "@/components/help/HelpFloatingButton";
@@ -195,6 +196,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PushNotificationBanner />
       {/* Tutorial onboarding modal for first-time clients */}
       {showTutorialModal && !isCreator && (
         <ClientOnboardingModal

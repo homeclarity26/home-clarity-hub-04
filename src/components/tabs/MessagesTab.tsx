@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import VideoMessageBubble from "@/components/VideoMessageBubble";
+import { sendPushNotification, pushTemplates } from "@/lib/pushNotifications";
 
 interface Message {
   id: string;
@@ -121,6 +122,14 @@ const MessagesTab = ({ propertyId, creatorName = "Your HBC Advisor", creatorInit
     try {
       const { error } = await (supabase.from("property_messages" as any) as any).insert({ property_id: propertyId, sender_id: user.id, message: newMessage.trim() });
       if (error) throw error;
+      
+      // Notify the admin/creator about the new client message
+      const { data: prop } = await (supabase.from("properties") as any).select("creator_user_id").eq("id", propertyId).single();
+      if (prop?.creator_user_id) {
+        const senderName = profile?.full_name || "A client";
+        sendPushNotification(pushTemplates.newMessage(prop.creator_user_id, senderName, newMessage.trim()));
+      }
+      
       setNewMessage(""); await fetchMessages();
     } catch (err) { console.error("Send failed:", err); toast.error("Failed to send message. Try again."); }
     finally { setIsSending(false); }
