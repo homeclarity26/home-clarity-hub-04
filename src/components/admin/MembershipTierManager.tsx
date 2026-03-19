@@ -30,6 +30,8 @@ const MembershipTierManager = () => {
   const [priceType, setPriceType] = useState("annual");
   const [isFeatured, setIsFeatured] = useState(false);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const [stripePriceMonthly, setStripePriceMonthly] = useState("");
+  const [stripePriceAnnual, setStripePriceAnnual] = useState("");
 
   const { data: tiers = [] } = useQuery({
     queryKey: ["membership-tiers"],
