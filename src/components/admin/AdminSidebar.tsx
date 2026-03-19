@@ -18,6 +18,7 @@ const navItems = [
   { label: "Referrals", path: "/admin/referrals", icon: Share2 },
   { label: "Announcements", path: "/admin/announcements", icon: Megaphone },
   { label: "Automations", path: "/admin/automations", icon: Zap },
+  { label: "Annual Reviews", path: "/admin/annual-reviews", icon: Award },
   { label: "Knowledge Base", path: "/admin/knowledge-base", icon: BookOpen },
   { label: "Help & Tutorials", path: "/admin/help", icon: GraduationCap },
   { label: "Settings", path: "/admin/settings", icon: Settings },

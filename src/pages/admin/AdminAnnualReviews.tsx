@@ -154,7 +154,7 @@ const AdminAnnualReviews = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      {isUrgent && !client.review && <Badge variant="outline" className="text-[9px] border-amber-400 text-amber-600">Renewal Soon</Badge>}
+                      {isUrgent && !client.review && <Badge variant="destructive" className="text-[9px]">Renewal Soon</Badge>}
                       {client.review ? statusBadge(client.review.status) : statusBadge("not_started")}
                       {!client.review || client.review.status === "not_started" ? (
                         <Button size="sm" variant="outline" className="text-xs font-sans gap-1" onClick={() => handleGenerate(client)} disabled={generating === client.client_id}>
