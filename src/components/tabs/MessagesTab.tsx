@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import VideoMessageBubble from "@/components/VideoMessageBubble";
+import { sendPushNotification, pushTemplates } from "@/lib/pushNotifications";
 
 interface Message {
   id: string;
