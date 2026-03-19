@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, FileText, Send } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
+import ScopeGeneratorModal from "@/components/admin/ScopeGeneratorModal";
+import BidRequestFlow from "@/components/admin/BidRequestFlow";
 import ProjectOverviewTab from "@/components/projects/tabs/ProjectOverviewTab";
 import PhasesTasksTab from "@/components/projects/tabs/PhasesTasksTab";
 import ProjectScheduleTab from "@/components/projects/tabs/ProjectScheduleTab";
@@ -20,6 +23,8 @@ import ProjectActivityLogTab from "@/components/projects/tabs/ProjectActivityLog
 const AdminProjectDetail = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const [bidOpen, setBidOpen] = useState(false);
 
   const { data: project, isLoading } = useQuery({
     queryKey: ["project-detail", projectId],
@@ -75,9 +80,17 @@ const AdminProjectDetail = () => {
               {project.project_type && project.project_type !== "custom" && ` · ${project.project_type.replace("_", " ")}`}
             </p>
           </div>
-          <Button variant="outline" onClick={() => navigate("/admin/projects")} className="gap-2 text-sm font-sans">
-            <ArrowLeft className="w-4 h-4" />Back to Projects
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setScopeOpen(true)} className="gap-1.5 text-xs font-sans">
+              <FileText className="w-3.5 h-3.5" />Scope of Work
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setBidOpen(true)} className="gap-1.5 text-xs font-sans">
+              <Send className="w-3.5 h-3.5" />Send for Bids
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/admin/projects")} className="gap-2 text-sm font-sans">
+              <ArrowLeft className="w-4 h-4" />Back
+            </Button>
+          </div>
         </div>
 
         {/* Progress Bar */}
@@ -114,6 +127,9 @@ const AdminProjectDetail = () => {
           <TabsContent value="decisions"><NotesDecisionsTab projectId={project.id} /></TabsContent>
           <TabsContent value="activity"><ProjectActivityLogTab projectId={project.id} /></TabsContent>
         </Tabs>
+
+        <ScopeGeneratorModal open={scopeOpen} onOpenChange={setScopeOpen} projectId={project.id} projectTitle={project.title} />
+        <BidRequestFlow open={bidOpen} onOpenChange={setBidOpen} projectId={project.id} projectTitle={project.title} />
       </div>
     </div>
   );

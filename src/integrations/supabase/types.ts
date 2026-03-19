@@ -3552,6 +3552,53 @@ export type Database = {
           },
         ]
       }
+      project_scopes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          detail_level: string
+          formatted_markdown: string
+          id: string
+          is_current: boolean
+          project_id: string
+          scope_content: Json
+          storage_pdf_path: string | null
+          version_number: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          detail_level?: string
+          formatted_markdown?: string
+          id?: string
+          is_current?: boolean
+          project_id: string
+          scope_content?: Json
+          storage_pdf_path?: string | null
+          version_number?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          detail_level?: string
+          formatted_markdown?: string
+          id?: string
+          is_current?: boolean
+          project_id?: string
+          scope_content?: Json
+          storage_pdf_path?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_scopes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_task_comments: {
         Row: {
           comment: string
