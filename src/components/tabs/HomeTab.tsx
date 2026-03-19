@@ -21,6 +21,7 @@ import SatisfactionSurvey from "@/components/portal/SatisfactionSurvey";
 import AppointmentRequestModal from "@/components/portal/AppointmentRequestModal";
 import PredictiveMaintenanceCard from "@/components/portal/PredictiveMaintenanceCard";
 import { usePropertyValuation } from "@/hooks/usePropertyValuation";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { ReportPageData } from "@/data/reportContent";
 
