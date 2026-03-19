@@ -536,6 +536,13 @@ const AdminClientDetail = () => {
             pdfData={pdfData}
           />
         )}
+        {activeTab === "photos" && (
+          <PhotoManager
+            propertyId={client.propertyId}
+            reportPages={reportPages?.map((rp) => ({ id: rp.id, title: rp.title, page_key: rp.page_key }))}
+            projects={projects?.map((p) => ({ id: p.id, title: p.title }))}
+          />
+        )}
         {activeTab === "files" && (
           <div className="space-y-4">
             <SignatureRequestManager clientId={client.propertyId} propertyId={client.propertyId} />
