@@ -17,6 +17,7 @@ import ReportsExportsSettings from "@/components/admin/ReportsExportsSettings";
 import MessageTemplateLibrary from "@/components/admin/MessageTemplateLibrary";
 import ServicesLibrary from "@/components/admin/ServicesLibrary";
 import PushNotificationSettings from "@/components/admin/PushNotificationSettings";
+import ReferralSettings from "@/components/admin/ReferralSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
