@@ -287,6 +287,9 @@ const Index = () => {
             />
           )}
         </div>
+        <div className={`transition-opacity duration-300 ${activeTab === "photos" ? "opacity-100" : "opacity-0 hidden"}`}>
+          {activeTab === "photos" && <PhotosTab propertyId={portal.property?.id} />}
+        </div>
         <div className={`transition-opacity duration-300 ${activeTab === "projects" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "projects" && <ProjectsTab onNavigate={handleNavigate} onTabChange={handleTabChange} propertyId={portal.property?.id} pages={portal.pages} onSendMessage={handleSendMessage} />}
         </div>
