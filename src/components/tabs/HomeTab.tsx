@@ -172,7 +172,7 @@ const HomeTab = ({
 
         {/* Home Value Tracker */}
         {propertyId && (
-          <HomeValueTracker propertyId={propertyId} estimatedValue={estimatedValue} />
+          <HomeValueTracker propertyId={propertyId} estimatedValue={estimatedValue} propertyAddress={propertyAddress} />
         )}
         {propertyId && !propertyId.startsWith("mock-") && (
           <AnnualReportCard propertyId={propertyId} />
