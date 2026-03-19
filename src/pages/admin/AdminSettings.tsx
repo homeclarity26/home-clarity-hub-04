@@ -371,6 +371,10 @@ const AdminSettings = () => {
           <TabsContent value="audit">
             <AuditLogSection />
           </TabsContent>
+
+          <TabsContent value="referrals">
+            <ReferralSettings />
+          </TabsContent>
         </Tabs>
       </div>
     </div>

@@ -700,6 +700,11 @@ const AdminClientDetail = () => {
         {activeTab === "predictions" && (
           <PredictiveMaintenanceTab clientId={clientId!} propertyId={client.propertyId} />
         )}
+
+        {/* REFERRALS TAB */}
+        {activeTab === "referrals" && (
+          <ClientReferralsTab propertyId={client.propertyId} clientId={client.clientUserId} />
+        )}
       </div>
     </div>
   );
