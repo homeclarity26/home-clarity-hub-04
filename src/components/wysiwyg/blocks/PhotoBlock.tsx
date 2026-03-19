@@ -13,6 +13,7 @@ interface PhotoBlockProps {
   isAnalyzing?: boolean;
   hasAnalysis?: boolean;
   onPhotoUploaded?: (url: string) => void;
+  onPhotoClick?: (url: string) => void;
 }
 
 const PhotoBlock = ({ content, editable, onChange, reportId, isAnalyzing, hasAnalysis, onPhotoUploaded }: PhotoBlockProps) => {
