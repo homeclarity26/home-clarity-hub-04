@@ -11,7 +11,7 @@ const SubscriptionDashboardWidget = () => {
     queryKey: ["subscription-dashboard-stats"],
     queryFn: async () => {
       // Get all active memberships with tier pricing
-      const { data: memberships } = await supabase
+      const { data: memberships } = await (supabase as any)
         .from("client_memberships")
         .select("*, membership_tiers(price_monthly, price_annually)")
         .eq("status", "active");
