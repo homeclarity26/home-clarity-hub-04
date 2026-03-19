@@ -523,6 +523,7 @@ const AdminClientDetail = () => {
             <AdminValuationCard propertyId={client.propertyId} address={client.address} />
           </div>
         )}
+        {activeTab === "digital-twin" && <DigitalTwinTab clientId={clientId!} propertyId={client.propertyId} />}
         {activeTab === "timeline" && <ClientTimelineTab propertyId={client.propertyId} />}
         {activeTab === "engagement" && <ClientEngagementTab clientUserId={client.clientUserId || ""} propertyId={client.propertyId} />}
         {activeTab === "report" && (
