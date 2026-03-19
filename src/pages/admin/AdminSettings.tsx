@@ -13,6 +13,7 @@ import IntegrationsHub from "@/components/admin/IntegrationsHub";
 import AuditLogSection from "@/components/admin/AuditLogSection";
 import SLASettings from "@/components/admin/SLASettings";
 import MembershipTierManager from "@/components/admin/MembershipTierManager";
+import ReportsExportsSettings from "@/components/admin/ReportsExportsSettings";
 import MessageTemplateLibrary from "@/components/admin/MessageTemplateLibrary";
 import ServicesLibrary from "@/components/admin/ServicesLibrary";
 import { useAuth } from "@/contexts/AuthContext";
@@ -141,6 +142,7 @@ const AdminSettings = () => {
             <TabsTrigger value="integrations" className="font-sans text-xs">Integrations</TabsTrigger>
             <TabsTrigger value="sla" className="font-sans text-xs">SLA</TabsTrigger>
             <TabsTrigger value="templates" className="font-sans text-xs">Message Templates</TabsTrigger>
+            <TabsTrigger value="exports" className="font-sans text-xs">Reports & Exports</TabsTrigger>
             <TabsTrigger value="audit" className="font-sans text-xs">Audit Log</TabsTrigger>
           </TabsList>
 
@@ -356,6 +358,10 @@ const AdminSettings = () => {
 
           <TabsContent value="templates">
             <MessageTemplateLibrary />
+          </TabsContent>
+
+          <TabsContent value="exports">
+            <ReportsExportsSettings />
           </TabsContent>
 
           <TabsContent value="audit">
