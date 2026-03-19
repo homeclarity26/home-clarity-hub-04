@@ -231,7 +231,9 @@ const AdminSettings = () => {
               </Button>
             </Card>
 
-            {/* Region */}
+            {/* Push Notifications */}
+            <PushNotificationSettings />
+
             <Card className="p-6 space-y-5">
               <h3 className="text-base font-sans font-semibold text-foreground">Default Region</h3>
               <div className="space-y-1.5">
