@@ -13,6 +13,8 @@ import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import ProposalView from "./pages/ProposalView";
+import InvoiceView from "./pages/InvoiceView";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminClients from "./pages/admin/AdminClients";
