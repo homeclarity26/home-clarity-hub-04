@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense, Component, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, FileText, HelpCircle, CheckCircle, BookOpen, AlertTriangle, Plus, Loader2, DollarSign, TrendingUp, CreditCard, MessageSquare, UserPlus, Clock, Command } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -11,7 +11,6 @@ import ClientTable from "@/components/admin/ClientTable";
 import RevenueAnalytics from "@/components/admin/RevenueAnalytics";
 import TasksSection from "@/components/admin/TasksSection";
 import NPSOverviewCard from "@/components/admin/NPSOverviewCard";
-import PropertyMap from "@/components/admin/PropertyMap";
 import OverdueActionCenter from "@/components/admin/OverdueActionCenter";
 import CrossReportAnalytics from "@/components/admin/CrossReportAnalytics";
 import WeeklyDigestWidget from "@/components/admin/WeeklyDigestWidget";
@@ -23,6 +22,23 @@ import { useAdminClients, useAdminStats, useAdminActivityLog, useClientsNeedingA
 import { useWeeklyTimeEntries } from "@/hooks/useTimeTracking";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+
+const PropertyMap = lazy(() => import("@/components/admin/PropertyMap"));
+
+// Isolate rendering errors to individual widgets instead of crashing the whole page
+class WidgetErrorBoundary extends Component<{ name: string; children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(err: any) { console.error(`[Dashboard] Widget "${this.props.name}" crashed:`, err); }
+  render() {
+    if (this.state.hasError) return (
+      <Card className="p-4 border-destructive/30">
+        <p className="text-xs text-destructive font-sans">⚠️ "{this.props.name}" failed to load.</p>
+      </Card>
+    );
+    return this.props.children;
+  }
+}
 
 const fmt = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(0)}`;
 
