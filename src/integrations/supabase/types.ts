@@ -2103,6 +2103,113 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenance_outcomes: {
+        Row: {
+          actual_cost: number | null
+          actual_service_date: string
+          client_id: string
+          created_at: string
+          equipment_id: string | null
+          id: string
+          outcome_notes: string | null
+          prediction_id: string | null
+        }
+        Insert: {
+          actual_cost?: number | null
+          actual_service_date: string
+          client_id: string
+          created_at?: string
+          equipment_id?: string | null
+          id?: string
+          outcome_notes?: string | null
+          prediction_id?: string | null
+        }
+        Update: {
+          actual_cost?: number | null
+          actual_service_date?: string
+          client_id?: string
+          created_at?: string
+          equipment_id?: string | null
+          id?: string
+          outcome_notes?: string | null
+          prediction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_outcomes_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_outcomes_prediction_id_fkey"
+            columns: ["prediction_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_predictions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_predictions: {
+        Row: {
+          client_id: string
+          confidence_level: string
+          equipment_id: string | null
+          estimated_cost_high: number | null
+          estimated_cost_low: number | null
+          generated_at: string
+          id: string
+          last_updated_at: string
+          predicted_timeframe: string
+          prediction_type: string
+          probability_score: number
+          reasoning: Json | null
+          status: string
+          system_type: string
+        }
+        Insert: {
+          client_id: string
+          confidence_level?: string
+          equipment_id?: string | null
+          estimated_cost_high?: number | null
+          estimated_cost_low?: number | null
+          generated_at?: string
+          id?: string
+          last_updated_at?: string
+          predicted_timeframe?: string
+          prediction_type?: string
+          probability_score?: number
+          reasoning?: Json | null
+          status?: string
+          system_type: string
+        }
+        Update: {
+          client_id?: string
+          confidence_level?: string
+          equipment_id?: string | null
+          estimated_cost_high?: number | null
+          estimated_cost_low?: number | null
+          generated_at?: string
+          id?: string
+          last_updated_at?: string
+          predicted_timeframe?: string
+          prediction_type?: string
+          probability_score?: number
+          reasoning?: Json | null
+          status?: string
+          system_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_predictions_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_reminders: {
         Row: {
           completed_at: string | null
@@ -2766,6 +2873,41 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: true
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prediction_factors: {
+        Row: {
+          description: string | null
+          factor_name: string
+          factor_value: string
+          id: string
+          prediction_id: string
+          weight: number
+        }
+        Insert: {
+          description?: string | null
+          factor_name: string
+          factor_value: string
+          id?: string
+          prediction_id: string
+          weight?: number
+        }
+        Update: {
+          description?: string | null
+          factor_name?: string
+          factor_value?: string
+          id?: string
+          prediction_id?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prediction_factors_prediction_id_fkey"
+            columns: ["prediction_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_predictions"
             referencedColumns: ["id"]
           },
         ]
