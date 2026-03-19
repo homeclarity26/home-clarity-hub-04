@@ -13,6 +13,7 @@ import IntegrationsHub from "@/components/admin/IntegrationsHub";
 import AuditLogSection from "@/components/admin/AuditLogSection";
 import SLASettings from "@/components/admin/SLASettings";
 import MembershipTierManager from "@/components/admin/MembershipTierManager";
+import ReportsExportsSettings from "@/components/admin/ReportsExportsSettings";
 import MessageTemplateLibrary from "@/components/admin/MessageTemplateLibrary";
 import ServicesLibrary from "@/components/admin/ServicesLibrary";
 import { useAuth } from "@/contexts/AuthContext";
