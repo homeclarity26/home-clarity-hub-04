@@ -398,6 +398,13 @@ const HomeTab = ({
             <AppointmentRequestModal open={showAppointment} onOpenChange={setShowAppointment} propertyId={propertyId} />
           </div>
         )}
+
+        {/* My Home's Story */}
+        {propertyId && !propertyId.startsWith("mock-") && (
+          <div className="max-w-[1400px] mx-auto px-6 md:px-20">
+            <MyHomeStory propertyId={propertyId} propertyName={propertyName} />
+          </div>
+        )}
       </div>
 
       {/* Feedback */}
