@@ -16,7 +16,7 @@ interface PhotoBlockProps {
   onPhotoClick?: (url: string) => void;
 }
 
-const PhotoBlock = ({ content, editable, onChange, reportId, isAnalyzing, hasAnalysis, onPhotoUploaded }: PhotoBlockProps) => {
+const PhotoBlock = ({ content, editable, onChange, reportId, isAnalyzing, hasAnalysis, onPhotoUploaded, onPhotoClick }: PhotoBlockProps) => {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
