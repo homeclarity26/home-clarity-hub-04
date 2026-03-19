@@ -80,7 +80,7 @@ import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 
-type ClientTab = "overview" | "digital-twin" | "timeline" | "engagement" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time" | "services" | "estimates" | "predictions" | "photos";
+type ClientTab = "overview" | "digital-twin" | "timeline" | "engagement" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time" | "services" | "estimates" | "predictions" | "photos" | "referrals";
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -102,6 +102,7 @@ const tabs: { id: ClientTab; label: string }[] = [
   { id: "predictions", label: "Predictions" },
   { id: "schedule", label: "Schedule" },
   { id: "vendors", label: "Vendors" },
+  { id: "referrals", label: "Referrals" },
 ];
 
 // ─── Report Tab with WYSIWYG toggle ─────────────────────────
