@@ -23,6 +23,8 @@ import ProjectActivityLogTab from "@/components/projects/tabs/ProjectActivityLog
 const AdminProjectDetail = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const [bidOpen, setBidOpen] = useState(false);
 
   const { data: project, isLoading } = useQuery({
     queryKey: ["project-detail", projectId],
