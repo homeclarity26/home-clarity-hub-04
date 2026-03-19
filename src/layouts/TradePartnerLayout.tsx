@@ -1,6 +1,7 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { LayoutDashboard, CheckSquare, Calendar, FileText, MessageSquare, DollarSign, Briefcase, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import PushNotificationBanner from "@/components/PushNotificationBanner";
 
 const navItems = [
   { label: "Dashboard", path: "/trade", icon: LayoutDashboard },
