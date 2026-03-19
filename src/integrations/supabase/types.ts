@@ -1718,6 +1718,42 @@ export type Database = {
           },
         ]
       }
+      export_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          error: string | null
+          export_type: string
+          file_url: string | null
+          filter_params: Json | null
+          id: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          error?: string | null
+          export_type: string
+          file_url?: string | null
+          filter_params?: Json | null
+          id?: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          error?: string | null
+          export_type?: string
+          file_url?: string | null
+          filter_params?: Json | null
+          id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           comment: string | null
@@ -5110,6 +5146,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      scheduled_reports: {
+        Row: {
+          active: boolean | null
+          config: Json | null
+          created_at: string | null
+          created_by: string | null
+          frequency: string
+          id: string
+          last_sent_at: string | null
+          name: string
+          next_send_at: string | null
+          recipients: string[] | null
+          report_type: string
+        }
+        Insert: {
+          active?: boolean | null
+          config?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          frequency?: string
+          id?: string
+          last_sent_at?: string | null
+          name: string
+          next_send_at?: string | null
+          recipients?: string[] | null
+          report_type: string
+        }
+        Update: {
+          active?: boolean | null
+          config?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          frequency?: string
+          id?: string
+          last_sent_at?: string | null
+          name?: string
+          next_send_at?: string | null
+          recipients?: string[] | null
+          report_type?: string
+        }
+        Relationships: []
       }
       service_history: {
         Row: {
