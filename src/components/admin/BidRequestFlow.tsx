@@ -103,8 +103,8 @@ const BidRequestFlow = ({ open, onOpenChange, projectId, projectTitle }: BidRequ
 
         <div className="flex-1 overflow-hidden flex flex-col gap-4">
           {!currentScope && (
-            <Card className="p-4 border-amber-200 bg-amber-50 dark:bg-amber-950/20">
-              <p className="text-sm font-sans text-amber-800 dark:text-amber-200">
+          <Card className="p-4 border-destructive/30 bg-destructive/5">
+              <p className="text-sm font-sans text-destructive">
                 No scope of work found. Generate a scope first before sending bid requests.
               </p>
             </Card>
