@@ -2614,6 +2614,82 @@ export type Database = {
           },
         ]
       }
+      photo_analyses: {
+        Row: {
+          analyzed_at: string | null
+          condition_rating: string | null
+          confidence_score: number | null
+          created_at: string | null
+          estimated_age_years: number | null
+          id: string
+          identified_defects: Json | null
+          narrative_paragraph: string | null
+          photo_url: string
+          property_id: string | null
+          raw_observations: Json | null
+          recommended_actions: Json | null
+          report_id: string | null
+          report_page_id: string | null
+          section_type: string | null
+        }
+        Insert: {
+          analyzed_at?: string | null
+          condition_rating?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          estimated_age_years?: number | null
+          id?: string
+          identified_defects?: Json | null
+          narrative_paragraph?: string | null
+          photo_url: string
+          property_id?: string | null
+          raw_observations?: Json | null
+          recommended_actions?: Json | null
+          report_id?: string | null
+          report_page_id?: string | null
+          section_type?: string | null
+        }
+        Update: {
+          analyzed_at?: string | null
+          condition_rating?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          estimated_age_years?: number | null
+          id?: string
+          identified_defects?: Json | null
+          narrative_paragraph?: string | null
+          photo_url?: string
+          property_id?: string | null
+          raw_observations?: Json | null
+          recommended_actions?: Json | null
+          report_id?: string | null
+          report_page_id?: string | null
+          section_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_analyses_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photo_analyses_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photo_analyses_report_page_id_fkey"
+            columns: ["report_page_id"]
+            isOneToOne: false
+            referencedRelation: "report_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       photo_submissions: {
         Row: {
           client_id: string
