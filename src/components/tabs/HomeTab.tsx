@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle, Info, Wrench, CalendarPlus } from "lucide-react";
+import MyHomeStory from "@/components/portal/MyHomeStory";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import HomeValueTracker from "@/components/HomeValueTracker";
 import MembershipBanner from "@/components/MembershipBanner";
