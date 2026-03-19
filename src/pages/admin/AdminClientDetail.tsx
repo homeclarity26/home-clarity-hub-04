@@ -576,6 +576,12 @@ const AdminClientDetail = () => {
         {/* PAYMENTS TAB */}
         {activeTab === "payments" && (
           <div className="space-y-6">
+            <SubscriptionManager
+              propertyId={client.propertyId}
+              clientUserId={client.clientUserId || ""}
+              clientEmail={client.email || ""}
+              clientName={client.name}
+            />
             <RecurringInvoiceScheduler propertyId={client.propertyId} />
             <AdminInvoicesSection
               propertyId={client.propertyId}
