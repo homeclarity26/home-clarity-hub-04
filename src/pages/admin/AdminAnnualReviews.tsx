@@ -28,7 +28,7 @@ const AdminAnnualReviews = () => {
 
       if (!memberships?.length) return [];
 
-      const clientIds = [...new Set(memberships.map((m: any) => m.client_id))];
+      const clientIds = [...new Set(memberships.map((m: any) => m.client_id))] as string[];
       const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email").in("user_id", clientIds);
       const { data: properties } = await supabase.from("properties").select("id, property_name, address, client_user_id").in("client_user_id", clientIds);
 
