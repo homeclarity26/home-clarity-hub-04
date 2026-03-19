@@ -17,6 +17,7 @@ import ReportsExportsSettings from "@/components/admin/ReportsExportsSettings";
 import MessageTemplateLibrary from "@/components/admin/MessageTemplateLibrary";
 import ServicesLibrary from "@/components/admin/ServicesLibrary";
 import PushNotificationSettings from "@/components/admin/PushNotificationSettings";
+import ReferralSettings from "@/components/admin/ReferralSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -145,6 +146,7 @@ const AdminSettings = () => {
             <TabsTrigger value="templates" className="font-sans text-xs">Message Templates</TabsTrigger>
             <TabsTrigger value="exports" className="font-sans text-xs">Reports & Exports</TabsTrigger>
             <TabsTrigger value="audit" className="font-sans text-xs">Audit Log</TabsTrigger>
+            <TabsTrigger value="referrals" className="font-sans text-xs">Referrals</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-6">
@@ -369,6 +371,10 @@ const AdminSettings = () => {
 
           <TabsContent value="audit">
             <AuditLogSection />
+          </TabsContent>
+
+          <TabsContent value="referrals">
+            <ReferralSettings />
           </TabsContent>
         </Tabs>
       </div>

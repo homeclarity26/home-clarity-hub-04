@@ -74,12 +74,13 @@ import SubscriptionManager from "@/components/admin/SubscriptionManager";
 import PhotoManager from "@/components/admin/PhotoManager";
 import PredictiveMaintenanceTab from "@/components/admin/PredictiveMaintenanceTab";
 import DigitalTwinTab from "@/components/admin/DigitalTwinTab";
+import ClientReferralsTab from "@/components/admin/ClientReferralsTab";
 import type { ReportBlock } from "@/components/wysiwyg/types";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 
-type ClientTab = "overview" | "digital-twin" | "timeline" | "engagement" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time" | "services" | "estimates" | "predictions" | "photos";
+type ClientTab = "overview" | "digital-twin" | "timeline" | "engagement" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time" | "services" | "estimates" | "predictions" | "photos" | "referrals";
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -101,6 +102,7 @@ const tabs: { id: ClientTab; label: string }[] = [
   { id: "predictions", label: "Predictions" },
   { id: "schedule", label: "Schedule" },
   { id: "vendors", label: "Vendors" },
+  { id: "referrals", label: "Referrals" },
 ];
 
 // ─── Report Tab with WYSIWYG toggle ─────────────────────────
@@ -697,6 +699,11 @@ const AdminClientDetail = () => {
         {/* PREDICTIONS TAB */}
         {activeTab === "predictions" && (
           <PredictiveMaintenanceTab clientId={clientId!} propertyId={client.propertyId} />
+        )}
+
+        {/* REFERRALS TAB */}
+        {activeTab === "referrals" && (
+          <ClientReferralsTab propertyId={client.propertyId} clientId={client.clientUserId} />
         )}
       </div>
     </div>

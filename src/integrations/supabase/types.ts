@@ -4735,6 +4735,165 @@ export type Database = {
           },
         ]
       }
+      referral_credits: {
+        Row: {
+          amount_cents: number
+          applied_at: string | null
+          applied_to_invoice_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          property_id: string | null
+          reason: string | null
+          referral_event_id: string | null
+          status: string
+        }
+        Insert: {
+          amount_cents: number
+          applied_at?: string | null
+          applied_to_invoice_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          property_id?: string | null
+          reason?: string | null
+          referral_event_id?: string | null
+          status?: string
+        }
+        Update: {
+          amount_cents?: number
+          applied_at?: string | null
+          applied_to_invoice_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          property_id?: string | null
+          reason?: string | null
+          referral_event_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_credits_applied_to_invoice_id_fkey"
+            columns: ["applied_to_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_credits_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_credits_referral_event_id_fkey"
+            columns: ["referral_event_id"]
+            isOneToOne: false
+            referencedRelation: "referral_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_events: {
+        Row: {
+          created_at: string
+          credit_amount_cents: number | null
+          credit_applied_at: string | null
+          id: string
+          referral_code: string
+          referred_email: string | null
+          referred_name: string | null
+          referred_property_id: string | null
+          referrer_property_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          credit_amount_cents?: number | null
+          credit_applied_at?: string | null
+          id?: string
+          referral_code: string
+          referred_email?: string | null
+          referred_name?: string | null
+          referred_property_id?: string | null
+          referrer_property_id?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          credit_amount_cents?: number | null
+          credit_applied_at?: string | null
+          id?: string
+          referral_code?: string
+          referred_email?: string | null
+          referred_name?: string | null
+          referred_property_id?: string | null
+          referrer_property_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_events_referred_property_id_fkey"
+            columns: ["referred_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_events_referrer_property_id_fkey"
+            columns: ["referrer_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_links: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          property_id: string | null
+          referral_code: string
+          referral_url: string | null
+          total_converted: number
+          total_credits_earned_cents: number
+          total_referrals: number
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          property_id?: string | null
+          referral_code: string
+          referral_url?: string | null
+          total_converted?: number
+          total_credits_earned_cents?: number
+          total_referrals?: number
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          property_id?: string | null
+          referral_code?: string
+          referral_url?: string | null
+          total_converted?: number
+          total_credits_earned_cents?: number
+          total_referrals?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_links_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referrals: {
         Row: {
           admin_id: string
