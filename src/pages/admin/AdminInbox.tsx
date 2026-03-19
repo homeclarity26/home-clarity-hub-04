@@ -10,6 +10,7 @@ import AdminHeader from "@/components/admin/AdminHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { sendPushNotification, pushTemplates } from "@/lib/pushNotifications";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
