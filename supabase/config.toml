@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.analyze-photo]
 verify_jwt = false
+
+[functions.generate-predictions]
+verify_jwt = false
