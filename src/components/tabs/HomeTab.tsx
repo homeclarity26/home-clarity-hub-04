@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle, Info, Wrench, CalendarPlus } from "lucide-react";
+import WelcomeHeader from "@/components/portal/WelcomeHeader";
+import AICommandBar from "@/components/portal/AICommandBar";
+import SmartActionTiles, { trackSectionVisit } from "@/components/portal/SmartActionTiles";
+import AISuggestionsStrip from "@/components/portal/AISuggestionsStrip";
+import CompactHealthBar from "@/components/portal/CompactHealthBar";
 import MyHomeStory from "@/components/portal/MyHomeStory";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import HomeValueTracker from "@/components/HomeValueTracker";
 import MembershipBanner from "@/components/MembershipBanner";
 import ValuationModal from "@/components/ValuationModal";
-import InteractiveHealthDashboard from "@/components/portal/InteractiveHealthDashboard";
 import SeasonalMaintenanceTips from "@/components/portal/SeasonalMaintenanceTips";
 import DocumentExpirationTracker from "@/components/portal/DocumentExpirationTracker";
 import ClientReferralPortal from "@/components/portal/ClientReferralPortal";
@@ -71,60 +75,73 @@ const HomeTab = ({
   }, [propertyId]);
 
   const displayValue = valuation?.price ?? estimatedValue;
+  const firstName = user?.user_metadata?.full_name?.split(" ")[0] || customization?.welcome_message?.split(" ")[0] || propertyName?.split(" ")[0];
 
-  const handleAskQuestion = () => {
+  const handleAskQuestion = (query?: string) => {
     const fab = document.querySelector<HTMLButtonElement>('[aria-label="Open assistant"]');
     if (fab) fab.click();
+  };
+
+  const handleNavigateTracked = (tab: string, pageId?: string) => {
+    trackSectionVisit(tab);
+    onNavigate(tab, pageId);
   };
 
   const statusLabel = completionPercent === 100 ? "COMPLETE" : completionPercent > 0 ? "IN PROGRESS" : "NOT STARTED";
 
   return (
-    <div>
-      {/* Hero */}
-      <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto" style={customization?.hero_photo_url ? { backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${customization.hero_photo_url})`, backgroundSize: "cover", backgroundPosition: "center", borderRadius: "0.5rem" } : undefined}>
-        <h1 className={`font-display text-3xl md:text-[36px] mb-3 ${customization?.hero_photo_url ? "text-white" : "text-foreground"}`}>
-          {customization?.welcome_message || propertyName}
-        </h1>
-        <p className={`font-mono text-[11px] uppercase tracking-[0.2em] mb-2 ${customization?.hero_photo_url ? "text-white/80" : "text-accent"}`}>
-          {customization?.tagline || "Home Operating System"}
-        </p>
-        {propertyAddress && (
-          <p className="font-sans text-base text-muted-foreground">{propertyAddress}</p>
-        )}
-        <button
-          onClick={() => { setValuationOpen(true); if (!valuation) fetchValuation(); }}
-          className="flex items-center justify-center gap-2 mt-3 bg-transparent border-none cursor-pointer group"
-        >
-          <Home className="w-4 h-4 text-accent" />
-          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-foreground group-hover:text-accent transition-colors underline underline-offset-2 decoration-accent/30">
-            {displayValue
-              ? `Estimated Value: $${displayValue.toLocaleString()}`
-              : "Value estimate pending"}
-          </p>
-          <Info className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-accent transition-colors" />
-        </button>
-        <ValuationModal
-          open={valuationOpen}
-          onOpenChange={setValuationOpen}
-          valuation={valuation}
-          onRefresh={() => fetchValuation(true)}
-          isRefreshing={valLoading}
-        />
-      </section>
+    <div className="flex flex-col gap-6 pb-16">
+      {/* SECTION 1 — Welcome Header */}
+      <WelcomeHeader
+        firstName={firstName}
+        propertyAddress={propertyAddress}
+        estimatedValue={displayValue}
+      />
 
-      {/* Getting Started */}
+      {/* SECTION 2 — AI Command Bar */}
+      <AICommandBar onSubmit={handleAskQuestion} />
+
+      {/* SECTION 3 — Smart Action Tiles */}
+      <SmartActionTiles
+        onNavigate={handleNavigateTracked}
+        propertyId={propertyId}
+        reportPages={reportPages}
+      />
+
+      {/* SECTION 4 — AI Suggestions Strip */}
+      <AISuggestionsStrip onNavigate={handleNavigateTracked} reportPages={reportPages} />
+
+      {/* SECTION 5 — Compact Health Bar */}
+      {reportPages && <CompactHealthBar pages={reportPages} onNavigate={handleNavigateTracked} />}
+
+      {/* Valuation Modal (retained) */}
+      <ValuationModal
+        open={valuationOpen}
+        onOpenChange={setValuationOpen}
+        valuation={valuation}
+        onRefresh={() => fetchValuation(true)}
+        isRefreshing={valLoading}
+      />
+
+      {/* Membership Banner */}
+      {membershipEndDate && (
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
+          <MembershipBanner membershipEndDate={membershipEndDate} onSendMessage={() => onNavigate("messages")} />
+        </div>
+      )}
+
+      {/* Getting Started (only if report incomplete) */}
       {completionPercent < 100 && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
           <div className="bg-card rounded-lg p-6 border border-border shadow-hbc-sm">
             <h2 className="font-display text-lg text-foreground mb-1">Getting Started</h2>
             <p className="font-sans text-sm text-muted-foreground mb-4">Here's what to explore in your home portal</p>
             <div className="space-y-2.5">
               {[
-                { label: "Review your Home Clarity Report", done: completionPercent > 0, action: () => onNavigate("report") },
-                { label: "Explore your equipment registry", done: false, action: () => onNavigate("equipment") },
-                { label: "Check your upcoming schedule", done: false, action: () => onNavigate("schedule") },
-                { label: "Send a message to your advisor", done: false, action: () => onNavigate("messages") },
+                { label: "Review your Home Clarity Report", done: completionPercent > 0, action: () => handleNavigateTracked("report") },
+                { label: "Explore your equipment registry", done: false, action: () => handleNavigateTracked("equipment") },
+                { label: "Check your upcoming schedule", done: false, action: () => handleNavigateTracked("schedule") },
+                { label: "Send a message to your advisor", done: false, action: () => handleNavigateTracked("messages") },
               ].map(step => (
                 <button
                   key={step.label}
@@ -145,271 +162,202 @@ const HomeTab = ({
         </div>
       )}
 
-      {/* Membership Banner */}
-      {membershipEndDate && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 mb-6">
-          <MembershipBanner membershipEndDate={membershipEndDate} onSendMessage={() => onNavigate("messages")} />
-        </div>
-      )}
-
-      {/* Card Grid */}
-      <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
-
-        {/* AI Priority Card */}
+      {/* Existing sections below the fold */}
+      <div className="max-w-[1400px] mx-auto px-6 md:px-20 flex flex-col gap-10 w-full">
         {propertyId && <AIPriorityCard propertyId={propertyId} reportPages={reportPages} />}
-
-        {/* Predictive Maintenance */}
         {propertyId && <PredictiveMaintenanceCard propertyId={propertyId} clientId={user?.id} />}
-
-        {/* Interactive Home Health Dashboard */}
-        {reportPages && <InteractiveHealthDashboard pages={reportPages} onNavigate={onNavigate} />}
-
-        {/* Satisfaction Survey */}
         {propertyId && <SatisfactionSurvey propertyId={propertyId} />}
-
-        {/* Cost Comparison Tool */}
         {reportPages && <CostComparisonTool pages={reportPages} />}
-
-        {/* Home Value Tracker */}
         {propertyId && (
           <HomeValueTracker propertyId={propertyId} estimatedValue={estimatedValue} propertyAddress={propertyAddress} />
         )}
         {propertyId && !propertyId.startsWith("mock-") && (
           <AnnualReportCard propertyId={propertyId} />
         )}
-
-        {/* Seasonal Maintenance Tips */}
         <SeasonalMaintenanceTips />
-
-        {/* Document Expiration Tracking */}
         {propertyId && <DocumentExpirationTracker propertyId={propertyId} />}
-
         {propertyId && !propertyId.startsWith("mock-") && (
           <MaintenanceReminders propertyId={propertyId} />
         )}
-
-        {/* Home Goals */}
         {propertyId && !propertyId.startsWith("mock-") && (
           <HomeGoals propertyId={propertyId} />
         )}
-
-        {/* Home Improvement Wishlist */}
         {propertyId && <HomeImprovementWishlist propertyId={propertyId} />}
-
-        {/* Insurance Assistant */}
         {propertyId && !propertyId.startsWith("mock-") && (
           <InsuranceAssistant propertyId={propertyId} />
         )}
-
-        {/* Client Referral Portal */}
         <ClientReferralPortal />
-
-        {/* Service Request */}
-        {propertyId && (
-          <div className="max-w-[1400px] mx-auto px-6 md:px-20">
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Need Help?</p>
-            <div className="bg-card rounded-lg border border-border shadow-hbc-sm p-6">
-              {showServiceRequest ? (
-                <>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-display text-lg text-foreground">Submit a Service Request</h3>
-                    <button onClick={() => setShowServiceRequest(false)} className="font-mono text-[10px] text-muted-foreground bg-transparent border-none cursor-pointer hover:text-foreground">Cancel</button>
-                  </div>
-                  <ServiceRequestForm propertyId={propertyId} onSubmitted={() => setShowServiceRequest(false)} />
-                </>
-              ) : (
-                <button
-                  onClick={() => setShowServiceRequest(true)}
-                  className="w-full flex items-center gap-3 bg-transparent border-none cursor-pointer text-left p-2 hover:bg-muted/30 rounded-lg transition-colors"
-                >
-                  <Wrench className="w-5 h-5 text-accent" />
-                  <div className="flex-1">
-                    <h3 className="font-display text-lg text-foreground">Report an Issue</h3>
-                    <p className="font-sans text-sm text-muted-foreground">Submit a service request with photos</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Advisor Signature */}
-        {customization?.advisor_signature && (
-          <div className="max-w-[1400px] mx-auto px-6 md:px-20">
-            <div className="bg-card rounded-lg p-6 border border-border shadow-hbc-sm text-center">
-              <p className="font-sans text-sm text-muted-foreground italic">{customization.advisor_signature}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Row 1: Portal Status */}
-        <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Your Portal Status</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-            {/* Home Clarity Report */}
-            <button
-              onClick={() => onNavigate("report")}
-              className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border border-l-[3px] border-l-accent text-left w-full"
-            >
-              <FileText className="w-5 h-5 text-accent" />
-              <div className="flex-1">
-                <h2 className="font-display text-xl text-foreground mb-1">Home Clarity Report</h2>
-                <p className="font-sans text-sm text-muted-foreground">Your complete home assessment</p>
-              </div>
-              <div className="mt-2">
-                <div className="w-full h-0.5 bg-border relative mb-2">
-                  <div className="h-full bg-accent transition-all" style={{ width: `${completionPercent}%` }} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-                    {completionPercent}% Complete
-                  </p>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent">{statusLabel}</span>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end -mt-1 transition-colors" />
-            </button>
-
-            {/* Active Projects */}
-            <button
-              onClick={() => onNavigate("projects")}
-              className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full"
-            >
-              <Hammer className="w-5 h-5 text-muted-foreground" />
-              <div className="flex-1">
-                <h2 className="font-display text-xl text-foreground mb-1">Active Projects</h2>
-                <p className="font-sans text-sm text-muted-foreground">Track ongoing home improvements</p>
-              </div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-1">No active projects</span>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
-            </button>
-          </div>
-        </div>
-
-        {/* Row 2: Portal Navigation */}
-        <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Navigate Your Portal</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-
-            <button
-              onClick={() => onNavigate("payments")}
-              className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full min-h-[180px]"
-            >
-              <Receipt className="w-5 h-5 text-accent" />
-              <div className="flex-1">
-                <h2 className="font-display text-xl text-foreground mb-1">Payments</h2>
-                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Account & transaction history</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
-            </button>
-
-            <button
-              onClick={() => onNavigate("schedule")}
-              className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full min-h-[180px]"
-            >
-              <Calendar className="w-5 h-5 text-accent" />
-              <div className="flex-1">
-                <h2 className="font-display text-xl text-foreground mb-1">Schedule & Timeline</h2>
-                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Appointments & reminders</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
-            </button>
-
-            <button
-              onClick={() => onNavigate("contacts")}
-              className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full min-h-[180px]"
-            >
-              <Users className="w-5 h-5 text-accent" />
-              <div className="flex-1">
-                <h2 className="font-display text-xl text-foreground mb-1">Your Home Team</h2>
-                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Advisors & vendor partners</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
-            </button>
-          </div>
-        </div>
-
-        {/* Row 3: Quick Actions */}
-        <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-
-            <button
-              onClick={() => onNavigate("report")}
-              className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full"
-            >
-              <FileText className="w-5 h-5 text-accent" />
-              <div className="flex-1">
-                <h2 className="font-display text-xl text-foreground mb-1">View Your Report</h2>
-                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Read your complete Home Clarity assessment</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
-            </button>
-
-            <button
-              onClick={handleAskQuestion}
-              className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full"
-            >
-              <MessageCircle className="w-5 h-5 text-accent" />
-              <div className="flex-1">
-                <h2 className="font-display text-xl text-foreground mb-1">Ask a Question</h2>
-                <p className="font-sans text-sm text-muted-foreground line-clamp-2">AI-powered answers about your home</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
-            </button>
-
-            <button
-              onClick={() => onNavigate("contacts")}
-              className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full"
-            >
-              <Phone className="w-5 h-5 text-accent" />
-              <div className="flex-1">
-                <h2 className="font-display text-xl text-foreground mb-1">Contact Your Advisor</h2>
-                <p className="font-sans text-sm text-muted-foreground line-clamp-2">Adam Kilgore — Founder & Lead Advisor</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
-            </button>
-          </div>
-        </div>
-
-        {/* Property Timeline */}
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-8">
-          <div className="bg-card rounded-lg p-8 shadow-hbc-sm border border-border">
-            <PropertyTimeline propertyId={propertyId} />
-          </div>
-        </div>
-
-        {/* Schedule Consultation Button */}
-        {propertyId && (
-          <div className="max-w-[1400px] mx-auto px-6 md:px-20">
-            <button
-              onClick={() => setShowAppointment(true)}
-              className="w-full group bg-card rounded-lg p-6 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4 border border-border text-left"
-            >
-              <CalendarPlus className="w-5 h-5 text-accent" />
-              <div className="flex-1">
-                <h3 className="font-display text-lg text-foreground">Schedule a Consultation</h3>
-                <p className="font-sans text-sm text-muted-foreground">Pick a time to speak with your advisor</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors" />
-            </button>
-            <AppointmentRequestModal open={showAppointment} onOpenChange={setShowAppointment} propertyId={propertyId} />
-          </div>
-        )}
-
-        {/* My Home's Story */}
-        {propertyId && !propertyId.startsWith("mock-") && (
-          <div className="max-w-[1400px] mx-auto px-6 md:px-20">
-            <MyHomeStory propertyId={propertyId} propertyName={propertyName} />
-          </div>
-        )}
       </div>
+
+      {/* Service Request */}
+      {propertyId && (
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Need Help?</p>
+          <div className="bg-card rounded-lg border border-border shadow-hbc-sm p-6">
+            {showServiceRequest ? (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-display text-lg text-foreground">Submit a Service Request</h3>
+                  <button onClick={() => setShowServiceRequest(false)} className="font-mono text-[10px] text-muted-foreground bg-transparent border-none cursor-pointer hover:text-foreground">Cancel</button>
+                </div>
+                <ServiceRequestForm propertyId={propertyId} onSubmitted={() => setShowServiceRequest(false)} />
+              </>
+            ) : (
+              <button
+                onClick={() => setShowServiceRequest(true)}
+                className="w-full flex items-center gap-3 bg-transparent border-none cursor-pointer text-left p-2 hover:bg-muted/30 rounded-lg transition-colors"
+              >
+                <Wrench className="w-5 h-5 text-accent" />
+                <div className="flex-1">
+                  <h3 className="font-display text-lg text-foreground">Report an Issue</h3>
+                  <p className="font-sans text-sm text-muted-foreground">Submit a service request with photos</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Advisor Signature */}
+      {customization?.advisor_signature && (
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
+          <div className="bg-card rounded-lg p-6 border border-border shadow-hbc-sm text-center">
+            <p className="font-sans text-sm text-muted-foreground italic">{customization.advisor_signature}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Portal Status Cards */}
+      <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Your Portal Status</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <button
+            onClick={() => handleNavigateTracked("report")}
+            className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border border-l-[3px] border-l-accent text-left w-full"
+          >
+            <FileText className="w-5 h-5 text-accent" />
+            <div className="flex-1">
+              <h2 className="font-display text-xl text-foreground mb-1">Home Clarity Report</h2>
+              <p className="font-sans text-sm text-muted-foreground">Your complete home assessment</p>
+            </div>
+            <div className="mt-2">
+              <div className="w-full h-0.5 bg-border relative mb-2">
+                <div className="h-full bg-accent transition-all" style={{ width: `${completionPercent}%` }} />
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">{completionPercent}% Complete</p>
+                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent">{statusLabel}</span>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end -mt-1 transition-colors" />
+          </button>
+          <button
+            onClick={() => handleNavigateTracked("projects")}
+            className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full"
+          >
+            <Hammer className="w-5 h-5 text-muted-foreground" />
+            <div className="flex-1">
+              <h2 className="font-display text-xl text-foreground mb-1">Active Projects</h2>
+              <p className="font-sans text-sm text-muted-foreground">Track ongoing home improvements</p>
+            </div>
+            <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-1">No active projects</span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+          </button>
+        </div>
+      </div>
+
+      {/* Navigate Your Portal */}
+      <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Navigate Your Portal</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {[
+            { icon: <Receipt className="w-5 h-5 text-accent" />, label: "Payments", sub: "Account & transaction history", tab: "payments" },
+            { icon: <Calendar className="w-5 h-5 text-accent" />, label: "Schedule & Timeline", sub: "Appointments & reminders", tab: "schedule" },
+            { icon: <Users className="w-5 h-5 text-accent" />, label: "Your Home Team", sub: "Advisors & vendor partners", tab: "contacts" },
+          ].map((item) => (
+            <button
+              key={item.tab}
+              onClick={() => handleNavigateTracked(item.tab)}
+              className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full min-h-[180px]"
+            >
+              {item.icon}
+              <div className="flex-1">
+                <h2 className="font-display text-xl text-foreground mb-1">{item.label}</h2>
+                <p className="font-sans text-sm text-muted-foreground line-clamp-2">{item.sub}</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <button onClick={() => handleNavigateTracked("report")} className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full">
+            <FileText className="w-5 h-5 text-accent" />
+            <div className="flex-1">
+              <h2 className="font-display text-xl text-foreground mb-1">View Your Report</h2>
+              <p className="font-sans text-sm text-muted-foreground line-clamp-2">Read your complete Home Clarity assessment</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+          </button>
+          <button onClick={() => handleAskQuestion()} className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full">
+            <MessageCircle className="w-5 h-5 text-accent" />
+            <div className="flex-1">
+              <h2 className="font-display text-xl text-foreground mb-1">Ask a Question</h2>
+              <p className="font-sans text-sm text-muted-foreground line-clamp-2">AI-powered answers about your home</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+          </button>
+          <button onClick={() => handleNavigateTracked("contacts")} className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full">
+            <Phone className="w-5 h-5 text-accent" />
+            <div className="flex-1">
+              <h2 className="font-display text-xl text-foreground mb-1">Contact Your Advisor</h2>
+              <p className="font-sans text-sm text-muted-foreground line-clamp-2">Adam Kilgore — Founder & Lead Advisor</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+          </button>
+        </div>
+      </div>
+
+      {/* Property Timeline */}
+      <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-8 w-full">
+        <div className="bg-card rounded-lg p-8 shadow-hbc-sm border border-border">
+          <PropertyTimeline propertyId={propertyId} />
+        </div>
+      </div>
+
+      {/* Schedule Consultation */}
+      {propertyId && (
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
+          <button
+            onClick={() => setShowAppointment(true)}
+            className="w-full group bg-card rounded-lg p-6 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4 border border-border text-left"
+          >
+            <CalendarPlus className="w-5 h-5 text-accent" />
+            <div className="flex-1">
+              <h3 className="font-display text-lg text-foreground">Schedule a Consultation</h3>
+              <p className="font-sans text-sm text-muted-foreground">Pick a time to speak with your advisor</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors" />
+          </button>
+          <AppointmentRequestModal open={showAppointment} onOpenChange={setShowAppointment} propertyId={propertyId} />
+        </div>
+      )}
+
+      {/* My Home's Story */}
+      {propertyId && !propertyId.startsWith("mock-") && (
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
+          <MyHomeStory propertyId={propertyId} propertyName={propertyName} />
+        </div>
+      )}
 
       {/* Feedback */}
       {propertyId && !propertyId.startsWith("mock-") && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
           <FeedbackWidget propertyId={propertyId} title="How's your experience with Home Clarity Hub?" />
         </div>
       )}
