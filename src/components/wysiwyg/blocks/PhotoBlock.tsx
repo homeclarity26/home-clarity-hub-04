@@ -54,7 +54,7 @@ const PhotoBlock = ({ content, editable, onChange, reportId, isAnalyzing, hasAna
 
   return (
     <div className="space-y-2">
-      <div className="relative group">
+      <div className={`relative group ${!editable && hasAnalysis ? "cursor-pointer" : ""}`} onClick={() => { if (!editable && hasAnalysis && content.url) onPhotoClick?.(content.url); }}>
         <img src={content.url} alt={content.caption || ""} className="w-full rounded-lg object-cover" />
         {/* Analysis overlay indicators */}
         {isAnalyzing && (
