@@ -231,6 +231,7 @@ const Index = () => {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onReportPageSelect={handleReportPageSelect}
+        propertyId={portal.property?.id}
       />
 
       <main className={`${isEditLink && canEdit ? "pt-[calc(2rem+36px)]" : "pt-20"} pb-16`}>

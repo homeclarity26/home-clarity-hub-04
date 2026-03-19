@@ -5525,6 +5525,39 @@ export type Database = {
           },
         ]
       }
+      voice_interactions: {
+        Row: {
+          client_id: string
+          command_type: string | null
+          created_at: string
+          destination: string | null
+          id: string
+          response_text: string | null
+          transcript: string
+          was_successful: boolean
+        }
+        Insert: {
+          client_id: string
+          command_type?: string | null
+          created_at?: string
+          destination?: string | null
+          id?: string
+          response_text?: string | null
+          transcript: string
+          was_successful?: boolean
+        }
+        Update: {
+          client_id?: string
+          command_type?: string | null
+          created_at?: string
+          destination?: string | null
+          id?: string
+          response_text?: string | null
+          transcript?: string
+          was_successful?: boolean
+        }
+        Relationships: []
+      }
       warranty_registry: {
         Row: {
           claim_process: string | null

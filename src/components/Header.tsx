@@ -5,14 +5,16 @@ import { useEditMode } from "@/contexts/EditModeContext";
 import { Switch } from "@/components/ui/switch";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import PropertySelector from "@/components/PropertySelector";
+import VoiceNavButton from "@/components/portal/VoiceNavButton";
 
 interface HeaderProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onReportPageSelect: (pageId: string) => void;
+  propertyId?: string;
 }
 
-const Header = ({ activeTab, onTabChange }: HeaderProps) => {
+const Header = ({ activeTab, onTabChange, propertyId }: HeaderProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { profile, isCreator, signOut } = useAuth();
@@ -72,6 +74,13 @@ const Header = ({ activeTab, onTabChange }: HeaderProps) => {
       {/* User Section */}
       <div className="hidden md:flex items-center ml-6 flex-shrink-0 gap-3">
         {!isCreator && <PropertySelector />}
+        {!isCreator && propertyId && (
+          <VoiceNavButton
+            propertyId={propertyId}
+            currentPage={activeTab}
+            onNavigate={(tab) => onTabChange(tab)}
+          />
+        )}
         {!isCreator && (
           <button
             onClick={() => onTabChange("notifications")}
