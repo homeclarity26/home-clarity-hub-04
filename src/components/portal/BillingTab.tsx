@@ -50,7 +50,7 @@ const BillingTab = ({ propertyId }: BillingTabProps) => {
     },
   });
 
-  const { data: events = [] } = useQuery({
+  const { data: events = [] }: { data: any[] } = useQuery({
     queryKey: ["my-subscription-events", user?.id],
     enabled: !!user,
     queryFn: async () => {

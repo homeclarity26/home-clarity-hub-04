@@ -16,8 +16,7 @@ const SubscriptionDashboardWidget = () => {
         .select("*, membership_tiers(price_monthly, price_annually)")
         .eq("status", "active");
 
-      const { data: pastDue } = await supabase
-        .from("profiles")
+      const { data: pastDue } = await (supabase.from("profiles") as any)
         .select("user_id")
         .eq("subscription_status", "past_due");
 

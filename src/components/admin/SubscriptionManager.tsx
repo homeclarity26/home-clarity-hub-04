@@ -72,7 +72,7 @@ const SubscriptionManager = ({ propertyId, clientUserId, clientEmail, clientName
     },
   });
 
-  const { data: events = [] } = useQuery({
+  const { data: events = [] }: { data: any[] } = useQuery({
     queryKey: ["subscription-events", clientUserId],
     queryFn: async () => {
       const { data } = await (supabase.from("subscription_events") as any)
