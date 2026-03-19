@@ -18,6 +18,7 @@ import EquipmentWarrantyCalendar from "@/components/admin/EquipmentWarrantyCalen
 import AdminSetupChecklist from "@/components/admin/AdminSetupChecklist";
 import DailyBrief from "@/components/admin/DailyBrief";
 import CRMDashboardWidget from "@/components/admin/CRMDashboardWidget";
+import SubscriptionDashboardWidget from "@/components/admin/SubscriptionDashboardWidget";
 import { useAdminClients, useAdminStats, useAdminActivityLog, useClientsNeedingAttention } from "@/hooks/useAdminData";
 import { useWeeklyTimeEntries } from "@/hooks/useTimeTracking";
 import { supabase } from "@/integrations/supabase/client";
