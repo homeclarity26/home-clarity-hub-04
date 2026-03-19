@@ -13,6 +13,8 @@ import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import ProposalView from "./pages/ProposalView";
+import InvoiceView from "./pages/InvoiceView";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminClients from "./pages/admin/AdminClients";
@@ -254,6 +256,10 @@ const AppRoutes = () => {
         }
       />
       <Route path="/reset-password" element={<ResetPassword />} />
+      {/* Public proposal & invoice views (no auth required) */}
+      <Route path="/proposal/:token" element={<ProposalView />} />
+      <Route path="/invoice/:token" element={<InvoiceView />} />
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

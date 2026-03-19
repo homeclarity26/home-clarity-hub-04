@@ -1576,6 +1576,34 @@ export type Database = {
           id: string
           notes: string | null
           property_id: string | null
+          proposal_accent_color: string | null
+          proposal_client_selections: Json | null
+          proposal_color_theme: string | null
+          proposal_cover_image_url: string | null
+          proposal_cover_video_url: string | null
+          proposal_cta_headline: string | null
+          proposal_cta_subtext: string | null
+          proposal_first_viewed_at: string | null
+          proposal_intro_text: string | null
+          proposal_last_viewed_at: string | null
+          proposal_optional_line_items: Json | null
+          proposal_prepared_for: string | null
+          proposal_scope_description: string | null
+          proposal_sections_viewed: Json | null
+          proposal_show_pricing_toggle: boolean | null
+          proposal_stat_callouts: Json | null
+          proposal_status: string | null
+          proposal_tagline: string | null
+          proposal_testimonial_author: string | null
+          proposal_testimonial_quote: string | null
+          proposal_testimonial_role: string | null
+          proposal_time_spent_seconds: number | null
+          proposal_timeline_phases: Json | null
+          proposal_timeline_text: string | null
+          proposal_token: string | null
+          proposal_view_count: number | null
+          proposal_viewed_by_name: string | null
+          proposal_why_us_text: string | null
           responded_at: string | null
           sent_at: string | null
           status: string
@@ -1595,6 +1623,34 @@ export type Database = {
           id?: string
           notes?: string | null
           property_id?: string | null
+          proposal_accent_color?: string | null
+          proposal_client_selections?: Json | null
+          proposal_color_theme?: string | null
+          proposal_cover_image_url?: string | null
+          proposal_cover_video_url?: string | null
+          proposal_cta_headline?: string | null
+          proposal_cta_subtext?: string | null
+          proposal_first_viewed_at?: string | null
+          proposal_intro_text?: string | null
+          proposal_last_viewed_at?: string | null
+          proposal_optional_line_items?: Json | null
+          proposal_prepared_for?: string | null
+          proposal_scope_description?: string | null
+          proposal_sections_viewed?: Json | null
+          proposal_show_pricing_toggle?: boolean | null
+          proposal_stat_callouts?: Json | null
+          proposal_status?: string | null
+          proposal_tagline?: string | null
+          proposal_testimonial_author?: string | null
+          proposal_testimonial_quote?: string | null
+          proposal_testimonial_role?: string | null
+          proposal_time_spent_seconds?: number | null
+          proposal_timeline_phases?: Json | null
+          proposal_timeline_text?: string | null
+          proposal_token?: string | null
+          proposal_view_count?: number | null
+          proposal_viewed_by_name?: string | null
+          proposal_why_us_text?: string | null
           responded_at?: string | null
           sent_at?: string | null
           status?: string
@@ -1614,6 +1670,34 @@ export type Database = {
           id?: string
           notes?: string | null
           property_id?: string | null
+          proposal_accent_color?: string | null
+          proposal_client_selections?: Json | null
+          proposal_color_theme?: string | null
+          proposal_cover_image_url?: string | null
+          proposal_cover_video_url?: string | null
+          proposal_cta_headline?: string | null
+          proposal_cta_subtext?: string | null
+          proposal_first_viewed_at?: string | null
+          proposal_intro_text?: string | null
+          proposal_last_viewed_at?: string | null
+          proposal_optional_line_items?: Json | null
+          proposal_prepared_for?: string | null
+          proposal_scope_description?: string | null
+          proposal_sections_viewed?: Json | null
+          proposal_show_pricing_toggle?: boolean | null
+          proposal_stat_callouts?: Json | null
+          proposal_status?: string | null
+          proposal_tagline?: string | null
+          proposal_testimonial_author?: string | null
+          proposal_testimonial_quote?: string | null
+          proposal_testimonial_role?: string | null
+          proposal_time_spent_seconds?: number | null
+          proposal_timeline_phases?: Json | null
+          proposal_timeline_text?: string | null
+          proposal_token?: string | null
+          proposal_view_count?: number | null
+          proposal_viewed_by_name?: string | null
+          proposal_why_us_text?: string | null
           responded_at?: string | null
           sent_at?: string | null
           status?: string
@@ -2165,12 +2249,20 @@ export type Database = {
           description: string
           due_date: string | null
           id: string
+          invoice_cover_image_url: string | null
+          invoice_footer_text: string | null
+          invoice_memo: string | null
           invoice_number: string | null
+          invoice_theme: string | null
+          invoice_token: string | null
+          invoice_view_count: number | null
           issue_date: string | null
           notes: string | null
           paid_date: string | null
           property_id: string
+          proposal_id: string | null
           status: string
+          stripe_payment_link_url: string | null
           subtotal: number
           tax: number
           title: string | null
@@ -2186,12 +2278,20 @@ export type Database = {
           description: string
           due_date?: string | null
           id?: string
+          invoice_cover_image_url?: string | null
+          invoice_footer_text?: string | null
+          invoice_memo?: string | null
           invoice_number?: string | null
+          invoice_theme?: string | null
+          invoice_token?: string | null
+          invoice_view_count?: number | null
           issue_date?: string | null
           notes?: string | null
           paid_date?: string | null
           property_id: string
+          proposal_id?: string | null
           status?: string
+          stripe_payment_link_url?: string | null
           subtotal?: number
           tax?: number
           title?: string | null
@@ -2207,12 +2307,20 @@ export type Database = {
           description?: string
           due_date?: string | null
           id?: string
+          invoice_cover_image_url?: string | null
+          invoice_footer_text?: string | null
+          invoice_memo?: string | null
           invoice_number?: string | null
+          invoice_theme?: string | null
+          invoice_token?: string | null
+          invoice_view_count?: number | null
           issue_date?: string | null
           notes?: string | null
           paid_date?: string | null
           property_id?: string
+          proposal_id?: string | null
           status?: string
+          stripe_payment_link_url?: string | null
           subtotal?: number
           tax?: number
           title?: string | null
@@ -2226,6 +2334,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
             referencedColumns: ["id"]
           },
         ]
