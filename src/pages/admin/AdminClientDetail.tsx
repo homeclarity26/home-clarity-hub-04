@@ -81,6 +81,7 @@ type ClientTab = "overview" | "digital-twin" | "timeline" | "engagement" | "repo
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
+  { id: "digital-twin", label: "Digital Twin" },
   { id: "timeline", label: "Timeline" },
   { id: "engagement", label: "Engagement" },
   { id: "tasks", label: "Tasks" },
