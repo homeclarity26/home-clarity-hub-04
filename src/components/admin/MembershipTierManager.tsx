@@ -233,6 +233,22 @@ const MembershipTierManager = () => {
               <Label className="text-xs font-sans">Mark as "Most Popular" (highlighted in portal)</Label>
             </div>
 
+            {/* Stripe Price IDs */}
+            <div className="space-y-2">
+              <Label className="text-xs font-sans font-medium">Stripe Price IDs</Label>
+              <p className="text-[10px] font-sans text-muted-foreground">Create products and prices in your Stripe dashboard and paste the price IDs here.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-mono text-muted-foreground">Monthly Price ID</Label>
+                  <Input value={stripePriceMonthly} onChange={e => setStripePriceMonthly(e.target.value)} placeholder="price_..." className="font-mono text-xs" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-mono text-muted-foreground">Annual Price ID</Label>
+                  <Input value={stripePriceAnnual} onChange={e => setStripePriceAnnual(e.target.value)} placeholder="price_..." className="font-mono text-xs" />
+                </div>
+              </div>
+            </div>
+
             {/* Service selection */}
             <div className="space-y-2">
               <Label className="text-xs font-sans">Included Services</Label>

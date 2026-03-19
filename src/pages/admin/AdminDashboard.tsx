@@ -106,6 +106,10 @@ const AdminDashboard = () => {
           <RevenueAnalytics />
         </WidgetErrorBoundary>
 
+        <WidgetErrorBoundary name="SubscriptionDashboard">
+          <SubscriptionDashboardWidget />
+        </WidgetErrorBoundary>
+
         <WidgetErrorBoundary name="WeeklyDigestWidget">
           <WeeklyDigestWidget />
         </WidgetErrorBoundary>
