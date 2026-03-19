@@ -34,7 +34,7 @@ const AdminAnnualReviews = () => {
 
       // Load existing reviews for current year
       const year = new Date().getFullYear();
-      const propIds = (properties || []).map((p: any) => p.id);
+      const propIds = (properties || []).map((p: any) => p.id) as string[];
       const { data: reviews } = await (supabase.from("annual_reviews" as any) as any)
         .select("*")
         .in("property_id", propIds.length ? propIds : ["none"])
