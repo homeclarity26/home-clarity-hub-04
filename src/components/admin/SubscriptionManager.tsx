@@ -42,8 +42,7 @@ const SubscriptionManager = ({ propertyId, clientUserId, clientEmail, clientName
   const { data: profile } = useQuery({
     queryKey: ["client-subscription", clientUserId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
+      const { data } = await (supabase.from("profiles") as any)
         .select("stripe_customer_id, stripe_subscription_id, subscription_status, subscription_current_period_end, subscription_plan_id, trial_ends_at")
         .eq("user_id", clientUserId)
         .single();
