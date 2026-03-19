@@ -90,26 +90,34 @@ const HomeTab = ({
   const statusLabel = completionPercent === 100 ? "COMPLETE" : completionPercent > 0 ? "IN PROGRESS" : "NOT STARTED";
 
   return (
-    <div className="flex flex-col gap-6 pb-16">
+    <div className="flex flex-col pb-16">
       {/* SECTION 1 — Welcome Header */}
-      <WelcomeHeader
-        firstName={firstName}
-        propertyAddress={propertyAddress}
-        estimatedValue={displayValue}
-      />
+      <div className="mb-8">
+        <WelcomeHeader
+          firstName={firstName}
+          propertyAddress={propertyAddress}
+          estimatedValue={displayValue}
+        />
+      </div>
 
       {/* SECTION 2 — AI Command Bar */}
-      <AICommandBar onSubmit={handleAskQuestion} />
+      <div className="mb-10">
+        <AICommandBar onSubmit={handleAskQuestion} />
+      </div>
 
       {/* SECTION 3 — Smart Action Tiles */}
-      <SmartActionTiles
-        onNavigate={handleNavigateTracked}
-        propertyId={propertyId}
-        reportPages={reportPages}
-      />
+      <div className="mb-10">
+        <SmartActionTiles
+          onNavigate={handleNavigateTracked}
+          propertyId={propertyId}
+          reportPages={reportPages}
+        />
+      </div>
 
       {/* SECTION 4 — AI Suggestions Strip */}
-      <AISuggestionsStrip onNavigate={handleNavigateTracked} reportPages={reportPages} />
+      <div className="mb-8">
+        <AISuggestionsStrip onNavigate={handleNavigateTracked} reportPages={reportPages} />
+      </div>
 
       {/* SECTION 5 — Compact Health Bar */}
       {reportPages && <CompactHealthBar pages={reportPages} onNavigate={handleNavigateTracked} />}
