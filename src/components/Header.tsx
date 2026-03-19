@@ -74,6 +74,13 @@ const Header = ({ activeTab, onTabChange, propertyId }: HeaderProps) => {
       {/* User Section */}
       <div className="hidden md:flex items-center ml-6 flex-shrink-0 gap-3">
         {!isCreator && <PropertySelector />}
+        {!isCreator && propertyId && (
+          <VoiceNavButton
+            propertyId={propertyId}
+            currentPage={activeTab}
+            onNavigate={(tab) => onTabChange(tab)}
+          />
+        )}
         {!isCreator && (
           <button
             onClick={() => onTabChange("notifications")}
