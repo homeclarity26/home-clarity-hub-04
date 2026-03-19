@@ -12,6 +12,7 @@ import ContactsTab from "@/components/tabs/ContactsTab";
 import ScheduleTab from "@/components/tabs/ScheduleTab";
 import DocumentsTab from "@/components/tabs/DocumentsTab";
 import MessagesTab from "@/components/tabs/MessagesTab";
+import BillingTab from "@/components/portal/BillingTab";
 import EquipmentTab from "@/components/tabs/EquipmentTab";
 import ServicesMenu from "@/components/portal/ServicesMenu";
 import EstimatesPortal from "@/components/portal/EstimatesPortal";
