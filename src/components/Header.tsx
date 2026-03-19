@@ -11,6 +11,7 @@ interface HeaderProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onReportPageSelect: (pageId: string) => void;
+  propertyId?: string;
 }
 
 const Header = ({ activeTab, onTabChange }: HeaderProps) => {
