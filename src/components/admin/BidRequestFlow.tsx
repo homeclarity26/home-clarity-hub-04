@@ -169,7 +169,5 @@ const BidRequestFlow = ({ open, onOpenChange, projectId, projectTitle }: BidRequ
   );
 };
 
-// Fix: import Loader2 at top
-import { Loader2 } from "lucide-react";
 
 export default BidRequestFlow;

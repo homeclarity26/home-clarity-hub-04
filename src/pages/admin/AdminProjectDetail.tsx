@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, FileText, Send } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
+import ScopeGeneratorModal from "@/components/admin/ScopeGeneratorModal";
+import BidRequestFlow from "@/components/admin/BidRequestFlow";
 import ProjectOverviewTab from "@/components/projects/tabs/ProjectOverviewTab";
 import PhasesTasksTab from "@/components/projects/tabs/PhasesTasksTab";
 import ProjectScheduleTab from "@/components/projects/tabs/ProjectScheduleTab";
