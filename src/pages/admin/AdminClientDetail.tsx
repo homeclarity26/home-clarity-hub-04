@@ -523,7 +523,7 @@ const AdminClientDetail = () => {
             <ClientOverview client={client} />
             <HomeGoalsAdmin clientUserId={client.clientUserId || ""} propertyId={client.propertyId} />
             <PortalPersonalization propertyId={client.propertyId} />
-            <AdminValuationCard propertyId={client.propertyId} address={client.address} />
+            <AdminValuationCard propertyId={client.propertyId} address={client.address} city={client.city || undefined} state={client.state || undefined} zip={client.zip || undefined} />
           </div>
         )}
         {activeTab === "digital-twin" && <DigitalTwinTab clientId={clientId!} propertyId={client.propertyId} />}
