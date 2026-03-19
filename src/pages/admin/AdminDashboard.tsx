@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense, Component, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, FileText, HelpCircle, CheckCircle, BookOpen, AlertTriangle, Plus, Loader2, DollarSign, TrendingUp, CreditCard, MessageSquare, UserPlus, Clock, Command } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -11,7 +11,6 @@ import ClientTable from "@/components/admin/ClientTable";
 import RevenueAnalytics from "@/components/admin/RevenueAnalytics";
 import TasksSection from "@/components/admin/TasksSection";
 import NPSOverviewCard from "@/components/admin/NPSOverviewCard";
-import PropertyMap from "@/components/admin/PropertyMap";
 import OverdueActionCenter from "@/components/admin/OverdueActionCenter";
 import CrossReportAnalytics from "@/components/admin/CrossReportAnalytics";
 import WeeklyDigestWidget from "@/components/admin/WeeklyDigestWidget";
@@ -23,6 +22,23 @@ import { useAdminClients, useAdminStats, useAdminActivityLog, useClientsNeedingA
 import { useWeeklyTimeEntries } from "@/hooks/useTimeTracking";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+
+const PropertyMap = lazy(() => import("@/components/admin/PropertyMap"));
+
+// Isolate rendering errors to individual widgets instead of crashing the whole page
+class WidgetErrorBoundary extends Component<{ name: string; children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(err: any) { console.error(`[Dashboard] Widget "${this.props.name}" crashed:`, err); }
+  render() {
+    if (this.state.hasError) return (
+      <Card className="p-4 border-destructive/30">
+        <p className="text-xs text-destructive font-sans">⚠️ "{this.props.name}" failed to load.</p>
+      </Card>
+    );
+    return this.props.children;
+  }
+}
 
 const fmt = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(0)}`;
 
@@ -59,15 +75,19 @@ const AdminDashboard = () => {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
+  
+
   return (
     <div>
       <AdminHeader breadcrumbs={[{ label: "Dashboard" }]} />
       <div className="p-6 space-y-6 max-w-7xl">
-        {/* Daily Brief */}
-        <DailyBrief />
+        <WidgetErrorBoundary name="DailyBrief">
+          <DailyBrief />
+        </WidgetErrorBoundary>
 
-        {/* Admin Setup Checklist */}
-        <AdminSetupChecklist />
+        <WidgetErrorBoundary name="AdminSetupChecklist">
+          <AdminSetupChecklist />
+        </WidgetErrorBoundary>
 
         {/* Primary Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -77,23 +97,31 @@ const AdminDashboard = () => {
           <StatsCard label="Published Reports" value={stats?.publishedReports ?? 0} icon={CheckCircle} />
         </div>
 
-        {/* Overdue Action Center */}
-        <OverdueActionCenter />
+        <WidgetErrorBoundary name="OverdueActionCenter">
+          <OverdueActionCenter />
+        </WidgetErrorBoundary>
 
-        {/* Revenue Analytics */}
-        <RevenueAnalytics />
+        <WidgetErrorBoundary name="RevenueAnalytics">
+          <RevenueAnalytics />
+        </WidgetErrorBoundary>
 
-        {/* Weekly AI Digest */}
-        <WeeklyDigestWidget />
+        <WidgetErrorBoundary name="WeeklyDigestWidget">
+          <WeeklyDigestWidget />
+        </WidgetErrorBoundary>
 
-        {/* CRM Dashboard Widget */}
-        <CRMDashboardWidget />
+        <WidgetErrorBoundary name="CRMDashboardWidget">
+          <CRMDashboardWidget />
+        </WidgetErrorBoundary>
 
-        {/* Cross-Report Analytics */}
-        <CrossReportAnalytics />
+        <WidgetErrorBoundary name="CrossReportAnalytics">
+          <CrossReportAnalytics />
+        </WidgetErrorBoundary>
 
-        {/* Property Map */}
-        <PropertyMap />
+        <WidgetErrorBoundary name="PropertyMap">
+          <Suspense fallback={<Card className="p-5 h-64 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></Card>}>
+            <PropertyMap />
+          </Suspense>
+        </WidgetErrorBoundary>
 
         {/* Tasks + Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -193,8 +221,12 @@ const AdminDashboard = () => {
               </div>
             </Card>
 
-            <NPSOverviewCard />
-            <EquipmentWarrantyCalendar />
+            <WidgetErrorBoundary name="NPSOverviewCard">
+              <NPSOverviewCard />
+            </WidgetErrorBoundary>
+            <WidgetErrorBoundary name="EquipmentWarrantyCalendar">
+              <EquipmentWarrantyCalendar />
+            </WidgetErrorBoundary>
           </div>
         </div>
 
