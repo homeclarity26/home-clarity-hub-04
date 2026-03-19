@@ -70,6 +70,7 @@ import DragReportReorder from "@/components/admin/DragReportReorder";
 import WYSIWYGReportEditor from "@/components/wysiwyg/WYSIWYGReportEditor";
 import EstimatesSection from "@/components/admin/EstimatesSection";
 import ClientServicesTab from "@/components/admin/ClientServicesTab";
+import SubscriptionManager from "@/components/admin/SubscriptionManager";
 import PredictiveMaintenanceTab from "@/components/admin/PredictiveMaintenanceTab";
 import DigitalTwinTab from "@/components/admin/DigitalTwinTab";
 import type { ReportBlock } from "@/components/wysiwyg/types";
@@ -576,6 +577,12 @@ const AdminClientDetail = () => {
         {/* PAYMENTS TAB */}
         {activeTab === "payments" && (
           <div className="space-y-6">
+            <SubscriptionManager
+              propertyId={client.propertyId}
+              clientUserId={client.clientUserId || ""}
+              clientEmail={client.email || ""}
+              clientName={client.name}
+            />
             <RecurringInvoiceScheduler propertyId={client.propertyId} />
             <AdminInvoicesSection
               propertyId={client.propertyId}

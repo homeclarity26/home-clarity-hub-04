@@ -12,6 +12,7 @@ import ContactsTab from "@/components/tabs/ContactsTab";
 import ScheduleTab from "@/components/tabs/ScheduleTab";
 import DocumentsTab from "@/components/tabs/DocumentsTab";
 import MessagesTab from "@/components/tabs/MessagesTab";
+import BillingTab from "@/components/portal/BillingTab";
 import EquipmentTab from "@/components/tabs/EquipmentTab";
 import ServicesMenu from "@/components/portal/ServicesMenu";
 import EstimatesPortal from "@/components/portal/EstimatesPortal";
@@ -318,6 +319,9 @@ const Index = () => {
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "schedule" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "schedule" && <ScheduleTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}
+        </div>
+        <div className={`transition-opacity duration-300 ${activeTab === "billing" ? "opacity-100" : "opacity-0 hidden"}`}>
+          {activeTab === "billing" && <BillingTab propertyId={portal.property?.id} />}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "notifications" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "notifications" && <NotificationPreferences />}

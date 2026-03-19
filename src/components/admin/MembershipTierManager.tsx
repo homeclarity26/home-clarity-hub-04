@@ -30,6 +30,8 @@ const MembershipTierManager = () => {
   const [priceType, setPriceType] = useState("annual");
   const [isFeatured, setIsFeatured] = useState(false);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const [stripePriceMonthly, setStripePriceMonthly] = useState("");
+  const [stripePriceAnnual, setStripePriceAnnual] = useState("");
 
   const { data: tiers = [] } = useQuery({
     queryKey: ["membership-tiers"],
@@ -63,6 +65,7 @@ const MembershipTierManager = () => {
   const openCreate = () => {
     setEditId(null); setName(""); setDesc(""); setMonthly(0); setAnnually(0);
     setColor("#C9A84C"); setPriceType("annual"); setIsFeatured(false); setSelectedServiceIds([]);
+    setStripePriceMonthly(""); setStripePriceAnnual("");
     setDialogOpen(true);
   };
 
@@ -71,6 +74,8 @@ const MembershipTierManager = () => {
     setMonthly(tier.price_monthly || 0); setAnnually(tier.price_annually || 0);
     setColor(tier.color_hex || "#C9A84C"); setPriceType(tier.price_type || "annual");
     setIsFeatured(tier.is_featured || false);
+    setStripePriceMonthly(tier.stripe_price_monthly || "");
+    setStripePriceAnnual(tier.stripe_price_annual || "");
     const ids = tierServices.filter((ts: any) => ts.tier_id === tier.id).map((ts: any) => ts.service_id);
     setSelectedServiceIds(ids);
     setDialogOpen(true);
@@ -81,6 +86,7 @@ const MembershipTierManager = () => {
     const payload = {
       name: name.trim(), description: desc.trim(), price_monthly: monthly, price_annually: annually,
       color_hex: color, price_type: priceType, is_featured: isFeatured,
+      stripe_price_monthly: stripePriceMonthly.trim() || null, stripe_price_annual: stripePriceAnnual.trim() || null,
     };
 
     let tierId = editId;
@@ -225,6 +231,22 @@ const MembershipTierManager = () => {
             <div className="flex items-center gap-3">
               <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
               <Label className="text-xs font-sans">Mark as "Most Popular" (highlighted in portal)</Label>
+            </div>
+
+            {/* Stripe Price IDs */}
+            <div className="space-y-2">
+              <Label className="text-xs font-sans font-medium">Stripe Price IDs</Label>
+              <p className="text-[10px] font-sans text-muted-foreground">Create products and prices in your Stripe dashboard and paste the price IDs here.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-mono text-muted-foreground">Monthly Price ID</Label>
+                  <Input value={stripePriceMonthly} onChange={e => setStripePriceMonthly(e.target.value)} placeholder="price_..." className="font-mono text-xs" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-mono text-muted-foreground">Annual Price ID</Label>
+                  <Input value={stripePriceAnnual} onChange={e => setStripePriceAnnual(e.target.value)} placeholder="price_..." className="font-mono text-xs" />
+                </div>
+              </div>
             </div>
 
             {/* Service selection */}

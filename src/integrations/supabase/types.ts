@@ -2477,8 +2477,10 @@ export type Database = {
           report_frequency: string
           response_time_sla_hours: number
           sort_order: number
+          stripe_price_annual: string | null
           stripe_price_id_annually: string | null
           stripe_price_id_monthly: string | null
+          stripe_price_monthly: string | null
         }
         Insert: {
           color_hex?: string
@@ -2496,8 +2498,10 @@ export type Database = {
           report_frequency?: string
           response_time_sla_hours?: number
           sort_order?: number
+          stripe_price_annual?: string | null
           stripe_price_id_annually?: string | null
           stripe_price_id_monthly?: string | null
+          stripe_price_monthly?: string | null
         }
         Update: {
           color_hex?: string
@@ -2515,8 +2519,10 @@ export type Database = {
           report_frequency?: string
           response_time_sla_hours?: number
           sort_order?: number
+          stripe_price_annual?: string | null
           stripe_price_id_annually?: string | null
           stripe_price_id_monthly?: string | null
+          stripe_price_monthly?: string | null
         }
         Relationships: []
       }
@@ -3142,6 +3148,12 @@ export type Database = {
           notification_preferences: Json | null
           phone: string | null
           service_region: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_current_period_end: string | null
+          subscription_plan_id: string | null
+          subscription_status: string | null
+          trial_ends_at: string | null
           updated_at: string
           user_id: string
         }
@@ -3157,6 +3169,12 @@ export type Database = {
           notification_preferences?: Json | null
           phone?: string | null
           service_region?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_current_period_end?: string | null
+          subscription_plan_id?: string | null
+          subscription_status?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -3172,6 +3190,12 @@ export type Database = {
           notification_preferences?: Json | null
           phone?: string | null
           service_region?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_current_period_end?: string | null
+          subscription_plan_id?: string | null
+          subscription_status?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -5238,6 +5262,45 @@ export type Database = {
           specification_name?: string
           specification_value?: string
           unit?: string | null
+        }
+        Relationships: []
+      }
+      subscription_events: {
+        Row: {
+          amount_cents: number | null
+          client_id: string
+          created_at: string | null
+          currency: string | null
+          event_type: string
+          id: string
+          invoice_url: string | null
+          period_end: string | null
+          period_start: string | null
+          stripe_event_id: string | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          client_id: string
+          created_at?: string | null
+          currency?: string | null
+          event_type: string
+          id?: string
+          invoice_url?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          stripe_event_id?: string | null
+        }
+        Update: {
+          amount_cents?: number | null
+          client_id?: string
+          created_at?: string | null
+          currency?: string | null
+          event_type?: string
+          id?: string
+          invoice_url?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          stripe_event_id?: string | null
         }
         Relationships: []
       }
