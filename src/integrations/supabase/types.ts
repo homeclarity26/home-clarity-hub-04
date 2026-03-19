@@ -4220,6 +4220,97 @@ export type Database = {
           },
         ]
       }
+      property_photos: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          file_url: string
+          gps_lat: number | null
+          gps_lng: number | null
+          height: number | null
+          id: string
+          inspection_id: string | null
+          is_client_visible: boolean | null
+          project_id: string | null
+          property_id: string
+          report_page_id: string | null
+          room_or_area: string | null
+          tags: string[] | null
+          taken_at: string | null
+          taken_by: string | null
+          thumbnail_url: string | null
+          title: string
+          width: number | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          file_url: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          height?: number | null
+          id?: string
+          inspection_id?: string | null
+          is_client_visible?: boolean | null
+          project_id?: string | null
+          property_id: string
+          report_page_id?: string | null
+          room_or_area?: string | null
+          tags?: string[] | null
+          taken_at?: string | null
+          taken_by?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          width?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          file_url?: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          height?: number | null
+          id?: string
+          inspection_id?: string | null
+          is_client_visible?: boolean | null
+          project_id?: string | null
+          property_id?: string
+          report_page_id?: string | null
+          room_or_area?: string | null
+          tags?: string[] | null
+          taken_at?: string | null
+          taken_by?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_photos_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_photos_report_page_id_fkey"
+            columns: ["report_page_id"]
+            isOneToOne: false
+            referencedRelation: "report_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_timeline: {
         Row: {
           client_id: string

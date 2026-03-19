@@ -12,6 +12,7 @@ import ContactsTab from "@/components/tabs/ContactsTab";
 import ScheduleTab from "@/components/tabs/ScheduleTab";
 import DocumentsTab from "@/components/tabs/DocumentsTab";
 import MessagesTab from "@/components/tabs/MessagesTab";
+import PhotosTab from "@/components/tabs/PhotosTab";
 import BillingTab from "@/components/portal/BillingTab";
 import EquipmentTab from "@/components/tabs/EquipmentTab";
 import ServicesMenu from "@/components/portal/ServicesMenu";
@@ -285,6 +286,9 @@ const Index = () => {
               blocksJson={portal.blocksJson}
             />
           )}
+        </div>
+        <div className={`transition-opacity duration-300 ${activeTab === "photos" ? "opacity-100" : "opacity-0 hidden"}`}>
+          {activeTab === "photos" && <PhotosTab propertyId={portal.property?.id} />}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "projects" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "projects" && <ProjectsTab onNavigate={handleNavigate} onTabChange={handleTabChange} propertyId={portal.property?.id} pages={portal.pages} onSendMessage={handleSendMessage} />}

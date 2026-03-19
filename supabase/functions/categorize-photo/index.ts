@@ -9,17 +9,26 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { imageBase64, mimeType, availablePages } = await req.json();
-    if (!imageBase64) return new Response(JSON.stringify({ error: "imageBase64 required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const { imageBase64, mimeType, imageUrl, availablePages } = await req.json();
+    if (!imageBase64 && !imageUrl) {
+      return new Response(JSON.stringify({ error: "imageBase64 or imageUrl required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `You are an expert home inspector analyzing photos. Given a home inspection photo, determine which room, system, or area of the home it belongs to.
+    const categories = ["exterior", "interior", "system", "damage", "progress", "before", "after", "other"];
 
-Available report pages: ${(availablePages || []).map((p: any) => `${p.slug} (${p.name})`).join(", ")}
+    const systemPrompt = `You are an expert home inspector analyzing photos. Given a home inspection photo, determine:
+1. Which category it belongs to: ${categories.join(", ")}
+2. What room or area of the home it shows
+3. Relevant tags for the photo
 
-Return the most likely page slug this photo belongs to, and a brief description.`;
+Available report pages: ${(availablePages || []).map((p: any) => `${p.slug} (${p.name})`).join(", ")}`;
+
+    const imageContent = imageBase64
+      ? { type: "image_url", image_url: { url: `data:${mimeType || "image/jpeg"};base64,${imageBase64}` } }
+      : { type: "image_url", image_url: { url: imageUrl } };
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -29,23 +38,26 @@ Return the most likely page slug this photo belongs to, and a brief description.
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: [
-            { type: "image_url", image_url: { url: `data:${mimeType || "image/jpeg"};base64,${imageBase64}` } },
-            { type: "text", text: "Which report page does this photo belong to? Return JSON with 'pageSlug' and 'description'." },
+            imageContent,
+            { type: "text", text: "Categorize this photo. Return the category, room/area, pageSlug (if applicable), and tags." },
           ]},
         ],
         tools: [{
           type: "function",
           function: {
             name: "categorize_photo",
-            description: "Categorize a photo to a report page",
+            description: "Categorize a home photo",
             parameters: {
               type: "object",
               properties: {
-                pageSlug: { type: "string" },
+                category: { type: "string", enum: categories },
+                room_or_area: { type: "string", description: "e.g. Kitchen, Roof, HVAC Room" },
+                pageSlug: { type: "string", description: "Report page slug if applicable" },
                 description: { type: "string" },
+                tags: { type: "array", items: { type: "string" } },
                 confidence: { type: "string", enum: ["high", "medium", "low"] },
               },
-              required: ["pageSlug", "description", "confidence"],
+              required: ["category", "room_or_area", "description", "confidence"],
             },
           },
         }],
@@ -61,7 +73,9 @@ Return the most likely page slug this photo belongs to, and a brief description.
 
     const result = await response.json();
     const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
-    const parsed = toolCall ? JSON.parse(toolCall.function.arguments) : { pageSlug: "unknown", description: "Could not categorize", confidence: "low" };
+    const parsed = toolCall
+      ? JSON.parse(toolCall.function.arguments)
+      : { category: "other", room_or_area: null, description: "Could not categorize", confidence: "low", tags: [] };
 
     return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err) {

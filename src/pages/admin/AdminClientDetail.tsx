@@ -71,6 +71,7 @@ import WYSIWYGReportEditor from "@/components/wysiwyg/WYSIWYGReportEditor";
 import EstimatesSection from "@/components/admin/EstimatesSection";
 import ClientServicesTab from "@/components/admin/ClientServicesTab";
 import SubscriptionManager from "@/components/admin/SubscriptionManager";
+import PhotoManager from "@/components/admin/PhotoManager";
 import PredictiveMaintenanceTab from "@/components/admin/PredictiveMaintenanceTab";
 import DigitalTwinTab from "@/components/admin/DigitalTwinTab";
 import type { ReportBlock } from "@/components/wysiwyg/types";
@@ -78,7 +79,7 @@ import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 
-type ClientTab = "overview" | "digital-twin" | "timeline" | "engagement" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time" | "services" | "estimates" | "predictions";
+type ClientTab = "overview" | "digital-twin" | "timeline" | "engagement" | "report" | "files" | "comments" | "projects" | "payments" | "equipment" | "schedule" | "vendors" | "messages" | "tasks" | "time" | "services" | "estimates" | "predictions" | "photos";
 
 const tabs: { id: ClientTab; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -88,6 +89,7 @@ const tabs: { id: ClientTab; label: string }[] = [
   { id: "tasks", label: "Tasks" },
   { id: "time", label: "Time" },
   { id: "report", label: "Report" },
+  { id: "photos", label: "Photos" },
   { id: "files", label: "Files" },
   { id: "comments", label: "Comments" },
   { id: "messages", label: "Messages" },
@@ -532,6 +534,13 @@ const AdminClientDetail = () => {
             client={client}
             reportPages={reportPages}
             pdfData={pdfData}
+          />
+        )}
+        {activeTab === "photos" && (
+          <PhotoManager
+            propertyId={client.propertyId}
+            reportPages={reportPages?.map((rp) => ({ id: rp.id, title: rp.title, page_key: rp.page_key }))}
+            projects={projects?.map((p) => ({ id: p.id, title: p.title }))}
           />
         )}
         {activeTab === "files" && (
