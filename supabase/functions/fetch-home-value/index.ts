@@ -21,7 +21,58 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { property_id, address, city, state, zip, force } = await req.json();
+    const body = await req.json();
+    
+    // Batch mode: fetch for all active properties
+    if (body.batch) {
+      const { data: properties } = await supabase
+        .from("properties")
+        .select("id, address, city, state, zip")
+        .not("address", "is", null);
+
+      const today = new Date().toISOString().split("T")[0];
+      let processed = 0;
+      for (const prop of (properties || []).slice(0, 20)) { // limit to 20 per batch
+        const { data: existing } = await supabase
+          .from("home_value_snapshots")
+          .select("id")
+          .eq("property_id", prop.id)
+          .eq("snapshot_date", today)
+          .limit(1);
+        if (existing && existing.length > 0) continue;
+
+        try {
+          const encodedAddr = encodeURIComponent(prop.address);
+          const res = await fetch(`https://api.rentcast.io/v1/avm/value?address=${encodedAddr}&propertyType=Single+Family`, {
+            headers: { "X-Api-Key": RENTCAST_API_KEY, Accept: "application/json" },
+          });
+          if (res.ok) {
+            const d = await res.json();
+            await supabase.from("home_value_snapshots").upsert({
+              property_id: prop.id,
+              snapshot_date: today,
+              estimated_value: d.price ?? null,
+              low_estimate: d.priceRangeLow ?? null,
+              high_estimate: d.priceRangeHigh ?? null,
+              price_per_sqft: d.pricePerSquareFoot ?? null,
+              data_source: "rentcast",
+              raw_response: d,
+            }, { onConflict: "property_id,snapshot_date" });
+            if (d.price) {
+              await supabase.from("properties").update({ estimated_value: d.price }).eq("id", prop.id);
+            }
+            processed++;
+          }
+        } catch (e) { console.error(`Batch error for ${prop.id}:`, e); }
+        // Rate limit: wait 500ms between calls
+        await new Promise(r => setTimeout(r, 500));
+      }
+      return new Response(JSON.stringify({ batch: true, processed }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { property_id, address, city, state, zip, force } = body;
     if (!property_id || !address) {
       return new Response(JSON.stringify({ error: "property_id and address required" }), {
         status: 400,
