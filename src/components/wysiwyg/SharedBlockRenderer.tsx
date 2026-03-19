@@ -21,9 +21,24 @@ interface SharedBlockRendererProps {
   onChange?: (content: Record<string, unknown>) => void;
   reportId?: string;
   propertyAddress?: string;
+  sectionType?: string;
+  propertyId?: string;
+  currentRating?: string;
+  onInsertFinding?: (finding: { name: string; rating: string; notes: string }) => void;
+  onInsertFindings?: (findings: Array<{ name: string; rating: string; notes: string }>) => void;
+  onApplyNarrative?: (narrative: string) => void;
+  onApplyRating?: (rating: string) => void;
+  /** Set of photo URLs that have analysis records (for portal "Inspected" badges) */
+  analyzedPhotoUrls?: Set<string>;
+  onPhotoClick?: (photoUrl: string) => void;
 }
 
-const SharedBlockRenderer = ({ block, editable, onChange, reportId, propertyAddress }: SharedBlockRendererProps) => {
+const SharedBlockRenderer = ({
+  block, editable, onChange, reportId, propertyAddress,
+  sectionType, propertyId, currentRating,
+  onInsertFinding, onInsertFindings, onApplyNarrative, onApplyRating,
+  analyzedPhotoUrls, onPhotoClick,
+}: SharedBlockRendererProps) => {
   const c = block.content as Record<string, unknown>;
   const handleChange = (updated: Record<string, unknown>) => onChange?.(updated);
 
@@ -39,9 +54,31 @@ const SharedBlockRenderer = ({ block, editable, onChange, reportId, propertyAddr
     case "finding_group":
       return <FindingGroupBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     case "photo":
-      return <PhotoBlock content={c as any} editable={editable} onChange={handleChange as any} reportId={reportId} />;
+      return (
+        <PhotoBlock
+          content={c as any}
+          editable={editable}
+          onChange={handleChange as any}
+          reportId={reportId}
+          hasAnalysis={analyzedPhotoUrls?.has((c as any).url)}
+        />
+      );
     case "photo_gallery":
-      return <PhotoGalleryBlock content={c as any} editable={editable} onChange={handleChange as any} reportId={reportId} />;
+      return (
+        <PhotoGalleryBlock
+          content={c as any}
+          editable={editable}
+          onChange={handleChange as any}
+          reportId={reportId}
+          sectionType={sectionType}
+          propertyId={propertyId}
+          currentRating={currentRating}
+          onInsertFinding={onInsertFinding}
+          onInsertFindings={onInsertFindings}
+          onApplyNarrative={onApplyNarrative}
+          onApplyRating={onApplyRating}
+        />
+      );
     case "priority_action":
       return <PriorityActionBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     case "cost_range":
