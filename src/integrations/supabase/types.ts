@@ -2005,6 +2005,56 @@ export type Database = {
           },
         ]
       }
+      home_value_snapshots: {
+        Row: {
+          created_at: string | null
+          data_source: string | null
+          estimated_value: number | null
+          high_estimate: number | null
+          id: string
+          low_estimate: number | null
+          neighborhood_avg: number | null
+          price_per_sqft: number | null
+          property_id: string
+          raw_response: Json | null
+          snapshot_date: string
+        }
+        Insert: {
+          created_at?: string | null
+          data_source?: string | null
+          estimated_value?: number | null
+          high_estimate?: number | null
+          id?: string
+          low_estimate?: number | null
+          neighborhood_avg?: number | null
+          price_per_sqft?: number | null
+          property_id: string
+          raw_response?: Json | null
+          snapshot_date?: string
+        }
+        Update: {
+          created_at?: string | null
+          data_source?: string | null
+          estimated_value?: number | null
+          high_estimate?: number | null
+          id?: string
+          low_estimate?: number | null
+          neighborhood_avg?: number | null
+          price_per_sqft?: number | null
+          property_id?: string
+          raw_response?: Json | null
+          snapshot_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_value_snapshots_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inspection_checklists: {
         Row: {
           completed_count: number
