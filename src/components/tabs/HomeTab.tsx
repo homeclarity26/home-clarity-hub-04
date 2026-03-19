@@ -120,7 +120,9 @@ const HomeTab = ({
       </div>
 
       {/* SECTION 5 — Compact Health Bar */}
-      {reportPages && <CompactHealthBar pages={reportPages} onNavigate={handleNavigateTracked} />}
+      <div className="mb-6">
+        {reportPages && <CompactHealthBar pages={reportPages} onNavigate={handleNavigateTracked} />}
+      </div>
 
       {/* Valuation Modal (retained) */}
       <ValuationModal
