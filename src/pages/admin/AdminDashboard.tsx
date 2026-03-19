@@ -75,7 +75,7 @@ const AdminDashboard = () => {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  console.log("[AdminDashboard] rendering, stats:", !!stats, "clients:", !!clients);
+  
 
   return (
     <div>
