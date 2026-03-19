@@ -55,9 +55,12 @@ const AdminClients = () => {
                 ))}
               </div>
               {clients && clients.length > 0 && (
-                <Button variant="outline" size="sm" onClick={() => exportClientsToCSV(clients)} className="gap-1.5 text-xs font-sans">
-                  <Download className="w-4 h-4" />Export CSV
-                </Button>
+                <div className="flex gap-1.5">
+                  <Button variant="outline" size="sm" onClick={() => exportClientsToCSV(clients)} className="gap-1.5 text-xs font-sans">
+                    <Download className="w-4 h-4" />Quick CSV
+                  </Button>
+                  <ExportMenu />
+                </div>
               )}
             </div>
             <Card className="p-0 overflow-hidden">
