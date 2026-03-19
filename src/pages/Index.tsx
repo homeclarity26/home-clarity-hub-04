@@ -196,6 +196,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PushNotificationBanner />
       {/* Tutorial onboarding modal for first-time clients */}
       {showTutorialModal && !isCreator && (
         <ClientOnboardingModal
