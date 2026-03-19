@@ -74,6 +74,7 @@ import SubscriptionManager from "@/components/admin/SubscriptionManager";
 import PhotoManager from "@/components/admin/PhotoManager";
 import PredictiveMaintenanceTab from "@/components/admin/PredictiveMaintenanceTab";
 import DigitalTwinTab from "@/components/admin/DigitalTwinTab";
+import ClientReferralsTab from "@/components/admin/ClientReferralsTab";
 import type { ReportBlock } from "@/components/wysiwyg/types";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import type { ReportPageData } from "@/data/reportContent";
