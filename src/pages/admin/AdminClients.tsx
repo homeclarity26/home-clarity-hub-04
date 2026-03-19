@@ -9,6 +9,7 @@ import AdminHeader from "@/components/admin/AdminHeader";
 import ClientTable from "@/components/admin/ClientTable";
 import ClientComparisonView from "@/components/admin/ClientComparisonView";
 import BulkReportGenerator from "@/components/admin/BulkReportGenerator";
+import ExportMenu from "@/components/admin/ExportMenu";
 import { useAdminClients } from "@/hooks/useAdminData";
 import { exportClientsToCSV } from "@/lib/csvExport";
 
