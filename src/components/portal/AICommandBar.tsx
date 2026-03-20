@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Sparkles } from "lucide-react";
 
 interface AICommandBarProps {
@@ -27,35 +27,39 @@ const AICommandBar = ({ onSubmit }: AICommandBarProps) => {
 
   const handleChipClick = (prompt: string) => {
     setValue(prompt);
-    // Focus the input so user can see the text and edit/send
     setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   return (
     <div className="w-full px-6 md:px-20 max-w-[1400px] mx-auto">
-      <div className="bg-card rounded-xl border border-border shadow-hbc-md">
+      <div className="bg-card rounded-lg border border-border shadow-hbc-sm">
         <form onSubmit={handleSubmit} className="relative">
-          <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-accent" />
+          <Sparkles className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-accent" />
           <input
             ref={inputRef}
             type="text"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder="Ask your home concierge anything…"
-            className="w-full h-11 pl-11 pr-4 bg-transparent rounded-xl text-foreground font-sans text-[15px] placeholder:text-muted-foreground/70 focus:outline-none focus:ring-0 border-none"
+            className="w-full h-14 pl-13 pr-5 bg-transparent rounded-lg text-foreground font-sans text-[15px] placeholder:text-muted-foreground focus:outline-none focus:ring-0 border-none"
+            style={{ paddingLeft: "3rem" }}
           />
         </form>
       </div>
-      {/* Prompt chips */}
-      <div className="flex gap-1.5 mt-1.5 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-        {SUGGESTED_PROMPTS.map((prompt) => (
-          <button
-            key={prompt}
-            onClick={() => handleChipClick(prompt)}
-            className="shrink-0 px-3 py-1 rounded-full border border-border/60 bg-card text-xs font-sans text-muted-foreground hover:border-accent/50 hover:text-accent transition-colors cursor-pointer whitespace-nowrap"
-          >
-            {prompt}
-          </button>
+      {/* Prompt chips as subtle gold text links */}
+      <div className="flex items-center gap-1 mt-2 flex-wrap">
+        {SUGGESTED_PROMPTS.map((prompt, i) => (
+          <span key={prompt} className="flex items-center">
+            <button
+              onClick={() => handleChipClick(prompt)}
+              className="text-[11px] font-mono tracking-[0.05em] text-accent hover:text-foreground transition-colors bg-transparent border-none cursor-pointer px-1 py-0.5"
+            >
+              {prompt}
+            </button>
+            {i < SUGGESTED_PROMPTS.length - 1 && (
+              <span className="text-border text-[10px]">·</span>
+            )}
+          </span>
         ))}
       </div>
     </div>

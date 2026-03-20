@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import {
   FileText, Hammer, Receipt, Calendar, Shield, Wrench,
-  AlertTriangle, Clock, Bookmark, ChevronRight
+  AlertTriangle, ChevronRight
 } from "lucide-react";
 import type { ReportPageData } from "@/data/reportContent";
 
@@ -52,14 +52,14 @@ export function trackSectionVisit(section: string) {
 }
 
 const SECTION_META: Record<string, { icon: React.ReactNode; label: string; defaultSubtitle: string }> = {
-  report: { icon: <FileText className="w-4 h-4" />, label: "Home Report", defaultSubtitle: "Your complete assessment" },
-  projects: { icon: <Hammer className="w-4 h-4" />, label: "Projects", defaultSubtitle: "Track improvements" },
-  payments: { icon: <Receipt className="w-4 h-4" />, label: "Payments", defaultSubtitle: "Invoices & billing" },
-  schedule: { icon: <Calendar className="w-4 h-4" />, label: "Schedule", defaultSubtitle: "Appointments & timeline" },
-  equipment: { icon: <Shield className="w-4 h-4" />, label: "Equipment", defaultSubtitle: "Your home systems" },
-  documents: { icon: <FileText className="w-4 h-4" />, label: "Documents", defaultSubtitle: "Files & records" },
-  messages: { icon: <FileText className="w-4 h-4" />, label: "Messages", defaultSubtitle: "Chat with your advisor" },
-  contacts: { icon: <FileText className="w-4 h-4" />, label: "Home Team", defaultSubtitle: "Advisors & vendors" },
+  report: { icon: <FileText className="w-5 h-5" />, label: "Home Report", defaultSubtitle: "Your complete assessment" },
+  projects: { icon: <Hammer className="w-5 h-5" />, label: "Projects", defaultSubtitle: "Track improvements" },
+  payments: { icon: <Receipt className="w-5 h-5" />, label: "Payments", defaultSubtitle: "Invoices & billing" },
+  schedule: { icon: <Calendar className="w-5 h-5" />, label: "Schedule", defaultSubtitle: "Appointments & timeline" },
+  equipment: { icon: <Shield className="w-5 h-5" />, label: "Equipment", defaultSubtitle: "Your home systems" },
+  documents: { icon: <FileText className="w-5 h-5" />, label: "Documents", defaultSubtitle: "Files & records" },
+  messages: { icon: <FileText className="w-5 h-5" />, label: "Messages", defaultSubtitle: "Chat with your advisor" },
+  contacts: { icon: <FileText className="w-5 h-5" />, label: "Home Team", defaultSubtitle: "Advisors & vendors" },
 };
 
 function timeAgo(ts: number): string {
@@ -71,6 +71,8 @@ function timeAgo(ts: number): string {
   const days = Math.floor(hours / 24);
   return days === 1 ? "Yesterday" : `${days}d ago`;
 }
+
+const cardBase = "bg-card rounded-lg shadow-hbc-sm border border-border";
 
 const SmartActionTiles = ({ onNavigate, propertyId, reportPages }: SmartActionTilesProps) => {
   const [, setTick] = useState(0);
@@ -88,7 +90,7 @@ const SmartActionTiles = ({ onNavigate, propertyId, reportPages }: SmartActionTi
         result.push({
           id: "urgent-conditions",
           type: "urgent",
-          icon: <AlertTriangle className="w-4 h-4" />,
+          icon: <AlertTriangle className="w-5 h-5" />,
           label: "Items Need Attention",
           subtitle: `${poorPages.length} system${poorPages.length > 1 ? "s" : ""} rated poor or critical`,
           tab: "report",
@@ -102,7 +104,7 @@ const SmartActionTiles = ({ onNavigate, propertyId, reportPages }: SmartActionTi
         result.push({
           id: "urgent-maintenance",
           type: "urgent",
-          icon: <Wrench className="w-4 h-4" />,
+          icon: <Wrench className="w-5 h-5" />,
           label: "Overdue Maintenance",
           subtitle: "HVAC service past due",
           tab: "equipment",
@@ -170,31 +172,10 @@ const SmartActionTiles = ({ onNavigate, propertyId, reportPages }: SmartActionTi
     return result.slice(0, 6);
   }, [reportPages]);
 
-  const borderColor = (type: TileType) => {
-    switch (type) {
-      case "urgent": return "border-l-destructive";
-      case "recent": return "border-l-muted-foreground/30";
-      case "frequent": return "border-l-primary/40";
-    }
-  };
-
-  const badgeFor = (type: TileType) => {
-    switch (type) {
-      case "urgent":
-        return (
-          <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-destructive" />
-        );
-      case "recent":
-        return <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/50">Recent</span>;
-      case "frequent":
-        return <Bookmark className="w-3 h-3 text-primary/30" />;
-    }
-  };
-
   return (
     <div className="w-full px-6 md:px-20 max-w-[1400px] mx-auto">
-      <p className="font-sans text-[10px] uppercase tracking-[0.15em] text-muted-foreground/60 font-normal mb-3">Your Command Center</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {tiles.map((tile) => (
           <button
             key={tile.id}
@@ -202,18 +183,15 @@ const SmartActionTiles = ({ onNavigate, propertyId, reportPages }: SmartActionTi
               trackSectionVisit(tile.tab);
               onNavigate(tile.tab, tile.pageId);
             }}
-            className={`group relative bg-card rounded-lg px-4 py-3 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-3 border border-border border-l-[3px] ${borderColor(tile.type)} text-left w-full cursor-pointer`}
+            className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 relative cursor-pointer`}
           >
-            <div className="text-accent shrink-0">{tile.icon}</div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-0.5">
-                <h3 className="font-display text-sm text-foreground truncate">{tile.label}</h3>
-                {tile.type !== "urgent" && badgeFor(tile.type)}
-              </div>
-              <p className="font-sans text-xs text-muted-foreground/60 truncate">{tile.subtitle}</p>
-            </div>
-            {tile.type === "urgent" && badgeFor(tile.type)}
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/20 group-hover:text-accent shrink-0 transition-colors" />
+            {tile.type === "urgent" && (
+              <span className="absolute top-4 right-4 w-2 h-2 rounded-full bg-destructive" />
+            )}
+            <div className="text-accent mb-3">{tile.icon}</div>
+            <h3 className="font-display text-xl text-foreground mb-1">{tile.label}</h3>
+            <p className="font-sans text-sm text-muted-foreground">{tile.subtitle}</p>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors mt-2" />
           </button>
         ))}
       </div>

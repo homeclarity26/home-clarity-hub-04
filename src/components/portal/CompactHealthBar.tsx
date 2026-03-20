@@ -84,7 +84,7 @@ const CompactHealthBar = ({ pages, onNavigate }: CompactHealthBarProps) => {
   return (
     <div className="w-full px-6 md:px-20 max-w-[1400px] mx-auto">
       <div className="bg-card rounded-lg border border-border shadow-hbc-sm">
-        {/* Main bar — max 80px */}
+        {/* Main bar */}
         <div className="flex items-center gap-6 px-6 py-4" style={{ maxHeight: "80px" }}>
           {/* Left: score */}
           <div className="flex items-center gap-3 shrink-0">

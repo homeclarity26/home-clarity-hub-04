@@ -43,6 +43,8 @@ interface HomeTabProps {
   reportPages?: Record<string, ReportPageData>;
 }
 
+const cardBase = "bg-card rounded-lg shadow-hbc-sm border border-border";
+
 const HomeTab = ({
   onNavigate,
   onTabChange,
@@ -92,13 +94,11 @@ const HomeTab = ({
   return (
     <div className="flex flex-col pb-16">
       {/* SECTION 1 — Welcome Header */}
-      <div className="mb-8">
-        <WelcomeHeader
-          firstName={firstName}
-          propertyAddress={propertyAddress}
-          estimatedValue={displayValue}
-        />
-      </div>
+      <WelcomeHeader
+        firstName={firstName}
+        propertyAddress={propertyAddress}
+        estimatedValue={displayValue}
+      />
 
       {/* SECTION 2 — AI Command Bar */}
       <div className="mb-10">
@@ -115,12 +115,12 @@ const HomeTab = ({
       </div>
 
       {/* SECTION 4 — AI Suggestions Strip */}
-      <div className="mb-8">
+      <div className="mb-10">
         <AISuggestionsStrip onNavigate={handleNavigateTracked} reportPages={reportPages} />
       </div>
 
       {/* SECTION 5 — Compact Health Bar */}
-      <div className="mb-6">
+      <div className="mb-10">
         {reportPages && <CompactHealthBar pages={reportPages} onNavigate={handleNavigateTracked} />}
       </div>
 
@@ -135,16 +135,16 @@ const HomeTab = ({
 
       {/* Membership Banner */}
       {membershipEndDate && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mb-10">
           <MembershipBanner membershipEndDate={membershipEndDate} onSendMessage={() => onNavigate("messages")} />
         </div>
       )}
 
       {/* Getting Started (only if report incomplete) */}
       {completionPercent < 100 && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
-          <div className="bg-card rounded-lg p-6 border border-border shadow-hbc-sm">
-            <h2 className="font-display text-lg text-foreground mb-1">Getting Started</h2>
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mb-10">
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Getting Started</p>
+          <div className={`${cardBase} p-6`}>
             <p className="font-sans text-sm text-muted-foreground mb-4">Here's what to explore in your home portal</p>
             <div className="space-y-2.5">
               {[
@@ -159,7 +159,7 @@ const HomeTab = ({
                   className="w-full flex items-center gap-3 text-left bg-transparent border-none cursor-pointer p-2 rounded-md hover:bg-muted/50 transition-colors"
                 >
                   {step.done ? (
-                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
                   ) : (
                     <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />
                   )}
@@ -199,15 +199,96 @@ const HomeTab = ({
         <ClientReferralPortal />
       </div>
 
+      {/* Portal Status Cards */}
+      <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mt-10">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Your Portal Status</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <button
+            onClick={() => handleNavigateTracked("report")}
+            className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 w-full`}
+          >
+            <FileText className="w-5 h-5 text-accent mb-3" />
+            <h2 className="font-display text-xl text-foreground mb-1">Home Clarity Report</h2>
+            <p className="font-sans text-sm text-muted-foreground mb-3">Your complete home assessment</p>
+            <div>
+              <div className="w-full h-0.5 bg-border relative mb-2">
+                <div className="h-full bg-accent transition-all" style={{ width: `${completionPercent}%` }} />
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">{completionPercent}% Complete</p>
+                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent">{statusLabel}</span>
+              </div>
+            </div>
+          </button>
+          <button
+            onClick={() => handleNavigateTracked("projects")}
+            className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 w-full`}
+          >
+            <Hammer className="w-5 h-5 text-accent mb-3" />
+            <h2 className="font-display text-xl text-foreground mb-1">Active Projects</h2>
+            <p className="font-sans text-sm text-muted-foreground">Track ongoing home improvements</p>
+            <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-2 block">No active projects</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Navigate Your Portal */}
+      <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mt-10">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Navigate Your Portal</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {[
+            { icon: <Receipt className="w-5 h-5 text-accent" />, label: "Payments", sub: "Account & transaction history", tab: "payments" },
+            { icon: <Calendar className="w-5 h-5 text-accent" />, label: "Schedule & Timeline", sub: "Appointments & reminders", tab: "schedule" },
+            { icon: <Users className="w-5 h-5 text-accent" />, label: "Your Home Team", sub: "Advisors & vendor partners", tab: "contacts" },
+          ].map((item) => (
+            <button
+              key={item.tab}
+              onClick={() => handleNavigateTracked(item.tab)}
+              className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 w-full`}
+            >
+              <div className="mb-3">{item.icon}</div>
+              <h2 className="font-display text-xl text-foreground mb-1">{item.label}</h2>
+              <p className="font-sans text-sm text-muted-foreground">{item.sub}</p>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors mt-2" />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mt-10">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <button onClick={() => handleNavigateTracked("report")} className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 w-full`}>
+            <FileText className="w-5 h-5 text-accent mb-3" />
+            <h2 className="font-display text-xl text-foreground mb-1">View Your Report</h2>
+            <p className="font-sans text-sm text-muted-foreground">Read your complete Home Clarity assessment</p>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors mt-2" />
+          </button>
+          <button onClick={() => handleAskQuestion()} className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 w-full`}>
+            <MessageCircle className="w-5 h-5 text-accent mb-3" />
+            <h2 className="font-display text-xl text-foreground mb-1">Ask a Question</h2>
+            <p className="font-sans text-sm text-muted-foreground">AI-powered answers about your home</p>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors mt-2" />
+          </button>
+          <button onClick={() => handleNavigateTracked("contacts")} className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 w-full`}>
+            <Phone className="w-5 h-5 text-accent mb-3" />
+            <h2 className="font-display text-xl text-foreground mb-1">Contact Your Advisor</h2>
+            <p className="font-sans text-sm text-muted-foreground">Adam Kilgore — Founder & Lead Advisor</p>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors mt-2" />
+          </button>
+        </div>
+      </div>
+
       {/* Service Request */}
       {propertyId && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mt-10">
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Need Help?</p>
-          <div className="bg-card rounded-lg border border-border shadow-hbc-sm p-6">
+          <div className={`${cardBase} p-6`}>
             {showServiceRequest ? (
               <>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-display text-lg text-foreground">Submit a Service Request</h3>
+                  <h3 className="font-display text-xl text-foreground">Submit a Service Request</h3>
                   <button onClick={() => setShowServiceRequest(false)} className="font-mono text-[10px] text-muted-foreground bg-transparent border-none cursor-pointer hover:text-foreground">Cancel</button>
                 </div>
                 <ServiceRequestForm propertyId={propertyId} onSubmitted={() => setShowServiceRequest(false)} />
@@ -219,7 +300,7 @@ const HomeTab = ({
               >
                 <Wrench className="w-5 h-5 text-accent" />
                 <div className="flex-1">
-                  <h3 className="font-display text-lg text-foreground">Report an Issue</h3>
+                  <h3 className="font-display text-xl text-foreground">Report an Issue</h3>
                   <p className="font-sans text-sm text-muted-foreground">Submit a service request with photos</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
@@ -231,111 +312,16 @@ const HomeTab = ({
 
       {/* Advisor Signature */}
       {customization?.advisor_signature && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
-          <div className="bg-card rounded-lg p-6 border border-border shadow-hbc-sm text-center">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mt-10">
+          <div className={`${cardBase} p-6 text-center`}>
             <p className="font-sans text-sm text-muted-foreground italic">{customization.advisor_signature}</p>
           </div>
         </div>
       )}
 
-      {/* Portal Status Cards */}
-      <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Your Portal Status</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <button
-            onClick={() => handleNavigateTracked("report")}
-            className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border border-l-[3px] border-l-accent text-left w-full"
-          >
-            <FileText className="w-5 h-5 text-accent" />
-            <div className="flex-1">
-              <h2 className="font-display text-xl text-foreground mb-1">Home Clarity Report</h2>
-              <p className="font-sans text-sm text-muted-foreground">Your complete home assessment</p>
-            </div>
-            <div className="mt-2">
-              <div className="w-full h-0.5 bg-border relative mb-2">
-                <div className="h-full bg-accent transition-all" style={{ width: `${completionPercent}%` }} />
-              </div>
-              <div className="flex items-center justify-between">
-                <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">{completionPercent}% Complete</p>
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent">{statusLabel}</span>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end -mt-1 transition-colors" />
-          </button>
-          <button
-            onClick={() => handleNavigateTracked("projects")}
-            className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full"
-          >
-            <Hammer className="w-5 h-5 text-muted-foreground" />
-            <div className="flex-1">
-              <h2 className="font-display text-xl text-foreground mb-1">Active Projects</h2>
-              <p className="font-sans text-sm text-muted-foreground">Track ongoing home improvements</p>
-            </div>
-            <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-1">No active projects</span>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
-          </button>
-        </div>
-      </div>
-
-      {/* Navigate Your Portal */}
-      <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Navigate Your Portal</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {[
-            { icon: <Receipt className="w-5 h-5 text-accent" />, label: "Payments", sub: "Account & transaction history", tab: "payments" },
-            { icon: <Calendar className="w-5 h-5 text-accent" />, label: "Schedule & Timeline", sub: "Appointments & reminders", tab: "schedule" },
-            { icon: <Users className="w-5 h-5 text-accent" />, label: "Your Home Team", sub: "Advisors & vendor partners", tab: "contacts" },
-          ].map((item) => (
-            <button
-              key={item.tab}
-              onClick={() => handleNavigateTracked(item.tab)}
-              className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full min-h-[180px]"
-            >
-              {item.icon}
-              <div className="flex-1">
-                <h2 className="font-display text-xl text-foreground mb-1">{item.label}</h2>
-                <p className="font-sans text-sm text-muted-foreground line-clamp-2">{item.sub}</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <button onClick={() => handleNavigateTracked("report")} className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full">
-            <FileText className="w-5 h-5 text-accent" />
-            <div className="flex-1">
-              <h2 className="font-display text-xl text-foreground mb-1">View Your Report</h2>
-              <p className="font-sans text-sm text-muted-foreground line-clamp-2">Read your complete Home Clarity assessment</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
-          </button>
-          <button onClick={() => handleAskQuestion()} className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full">
-            <MessageCircle className="w-5 h-5 text-accent" />
-            <div className="flex-1">
-              <h2 className="font-display text-xl text-foreground mb-1">Ask a Question</h2>
-              <p className="font-sans text-sm text-muted-foreground line-clamp-2">AI-powered answers about your home</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
-          </button>
-          <button onClick={() => handleNavigateTracked("contacts")} className="group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full">
-            <Phone className="w-5 h-5 text-accent" />
-            <div className="flex-1">
-              <h2 className="font-display text-xl text-foreground mb-1">Contact Your Advisor</h2>
-              <p className="font-sans text-sm text-muted-foreground line-clamp-2">Adam Kilgore — Founder & Lead Advisor</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
-          </button>
-        </div>
-      </div>
-
       {/* Property Timeline */}
-      <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-8 w-full">
-        <div className="bg-card rounded-lg p-8 shadow-hbc-sm border border-border">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-8 w-full mt-10">
+        <div className={`${cardBase} p-6`}>
           <PropertyTimeline propertyId={propertyId} />
         </div>
       </div>
@@ -345,11 +331,11 @@ const HomeTab = ({
         <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
           <button
             onClick={() => setShowAppointment(true)}
-            className="w-full group bg-card rounded-lg p-6 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4 border border-border text-left"
+            className={`${cardBase} w-full group p-6 hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4 text-left`}
           >
             <CalendarPlus className="w-5 h-5 text-accent" />
             <div className="flex-1">
-              <h3 className="font-display text-lg text-foreground">Schedule a Consultation</h3>
+              <h3 className="font-display text-xl text-foreground">Schedule a Consultation</h3>
               <p className="font-sans text-sm text-muted-foreground">Pick a time to speak with your advisor</p>
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors" />
@@ -360,14 +346,14 @@ const HomeTab = ({
 
       {/* My Home's Story */}
       {propertyId && !propertyId.startsWith("mock-") && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mt-10">
           <MyHomeStory propertyId={propertyId} propertyName={propertyName} />
         </div>
       )}
 
       {/* Feedback */}
       {propertyId && !propertyId.startsWith("mock-") && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mt-10">
           <FeedbackWidget propertyId={propertyId} title="How's your experience with Home Clarity Hub?" />
         </div>
       )}
