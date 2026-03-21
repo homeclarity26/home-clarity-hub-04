@@ -16,9 +16,7 @@
 - [x] RENTCAST_API_KEY configured ✅
 - [x] LOVABLE_API_KEY configured ✅
 
-- [ ] **Set Frontend Env Var**
-  - Add `VITE_GOOGLE_MAPS_API_KEY=your_key_here` to `.env`
-  - Enable Places API in Google Cloud Console
+- [x] `VITE_GOOGLE_MAPS_API_KEY` configured ✅
 
 ---
 
