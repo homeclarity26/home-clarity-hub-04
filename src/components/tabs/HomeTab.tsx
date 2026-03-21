@@ -76,95 +76,86 @@ const HomeTab = ({
         estimatedValue={displayValue}
       />
 
-      {/* SECTION 2 — AI Command Bar */}
-      <div className="mb-10">
+      {/* All content sections use consistent max-w-5xl container */}
+      <div className="max-w-5xl mx-auto px-6 md:px-20 w-full space-y-10">
+        {/* SECTION 2 — AI Command Bar */}
         <AICommandBar onSubmit={handleAskQuestion} />
-      </div>
 
-      {/* SECTION 3 — Smart Action Tiles */}
-      <div className="mb-10">
+        {/* SECTION 3 — Smart Action Tiles */}
         <SmartActionTiles
           onNavigate={handleNavigateTracked}
           propertyId={propertyId}
           reportPages={reportPages}
         />
-      </div>
 
-      {/* SECTION 4 — AI Suggestions Strip */}
-      <div className="mb-10">
+        {/* SECTION 4 — AI Suggestions Strip */}
         <AISuggestionsStrip onNavigate={handleNavigateTracked} reportPages={reportPages} />
-      </div>
 
-      {/* SECTION 5 — Compact Health Bar */}
-      <div className="mb-10">
+        {/* SECTION 5 — Compact Health Bar */}
         {reportPages && <CompactHealthBar pages={reportPages} onNavigate={handleNavigateTracked} />}
-      </div>
 
-      {/* SECTION 6 — Membership Banner (conditional) */}
-      {membershipEndDate && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mb-10">
+        {/* SECTION 6 — Membership Banner (conditional) */}
+        {membershipEndDate && (
           <MembershipBanner membershipEndDate={membershipEndDate} onSendMessage={() => onNavigate("messages")} />
-        </div>
-      )}
+        )}
 
-      {/* SECTION 7 — Getting Started Checklist (conditional) */}
-      {completionPercent < 100 && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mb-10">
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Getting Started</p>
-          <div className={`${cardBase} p-6`}>
-            <p className="font-sans text-sm text-muted-foreground mb-4">Here's what to explore in your home portal</p>
-            <div className="space-y-2.5">
-              {[
-                { label: "Review your Home Clarity Report", done: completionPercent > 0, action: () => handleNavigateTracked("report") },
-                { label: "Explore your equipment registry", done: false, action: () => handleNavigateTracked("equipment") },
-                { label: "Check your upcoming schedule", done: false, action: () => handleNavigateTracked("schedule") },
-                { label: "Send a message to your advisor", done: false, action: () => handleNavigateTracked("messages") },
-              ].map(step => (
-                <button
-                  key={step.label}
-                  onClick={step.action}
-                  className="w-full flex items-center gap-3 text-left bg-transparent border-none cursor-pointer p-2 rounded-md hover:bg-muted/50 transition-colors"
-                >
-                  {step.done ? (
-                    <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
-                  ) : (
-                    <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />
-                  )}
-                  <span className={`text-sm font-sans ${step.done ? 'text-foreground' : 'text-muted-foreground'}`}>{step.label}</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 ml-auto" />
-                </button>
-              ))}
+        {/* SECTION 7 — Getting Started Checklist (conditional) */}
+        {completionPercent < 100 && (
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Getting Started</p>
+            <div className={`${cardBase} p-6`}>
+              <p className="font-sans text-sm text-muted-foreground mb-4">Here's what to explore in your home portal</p>
+              <div className="space-y-2.5">
+                {[
+                  { label: "Review your Home Clarity Report", done: completionPercent > 0, action: () => handleNavigateTracked("report") },
+                  { label: "Explore your equipment registry", done: false, action: () => handleNavigateTracked("equipment") },
+                  { label: "Check your upcoming schedule", done: false, action: () => handleNavigateTracked("schedule") },
+                  { label: "Send a message to your advisor", done: false, action: () => handleNavigateTracked("messages") },
+                ].map(step => (
+                  <button
+                    key={step.label}
+                    onClick={step.action}
+                    className="w-full flex items-center gap-3 text-left bg-transparent border-none cursor-pointer p-2 rounded-md hover:bg-muted/50 transition-colors"
+                  >
+                    {step.done ? (
+                      <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
+                    ) : (
+                      <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />
+                    )}
+                    <span className={`text-sm font-sans ${step.done ? 'text-foreground' : 'text-muted-foreground'}`}>{step.label}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 ml-auto" />
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Schedule Consultation CTA */}
-      {propertyId && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
-          <button
-            onClick={() => setShowAppointment(true)}
-            className={`${cardBase} w-full group p-6 hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4 text-left`}
-          >
-            <CalendarPlus className="w-5 h-5 text-accent" />
-            <div className="flex-1">
-              <h3 className="font-display text-xl text-foreground">Schedule a Consultation</h3>
-              <p className="font-sans text-sm text-muted-foreground">Pick a time to speak with your advisor</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors" />
-          </button>
-          <AppointmentRequestModal open={showAppointment} onOpenChange={setShowAppointment} propertyId={propertyId} />
-        </div>
-      )}
+        {/* Schedule Consultation CTA */}
+        {propertyId && (
+          <div>
+            <button
+              onClick={() => setShowAppointment(true)}
+              className={`${cardBase} w-full group p-6 hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4 text-left`}
+            >
+              <CalendarPlus className="w-5 h-5 text-accent" />
+              <div className="flex-1">
+                <h3 className="font-display text-xl text-foreground">Schedule a Consultation</h3>
+                <p className="font-sans text-sm text-muted-foreground">Pick a time to speak with your advisor</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors" />
+            </button>
+            <AppointmentRequestModal open={showAppointment} onOpenChange={setShowAppointment} propertyId={propertyId} />
+          </div>
+        )}
 
-      {/* Advisor Signature */}
-      {customization?.advisor_signature && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mt-10">
+        {/* Advisor Signature */}
+        {customization?.advisor_signature && (
           <div className={`${cardBase} p-6 text-center`}>
             <p className="font-sans text-sm text-muted-foreground italic">{customization.advisor_signature}</p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
