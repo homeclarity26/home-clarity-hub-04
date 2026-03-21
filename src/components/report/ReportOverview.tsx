@@ -88,6 +88,7 @@ const ReportOverview = ({
   hoverPdfUrl,
   iguideUrl,
   iguidePdfUrl,
+  estimatedValue,
   propertyId,
 }: ReportOverviewProps) => {
   // Calculate health scores
