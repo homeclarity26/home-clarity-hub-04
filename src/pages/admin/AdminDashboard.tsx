@@ -16,7 +16,10 @@ import OverdueActionCenter from "@/components/admin/OverdueActionCenter";
 import CrossReportAnalytics from "@/components/admin/CrossReportAnalytics";
 import WeeklyDigestWidget from "@/components/admin/WeeklyDigestWidget";
 import EquipmentWarrantyCalendar from "@/components/admin/EquipmentWarrantyCalendar";
+import PortfolioHealthDashboard from "@/components/admin/PortfolioHealthDashboard";
+import CrossClientInsightsCard from "@/components/admin/CrossClientInsightsCard";
 import AdminSetupChecklist from "@/components/admin/AdminSetupChecklist";
+import ServiceRequestsManager from "@/components/admin/ServiceRequestsManager";
 import DailyBrief from "@/components/admin/DailyBrief";
 import CRMDashboardWidget from "@/components/admin/CRMDashboardWidget";
 import SubscriptionDashboardWidget from "@/components/admin/SubscriptionDashboardWidget";
@@ -99,12 +102,23 @@ const AdminDashboard = () => {
           <StatsCard label="Published Reports" value={stats?.publishedReports ?? 0} icon={CheckCircle} />
         </div>
 
+        {/* Portfolio Health Dashboard */}
+        {clients && clients.length > 0 && (
+          <WidgetErrorBoundary name="PortfolioHealthDashboard">
+            <PortfolioHealthDashboard clients={clients} />
+          </WidgetErrorBoundary>
+        )}
+
         {/* ═══ ZONE 2: ACTION — Things requiring clicks ═══ */}
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">Action Required</p>
           <div className="space-y-4">
             <WidgetErrorBoundary name="OverdueActionCenter">
               <OverdueActionCenter />
+            </WidgetErrorBoundary>
+
+            <WidgetErrorBoundary name="ServiceRequestsManager">
+              <ServiceRequestsManager />
             </WidgetErrorBoundary>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -213,6 +227,10 @@ const AdminDashboard = () => {
 
             <WidgetErrorBoundary name="CRMDashboardWidget">
               <CRMDashboardWidget />
+            </WidgetErrorBoundary>
+
+            <WidgetErrorBoundary name="CrossClientInsightsCard">
+              <CrossClientInsightsCard />
             </WidgetErrorBoundary>
 
             <WidgetErrorBoundary name="CrossReportAnalytics">

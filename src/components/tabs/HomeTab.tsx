@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
-import { CheckCircle2, Circle, ChevronRight, CalendarPlus } from "lucide-react";
+import { CheckCircle2, Circle, ChevronRight, CalendarPlus, Sparkles } from "lucide-react";
 import WelcomeHeader from "@/components/portal/WelcomeHeader";
 import AICommandBar from "@/components/portal/AICommandBar";
 import SmartActionTiles, { trackSectionVisit } from "@/components/portal/SmartActionTiles";
 import AISuggestionsStrip from "@/components/portal/AISuggestionsStrip";
 import CompactHealthBar from "@/components/portal/CompactHealthBar";
+import HomeHealthScore from "@/components/portal/HomeHealthScore";
+import SeasonalChecklist from "@/components/portal/SeasonalChecklist";
+import ClientGoalsWidget from "@/components/portal/ClientGoalsWidget";
+import NotificationNudges from "@/components/portal/NotificationNudges";
+import ConciergeRequestModal from "@/components/portal/ConciergeRequestModal";
 import MembershipBanner from "@/components/MembershipBanner";
 import AppointmentRequestModal from "@/components/portal/AppointmentRequestModal";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +45,7 @@ const HomeTab = ({
 }: HomeTabProps) => {
   const { user } = useAuth();
   const [showAppointment, setShowAppointment] = useState(false);
+  const [showConcierge, setShowConcierge] = useState(false);
   const [customization, setCustomization] = useState<{ welcome_message?: string; tagline?: string; hero_photo_url?: string; advisor_signature?: string } | null>(null);
 
   useEffect(() => {
@@ -78,20 +84,32 @@ const HomeTab = ({
 
       {/* All content sections use consistent max-w-5xl container */}
       <div className="max-w-5xl mx-auto px-6 md:px-20 w-full space-y-10">
-        {/* SECTION 2 — AI Command Bar */}
+        {/* Smart Notification Nudges */}
+        <NotificationNudges propertyId={propertyId} onNavigate={(tab) => handleNavigateTracked(tab)} />
+
+        {/* SECTION 2 — Home Health Score */}
+        <HomeHealthScore reportPages={reportPages} onNavigate={handleNavigateTracked} />
+
+        {/* SECTION 3 — AI Command Bar */}
         <AICommandBar onSubmit={handleAskQuestion} />
 
-        {/* SECTION 3 — Smart Action Tiles */}
+        {/* SECTION 4 — Smart Action Tiles */}
         <SmartActionTiles
           onNavigate={handleNavigateTracked}
           propertyId={propertyId}
           reportPages={reportPages}
         />
 
-        {/* SECTION 4 — AI Suggestions Strip */}
+        {/* SECTION 5 — AI Suggestions Strip */}
         <AISuggestionsStrip onNavigate={handleNavigateTracked} reportPages={reportPages} />
 
-        {/* SECTION 5 — Compact Health Bar */}
+        {/* SECTION 6 — My Home Goals */}
+        {propertyId && <ClientGoalsWidget propertyId={propertyId} />}
+
+        {/* SECTION 7 — Seasonal Maintenance Checklist */}
+        <SeasonalChecklist propertyId={propertyId} />
+
+        {/* SECTION 8 — Compact Health Bar */}
         {reportPages && <CompactHealthBar pages={reportPages} onNavigate={handleNavigateTracked} />}
 
         {/* SECTION 6 — Membership Banner (conditional) */}
@@ -131,20 +149,32 @@ const HomeTab = ({
           </div>
         )}
 
-        {/* Schedule Consultation CTA */}
+        {/* Concierge + Schedule CTAs */}
         {propertyId && (
-          <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={() => setShowConcierge(true)}
+              className={`${cardBase} w-full group p-6 hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4 text-left`}
+            >
+              <Sparkles className="w-5 h-5 text-primary" />
+              <div className="flex-1">
+                <h3 className="font-display text-lg text-foreground">Concierge Request</h3>
+                <p className="font-sans text-sm text-muted-foreground">Ask your advisor for anything</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary transition-colors" />
+            </button>
             <button
               onClick={() => setShowAppointment(true)}
               className={`${cardBase} w-full group p-6 hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4 text-left`}
             >
               <CalendarPlus className="w-5 h-5 text-accent" />
               <div className="flex-1">
-                <h3 className="font-display text-xl text-foreground">Schedule a Consultation</h3>
-                <p className="font-sans text-sm text-muted-foreground">Pick a time to speak with your advisor</p>
+                <h3 className="font-display text-lg text-foreground">Schedule a Consultation</h3>
+                <p className="font-sans text-sm text-muted-foreground">Pick a time with your advisor</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors" />
             </button>
+            <ConciergeRequestModal open={showConcierge} onOpenChange={setShowConcierge} propertyId={propertyId} />
             <AppointmentRequestModal open={showAppointment} onOpenChange={setShowAppointment} propertyId={propertyId} />
           </div>
         )}
