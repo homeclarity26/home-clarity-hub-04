@@ -46,20 +46,16 @@ const AICommandBar = ({ onSubmit }: AICommandBarProps) => {
           />
         </form>
       </div>
-      {/* Prompt chips as subtle gold text links */}
-      <div className="flex items-center gap-1 mt-2 flex-wrap">
-        {SUGGESTED_PROMPTS.map((prompt, i) => (
-          <span key={prompt} className="flex items-center">
-            <button
-              onClick={() => handleChipClick(prompt)}
-              className="text-[11px] font-mono tracking-[0.05em] text-accent hover:text-foreground transition-colors bg-transparent border-none cursor-pointer px-1 py-0.5"
-            >
-              {prompt}
-            </button>
-            {i < SUGGESTED_PROMPTS.length - 1 && (
-              <span className="text-border text-[10px]">·</span>
-            )}
-          </span>
+      {/* Prompt chips */}
+      <div className="flex items-center gap-2 mt-3 flex-wrap">
+        {SUGGESTED_PROMPTS.map((prompt) => (
+          <button
+            key={prompt}
+            onClick={() => handleChipClick(prompt)}
+            className="text-xs font-sans text-accent border border-accent/30 rounded-full px-3.5 py-1.5 hover:bg-accent/10 hover:border-accent/60 transition-all cursor-pointer bg-transparent"
+          >
+            {prompt}
+          </button>
         ))}
       </div>
     </div>
