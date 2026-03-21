@@ -515,6 +515,7 @@ const AdminClientDetail = () => {
         {activeTab === "overview" && (
           <div className="space-y-6">
             <AIClientInsightsCard propertyId={client.propertyId} clientData={{ name: client.name, address: client.address, propertyType: client.propertyType, yearBuilt: client.yearBuilt }} />
+            <AIMeetingPrep clientId={client.propertyId} clientName={client.name} propertyAddress={client.address} />
             <HealthScoreTrend clientId={client.propertyId} />
             <ClientRiskScore client={client} invoices={invoices?.map(i => ({ status: i.status, due_date: i.due_date, balance_due: Number(i.balance_due) }))} />
             <ClientHealthCard client={client} />

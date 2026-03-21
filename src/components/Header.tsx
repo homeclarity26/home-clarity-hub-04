@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Menu, Settings, Pencil, Bell, ChevronDown } from "lucide-react";
+import { Menu, Settings, Pencil, ChevronDown } from "lucide-react";
+import NotificationBell from "@/components/portal/NotificationBell";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { Switch } from "@/components/ui/switch";
@@ -201,14 +202,8 @@ const Header = ({ activeTab, onTabChange, propertyId }: HeaderProps) => {
             onNavigate={(tab) => onTabChange(tab)}
           />
         )}
-        {!isCreator && (
-          <button
-            onClick={() => onTabChange("notifications")}
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors bg-transparent border-none cursor-pointer"
-            title="Notification Settings"
-          >
-            <Bell className="w-4 h-4" />
-          </button>
+        {!isCreator && propertyId && (
+          <NotificationBell propertyId={propertyId} onNavigate={(tab) => onTabChange(tab)} />
         )}
         {isCreator && (
           <button
