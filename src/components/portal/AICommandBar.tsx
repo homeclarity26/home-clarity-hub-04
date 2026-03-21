@@ -46,13 +46,13 @@ const AICommandBar = ({ onSubmit }: AICommandBarProps) => {
           />
         </form>
       </div>
-      {/* Prompt chips */}
-      <div className="flex items-center gap-2 mt-3 flex-wrap">
+      {/* Prompt chips — uniform grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mt-3">
         {SUGGESTED_PROMPTS.map((prompt) => (
           <button
             key={prompt}
             onClick={() => handleChipClick(prompt)}
-            className="text-xs font-sans text-accent border border-accent/30 rounded-full px-3.5 py-1.5 hover:bg-accent/10 hover:border-accent/60 transition-all cursor-pointer bg-transparent"
+            className="text-xs font-sans text-accent border border-accent/30 rounded-full px-3 py-2 hover:bg-accent/10 hover:border-accent/60 transition-all cursor-pointer bg-transparent text-center"
           >
             {prompt}
           </button>
