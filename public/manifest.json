@@ -1,0 +1,12 @@
+{
+  "name": "Home Clarity Hub",
+  "short_name": "HBC",
+  "description": "Your home stewardship platform — report, projects, and maintenance clarity.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f5f0",
+  "theme_color": "#1e2d4d",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "64x64", "type": "image/x-icon" }
+  ]
+}
