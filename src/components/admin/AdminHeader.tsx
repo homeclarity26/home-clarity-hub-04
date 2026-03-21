@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useAdminStats } from "@/hooks/useAdminData";
 import NotificationBell from "@/components/admin/NotificationBell";
 import KeyboardShortcuts from "@/components/admin/KeyboardShortcuts";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface AdminHeaderProps {
   breadcrumbs: { label: string; path?: string }[];
@@ -47,6 +48,7 @@ const AdminHeader = ({ breadcrumbs }: AdminHeaderProps) => {
         </div>
 
         <KeyboardShortcuts />
+        <ThemeToggle />
         <NotificationBell />
 
         <Button
