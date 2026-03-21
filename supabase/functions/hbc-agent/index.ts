@@ -1072,12 +1072,73 @@ serve(async (req) => {
     // Filter tools by role
     const allowedTools = TOOLS.filter(t => t.allowedRoles.includes(role));
 
+    // ─── SMART CONTEXT INJECTION (Self-Learning Layer) ───
+    let smartContext: any = {};
+    try {
+      const scResp = await fetch(`${supabaseUrl}/functions/v1/get-smart-context`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseServiceKey}` },
+        body: JSON.stringify({
+          role,
+          userId,
+          entityType: context?.currentEntityType,
+          entityId: context?.currentEntityId,
+          propertyId: context?.propertyId || context?.currentEntityId,
+          pageKey: context?.activeTab,
+        }),
+      });
+      if (scResp.ok) smartContext = await scResp.json();
+    } catch (scErr) {
+      console.warn("Smart context fetch failed (non-fatal):", scErr);
+    }
+
     // Build system prompt with context injection
     let systemPrompt: string;
     if (role === "client") {
       systemPrompt = CLIENT_SYSTEM_PROMPT(context?.currentEntityName || "Homeowner", context?.enrichment);
     } else {
       systemPrompt = ADMIN_SYSTEM_PROMPT;
+    }
+
+    // Inject learned patterns into system prompt
+    if (smartContext.advisor_patterns && smartContext.advisor_patterns.length > 0) {
+      systemPrompt += `\n\n## LEARNED PATTERNS (from your past work)\n`;
+      for (const p of smartContext.advisor_patterns) {
+        systemPrompt += `- **${p.type}** (${p.key}): ${JSON.stringify(p.data).slice(0, 200)} [confidence: ${p.confidence}, uses: ${p.uses}]\n`;
+      }
+      systemPrompt += `\nUse these patterns to inform your suggestions. When you pre-fill or suggest content based on learned patterns, note it with "✨ Suggested based on your past work".`;
+    }
+
+    if (smartContext.suggestion_history) {
+      systemPrompt += `\n\n## AI SUGGESTION ACCEPTANCE RATES\n`;
+      for (const [type, stats] of Object.entries(smartContext.suggestion_history as Record<string, any>)) {
+        systemPrompt += `- ${type}: ${stats.acceptance_rate}% accepted (${stats.total} total)\n`;
+      }
+    }
+
+    if (smartContext.cross_client_insights && smartContext.cross_client_insights.length > 0) {
+      systemPrompt += `\n\n## CROSS-CLIENT INTELLIGENCE\n`;
+      for (const i of smartContext.cross_client_insights) {
+        systemPrompt += `- ${i.insight_key}: ${JSON.stringify(i.insight_data).slice(0, 200)}\n`;
+      }
+    }
+
+    if (smartContext.behavior_profile) {
+      const bp = smartContext.behavior_profile;
+      systemPrompt += `\n\n## CLIENT BEHAVIOR PROFILE\n`;
+      systemPrompt += `Engagement: ${bp.engagement_level} | Communication preference: ${bp.communication_preference} | Satisfaction: ${bp.satisfaction_trend} | Active goals: ${bp.goals_active}\n`;
+      if (bp.engagement_level === "high") {
+        systemPrompt += `This client is highly engaged — offer proactive suggestions, detailed insights, and advanced features.\n`;
+      } else if (bp.engagement_level === "low" || bp.engagement_level === "dormant") {
+        systemPrompt += `This client has low engagement — keep responses simple, short, and encouraging. Gentle prompts work better than detailed explanations.\n`;
+      }
+    }
+
+    if (smartContext.home_insights && smartContext.home_insights.length > 0) {
+      systemPrompt += `\n\n## INSIGHTS FOR HOMES LIKE YOURS\n`;
+      for (const i of smartContext.home_insights) {
+        systemPrompt += `- ${JSON.stringify(i).slice(0, 200)}\n`;
+      }
     }
 
     if (context?.currentEntityType && context?.currentEntityId) {
@@ -1190,6 +1251,18 @@ serve(async (req) => {
     }
 
     const duration = Date.now() - startTime;
+
+    // ─── LOG LEARNING EVENTS for each tool call ───
+    for (const tc of toolsCalled) {
+      supabase.from("learning_events").insert({
+        event_type: `tool_${tc.tool_name}`,
+        actor_id: userId,
+        actor_role: role,
+        entity_type: tc.entity_type,
+        entity_id: tc.entity_id,
+        event_data: { params: tc.params, success: tc.success, result_summary: tc.result_summary },
+      }).then(() => {}).catch(() => {});
+    }
 
     if (userId) {
       await supabase.from("agent_logs").insert({
