@@ -54,7 +54,7 @@ const Index = () => {
   const [reportPageId, setReportPageId] = useState<string | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   // showOnboarding removed — consolidated into tutorial modal
-  const [helpOpen, _setHelpOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const { editMode, toggleEditMode, canEdit } = useEditMode();
 
