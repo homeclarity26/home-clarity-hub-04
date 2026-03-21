@@ -180,9 +180,18 @@ const Index = () => {
 
   if (portal.isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-          Loading your portal...
+      <div className="min-h-screen bg-background">
+        <div className="h-20 bg-card shadow-hbc-sm" />
+        <div className="max-w-5xl mx-auto px-6 md:px-20 pt-10 space-y-6">
+          <div className="h-8 w-48 bg-muted animate-pulse rounded-md" />
+          <div className="h-4 w-72 bg-muted animate-pulse rounded-md" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
+            ))}
+          </div>
+          <div className="h-48 bg-muted animate-pulse rounded-lg" />
+          <div className="h-32 bg-muted animate-pulse rounded-lg" />
         </div>
       </div>
     );

@@ -95,12 +95,26 @@ const AdminDashboard = () => {
         </WidgetErrorBoundary>
 
         {/* Primary Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatsCard label="Active Clients" value={stats?.activeClients ?? 0} icon={Users} />
-          <StatsCard label="Reports in Progress" value={stats?.reportsInProgress ?? 0} icon={FileText} />
-          <StatsCard label="Unanswered Questions" value={stats?.unansweredQuestions ?? 0} icon={HelpCircle} alert={!!stats && stats.unansweredQuestions > 0} />
-          <StatsCard label="Published Reports" value={stats?.publishedReports ?? 0} icon={CheckCircle} />
-        </div>
+        {statsLoading ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="p-5 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg bg-muted animate-pulse" />
+                <div className="space-y-2">
+                  <div className="h-6 w-12 bg-muted animate-pulse rounded" />
+                  <div className="h-3 w-20 bg-muted animate-pulse rounded" />
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatsCard label="Active Clients" value={stats?.activeClients ?? 0} icon={Users} />
+            <StatsCard label="Reports in Progress" value={stats?.reportsInProgress ?? 0} icon={FileText} />
+            <StatsCard label="Unanswered Questions" value={stats?.unansweredQuestions ?? 0} icon={HelpCircle} alert={!!stats && stats.unansweredQuestions > 0} />
+            <StatsCard label="Published Reports" value={stats?.publishedReports ?? 0} icon={CheckCircle} />
+          </div>
+        )}
 
         {/* Portfolio Health Dashboard */}
         {clients && clients.length > 0 && (
