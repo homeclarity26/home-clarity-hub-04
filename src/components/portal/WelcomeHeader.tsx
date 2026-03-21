@@ -20,7 +20,7 @@ const WelcomeHeader = ({ firstName, propertyAddress, estimatedValue }: WelcomeHe
   const displayName = firstName || "there";
 
   return (
-    <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto">
+    <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-5xl mx-auto">
       <div className="mb-3">
         <h1 className="font-display text-3xl md:text-[36px] text-foreground">
           {greeting}, {displayName}

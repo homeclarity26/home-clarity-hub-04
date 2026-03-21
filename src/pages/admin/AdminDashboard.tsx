@@ -4,6 +4,7 @@ import { Users, FileText, HelpCircle, CheckCircle, BookOpen, AlertTriangle, Plus
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import AdminHeader from "@/components/admin/AdminHeader";
 import StatsCard from "@/components/admin/StatsCard";
 import ActivityFeed from "@/components/admin/ActivityFeed";
@@ -23,10 +24,11 @@ import { useAdminClients, useAdminStats, useAdminActivityLog, useClientsNeedingA
 import { useWeeklyTimeEntries } from "@/hooks/useTimeTracking";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 const PropertyMap = lazy(() => import("@/components/admin/PropertyMap"));
 
-// Isolate rendering errors to individual widgets instead of crashing the whole page
 class WidgetErrorBoundary extends Component<{ name: string; children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
   static getDerivedStateFromError() { return { hasError: true }; }
@@ -51,10 +53,10 @@ const AdminDashboard = () => {
   const { data: activities } = useAdminActivityLog(10);
   const { data: attentionClients } = useClientsNeedingAttention();
   const { data: weeklyTime } = useWeeklyTimeEntries();
+  const [referenceOpen, setReferenceOpen] = useState(false);
 
   const isLoading = statsLoading || clientsLoading;
 
-  // Weekly time summary
   const weeklyHours = (weeklyTime || []).reduce((s: number, e: any) => s + Number(e.hours), 0);
   const weeklyByClient: Record<string, { name: string; hours: number }> = {};
   (weeklyTime || []).forEach((e: any) => {
@@ -72,16 +74,15 @@ const AdminDashboard = () => {
         queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
       })
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
-
-  
 
   return (
     <div>
       <AdminHeader breadcrumbs={[{ label: "Dashboard" }]} />
       <div className="p-6 space-y-6 max-w-7xl">
+
+        {/* ═══ ZONE 1: BRIEFING ═══ */}
         <WidgetErrorBoundary name="DailyBrief">
           <DailyBrief />
         </WidgetErrorBoundary>
@@ -98,138 +99,157 @@ const AdminDashboard = () => {
           <StatsCard label="Published Reports" value={stats?.publishedReports ?? 0} icon={CheckCircle} />
         </div>
 
-        <WidgetErrorBoundary name="OverdueActionCenter">
-          <OverdueActionCenter />
-        </WidgetErrorBoundary>
+        {/* ═══ ZONE 2: ACTION — Things requiring clicks ═══ */}
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">Action Required</p>
+          <div className="space-y-4">
+            <WidgetErrorBoundary name="OverdueActionCenter">
+              <OverdueActionCenter />
+            </WidgetErrorBoundary>
 
-        <WidgetErrorBoundary name="RevenueAnalytics">
-          <RevenueAnalytics />
-        </WidgetErrorBoundary>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* My Tasks */}
+              <Card className="lg:col-span-2 p-5">
+                <TasksSection compact />
+              </Card>
 
-        <WidgetErrorBoundary name="SubscriptionDashboard">
-          <SubscriptionDashboardWidget />
-        </WidgetErrorBoundary>
+              {/* Clients Needing Attention + Quick Actions */}
+              <div className="space-y-6">
+                {attentionClients && attentionClients.length > 0 && (
+                  <Card className="p-5">
+                    <h2 className="text-sm font-sans font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-accent" />
+                      Needs Attention
+                    </h2>
+                    <div className="space-y-2">
+                      {attentionClients.slice(0, 5).map((c) => (
+                        <button
+                          key={c.propertyId}
+                          onClick={() => navigate(`/admin/clients/${c.propertyId}`)}
+                          className="w-full text-left bg-transparent border-none cursor-pointer p-2.5 rounded-md hover:bg-muted/50 transition-colors"
+                        >
+                          <p className="text-sm font-sans font-medium text-foreground truncate">{c.propertyName}</p>
+                          <div className="flex gap-2 mt-1 flex-wrap">
+                            {c.unreadMessages > 0 && (
+                              <Badge variant="secondary" className="text-[10px] gap-1 h-5">
+                                <MessageSquare className="w-3 h-3" />{c.unreadMessages} unread
+                              </Badge>
+                            )}
+                            {c.openQuestions > 0 && (
+                              <Badge variant="secondary" className="text-[10px] gap-1 h-5">
+                                <HelpCircle className="w-3 h-3" />{c.openQuestions} questions
+                              </Badge>
+                            )}
+                            {c.overdueInvoices > 0 && (
+                              <Badge variant="destructive" className="text-[10px] gap-1 h-5">
+                                <AlertTriangle className="w-3 h-3" />{c.overdueInvoices} overdue
+                              </Badge>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </Card>
+                )}
 
-        <WidgetErrorBoundary name="WeeklyDigestWidget">
-          <WeeklyDigestWidget />
-        </WidgetErrorBoundary>
-
-        <WidgetErrorBoundary name="CRMDashboardWidget">
-          <CRMDashboardWidget />
-        </WidgetErrorBoundary>
-
-        <WidgetErrorBoundary name="CrossReportAnalytics">
-          <CrossReportAnalytics />
-        </WidgetErrorBoundary>
-
-        <WidgetErrorBoundary name="PropertyMap">
-          <Suspense fallback={<Card className="p-5 h-64 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></Card>}>
-            <PropertyMap />
-          </Suspense>
-        </WidgetErrorBoundary>
-
-        {/* Tasks + Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* My Tasks */}
-          <Card className="lg:col-span-2 p-5">
-            <TasksSection compact />
-          </Card>
-
-          {/* Time This Week */}
-          <Card className="p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <h3 className="text-sm font-sans font-semibold text-foreground">Time This Week</h3>
-            </div>
-            <p className="text-2xl font-sans font-bold text-foreground">{weeklyHours.toFixed(1)}h</p>
-            {weeklyRanked.length > 0 && (
-              <div className="mt-3 space-y-2">
-                {weeklyRanked.map((c) => (
-                  <div key={c.name} className="flex items-center justify-between">
-                    <span className="text-xs font-sans text-muted-foreground truncate max-w-[150px]">{c.name}</span>
-                    <span className="text-xs font-mono text-foreground">{c.hours.toFixed(1)}h</span>
+                <Card className="p-5">
+                  <h2 className="text-sm font-sans font-semibold text-foreground mb-4">Quick Actions</h2>
+                  <div className="space-y-2">
+                    <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => navigate("/admin/clients/new")}>
+                      <Plus className="w-4 h-4" />New Client
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => {
+                      window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+                    }}>
+                      <Command className="w-4 h-4" />Quick Search (⌘K)
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => navigate("/admin/clients?status=review")}>
+                      <AlertTriangle className="w-4 h-4 text-accent" />Review Flagged Items
+                      <span className="ml-auto text-xs text-accent font-medium">{stats?.unansweredQuestions ?? 0}</span>
+                    </Button>
                   </div>
-                ))}
+                </Card>
               </div>
-            )}
-          </Card>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Recent Activity */}
-          <Card className="lg:col-span-2 p-5">
-            <h2 className="text-sm font-sans font-semibold text-foreground mb-4">Recent Activity</h2>
-            <ActivityFeed activities={activities || []} limit={6} />
-          </Card>
+        {/* ═══ ZONE 3: INSIGHTS — Read-only monitoring ═══ */}
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">Insights</p>
+          <div className="space-y-4">
+            <WidgetErrorBoundary name="RevenueAnalytics">
+              <RevenueAnalytics />
+            </WidgetErrorBoundary>
 
-          {/* Clients Needing Attention + Quick Actions */}
-          <div className="space-y-6">
-            {attentionClients && attentionClients.length > 0 && (
-              <Card className="p-5">
-                <h2 className="text-sm font-sans font-semibold text-foreground mb-3 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-accent" />
-                  Needs Attention
-                </h2>
-                <div className="space-y-2">
-                  {attentionClients.slice(0, 5).map((c) => (
-                    <button
-                      key={c.propertyId}
-                      onClick={() => navigate(`/admin/clients/${c.propertyId}`)}
-                      className="w-full text-left bg-transparent border-none cursor-pointer p-2.5 rounded-md hover:bg-muted/50 transition-colors"
-                    >
-                      <p className="text-sm font-sans font-medium text-foreground truncate">{c.propertyName}</p>
-                      <div className="flex gap-2 mt-1 flex-wrap">
-                        {c.unreadMessages > 0 && (
-                          <Badge variant="secondary" className="text-[10px] gap-1 h-5">
-                            <MessageSquare className="w-3 h-3" />{c.unreadMessages} unread
-                          </Badge>
-                        )}
-                        {c.openQuestions > 0 && (
-                          <Badge variant="secondary" className="text-[10px] gap-1 h-5">
-                            <HelpCircle className="w-3 h-3" />{c.openQuestions} questions
-                          </Badge>
-                        )}
-                        {c.overdueInvoices > 0 && (
-                          <Badge variant="destructive" className="text-[10px] gap-1 h-5">
-                            <AlertTriangle className="w-3 h-3" />{c.overdueInvoices} overdue
-                          </Badge>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </Card>
-            )}
+            <WidgetErrorBoundary name="SubscriptionDashboard">
+              <SubscriptionDashboardWidget />
+            </WidgetErrorBoundary>
 
-            <Card className="p-5">
-              <h2 className="text-sm font-sans font-semibold text-foreground mb-4">Quick Actions</h2>
-              <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => navigate("/admin/clients/new")}>
-                  <Plus className="w-4 h-4" />New Client
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => {
-                  // Trigger Cmd+K
-                  window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
-                }}>
-                  <Command className="w-4 h-4" />Quick Search (⌘K)
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => navigate("/admin/knowledge-base")}>
-                  <BookOpen className="w-4 h-4" />View Knowledge Base
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => navigate("/admin/clients?status=review")}>
-                  <AlertTriangle className="w-4 h-4 text-accent" />Review Flagged Items
-                  <span className="ml-auto text-xs text-accent font-medium">{stats?.unansweredQuestions ?? 0}</span>
-                </Button>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <WidgetErrorBoundary name="WeeklyDigestWidget">
+                  <WeeklyDigestWidget />
+                </WidgetErrorBoundary>
               </div>
-            </Card>
+              <Card className="p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="text-sm font-sans font-semibold text-foreground">Time This Week</h3>
+                </div>
+                <p className="text-2xl font-sans font-bold text-foreground">{weeklyHours.toFixed(1)}h</p>
+                {weeklyRanked.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {weeklyRanked.map((c) => (
+                      <div key={c.name} className="flex items-center justify-between">
+                        <span className="text-xs font-sans text-muted-foreground truncate max-w-[150px]">{c.name}</span>
+                        <span className="text-xs font-mono text-foreground">{c.hours.toFixed(1)}h</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </div>
+
+            <WidgetErrorBoundary name="CRMDashboardWidget">
+              <CRMDashboardWidget />
+            </WidgetErrorBoundary>
+
+            <WidgetErrorBoundary name="CrossReportAnalytics">
+              <CrossReportAnalytics />
+            </WidgetErrorBoundary>
+          </div>
+        </div>
+
+        {/* ═══ ZONE 4: REFERENCE — Collapsed by default ═══ */}
+        <Collapsible open={referenceOpen} onOpenChange={setReferenceOpen}>
+          <CollapsibleTrigger className="w-full flex items-center gap-2 py-2 border-none bg-transparent cursor-pointer text-left">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Reference & Tools</p>
+            <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${referenceOpen ? "rotate-180" : ""}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-4 mt-3">
+            <WidgetErrorBoundary name="PropertyMap">
+              <Suspense fallback={<Card className="p-5 h-64 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></Card>}>
+                <PropertyMap />
+              </Suspense>
+            </WidgetErrorBoundary>
 
             <WidgetErrorBoundary name="NPSOverviewCard">
               <NPSOverviewCard />
             </WidgetErrorBoundary>
+
             <WidgetErrorBoundary name="EquipmentWarrantyCalendar">
               <EquipmentWarrantyCalendar />
             </WidgetErrorBoundary>
-          </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* Recent Activity + Clients */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-2 p-5">
+            <h2 className="text-sm font-sans font-semibold text-foreground mb-4">Recent Activity</h2>
+            <ActivityFeed activities={activities || []} limit={6} />
+          </Card>
         </div>
 
         {/* Recent Clients */}

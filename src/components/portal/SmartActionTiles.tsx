@@ -161,7 +161,7 @@ const SmartActionTiles = ({ onNavigate, propertyId, reportPages }: SmartActionTi
   }, [reportPages]);
 
   return (
-    <div className="w-full px-6 md:px-20 max-w-[1400px] mx-auto">
+    <div className="w-full">
       <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {tiles.map((tile) => (
