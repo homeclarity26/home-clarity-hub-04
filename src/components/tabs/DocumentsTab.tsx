@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import DocumentExpirationTracker from "@/components/portal/DocumentExpirationTracker";
+import InsuranceAssistant from "@/components/InsuranceAssistant";
 
 interface DocumentsTabProps {
   propertyId?: string;
@@ -274,6 +276,13 @@ const DocumentsTab = ({ propertyId }: DocumentsTabProps) => {
               </div>
             );
           })
+        )}
+        {/* Document Expiration Tracker — relocated from Home */}
+        {propertyId && <DocumentExpirationTracker propertyId={propertyId} />}
+
+        {/* Insurance Assistant — relocated from Home */}
+        {propertyId && !propertyId?.startsWith("mock-") && (
+          <InsuranceAssistant propertyId={propertyId} />
         )}
       </div>
     </div>

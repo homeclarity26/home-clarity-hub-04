@@ -1,31 +1,12 @@
 import { useState, useEffect } from "react";
-import { FileText, Hammer, Receipt, Calendar, Users, MessageCircle, Phone, ChevronRight, Home, CheckCircle2, Circle, Info, Wrench, CalendarPlus } from "lucide-react";
+import { CheckCircle2, Circle, ChevronRight, CalendarPlus } from "lucide-react";
 import WelcomeHeader from "@/components/portal/WelcomeHeader";
 import AICommandBar from "@/components/portal/AICommandBar";
 import SmartActionTiles, { trackSectionVisit } from "@/components/portal/SmartActionTiles";
 import AISuggestionsStrip from "@/components/portal/AISuggestionsStrip";
 import CompactHealthBar from "@/components/portal/CompactHealthBar";
-import MyHomeStory from "@/components/portal/MyHomeStory";
-import FeedbackWidget from "@/components/FeedbackWidget";
-import HomeValueTracker from "@/components/HomeValueTracker";
 import MembershipBanner from "@/components/MembershipBanner";
-import ValuationModal from "@/components/ValuationModal";
-import SeasonalMaintenanceTips from "@/components/portal/SeasonalMaintenanceTips";
-import DocumentExpirationTracker from "@/components/portal/DocumentExpirationTracker";
-import ClientReferralPortal from "@/components/portal/ClientReferralPortal";
-import CostComparisonTool from "@/components/portal/CostComparisonTool";
-import HomeImprovementWishlist from "@/components/portal/HomeImprovementWishlist";
-import ServiceRequestForm from "@/components/portal/ServiceRequestForm";
-import AnnualReportCard from "@/components/AnnualReportCard";
-import MaintenanceReminders from "@/components/MaintenanceReminders";
-import HomeGoals from "@/components/HomeGoals";
-import InsuranceAssistant from "@/components/InsuranceAssistant";
-import PropertyTimeline from "@/components/portal/PropertyTimeline";
-import AIPriorityCard from "@/components/portal/AIPriorityCard";
-import SatisfactionSurvey from "@/components/portal/SatisfactionSurvey";
 import AppointmentRequestModal from "@/components/portal/AppointmentRequestModal";
-import PredictiveMaintenanceCard from "@/components/portal/PredictiveMaintenanceCard";
-import { usePropertyValuation } from "@/hooks/usePropertyValuation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { ReportPageData } from "@/data/reportContent";
@@ -58,10 +39,7 @@ const HomeTab = ({
   reportPages,
 }: HomeTabProps) => {
   const { user } = useAuth();
-  const [valuationOpen, setValuationOpen] = useState(false);
-  const [showServiceRequest, setShowServiceRequest] = useState(false);
   const [showAppointment, setShowAppointment] = useState(false);
-  const { valuation, isLoading: valLoading, fetchValuation } = usePropertyValuation(propertyId, propertyAddress);
   const [customization, setCustomization] = useState<{ welcome_message?: string; tagline?: string; hero_photo_url?: string; advisor_signature?: string } | null>(null);
 
   useEffect(() => {
@@ -76,7 +54,7 @@ const HomeTab = ({
     load();
   }, [propertyId]);
 
-  const displayValue = valuation?.price ?? estimatedValue;
+  const displayValue = estimatedValue;
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || customization?.welcome_message?.split(" ")[0] || propertyName?.split(" ")[0];
 
   const handleAskQuestion = (query?: string) => {
@@ -88,8 +66,6 @@ const HomeTab = ({
     trackSectionVisit(tab);
     onNavigate(tab, pageId);
   };
-
-  const statusLabel = completionPercent === 100 ? "COMPLETE" : completionPercent > 0 ? "IN PROGRESS" : "NOT STARTED";
 
   return (
     <div className="flex flex-col pb-16">
@@ -124,23 +100,14 @@ const HomeTab = ({
         {reportPages && <CompactHealthBar pages={reportPages} onNavigate={handleNavigateTracked} />}
       </div>
 
-      {/* Valuation Modal (retained) */}
-      <ValuationModal
-        open={valuationOpen}
-        onOpenChange={setValuationOpen}
-        valuation={valuation}
-        onRefresh={() => fetchValuation(true)}
-        isRefreshing={valLoading}
-      />
-
-      {/* Membership Banner */}
+      {/* SECTION 6 — Membership Banner (conditional) */}
       {membershipEndDate && (
         <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mb-10">
           <MembershipBanner membershipEndDate={membershipEndDate} onSendMessage={() => onNavigate("messages")} />
         </div>
       )}
 
-      {/* Getting Started (only if report incomplete) */}
+      {/* SECTION 7 — Getting Started Checklist (conditional) */}
       {completionPercent < 100 && (
         <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mb-10">
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Getting Started</p>
@@ -172,161 +139,7 @@ const HomeTab = ({
         </div>
       )}
 
-      {/* Existing sections below the fold */}
-      <div className="max-w-[1400px] mx-auto px-6 md:px-20 flex flex-col gap-10 w-full">
-        {propertyId && <AIPriorityCard propertyId={propertyId} reportPages={reportPages} />}
-        {propertyId && <PredictiveMaintenanceCard propertyId={propertyId} clientId={user?.id} />}
-        {propertyId && <SatisfactionSurvey propertyId={propertyId} />}
-        {reportPages && <CostComparisonTool pages={reportPages} />}
-        {propertyId && (
-          <HomeValueTracker propertyId={propertyId} estimatedValue={estimatedValue} propertyAddress={propertyAddress} />
-        )}
-        {propertyId && !propertyId.startsWith("mock-") && (
-          <AnnualReportCard propertyId={propertyId} />
-        )}
-        <SeasonalMaintenanceTips />
-        {propertyId && <DocumentExpirationTracker propertyId={propertyId} />}
-        {propertyId && !propertyId.startsWith("mock-") && (
-          <MaintenanceReminders propertyId={propertyId} />
-        )}
-        {propertyId && !propertyId.startsWith("mock-") && (
-          <HomeGoals propertyId={propertyId} />
-        )}
-        {propertyId && <HomeImprovementWishlist propertyId={propertyId} />}
-        {propertyId && !propertyId.startsWith("mock-") && (
-          <InsuranceAssistant propertyId={propertyId} />
-        )}
-        <ClientReferralPortal />
-      </div>
-
-      {/* Portal Status Cards */}
-      <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mt-10">
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Your Portal Status</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <button
-            onClick={() => handleNavigateTracked("report")}
-            className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 w-full`}
-          >
-            <FileText className="w-5 h-5 text-accent mb-3" />
-            <h2 className="font-display text-xl text-foreground mb-1">Home Clarity Report</h2>
-            <p className="font-sans text-sm text-muted-foreground mb-3">Your complete home assessment</p>
-            <div>
-              <div className="w-full h-0.5 bg-border relative mb-2">
-                <div className="h-full bg-accent transition-all" style={{ width: `${completionPercent}%` }} />
-              </div>
-              <div className="flex items-center justify-between">
-                <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">{completionPercent}% Complete</p>
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent">{statusLabel}</span>
-              </div>
-            </div>
-          </button>
-          <button
-            onClick={() => handleNavigateTracked("projects")}
-            className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 w-full`}
-          >
-            <Hammer className="w-5 h-5 text-accent mb-3" />
-            <h2 className="font-display text-xl text-foreground mb-1">Active Projects</h2>
-            <p className="font-sans text-sm text-muted-foreground">Track ongoing home improvements</p>
-            <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-2 block">No active projects</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Navigate Your Portal */}
-      <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mt-10">
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Navigate Your Portal</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {[
-            { icon: <Receipt className="w-5 h-5 text-accent" />, label: "Payments", sub: "Account & transaction history", tab: "payments" },
-            { icon: <Calendar className="w-5 h-5 text-accent" />, label: "Schedule & Timeline", sub: "Appointments & reminders", tab: "schedule" },
-            { icon: <Users className="w-5 h-5 text-accent" />, label: "Your Home Team", sub: "Advisors & vendor partners", tab: "contacts" },
-          ].map((item) => (
-            <button
-              key={item.tab}
-              onClick={() => handleNavigateTracked(item.tab)}
-              className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 w-full`}
-            >
-              <div className="mb-3">{item.icon}</div>
-              <h2 className="font-display text-xl text-foreground mb-1">{item.label}</h2>
-              <p className="font-sans text-sm text-muted-foreground">{item.sub}</p>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors mt-2" />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mt-10">
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <button onClick={() => handleNavigateTracked("report")} className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 w-full`}>
-            <FileText className="w-5 h-5 text-accent mb-3" />
-            <h2 className="font-display text-xl text-foreground mb-1">View Your Report</h2>
-            <p className="font-sans text-sm text-muted-foreground">Read your complete Home Clarity assessment</p>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors mt-2" />
-          </button>
-          <button onClick={() => handleAskQuestion()} className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 w-full`}>
-            <MessageCircle className="w-5 h-5 text-accent mb-3" />
-            <h2 className="font-display text-xl text-foreground mb-1">Ask a Question</h2>
-            <p className="font-sans text-sm text-muted-foreground">AI-powered answers about your home</p>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors mt-2" />
-          </button>
-          <button onClick={() => handleNavigateTracked("contacts")} className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 w-full`}>
-            <Phone className="w-5 h-5 text-accent mb-3" />
-            <h2 className="font-display text-xl text-foreground mb-1">Contact Your Advisor</h2>
-            <p className="font-sans text-sm text-muted-foreground">Adam Kilgore — Founder & Lead Advisor</p>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors mt-2" />
-          </button>
-        </div>
-      </div>
-
-      {/* Service Request */}
-      {propertyId && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mt-10">
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Need Help?</p>
-          <div className={`${cardBase} p-6`}>
-            {showServiceRequest ? (
-              <>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-display text-xl text-foreground">Submit a Service Request</h3>
-                  <button onClick={() => setShowServiceRequest(false)} className="font-mono text-[10px] text-muted-foreground bg-transparent border-none cursor-pointer hover:text-foreground">Cancel</button>
-                </div>
-                <ServiceRequestForm propertyId={propertyId} onSubmitted={() => setShowServiceRequest(false)} />
-              </>
-            ) : (
-              <button
-                onClick={() => setShowServiceRequest(true)}
-                className="w-full flex items-center gap-3 bg-transparent border-none cursor-pointer text-left p-2 hover:bg-muted/30 rounded-lg transition-colors"
-              >
-                <Wrench className="w-5 h-5 text-accent" />
-                <div className="flex-1">
-                  <h3 className="font-display text-xl text-foreground">Report an Issue</h3>
-                  <p className="font-sans text-sm text-muted-foreground">Submit a service request with photos</p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Advisor Signature */}
-      {customization?.advisor_signature && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mt-10">
-          <div className={`${cardBase} p-6 text-center`}>
-            <p className="font-sans text-sm text-muted-foreground italic">{customization.advisor_signature}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Property Timeline */}
-      <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-8 w-full mt-10">
-        <div className={`${cardBase} p-6`}>
-          <PropertyTimeline propertyId={propertyId} />
-        </div>
-      </div>
-
-      {/* Schedule Consultation */}
+      {/* Schedule Consultation CTA */}
       {propertyId && (
         <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full">
           <button
@@ -344,17 +157,12 @@ const HomeTab = ({
         </div>
       )}
 
-      {/* My Home's Story */}
-      {propertyId && !propertyId.startsWith("mock-") && (
+      {/* Advisor Signature */}
+      {customization?.advisor_signature && (
         <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mt-10">
-          <MyHomeStory propertyId={propertyId} propertyName={propertyName} />
-        </div>
-      )}
-
-      {/* Feedback */}
-      {propertyId && !propertyId.startsWith("mock-") && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-20 w-full mt-10">
-          <FeedbackWidget propertyId={propertyId} title="How's your experience with Home Clarity Hub?" />
+          <div className={`${cardBase} p-6 text-center`}>
+            <p className="font-sans text-sm text-muted-foreground italic">{customization.advisor_signature}</p>
+          </div>
         </div>
       )}
     </div>

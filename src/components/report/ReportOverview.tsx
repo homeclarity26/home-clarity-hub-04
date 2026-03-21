@@ -2,6 +2,10 @@ import { useMemo } from "react";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
+import CostComparisonTool from "@/components/portal/CostComparisonTool";
+import AnnualReportCard from "@/components/AnnualReportCard";
+import PropertyTimeline from "@/components/portal/PropertyTimeline";
+import MyHomeStory from "@/components/portal/MyHomeStory";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 import DigitalHomePanel from "./DigitalHomePanel";
 import { CHAPTERS } from "./ReportChapterNav";
@@ -67,6 +71,7 @@ interface ReportOverviewProps {
   iguideUrl?: string | null;
   iguidePdfUrl?: string | null;
   estimatedValue?: number | null;
+  propertyId?: string;
 }
 
 const ReportOverview = ({
@@ -84,6 +89,7 @@ const ReportOverview = ({
   iguideUrl,
   iguidePdfUrl,
   estimatedValue,
+  propertyId,
 }: ReportOverviewProps) => {
   // Calculate health scores
   const allPagesList = useMemo(() => Object.values(pages), [pages]);
@@ -389,6 +395,22 @@ const ReportOverview = ({
           iguideUrl={iguideUrl}
           iguidePdfUrl={iguidePdfUrl}
         />
+
+        {/* Cost Comparison Tool — relocated from Home */}
+        {Object.keys(pages).length > 0 && <CostComparisonTool pages={pages} />}
+
+        {/* Annual Report Card — relocated from Home */}
+        {propertyId && !propertyId?.startsWith("mock-") && (
+          <AnnualReportCard propertyId={propertyId} />
+        )}
+
+        {/* Property Timeline — relocated from Home */}
+        {propertyId && <PropertyTimeline propertyId={propertyId} />}
+
+        {/* My Home's Story — relocated from Home */}
+        {propertyId && !propertyId?.startsWith("mock-") && (
+          <MyHomeStory propertyId={propertyId} propertyName={propertyName} />
+        )}
       </div>
     </div>
   );

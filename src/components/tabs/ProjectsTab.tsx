@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight, ChevronDown, CheckCircle, Calendar, DollarSign, User, Loader2, MessageSquare, PlusCircle } from "lucide-react";
+import HomeGoals from "@/components/HomeGoals";
+import HomeImprovementWishlist from "@/components/portal/HomeImprovementWishlist";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ContractorBidsSection from "@/components/admin/ContractorBidsSection";
 import ProjectPhotoTimeline from "@/components/admin/ProjectPhotoTimeline";
@@ -486,6 +488,14 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Home Goals — relocated from Home */}
+        {propertyId && !propertyId?.startsWith("mock-") && (
+          <HomeGoals propertyId={propertyId} />
+        )}
+
+        {/* Home Improvement Wishlist — relocated from Home */}
+        {propertyId && <HomeImprovementWishlist propertyId={propertyId} />}
       </div>
     </div>
   );

@@ -373,6 +373,7 @@ const ReportTab = ({
       iguideUrl={iguideUrl}
       iguidePdfUrl={iguidePdfUrl}
       estimatedValue={estimatedValue}
+      propertyId={propertyId}
     />
   );
 };
