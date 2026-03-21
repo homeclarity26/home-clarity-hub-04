@@ -40,30 +40,7 @@ const AISuggestionsStrip = ({ onNavigate, reportPages }: AISuggestionsStripProps
       }
     }
 
-    items.push(
-      {
-        id: "hvac-service",
-        icon: <Wrench className="w-5 h-5 text-accent" />,
-        headline: "Your HVAC hasn't been serviced in 11 months — schedule now",
-        action: "Schedule",
-        tab: "equipment",
-      },
-      {
-        id: "roof-inspection",
-        icon: <Calendar className="w-5 h-5 text-accent" />,
-        headline: "Roof inspection recommended before summer",
-        action: "View",
-        tab: "report",
-        pageId: "roof",
-      },
-      {
-        id: "overdue-tasks",
-        icon: <FileText className="w-5 h-5 text-accent" />,
-        headline: "3 maintenance tasks are overdue from last season",
-        action: "Act",
-        tab: "schedule",
-      }
-    );
+    // Only show data-driven suggestions — no hardcoded filler items
 
     return items;
   }, [reportPages]);

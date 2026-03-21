@@ -1,19 +1,24 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X, MessageSquare, CheckSquare, Briefcase, Target, Share2, Megaphone, Zap, GraduationCap, BarChart3, Calendar, Award } from "lucide-react";
+import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X, MessageSquare, CheckSquare, Briefcase, Target, Share2, Megaphone, Zap, GraduationCap, BarChart3, Calendar, Award, Home, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useOpenTaskCount } from "@/hooks/useAdminTasks";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-const navItems = [
+const primaryNavItems = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard, showBadge: true },
-  { label: "Analytics", path: "/admin/analytics", icon: BarChart3 },
   { label: "Inbox", path: "/admin/inbox", icon: MessageSquare },
-  { label: "Calendar", path: "/admin/calendar", icon: Calendar },
+  { label: "Clients", path: "/admin/clients", icon: Home },
   { label: "CRM", path: "/admin/crm", icon: Users },
   { label: "Projects", path: "/admin/projects", icon: Briefcase },
   { label: "Tasks", path: "/admin/tasks", icon: CheckSquare },
+  { label: "Calendar", path: "/admin/calendar", icon: Calendar },
+  { label: "Analytics", path: "/admin/analytics", icon: BarChart3 },
+];
+
+const toolsNavItems = [
   { label: "Goals", path: "/admin/goals", icon: Target },
   { label: "Referrals", path: "/admin/referrals", icon: Share2 },
   { label: "Announcements", path: "/admin/announcements", icon: Megaphone },
@@ -21,7 +26,6 @@ const navItems = [
   { label: "Annual Reviews", path: "/admin/annual-reviews", icon: Award },
   { label: "Knowledge Base", path: "/admin/knowledge-base", icon: BookOpen },
   { label: "Help & Tutorials", path: "/admin/help", icon: GraduationCap },
-  { label: "Settings", path: "/admin/settings", icon: Settings },
 ];
 
 const SidebarContent = ({ onNavClick }: { onNavClick?: () => void }) => {

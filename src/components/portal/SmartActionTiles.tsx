@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import {
   FileText, Hammer, Receipt, Calendar, Shield, Wrench,
-  AlertTriangle, ChevronRight
+  AlertTriangle, ChevronRight, MessageSquare, FolderOpen, UsersRound
 } from "lucide-react";
 import type { ReportPageData } from "@/data/reportContent";
 
@@ -57,9 +57,9 @@ const SECTION_META: Record<string, { icon: React.ReactNode; label: string; defau
   payments: { icon: <Receipt className="w-5 h-5" />, label: "Payments", defaultSubtitle: "Invoices & billing" },
   schedule: { icon: <Calendar className="w-5 h-5" />, label: "Schedule", defaultSubtitle: "Appointments & timeline" },
   equipment: { icon: <Shield className="w-5 h-5" />, label: "Equipment", defaultSubtitle: "Your home systems" },
-  documents: { icon: <FileText className="w-5 h-5" />, label: "Documents", defaultSubtitle: "Files & records" },
-  messages: { icon: <FileText className="w-5 h-5" />, label: "Messages", defaultSubtitle: "Chat with your advisor" },
-  contacts: { icon: <FileText className="w-5 h-5" />, label: "Home Team", defaultSubtitle: "Advisors & vendors" },
+  documents: { icon: <FolderOpen className="w-5 h-5" />, label: "Documents", defaultSubtitle: "Files & records" },
+  messages: { icon: <MessageSquare className="w-5 h-5" />, label: "Messages", defaultSubtitle: "Chat with your advisor" },
+  contacts: { icon: <UsersRound className="w-5 h-5" />, label: "Home Team", defaultSubtitle: "Advisors & vendors" },
 };
 
 function timeAgo(ts: number): string {
@@ -99,19 +99,7 @@ const SmartActionTiles = ({ onNavigate, propertyId, reportPages }: SmartActionTi
       }
     }
 
-    if (result.length < 2) {
-      if (!usedIds.has("urgent-maintenance")) {
-        result.push({
-          id: "urgent-maintenance",
-          type: "urgent",
-          icon: <Wrench className="w-5 h-5" />,
-          label: "Overdue Maintenance",
-          subtitle: "HVAC service past due",
-          tab: "equipment",
-        });
-        usedIds.add("urgent-maintenance");
-      }
-    }
+    // No hardcoded fake urgency tiles — only show real data-driven items
 
     const recent = getRecentSections();
     const visits = getVisitData();
