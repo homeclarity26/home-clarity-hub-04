@@ -95,3 +95,9 @@ verify_jwt = false
 
 [functions.fetch-home-value]
 verify_jwt = false
+
+[functions.learn-from-activity]
+verify_jwt = false
+
+[functions.get-smart-context]
+verify_jwt = false
