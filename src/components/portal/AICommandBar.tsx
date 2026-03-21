@@ -11,6 +11,7 @@ const SUGGESTED_PROMPTS = [
   "Review my spending",
   "What's coming up?",
   "Show open proposals",
+  "View schedule",
 ];
 
 const AICommandBar = ({ onSubmit }: AICommandBarProps) => {
