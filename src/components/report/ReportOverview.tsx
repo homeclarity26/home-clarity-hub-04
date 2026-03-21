@@ -2,6 +2,10 @@ import { useMemo } from "react";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
+import CostComparisonTool from "@/components/portal/CostComparisonTool";
+import AnnualReportCard from "@/components/AnnualReportCard";
+import PropertyTimeline from "@/components/portal/PropertyTimeline";
+import MyHomeStory from "@/components/portal/MyHomeStory";
 import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 import DigitalHomePanel from "./DigitalHomePanel";
 import { CHAPTERS } from "./ReportChapterNav";
@@ -67,6 +71,7 @@ interface ReportOverviewProps {
   iguideUrl?: string | null;
   iguidePdfUrl?: string | null;
   estimatedValue?: number | null;
+  propertyId?: string;
 }
 
 const ReportOverview = ({
