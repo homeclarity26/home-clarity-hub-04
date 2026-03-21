@@ -10,36 +10,37 @@ interface HomeHealthScoreProps {
 }
 
 const CONDITION_SCORES: Record<string, number> = {
-  excellent: 100,
-  good: 80,
-  fair: 55,
-  poor: 30,
-  critical: 10,
+  Excellent: 100,
+  Good: 80,
+  Fair: 55,
+  Poor: 30,
+  Critical: 10,
 };
 
 const HomeHealthScore = ({ reportPages, onNavigate }: HomeHealthScoreProps) => {
   const health = useMemo(() => {
     if (!reportPages) return null;
-    const pages = Object.values(reportPages);
-    const rated = pages.filter((p) => p.conditionRating && CONDITION_SCORES[p.conditionRating] !== undefined);
+    const entries = Object.entries(reportPages);
+    const rated = entries.filter(([, p]) => p.conditionRating && CONDITION_SCORES[p.conditionRating] !== undefined);
     if (rated.length === 0) return null;
 
-    const totalScore = rated.reduce((s, p) => s + (CONDITION_SCORES[p.conditionRating!] || 0), 0);
+    const totalScore = rated.reduce((s, [, p]) => s + (CONDITION_SCORES[p.conditionRating!] || 0), 0);
     const score = Math.round(totalScore / rated.length);
 
     const breakdown = {
-      excellent: rated.filter((p) => p.conditionRating === "excellent").length,
-      good: rated.filter((p) => p.conditionRating === "good").length,
-      fair: rated.filter((p) => p.conditionRating === "fair").length,
-      poor: rated.filter((p) => p.conditionRating === "poor").length,
-      critical: rated.filter((p) => p.conditionRating === "critical").length,
+      excellent: rated.filter(([, p]) => p.conditionRating === "Excellent").length,
+      good: rated.filter(([, p]) => p.conditionRating === "Good").length,
+      fair: rated.filter(([, p]) => p.conditionRating === "Fair").length,
+      poor: rated.filter(([, p]) => p.conditionRating === "Poor").length,
+      critical: rated.filter(([, p]) => p.conditionRating === "Critical").length,
     };
 
     const needsAttention = rated
-      .filter((p) => p.conditionRating === "poor" || p.conditionRating === "critical")
+      .filter(([, p]) => p.conditionRating === "Poor" || p.conditionRating === "Critical")
+      .map(([key, p]) => ({ key, ...p }))
       .slice(0, 3);
 
-    return { score, rated: rated.length, total: pages.length, breakdown, needsAttention };
+    return { score, rated: rated.length, total: entries.length, breakdown, needsAttention };
   }, [reportPages]);
 
   if (!health) return null;
