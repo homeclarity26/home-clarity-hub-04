@@ -6683,6 +6683,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_creator: { Args: never; Returns: boolean }
+      owns_property: { Args: { _property_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "creator" | "client" | "trade_partner"
