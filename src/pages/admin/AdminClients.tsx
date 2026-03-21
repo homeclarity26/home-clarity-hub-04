@@ -10,20 +10,47 @@ import ClientTable from "@/components/admin/ClientTable";
 import ClientComparisonView from "@/components/admin/ClientComparisonView";
 import BulkReportGenerator from "@/components/admin/BulkReportGenerator";
 import ExportMenu from "@/components/admin/ExportMenu";
+import ClientSmartFilters, { DEFAULT_FILTERS, type FilterState } from "@/components/admin/ClientSmartFilters";
 import { useAdminClients } from "@/hooks/useAdminData";
 import { exportClientsToCSV } from "@/lib/csvExport";
+import type { AdminClient } from "@/hooks/useAdminData";
+
+function getOnboardingComplete(client: AdminClient) {
+  const steps = [
+    !!client.address,
+    !!client.discoveryNotes,
+    client.digitalAssetsStatus === "complete",
+    client.totalPages > 0,
+    client.reportStatus === "published",
+  ];
+  return steps.every(Boolean);
+}
+
+function applyFilters(clients: AdminClient[], filters: FilterState): AdminClient[] {
+  return clients.filter((c) => {
+    // Search
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      if (!c.name.toLowerCase().includes(q) && !c.address.toLowerCase().includes(q)) return false;
+    }
+    // Status
+    if (filters.status !== "all" && c.reportStatus !== filters.status) return false;
+    // Onboarding
+    if (filters.onboarding === "complete" && !getOnboardingComplete(c)) return false;
+    if (filters.onboarding === "incomplete" && getOnboardingComplete(c)) return false;
+    // Unread
+    if (filters.hasUnread === "yes" && (c.unreadMessages || 0) === 0 && (c.unreadComments || 0) === 0) return false;
+    if (filters.hasUnread === "no" && ((c.unreadMessages || 0) > 0 || (c.unreadComments || 0) > 0)) return false;
+    return true;
+  });
+}
 
 const AdminClients = () => {
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const navigate = useNavigate();
   const { data: clients, isLoading } = useAdminClients();
 
-  const filtered = (clients || []).filter((c) => {
-    const matchesSearch = search === "" || c.name.toLowerCase().includes(search.toLowerCase()) || c.address.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || c.reportStatus === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filtered = applyFilters(clients || [], filters);
 
   return (
     <div>
@@ -42,24 +69,19 @@ const AdminClients = () => {
           </div>
 
           <TabsContent value="clients">
-            <div className="flex items-center gap-3 flex-1 mb-4">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Search clients..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 font-sans" />
-              </div>
-              <div className="flex gap-1">
-                {["all", "draft", "review", "published"].map((s) => (
-                  <Button key={s} variant={statusFilter === s ? "default" : "outline"} size="sm" onClick={() => setStatusFilter(s)} className="text-xs font-sans capitalize">
-                    {s === "all" ? "All" : s === "review" ? "In Review" : s}
-                  </Button>
-                ))}
-              </div>
+            <div className="space-y-3 mb-4">
+              <ClientSmartFilters filters={filters} onChange={setFilters} />
               {clients && clients.length > 0 && (
-                <div className="flex gap-1.5">
-                  <Button variant="outline" size="sm" onClick={() => exportClientsToCSV(clients)} className="gap-1.5 text-xs font-sans">
-                    <Download className="w-4 h-4" />Quick CSV
-                  </Button>
-                  <ExportMenu />
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-sans text-muted-foreground">
+                    Showing {filtered.length} of {clients.length} clients
+                  </p>
+                  <div className="flex gap-1.5">
+                    <Button variant="outline" size="sm" onClick={() => exportClientsToCSV(clients)} className="gap-1.5 text-xs font-sans">
+                      <Download className="w-4 h-4" />Quick CSV
+                    </Button>
+                    <ExportMenu />
+                  </div>
                 </div>
               )}
             </div>
@@ -70,7 +92,7 @@ const AdminClients = () => {
                 <ClientTable clients={filtered} />
               ) : (
                 <p className="text-sm font-sans text-muted-foreground text-center py-12">
-                  {clients?.length === 0 ? "No clients yet." : "No clients match your search."}
+                  {clients?.length === 0 ? "No clients yet." : "No clients match your filters."}
                 </p>
               )}
             </Card>

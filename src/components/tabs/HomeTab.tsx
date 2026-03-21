@@ -10,6 +10,10 @@ import SeasonalChecklist from "@/components/portal/SeasonalChecklist";
 import ClientGoalsWidget from "@/components/portal/ClientGoalsWidget";
 import NotificationNudges from "@/components/portal/NotificationNudges";
 import ConciergeRequestModal from "@/components/portal/ConciergeRequestModal";
+import DocumentExpirationTracker from "@/components/portal/DocumentExpirationTracker";
+import CostComparisonTool from "@/components/portal/CostComparisonTool";
+import PhotoInspectionSidebar from "@/components/portal/PhotoInspectionSidebar";
+import MyHomeStory from "@/components/portal/MyHomeStory";
 import MembershipBanner from "@/components/MembershipBanner";
 import AppointmentRequestModal from "@/components/portal/AppointmentRequestModal";
 import { useAuth } from "@/contexts/AuthContext";
@@ -73,6 +77,8 @@ const HomeTab = ({
     onNavigate(tab, pageId);
   };
 
+  const hasReportData = reportPages && Object.keys(reportPages).length > 0;
+
   return (
     <div className="flex flex-col pb-16">
       {/* SECTION 1 — Welcome Header */}
@@ -87,37 +93,58 @@ const HomeTab = ({
         {/* Smart Notification Nudges */}
         <NotificationNudges propertyId={propertyId} onNavigate={(tab) => handleNavigateTracked(tab)} />
 
-        {/* SECTION 2 — Home Health Score */}
+        {/* Home Health Score */}
         <HomeHealthScore reportPages={reportPages} onNavigate={handleNavigateTracked} />
 
-        {/* SECTION 3 — AI Command Bar */}
+        {/* AI Command Bar */}
         <AICommandBar onSubmit={handleAskQuestion} />
 
-        {/* SECTION 4 — Smart Action Tiles */}
+        {/* Smart Action Tiles */}
         <SmartActionTiles
           onNavigate={handleNavigateTracked}
           propertyId={propertyId}
           reportPages={reportPages}
         />
 
-        {/* SECTION 5 — AI Suggestions Strip */}
+        {/* AI Suggestions Strip */}
         <AISuggestionsStrip onNavigate={handleNavigateTracked} reportPages={reportPages} />
 
-        {/* SECTION 6 — My Home Goals */}
+        {/* My Home Goals */}
         {propertyId && <ClientGoalsWidget propertyId={propertyId} />}
 
-        {/* SECTION 7 — Seasonal Maintenance Checklist */}
+        {/* Cost Comparison Tool */}
+        {hasReportData && (
+          <CostComparisonTool reportPages={reportPages} onNavigate={handleNavigateTracked} />
+        )}
+
+        {/* Document & Warranty Expiration Tracker */}
+        {propertyId && <DocumentExpirationTracker propertyId={propertyId} />}
+
+        {/* Two-column: Photo Inspector + Home Story */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {propertyId && <PhotoInspectionSidebar propertyId={propertyId} />}
+          {hasReportData && (
+            <MyHomeStory
+              propertyName={propertyName}
+              propertyAddress={propertyAddress}
+              reportPages={reportPages}
+              propertyId={propertyId}
+            />
+          )}
+        </div>
+
+        {/* Seasonal Maintenance Checklist */}
         <SeasonalChecklist propertyId={propertyId} />
 
-        {/* SECTION 8 — Compact Health Bar */}
+        {/* Compact Health Bar */}
         {reportPages && <CompactHealthBar pages={reportPages} onNavigate={handleNavigateTracked} />}
 
-        {/* SECTION 6 — Membership Banner (conditional) */}
+        {/* Membership Banner (conditional) */}
         {membershipEndDate && (
           <MembershipBanner membershipEndDate={membershipEndDate} onSendMessage={() => onNavigate("messages")} />
         )}
 
-        {/* SECTION 7 — Getting Started Checklist (conditional) */}
+        {/* Getting Started Checklist (conditional) */}
         {completionPercent < 100 && (
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Getting Started</p>
