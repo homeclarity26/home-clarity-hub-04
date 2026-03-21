@@ -482,11 +482,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
               {loading ? (
                 <p className="font-sans text-sm text-muted-foreground">Loading...</p>
               ) : paymentsPosted.length === 0 && invoices.filter(i => i.status === "paid").length === 0 ? (
-                <div className="flex flex-col items-center text-center py-8 gap-3">
-                  <List className="w-6 h-6 text-accent" />
-                  <h3 className="font-display text-xl text-foreground">No Transactions Yet</h3>
-                  <p className="font-sans text-sm text-muted-foreground max-w-[40ch]">Your payment history will appear here.</p>
-                </div>
+                <EmptyState icon={List} title="No Transactions Yet" description="Your payment history will appear here." />
               ) : (
                 <table className="w-full border-collapse">
                   <thead>

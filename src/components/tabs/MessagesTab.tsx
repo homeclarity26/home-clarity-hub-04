@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Send, Loader2, MessageSquare, Video, Link } from "lucide-react";
+import EmptyState from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -152,10 +153,8 @@ const MessagesTab = ({ propertyId, creatorName = "Your HBC Advisor", creatorInit
             {isLoading ? (
               <div className="flex items-center justify-center h-full"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
             ) : messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full gap-3">
-                <MessageSquare className="w-8 h-8 text-muted-foreground/40" />
-                <p className="font-sans text-sm font-medium text-foreground">No Messages Yet</p>
-                <p className="text-sm font-sans text-muted-foreground text-center max-w-sm">Send a message to start the conversation with your advisor.</p>
+              <div className="flex items-center justify-center h-full">
+                <EmptyState icon={MessageSquare} title="No Messages Yet" description="Send a message to start the conversation with your advisor." />
               </div>
             ) : (
               messages.map((msg) => {
