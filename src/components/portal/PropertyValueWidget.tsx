@@ -20,12 +20,11 @@ const PropertyValueWidget = ({ propertyId, estimatedValue: initialValue }: Prope
     const load = async () => {
       const { data } = await supabase
         .from("properties")
-        .select("estimated_value, value_updated_at")
+        .select("estimated_value")
         .eq("id", propertyId)
         .single();
-      if (data) {
-        if (data.estimated_value) setValue(Number(data.estimated_value));
-        if ((data as any).value_updated_at) setLastUpdated((data as any).value_updated_at);
+      if (data && data.estimated_value) {
+        setValue(Number(data.estimated_value));
       }
     };
     load();
