@@ -64,6 +64,41 @@ interface PaymentPosted {
   notes: string | null;
 }
 
+const PayNowButton = ({ invoice }: { invoice: Invoice }) => {
+  const [loading, setLoading] = useState(false);
+  const handlePay = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: {
+          invoice_id: invoice.id,
+          amount: Number(invoice.balance_due),
+          title: invoice.title || invoice.description || `Invoice ${invoice.invoice_number}`,
+          success_url: `${window.location.origin}${window.location.pathname}?payment=success`,
+          cancel_url: `${window.location.origin}${window.location.pathname}?payment=cancelled`,
+        },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned");
+      }
+    } catch (err) {
+      console.error("Checkout error:", err);
+      toast.error("Unable to start payment. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <Button onClick={handlePay} disabled={loading} className="w-full mt-4 gap-2 font-sans">
+      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+      {loading ? "Redirecting..." : `Pay ${fmt(Number(invoice.balance_due))} Now`}
+    </Button>
+  );
+};
+
 const cardBase = "group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full";
 const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 
