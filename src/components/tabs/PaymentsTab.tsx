@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Receipt, ShieldCheck, Calendar, List, MessageCircle, FileText, ChevronRight, Eye, CreditCard } from "lucide-react";
+import EmptyState from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
@@ -388,11 +389,11 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
               {loading ? (
                 <p className="font-sans text-sm text-muted-foreground">Loading...</p>
               ) : visibleInvoices.length === 0 ? (
-                <div className="flex flex-col items-center text-center py-8 gap-3">
-                  <FileText className="w-6 h-6 text-accent" />
-                  <h3 className="font-display text-xl text-foreground">No Invoices Yet</h3>
-                  <p className="font-sans text-sm text-muted-foreground max-w-[40ch]">Your invoices will appear here.</p>
-                </div>
+                <EmptyState
+                  icon={FileText}
+                  title="No Invoices Yet"
+                  description="Your invoices and estimates will appear here once your advisor creates them."
+                />
               ) : (
                 <table className="w-full border-collapse">
                   <thead>

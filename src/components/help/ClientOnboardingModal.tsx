@@ -1,33 +1,39 @@
 import { useState } from "react";
-import { FileText, Wrench, Star } from "lucide-react";
+import { FileText, Wrench, Star, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTutorialProgress } from "@/hooks/useTutorialProgress";
 
 interface ClientOnboardingModalProps {
   onComplete: (navigateTo?: string) => void;
+  propertyName?: string;
+  creatorName?: string;
 }
 
 const steps = [
   {
-    title: "Welcome to Your Home Clarity Hub Portal",
-    subtitle: "Your personalized home stewardship system.",
+    id: "welcome",
+    title: "Welcome to Your Home Clarity Hub",
+    subtitle: "Your personalized home stewardship portal.",
     body: "Everything you need to understand, maintain, and improve your home lives here. Your advisor has built this portal specifically for you and your property.",
     icon: null,
     button: "Get Started →",
   },
   {
+    id: "report",
     title: "Your Home Clarity Report",
     body: "At the heart of your portal is your Home Clarity Report — a chapter-by-chapter assessment of your home's condition. It includes your Home Health Score, condition ratings for every major system, Priority Action Items, and a multi-year Strategic Plan built just for your home.",
     icon: FileText,
     button: "Next →",
   },
   {
+    id: "tools",
     title: "Projects, Schedule & Equipment",
     body: "Your advisor creates projects directly tied to your report findings. Track their status, see estimated costs, and follow along as work is completed. Your Equipment Registry logs every major system in your home, and your seasonal Maintenance Calendar keeps everything running smoothly year-round.",
     icon: Wrench,
     button: "Next →",
   },
   {
+    id: "ready",
     title: "You're All Set",
     body: "Your portal is ready. Explore at your own pace — or jump straight to your report to see your Home Health Score and what your advisor recommends.",
     icon: Star,
@@ -35,7 +41,7 @@ const steps = [
   },
 ];
 
-const ClientOnboardingModal = ({ onComplete }: ClientOnboardingModalProps) => {
+const ClientOnboardingModal = ({ onComplete, propertyName, creatorName }: ClientOnboardingModalProps) => {
   const [step, setStep] = useState(0);
   const { markOnboardingComplete, ensureRecord } = useTutorialProgress();
 
@@ -71,6 +77,9 @@ const ClientOnboardingModal = ({ onComplete }: ClientOnboardingModalProps) => {
 
         {/* Content */}
         <h2 className="font-display text-xl text-foreground mb-1">{current.title}</h2>
+        {current.id === "welcome" && propertyName && (
+          <p className="font-display text-base text-accent mb-1">{propertyName}</p>
+        )}
         {current.subtitle && (
           <p className="text-sm font-sans text-muted-foreground mb-4">{current.subtitle}</p>
         )}
@@ -82,11 +91,17 @@ const ClientOnboardingModal = ({ onComplete }: ClientOnboardingModalProps) => {
             {current.button}
           </Button>
         ) : (
-          <div className="flex gap-3">
-            <Button onClick={() => handleFinish("report")} className="flex-1 font-sans">
-              View My Report
-            </Button>
-            <Button onClick={() => handleFinish()} variant="outline" className="flex-1 font-sans">
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-3">
+              <Button onClick={() => handleFinish("report")} className="flex-1 font-sans">
+                View My Report
+              </Button>
+              <Button onClick={() => handleFinish("messages")} variant="outline" className="flex-1 font-sans gap-1.5">
+                <MessageCircle className="w-4 h-4" />
+                Message {creatorName?.split(" ")[0] || "Advisor"}
+              </Button>
+            </div>
+            <Button onClick={() => handleFinish()} variant="ghost" size="sm" className="font-sans text-muted-foreground">
               Explore My Portal
             </Button>
           </div>
@@ -97,7 +112,7 @@ const ClientOnboardingModal = ({ onComplete }: ClientOnboardingModalProps) => {
           {steps.map((_, i) => (
             <div
               key={i}
-              className={`w-2 h-2 rounded-full transition-colors ${i <= step ? "bg-accent" : "bg-muted-foreground/30"}`}
+              className={`h-1.5 rounded-full transition-all ${i === step ? "bg-accent w-6" : i < step ? "bg-accent/40 w-1.5" : "bg-muted-foreground/20 w-1.5"}`}
             />
           ))}
         </div>

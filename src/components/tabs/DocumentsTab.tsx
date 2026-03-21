@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import EmptyState from "@/components/EmptyState";
 import { FileText, Image, Music, ExternalLink, FolderOpen, Loader2, Search, Upload, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -235,11 +236,11 @@ const DocumentsTab = ({ propertyId }: DocumentsTabProps) => {
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
         ) : filteredFiles.length === 0 && files.length === 0 ? (
-          <div className="text-center py-12">
-            <FolderOpen className="w-10 h-10 text-muted-foreground/40 mx-auto mb-4" />
-            <p className="font-sans text-sm text-muted-foreground">No documents have been shared yet.</p>
-            <p className="font-sans text-xs text-muted-foreground mt-1">Upload files above or your advisor will share them here.</p>
-          </div>
+          <EmptyState
+            icon={FolderOpen}
+            title="No Documents Yet"
+            description="Upload files above or your advisor will share documents here as they become available."
+          />
         ) : (
           categories.map((category) => {
             const catFiles = filteredFiles.filter((f) => f.category === category);

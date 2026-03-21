@@ -154,7 +154,8 @@ const MessagesTab = ({ propertyId, creatorName = "Your HBC Advisor", creatorInit
             ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full gap-3">
                 <MessageSquare className="w-8 h-8 text-muted-foreground/40" />
-                <p className="text-sm font-sans text-muted-foreground text-center">No messages yet. Send a message to start the conversation.</p>
+                <p className="font-sans text-sm font-medium text-foreground">No Messages Yet</p>
+                <p className="text-sm font-sans text-muted-foreground text-center max-w-sm">Send a message to start the conversation with your advisor.</p>
               </div>
             ) : (
               messages.map((msg) => {

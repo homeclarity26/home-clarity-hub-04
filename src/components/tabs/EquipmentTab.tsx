@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Wrench, AlertTriangle, Clock, CheckCircle, ShieldAlert, ChevronRight, FileText, MessageSquare } from "lucide-react";
+import EmptyState from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import { format, isPast, isAfter, addDays } from "date-fns";
 import PredictiveMaintenanceCard from "@/components/portal/PredictiveMaintenanceCard";
@@ -155,13 +156,13 @@ const EquipmentTab = ({ propertyId, onTabChange, onSendMessage }: EquipmentTabPr
         )}
 
         {equipment.length === 0 ? (
-          <div className={`${cardBase} p-8`}>
-            <Wrench className="w-5 h-5 text-accent mb-3" />
-            <h2 className="font-display text-xl text-foreground mb-1">No Equipment on File</h2>
-            <p className="font-sans text-sm text-muted-foreground">
-              Your advisor will add your home's major systems and appliances to this registry.
-            </p>
-          </div>
+          <EmptyState
+            icon={Wrench}
+            title="No Equipment on File"
+            description="Your advisor will add your home's major systems and appliances to this registry."
+            actionLabel="View Report"
+            onAction={() => onTabChange?.("report")}
+          />
         ) : (
           orderedCategories.map((category) => (
             <div key={category}>

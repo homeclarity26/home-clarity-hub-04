@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react";
+import EmptyState from "@/components/EmptyState";
 import { Camera, Upload, Download, ChevronLeft, ChevronRight, Loader2, Image as ImageIcon, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -225,12 +226,13 @@ const PhotosTab = ({ propertyId }: PhotosTabProps) => {
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
       ) : filtered.length === 0 ? (
-        <Card className="p-8 text-center border-dashed">
-          <ImageIcon className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-          <p className="text-sm font-sans text-muted-foreground">
-            {allPhotos.length === 0 ? "No photos yet. Upload some to get started!" : "No photos in this category"}
-          </p>
-        </Card>
+        <EmptyState
+          icon={ImageIcon}
+          title={allPhotos.length === 0 ? "No Photos Yet" : "No Photos in This Category"}
+          description={allPhotos.length === 0 ? "Upload photos to start building your home's visual record." : "Try selecting a different category filter above."}
+          actionLabel={allPhotos.length === 0 ? "Upload Photos" : undefined}
+          onAction={allPhotos.length === 0 ? () => fileInputRef.current?.click() : undefined}
+        />
       ) : (
         <div className="columns-2 md:columns-3 gap-3 space-y-3">
           {filtered.map((photo, idx) => (

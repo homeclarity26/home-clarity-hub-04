@@ -17,7 +17,7 @@ import BillingTab from "@/components/portal/BillingTab";
 import EquipmentTab from "@/components/tabs/EquipmentTab";
 import ServicesMenu from "@/components/portal/ServicesMenu";
 import EstimatesPortal from "@/components/portal/EstimatesPortal";
-import OnboardingOverlay from "@/components/OnboardingOverlay";
+// OnboardingOverlay removed — consolidated into ClientOnboardingModal
 import MembershipBanner from "@/components/MembershipBanner";
 import NotificationPreferences from "@/components/NotificationPreferences";
 import ClientReferralPortal from "@/components/portal/ClientReferralPortal";
@@ -36,16 +36,25 @@ import { useTutorialProgress } from "@/hooks/useTutorialProgress";
 import { supabase } from "@/integrations/supabase/client";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 
+const VALID_TABS = new Set([
+  "home", "report", "photos", "projects", "payments", "contacts",
+  "documents", "messages", "equipment", "services", "estimates",
+  "schedule", "billing", "notifications", "refer",
+]);
+
 const Index = () => {
-  const { propertyId } = useParams<{ propertyId?: string }>();
+  const { propertyId, tab: urlTab } = useParams<{ propertyId?: string; tab?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isEditLink = searchParams.get("edit") === "true";
   const { user, isCreator } = useAuth();
-  const [activeTab, setActiveTab] = useState("home");
+
+  // Derive active tab from URL — fall back to "home"
+  const activeTab = urlTab && VALID_TABS.has(urlTab) ? urlTab : "home";
+
   const [reportPageId, setReportPageId] = useState<string | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  // showOnboarding removed — consolidated into tutorial modal
   const [helpOpen, setHelpOpen] = useState(false);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const { editMode, toggleEditMode, canEdit } = useEditMode();
@@ -72,12 +81,7 @@ const Index = () => {
   usePortalTracking(activeTab);
   const { progress: tutorialProgress, markChecklistItem, ensureRecord } = useTutorialProgress();
 
-  // Check onboarding status for new clients
-  useEffect(() => {
-    if (!isCreator && profile && !(profile as any).has_completed_onboarding && portal.property) {
-      setShowOnboarding(true);
-    }
-  }, [profile, isCreator, portal.property]);
+  // Onboarding consolidated: only ClientOnboardingModal is used now
 
   // Show tutorial modal for first-time clients
   useEffect(() => {
@@ -117,30 +121,36 @@ const Index = () => {
     }
 
     if (pageParam) {
-      setActiveTab("report");
+      if (activeTab !== "report") {
+        navigate(`/portal/${propertyId}/report`, { replace: true });
+      }
       setReportPageId(pageParam);
     }
   }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const navigateToTab = useCallback((tab: string) => {
+    const base = propertyId ? `/portal/${propertyId}` : "/portal";
+    const path = tab === "home" ? base : `${base}/${tab}`;
+    navigate(path);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [propertyId, navigate]);
+
   const handleTabChange = useCallback((tab: string) => {
-    setActiveTab(tab);
     setReportPageId(null);
     if (tab !== "messages") setPendingMessage(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+    navigateToTab(tab);
+  }, [navigateToTab]);
 
   const handleSendMessage = useCallback((msg: string) => {
     setPendingMessage(msg);
-    setActiveTab("messages");
     setReportPageId(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+    navigateToTab("messages");
+  }, [navigateToTab]);
 
   const handleReportPageSelect = useCallback((pageId: string) => {
-    setActiveTab("report");
     setReportPageId(pageId);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+    navigateToTab("report");
+  }, [navigateToTab]);
 
   const handleNavigate = useCallback((tab: string, pageId?: string) => {
     if (pageId) {
@@ -201,19 +211,13 @@ const Index = () => {
       {/* Tutorial onboarding modal for first-time clients */}
       {showTutorialModal && !isCreator && (
         <ClientOnboardingModal
+          propertyName={propertyName}
+          creatorName={portal.creatorName}
           onComplete={(navigateTo) => {
             setShowTutorialModal(false);
             if (navigateTo === "report") handleTabChange("report");
+            if (navigateTo === "messages") handleTabChange("messages");
           }}
-        />
-      )}
-      {showOnboarding && portal.property && (
-        <OnboardingOverlay
-          propertyName={propertyName}
-          propertyAddress={portal.property.address}
-          creatorName={portal.creatorName}
-          onComplete={() => setShowOnboarding(false)}
-          onSendMessage={() => { setShowOnboarding(false); handleTabChange("messages"); }}
         />
       )}
       {isEditLink && canEdit && (
