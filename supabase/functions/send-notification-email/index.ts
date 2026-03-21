@@ -173,10 +173,48 @@ serve(async (req) => {
 
     const html = emailWrapper(body, prop.address);
 
-    // Log the notification (we can't actually send email without email infra, but we log intent)
-    console.log(`[Notification] type=${type} to=${clientEmail} subject="${subject}"`);
+    if (!clientEmail) {
+      return new Response(JSON.stringify({ error: "No client email found" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    return new Response(JSON.stringify({ success: true, type, recipient: clientEmail, subject }), {
+    // Send via Resend
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      console.warn("[Notification] RESEND_API_KEY not set — logging only");
+      console.log(`[Notification] type=${type} to=${clientEmail} subject="${subject}"`);
+      return new Response(JSON.stringify({ success: true, type, recipient: clientEmail, subject, sent: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const resendRes = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "Home Clarity Hub <notifications@resend.dev>",
+        to: [clientEmail],
+        subject,
+        html,
+      }),
+    });
+
+    if (!resendRes.ok) {
+      const errText = await resendRes.text();
+      console.error("Resend error:", errText);
+      return new Response(JSON.stringify({ error: "Failed to send email", details: errText }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const resendData = await resendRes.json();
+    console.log(`[Notification] Sent: type=${type} to=${clientEmail} emailId=${resendData.id}`);
+
+    return new Response(JSON.stringify({ success: true, type, recipient: clientEmail, subject, sent: true, emailId: resendData.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
