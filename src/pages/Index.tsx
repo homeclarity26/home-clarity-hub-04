@@ -359,7 +359,7 @@ const Index = () => {
       {!isCreator && (
         <HelpCenterPanel
           open={helpOpen}
-          onClose={() => _setHelpOpen(false)}
+          onClose={() => setHelpOpen(false)}
           onNavigate={handleTabChange}
         />
       )}
