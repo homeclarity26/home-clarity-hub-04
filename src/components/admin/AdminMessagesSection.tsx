@@ -73,6 +73,18 @@ const AdminMessagesSection = ({ propertyId, clientName, propertyAddress }: Admin
   useEffect(() => { fetchMessages(); }, [propertyId, user?.id]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
+  // Realtime subscription
+  useEffect(() => {
+    if (!propertyId) return;
+    const channel = supabase
+      .channel(`admin-messages-${propertyId}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "property_messages", filter: `property_id=eq.${propertyId}` }, () => {
+        fetchMessages();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [propertyId]);
+
   const handleSend = async () => {
     if (!newMessage.trim() || !user) return;
     setIsSending(true);
