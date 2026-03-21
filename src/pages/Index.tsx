@@ -36,13 +36,22 @@ import { useTutorialProgress } from "@/hooks/useTutorialProgress";
 import { supabase } from "@/integrations/supabase/client";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 
+const VALID_TABS = new Set([
+  "home", "report", "photos", "projects", "payments", "contacts",
+  "documents", "messages", "equipment", "services", "estimates",
+  "schedule", "billing", "notifications", "refer",
+]);
+
 const Index = () => {
-  const { propertyId } = useParams<{ propertyId?: string }>();
+  const { propertyId, tab: urlTab } = useParams<{ propertyId?: string; tab?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isEditLink = searchParams.get("edit") === "true";
   const { user, isCreator } = useAuth();
-  const [activeTab, setActiveTab] = useState("home");
+
+  // Derive active tab from URL — fall back to "home"
+  const activeTab = urlTab && VALID_TABS.has(urlTab) ? urlTab : "home";
+
   const [reportPageId, setReportPageId] = useState<string | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   // showOnboarding removed — consolidated into tutorial modal
