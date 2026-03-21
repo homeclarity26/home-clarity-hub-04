@@ -199,7 +199,7 @@ const AgentChat = ({ contextOverride, quickChips, onNavigate, onboardingMessage,
 
       // ── Log learning event for agent interaction ──
       if (data.actions_taken?.length > 0) {
-        supabase.from("learning_events").insert({
+        supabase.from("learning_events" as any).insert({
           event_type: "agent_action_completed",
           actor_id: buildContext().userId || undefined,
           actor_role: buildContext().role || "creator",
@@ -210,7 +210,7 @@ const AgentChat = ({ contextOverride, quickChips, onNavigate, onboardingMessage,
             actions_count: data.actions_taken.length,
             action_types: data.actions_taken.map((a: any) => a.tool_name),
           },
-        }).then(() => {}).catch(() => {});
+        } as any).then(() => {});
       }
     } catch (err: any) {
       setMessages(prev => [...prev, {

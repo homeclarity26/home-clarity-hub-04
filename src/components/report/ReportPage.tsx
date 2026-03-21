@@ -87,7 +87,7 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
       toast.success("Draft generated — review and edit as needed.");
 
       // ── Log learning event: draft generated ──
-      supabase.from("learning_events").insert({
+      supabase.from("learning_events" as any).insert({
         event_type: "draft_narrative_generated",
         actor_role: "creator",
         entity_type: "report_page",
@@ -98,7 +98,7 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
           narrative_length: data.narrative?.length || 0,
           has_observations: (data.key_observations?.length || 0) > 0,
         },
-      }).then(() => {}).catch(() => {});
+      } as any).then(() => {});
     } catch (err) {
       console.error("Draft narrative failed:", err);
       toast.error("Could not generate draft. Check that the edge function is deployed.");

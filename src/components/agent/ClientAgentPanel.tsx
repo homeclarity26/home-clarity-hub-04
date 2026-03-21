@@ -103,7 +103,7 @@ const ClientAgentPanel = ({ propertyName, propertyAddress, enrichment }: ClientA
       setMessages(prev => [...prev, { id: genId(), role: "assistant", content: data.reply || "Done!" }]);
 
       // ── Log learning event for client interaction ──
-      supabase.from("learning_events").insert({
+      supabase.from("learning_events" as any).insert({
         event_type: "client_agent_query",
         actor_id: user?.id || undefined,
         actor_role: "client",
@@ -114,7 +114,7 @@ const ClientAgentPanel = ({ propertyName, propertyAddress, enrichment }: ClientA
           tab: activeTab,
           had_actions: (data.actions_taken?.length || 0) > 0,
         },
-      }).then(() => {}).catch(() => {});
+      } as any).then(() => {});
     } catch (err: any) {
       setMessages(prev => [...prev, { id: genId(), role: "assistant", content: `Oops, something went wrong. Please try again! 🙏` }]);
     } finally {
