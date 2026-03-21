@@ -16,6 +16,8 @@ import OverdueActionCenter from "@/components/admin/OverdueActionCenter";
 import CrossReportAnalytics from "@/components/admin/CrossReportAnalytics";
 import WeeklyDigestWidget from "@/components/admin/WeeklyDigestWidget";
 import EquipmentWarrantyCalendar from "@/components/admin/EquipmentWarrantyCalendar";
+import PortfolioHealthDashboard from "@/components/admin/PortfolioHealthDashboard";
+import CrossClientInsightsCard from "@/components/admin/CrossClientInsightsCard";
 import AdminSetupChecklist from "@/components/admin/AdminSetupChecklist";
 import DailyBrief from "@/components/admin/DailyBrief";
 import CRMDashboardWidget from "@/components/admin/CRMDashboardWidget";
@@ -98,6 +100,13 @@ const AdminDashboard = () => {
           <StatsCard label="Unanswered Questions" value={stats?.unansweredQuestions ?? 0} icon={HelpCircle} alert={!!stats && stats.unansweredQuestions > 0} />
           <StatsCard label="Published Reports" value={stats?.publishedReports ?? 0} icon={CheckCircle} />
         </div>
+
+        {/* Portfolio Health Dashboard */}
+        {clients && clients.length > 0 && (
+          <WidgetErrorBoundary name="PortfolioHealthDashboard">
+            <PortfolioHealthDashboard clients={clients} />
+          </WidgetErrorBoundary>
+        )}
 
         {/* ═══ ZONE 2: ACTION — Things requiring clicks ═══ */}
         <div>
@@ -213,6 +222,10 @@ const AdminDashboard = () => {
 
             <WidgetErrorBoundary name="CRMDashboardWidget">
               <CRMDashboardWidget />
+            </WidgetErrorBoundary>
+
+            <WidgetErrorBoundary name="CrossClientInsightsCard">
+              <CrossClientInsightsCard />
             </WidgetErrorBoundary>
 
             <WidgetErrorBoundary name="CrossReportAnalytics">
