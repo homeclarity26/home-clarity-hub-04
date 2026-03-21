@@ -1,220 +1,172 @@
 
 
-# Agent Knowledge & Capability Audit + Gap Plan
+# Self-Learning Intelligence Layer — Architecture Plan
 
-## STEP 1: Current Agent Infrastructure
+## What Already Exists (Learning Infrastructure Audit)
 
-### A. HBC Agent (Admin) — `supabase/functions/hbc-agent/index.ts`
-**Architecture:** ReAct loop with Gemini 2.5 Flash, 70+ tool definitions, role-based access (`creator` vs `client`), confirmation flow for destructive/communication actions, agent_logs audit table.
+The app already captures a significant amount of raw data, but **none of it feeds back** into AI suggestions or auto-fill. It's storage, not learning.
 
-**Current Admin Tools (16 groups, ~50 tools):**
-| Group | Tools | Actions |
-|-------|-------|---------|
-| Client Mgmt | create/update/get/list/search/archive_client, update_stage, add_tag, log_activity, get_timeline | Full CRUD + CRM |
-| Reports | get_report, list_pages, update_page, set_page_status, publish_report | Read + edit + publish |
-| Field Inspection | create/get_field_inspections | Start + list |
-| Projects | create/update/get/list/delete_project, add_task, update/complete_task, create_change_order, budget_summary | Full CRUD |
-| Estimates | create/get/list/send_estimate, convert_to_invoice | Full lifecycle |
-| Invoices | create/update/list/mark_paid/send/void_invoice, get_financial_summary | Full lifecycle |
-| Vendors | create/update/get/list_vendors, create_review, request_bid | Full CRUD + bids |
-| Communication | send_message, ai_write_message, get_inbox, mark_read | Messaging |
-| Scheduling | create/get_calendar/get_upcoming/delete_event | Calendar CRUD |
-| Equipment | add/get/update/delete_equipment | Full CRUD |
-| Home Goals | create/list_home_goals | Create + list |
-| Membership | list_membership_tiers, list_services | Read-only |
-| Automations | list/toggle_automation | Read + toggle |
-| Announcements | create/list_announcements | Create + list |
-| Analytics | get_revenue_metrics, get_client_metrics, get_dashboard_summary | Read-only |
-| Settings | get/update_admin_profile | Profile CRUD |
+### Existing Data Sources (passive logging, no feedback loop)
+| Table | What It Captures | Used by AI? |
+|-------|------------------|-------------|
+| `agent_logs` | Every agent interaction: message, reply, tools called, duration, page context | No — logged but never queried by the agent |
+| `activity_log` | All admin/client actions: edits, publishes, comments, payments | No — displayed in timeline only |
+| `audit_log` | Before/after diffs on entity changes | No |
+| `page_views` / `client_sessions` | Client portal engagement (pages visited, session duration) | No — displayed in engagement tab only |
+| `feedback` / `client_satisfaction_scores` | Client ratings + comments | No |
+| `report_edit_history` | Field-level edit diffs on report pages | No |
+| `ai_draft_history` | AI-generated narratives (input notes → generated text) | No |
+| `narrative_snippets` | Reusable narrative blocks with usage_count | No — `usage_count` exists but never incremented |
+| `maintenance_outcomes` | Actual vs predicted maintenance results | No — predictions exist but outcomes never feed back |
+| `portfolio_snapshots` | Daily business metrics snapshots | No — stored but never trended |
+| `health_score_history` | Historical health scores per client | No — stored but never analyzed for trends |
+| `estimates` | Full proposal analytics (view count, time spent, sections viewed, accepted/declined) | No |
+| `knowledge_templates` | Knowledge base articles with categories | Partially — injected into `draft-page-narrative` for context |
 
-**Current Client Tools (10 tools):**
-| Tool | Action |
-|------|--------|
-| client_get_home_summary | Read projects, invoices, equipment counts |
-| client_get_report | Read published report + pages |
-| client_get_projects | Read projects |
-| client_get_invoices | Read invoices |
-| client_send_message | Send message to advisor |
-| client_request_appointment | Submit appointment request |
-| client_get_equipment | Read equipment list |
-| client_add_home_goal | Create a home goal |
-| client_submit_feedback | Submit NPS/rating |
-| (shared) create_home_goal / list_home_goals | Also accessible to client role |
-
-### B. Chat Assistant (Client Report Chat) — `supabase/functions/chat-assistant/index.ts`
-**Purpose:** Report-specific Q&A using Gemini direct API (not the agent). Streams responses with citation support (`[See: Page Title]`). Injected with full report page data, property info, goals, projects.
-**Limitation:** Read-only, no tool calling, no action execution. Purely conversational about the report.
-
-### C. CRM AI Assistant — `supabase/functions/crm-ai-assistant/index.ts`
-**Purpose:** Chat-only assistant for CRM page. Uses Lovable AI gateway with streaming.
-**Limitation:** No tool calling — it's a conversational-only assistant. It *describes* what it would do but cannot actually execute anything.
-
-### D. Client Agent Panel — `src/components/agent/ClientAgentPanel.tsx`
-**Purpose:** Floating sheet on client portal that calls `hbc-agent` with `role: "client"`.
-**Passes:** userId, propertyId, sessionId, role="client", currentEntityType="client_portal".
-**Missing:** Does NOT pass enrichment data (health score, report status, equipment, etc.). Does NOT pass `currentEntityName`.
+**Summary:** The app has ~15 data sources that could power a learning system, but currently zero feedback loops exist. Every AI call uses only the immediate context — never historical patterns.
 
 ---
 
-## STEP 2: Knowledge Gaps — "How Do I..." Coverage
+## What Needs to Be Built
 
-### Admin Side — What the agent DOESN'T know how to explain:
-The system prompt is operationally focused ("I can do everything") but has **zero app navigation knowledge**. It cannot explain:
-1. How to use the Knowledge Base (pricing/scope/system templates)
-2. How the Proposal Builder works
-3. How to use the Digital Twin / Document Intelligence features
-4. How Annual Reviews work
-5. How the Integrations Hub / Settings page works
-6. How the Field Inspection mode works step-by-step
-7. How the Report Editor WYSIWYG works
-8. How the AI tools work (Score Explainer, Condition Forecast, Meeting Prep, etc.)
-9. How the Referral tracking system works
-10. How to use the Command Palette / keyboard shortcuts
-11. How the Analytics dashboard works
-12. How to use message templates
-13. How the Task Board (Kanban) works
+### New Database Tables (5 tables)
 
-### Client Side — What the agent DOESN'T know how to explain:
-1. How to navigate the portal (tab layout, More dropdown)
-2. How to use the report chapter navigation
-3. How the Cost Comparison Tool works
-4. How to upload photos and flag concerns
-5. How to use the Concierge Request / Services menu
-6. How to view warranties in Equipment tab
-7. How to view/accept estimates (EstimatesPortal)
-8. How to use the billing/subscription features
-9. How the notification preferences work
-10. How the referral portal works
+1. **`advisor_patterns`** — Learned playbooks from admin behavior
+   - `admin_id`, `pattern_type` (report_structure, estimate_template, workflow_sequence, communication_style, pricing_pattern), `pattern_key` (e.g., "kitchen_report", "hvac_estimate"), `pattern_data` (JSONB — the learned template/structure), `usage_count`, `last_used_at`, `confidence_score` (0-1, increases with repeated use)
 
----
+2. **`ai_suggestion_outcomes`** — Feedback loop for every AI suggestion
+   - `suggestion_type` (draft_narrative, auto_fill, estimate_prefill, smart_reply, agent_recommendation), `suggestion_data` (JSONB — what was suggested), `outcome` (accepted, edited, rejected), `edited_data` (JSONB — what the admin changed it to, if edited), `context` (JSONB — what entity, what page), `admin_id`, `created_at`
 
-## STEP 3: Action Gaps — "Do It For Me" Coverage
+3. **`client_behavior_profiles`** — Per-client engagement/personality model
+   - `client_id` (unique), `engagement_level` (high, medium, low, dormant), `communication_preference` (detailed, summary, minimal), `response_speed_avg_hours`, `portal_focus_areas` (JSONB — array of most-visited tabs), `goals_active`, `satisfaction_trend` (improving, stable, declining), `churn_risk_score` (0-100), `last_computed_at`
 
-### Admin Agent — Missing Tool Capabilities:
-| Missing Action | Why It's Missing |
-|----------------|------------------|
-| Create/manage report (initialize, add pages) | Only read/edit/publish exist; no `create_report` or `add_report_page` |
-| Knowledge Base CRUD | No tools for knowledge_templates table |
-| Referral tracking | No tools to create/manage referrals |
-| Task Board operations | No standalone task CRUD (only project sub-tasks) |
-| Message templates | No tools to use/apply templates |
-| Annual review generation | No tool to trigger annual review |
-| AI tool invocations (Meeting Prep, Weekly Digest, Condition Forecast, etc.) | No agent tools to trigger these 15+ specialized edge functions |
-| Subscription/billing management | No tools for membership management |
-| Document upload/processing | No tools for Digital Twin actions |
-| Notification/email sending | No tools for notification dispatch |
-| Goal updates (complete/delete) | Only create/list exist |
-| Estimate update/delete | Only create/get/list/send/convert exist |
-| Project phase management | No tools for project phases (Gantt) |
-| Vendor assignment to projects | No tools for vendor-project linking |
+4. **`cross_client_insights`** — Aggregated anonymous patterns
+   - `insight_type` (common_issue, budget_pattern, timeline_pattern, seasonal_trend, churn_signal), `insight_key` (e.g., "homes_1960s_electrical"), `insight_data` (JSONB), `affected_client_count`, `confidence`, `last_updated`
 
-### Client Agent — Missing Tool Capabilities:
-| Missing Action | Why It's Missing |
-|----------------|------------------|
-| View warranties / next service dates | `client_get_equipment` exists but no warranty-specific query |
-| Upload photos | No tool for photo upload |
-| Flag concern on a photo | No tool |
-| Submit concierge/service request | No tool |
-| View/accept/decline estimates | No tool |
-| View schedule/upcoming events | No tool |
-| View documents | No tool |
-| Update/complete/delete a goal | Only add exists |
-| View payment history | `client_get_invoices` exists but no detailed payment view |
-| Make a payment | No tool (Stripe) |
-| Refer a friend | No tool |
-| Update notification preferences | No tool |
+5. **`learning_events`** — Raw event bus for all learnable moments
+   - `event_type` (report_completed, estimate_sent, estimate_responded, project_closed, draft_edited, goal_added, agent_query, etc.), `actor_id`, `actor_role`, `entity_type`, `entity_id`, `event_data` (JSONB — full payload), `created_at`
+
+### New Edge Functions (2 functions)
+
+1. **`learn-from-activity`** — Background processor triggered by cron or event
+   - Reads recent `learning_events`, aggregates into `advisor_patterns`, `client_behavior_profiles`, and `cross_client_insights`
+   - Updates `narrative_snippets.usage_count` when snippets are reused
+   - Computes client engagement levels from `page_views` + `client_sessions`
+   - Identifies churn signals from declining engagement + overdue invoices
+
+2. **`get-smart-context`** — Called by `hbc-agent` before each AI call
+   - Given an entity type + context, returns relevant learned patterns:
+     - For report drafting: advisor's typical structure, preferred language, past narratives for similar systems
+     - For estimates: typical pricing for this service type, acceptance rate data
+     - For client interactions: client's behavior profile, preferred communication style
+     - Cross-client insights relevant to this property (age, location, systems)
+
+### Modified Edge Functions
+
+1. **`hbc-agent/index.ts`** — Inject learned context into system prompt
+   - Before the ReAct loop, call `get-smart-context` to fetch relevant patterns
+   - Append to system prompt: "Based on your past work: [patterns]"
+   - After tool execution, log a `learning_event` for each action taken
+   - Log suggestion outcomes when admin edits or overrides AI-suggested content
+
+2. **`draft-page-narrative/index.ts`** — Use advisor patterns for style
+   - Query `advisor_patterns` for this admin's report writing style
+   - Include past narratives for the same system type as few-shot examples
+   - After generation, log to `ai_suggestion_outcomes`
+
+### Modified Frontend Components (3 files)
+
+1. **`AgentChat.tsx`** — Track suggestion outcomes
+   - When agent suggests something and admin modifies it, capture the delta
+   - Send outcome events to a new `/learning-event` endpoint or inline in next agent call
+
+2. **`ClientAgentPanel.tsx`** — Personalize based on behavior profile
+   - Fetch `client_behavior_profiles` for this client on mount
+   - Adjust quick chips and greeting based on engagement level
+   - High engagement → proactive suggestions; Low engagement → simpler prompts
+
+3. **Report editor (ReportPage.tsx)** — Log when AI drafts are edited
+   - After AI draft is generated and admin saves edits, log the diff as a `learning_event`
 
 ---
 
-## STEP 4: Context Awareness Gaps
+## Phased Build Plan
 
-### Admin Agent:
-- **Workspace rail** (`WorkspaceAgentRail`) correctly passes `clientId`, `propertyId`, `activeTab`, and enrichment data — this is well-implemented.
-- **Global agent** (non-workspace pages) passes minimal context — only route-derived entity type/ID. Missing: dashboard stats, task counts, calendar data.
+### Phase 1 — Event Bus + Suggestion Tracking (highest value, lowest complexity)
+**Tables:** `learning_events`, `ai_suggestion_outcomes`
+**Changes:** Instrument `hbc-agent` to log learning events after every tool call. Instrument `draft-page-narrative` to log suggestion outcomes. Add a simple outcome tracker in `AgentChat.tsx`.
+**Value:** Starts capturing data immediately. Every interaction becomes training data.
+**Effort:** ~2 hours
 
-### Client Agent:
-- **ClientAgentPanel** passes `propertyId` but does NOT pass:
-  - `currentEntityName` (always empty string)
-  - No enrichment data (health score, open invoice count, equipment needing service, report completion %)
-  - No active tab awareness
+### Phase 2 — Advisor Pattern Recognition
+**Tables:** `advisor_patterns`
+**Edge function:** `learn-from-activity` (cron, runs daily)
+**What it does:** Analyzes `learning_events` + `report_pages` + `estimates` + `ai_suggestion_outcomes` to extract:
+- Report structure preferences (section order, rating tendencies, language style)
+- Estimate pricing patterns (avg price per service type, typical line items)
+- Workflow sequences (what steps admin takes for common tasks)
+**Value:** Pre-fill reports/estimates based on how the advisor actually works.
+**Effort:** ~3 hours
 
----
+### Phase 3 — Smart Context Injection into Agents
+**Edge function:** `get-smart-context`
+**Changes:** `hbc-agent` calls `get-smart-context` before each conversation to load:
+- Advisor's patterns (for admin) or client's behavior profile (for client)
+- Relevant cross-client insights
+- Past suggestion outcomes to improve current suggestions
+**Value:** Every AI response becomes personalized and historically informed.
+**Effort:** ~3 hours
 
-## STEP 5: Recommended Build Plan
+### Phase 4 — Client Behavior Profiling
+**Tables:** `client_behavior_profiles`
+**Changes:** `learn-from-activity` computes profiles from `page_views`, `client_sessions`, `feedback`, `estimates` (response time), agent interaction frequency.
+**Frontend:** `ClientAgentPanel` adapts tone and suggestions per profile.
+**Value:** Passive clients get gentle nudges, power users get advanced suggestions.
+**Effort:** ~2 hours
 
-### Phase 1 — Comprehensive System Prompts (Knowledge Base)
-**Goal:** Both agents can answer any "How do I..." question.
+### Phase 5 — Cross-Client Intelligence
+**Tables:** `cross_client_insights`
+**Changes:** `learn-from-activity` aggregates anonymized patterns:
+- "Homes built before 1970 commonly need electrical panel upgrades" (from `report_pages` condition data + property year)
+- "Projects of type X typically run Y% over budget" (from `projects` actual vs estimated)
+- "Clients who ignore 3+ maintenance items show churn signals" (from engagement data)
+**Value:** Proactive alerts like "Based on homes similar to yours, you may want to consider..."
+**Effort:** ~3 hours
 
-1. **Add an app knowledge document** to each system prompt — a structured map of every feature, where it lives, and how to use it. This goes directly into `ADMIN_SYSTEM_PROMPT` and `CLIENT_SYSTEM_PROMPT` in `hbc-agent/index.ts`.
-   - Admin: ~40 features across Dashboard, Inbox, Clients, CRM, Projects, Tasks, Calendar, Analytics, Goals, Referrals, Announcements, Automations, Annual Reviews, Knowledge Base, Help, Settings
-   - Client: ~15 tabs (Home, Report, Projects, Payments, Equipment, Documents, Messages, Photos, Services, Estimates, Schedule, Billing, Notifications, Refer, Contacts)
-
-2. **Deprecate `crm-ai-assistant`** — the CRM page should use the main `hbc-agent` instead (which already has all CRM tools). The standalone CRM assistant is a weaker duplicate.
-
-### Phase 2 — Missing Admin Tools (~15 new tools)
-Add to `hbc-agent/index.ts`:
-
-| Tool | Description |
-|------|-------------|
-| `create_report` | Initialize a new report for a property |
-| `add_report_page` | Add a page to a report |
-| `create_standalone_task` | Create a task not tied to a project |
-| `update_home_goal` | Update goal status/details |
-| `delete_home_goal` | Delete a goal |
-| `update_estimate` | Update estimate fields |
-| `delete_estimate` | Delete a draft estimate |
-| `create_referral` | Log a referral |
-| `knowledge_base_search` | Search knowledge templates |
-| `trigger_ai_tool` | Meta-tool that invokes specialized edge functions (meeting-prep, weekly-digest, condition-forecast, score-explainer, maintenance-schedule, smart-notifications) |
-| `send_notification_email` | Trigger email notification |
-| `create_announcement_update` | Update/delete announcement |
-| `list_tasks` | List all admin tasks (standalone) |
-| `update_standalone_task` | Update a standalone task |
-
-### Phase 3 — Missing Client Tools (~10 new tools)
-Add to `hbc-agent/index.ts`:
-
-| Tool | Description |
-|------|-------------|
-| `client_get_schedule` | Get upcoming events/maintenance for property |
-| `client_get_documents` | List documents for property |
-| `client_get_warranties` | Get equipment with warranty status |
-| `client_get_estimates` | List estimates for property |
-| `client_accept_estimate` | Accept a sent estimate |
-| `client_submit_service_request` | Submit a concierge/service request |
-| `client_update_goal` | Update/complete a goal |
-| `client_get_maintenance_due` | Get maintenance items due this month |
-| `client_submit_referral` | Submit a friend referral |
-| `client_update_notifications` | Update notification preferences |
-
-### Phase 4 — Enhanced Context Injection
-1. **Client Agent Panel** — inject enrichment data:
-   - Property name, health score, report completion %, open invoice count, equipment needing service, active project count, last advisor contact date
-   - Pass `activeTab` from the portal's URL state
-
-2. **Graceful limits** — Add a structured fallback in the system prompt: "If you cannot perform an action, explain what you can't do, why, and offer to walk the user through doing it manually or flag it for their advisor."
-
-### Phase 5 — Consolidate AI Assistants
-1. Retire `crm-ai-assistant` edge function — route CRM AI panel through `hbc-agent`
-2. Consider whether `chat-assistant` (report Q&A) should merge into `hbc-agent` or remain separate (it has deep report context injection that works well as-is — recommend keeping it separate for now since it's specialized)
+### Phase 6 — Approval Layer + Labeling
+**Changes:** All learned patterns that could result in client-facing actions pass through the existing `requiresConfirmation` flow in the agent. AI suggestions are labeled with a "✨ Suggested based on your past work" badge in the UI. The admin always has final say.
+**Effort:** ~1 hour
 
 ---
 
-## Files to Change
+## Technical Decisions
 
-| Action | File | Description |
-|--------|------|-------------|
-| Edit | `supabase/functions/hbc-agent/index.ts` | Add ~25 new tools, expand system prompts with app knowledge, add graceful limits |
-| Edit | `src/components/agent/ClientAgentPanel.tsx` | Add enrichment context, property name, active tab |
-| Edit | `src/components/admin/CRMAIAssistant.tsx` | Rewire to use hbc-agent instead of crm-ai-assistant |
-| Delete | `supabase/functions/crm-ai-assistant/index.ts` | Deprecated — consolidated into hbc-agent |
+### No vector database or RAG pipeline needed (yet)
+The data volume for a single advisor with <500 clients is small enough that structured JSONB queries in Postgres are faster and simpler than a vector DB. The `advisor_patterns` and `cross_client_insights` tables use JSONB with indexed keys. If the platform scales to multiple advisors with thousands of clients, a pgvector extension could be added later for semantic search across narratives — but that's a scale concern, not a current need.
 
-### No database changes needed
-All tables already exist. This is purely edge function logic + frontend context passing.
+### No third-party services required
+- AI: Already using Lovable AI gateway (Gemini 2.5 Flash)
+- Storage: All in existing Supabase Postgres
+- Processing: Edge functions with cron scheduling (already used for `payment-escalation-check`, `maintenance-alerts`)
 
-### Estimated scope
-- Phase 1 (prompts): ~200 lines of system prompt additions
-- Phase 2-3 (tools): ~400 lines of new tool handlers
-- Phase 4 (context): ~30 lines in ClientAgentPanel
-- Phase 5 (consolidation): ~20 lines rewiring CRM assistant
+### Privacy architecture
+- `client_behavior_profiles` are per-client, accessible only to the admin
+- `cross_client_insights` contain only aggregated, anonymous patterns — never individual client data
+- Learning events are scoped to `actor_id` and never cross tenant boundaries
+- Client agent only sees its own profile, never other clients' data
+
+---
+
+## Files Summary
+
+| Action | File | Phase |
+|--------|------|-------|
+| Migration | 5 new tables | 1-5 |
+| Create | `supabase/functions/learn-from-activity/index.ts` | 2 |
+| Create | `supabase/functions/get-smart-context/index.ts` | 3 |
+| Edit | `supabase/functions/hbc-agent/index.ts` | 1, 3 |
+| Edit | `supabase/functions/draft-page-narrative/index.ts` | 1 |
+| Edit | `src/components/agent/AgentChat.tsx` | 1, 6 |
+| Edit | `src/components/agent/ClientAgentPanel.tsx` | 4 |
+| Edit | `src/components/report/ReportPage.tsx` | 1 |
 
