@@ -121,30 +121,36 @@ const Index = () => {
     }
 
     if (pageParam) {
-      setActiveTab("report");
+      if (activeTab !== "report") {
+        navigate(`/portal/${propertyId}/report`, { replace: true });
+      }
       setReportPageId(pageParam);
     }
   }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const navigateToTab = useCallback((tab: string) => {
+    const base = propertyId ? `/portal/${propertyId}` : "/portal";
+    const path = tab === "home" ? base : `${base}/${tab}`;
+    navigate(path);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [propertyId, navigate]);
+
   const handleTabChange = useCallback((tab: string) => {
-    setActiveTab(tab);
     setReportPageId(null);
     if (tab !== "messages") setPendingMessage(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+    navigateToTab(tab);
+  }, [navigateToTab]);
 
   const handleSendMessage = useCallback((msg: string) => {
     setPendingMessage(msg);
-    setActiveTab("messages");
     setReportPageId(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+    navigateToTab("messages");
+  }, [navigateToTab]);
 
   const handleReportPageSelect = useCallback((pageId: string) => {
-    setActiveTab("report");
     setReportPageId(pageId);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+    navigateToTab("report");
+  }, [navigateToTab]);
 
   const handleNavigate = useCallback((tab: string, pageId?: string) => {
     if (pageId) {
