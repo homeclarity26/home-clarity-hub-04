@@ -48,7 +48,7 @@ const AICommandBar = ({ onSubmit }: AICommandBarProps) => {
         </form>
       </div>
       {/* Prompt chips — uniform grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mt-3">
+      <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 mt-3">
         {SUGGESTED_PROMPTS.map((prompt) => (
           <button
             key={prompt}
