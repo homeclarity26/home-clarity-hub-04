@@ -1,172 +1,294 @@
 
 
-# Self-Learning Intelligence Layer — Architecture Plan
+# Rebuild Help & Tutorials — Complete Audit + Architecture Plan
 
-## What Already Exists (Learning Infrastructure Audit)
+## STEP 1 — Current State Audit
 
-The app already captures a significant amount of raw data, but **none of it feeds back** into AI suggestions or auto-fill. It's storage, not learning.
+### What Currently Exists
 
-### Existing Data Sources (passive logging, no feedback loop)
-| Table | What It Captures | Used by AI? |
-|-------|------------------|-------------|
-| `agent_logs` | Every agent interaction: message, reply, tools called, duration, page context | No — logged but never queried by the agent |
-| `activity_log` | All admin/client actions: edits, publishes, comments, payments | No — displayed in timeline only |
-| `audit_log` | Before/after diffs on entity changes | No |
-| `page_views` / `client_sessions` | Client portal engagement (pages visited, session duration) | No — displayed in engagement tab only |
-| `feedback` / `client_satisfaction_scores` | Client ratings + comments | No |
-| `report_edit_history` | Field-level edit diffs on report pages | No |
-| `ai_draft_history` | AI-generated narratives (input notes → generated text) | No |
-| `narrative_snippets` | Reusable narrative blocks with usage_count | No — `usage_count` exists but never incremented |
-| `maintenance_outcomes` | Actual vs predicted maintenance results | No — predictions exist but outcomes never feed back |
-| `portfolio_snapshots` | Daily business metrics snapshots | No — stored but never trended |
-| `health_score_history` | Historical health scores per client | No — stored but never analyzed for trends |
-| `estimates` | Full proposal analytics (view count, time spent, sections viewed, accepted/declined) | No |
-| `knowledge_templates` | Knowledge base articles with categories | Partially — injected into `draft-page-narrative` for context |
+**Admin Help Center** (`/admin/help` — `AdminHelpCenter.tsx`, 343 lines):
+1. **Interactive Walkthroughs** (5 tours): Dashboard Tour, Creating a Client & Report, Unified Inbox, Projects & Vendors, Automations. These are "fake" — clicking "Start Tour" just marks them complete instantly with no actual walkthrough.
+2. **Step-by-Step Guides** (6 tabs, 11 guides total):
+   - Getting Started (2): Setting Up Admin Account, Adding First Client
+   - Reports (2): Writing a Report, Updating After Project Completion
+   - Clients & Communication (2): Day-to-Day Communication, Reading the Timeline
+   - Billing (2): Creating an Invoice, Payment Escalation Rules
+   - AI Features (3): Report Draft Assistant, Message Reply Suggestions, Cost Estimator
+   - Automations & Settings (2): Setting Up Automations, Customizing Branding
+3. **Quick Reference Cards** (8 cards): Condition Ratings, Report Chapters, Project Statuses, Invoice Statuses, AI Tools, Automation Rules, Keyboard Shortcuts, Key Metrics
 
-**Summary:** The app has ~15 data sources that could power a learning system, but currently zero feedback loops exist. Every AI call uses only the immediate context — never historical patterns.
+**Client Help Center** (`HelpCenterPanel.tsx` — Sheet panel, 3 tabs):
+1. **Getting Started** (`GettingStartedTab.tsx`): 8-item checklist tied to `tutorial_progress` table (view report, check health score, review actions, explore projects, view equipment, view document, send message, check schedule)
+2. **How-To Guides** (`HowToGuidesTab.tsx`): 8 accordion articles (Reading Report, Health Score, Projects, Payments & Invoices, Equipment Registry, Documents, Messaging Advisor, Annual Maintenance Schedule)
+3. **FAQ** (`FAQTab.tsx`): 11 searchable Q&A items (report basics, HVAC condition, PDF download, portal privacy, sharing access, project completion, home value, re-assessment, membership, support)
 
----
+**Other Help Infrastructure**:
+- `HelpTooltip.tsx` — Contextual popover tooltip component
+- `ClientOnboardingModal.tsx` — 4-step welcome modal for new clients
+- `AdminSetupChecklist.tsx` — 5-item admin setup checklist on dashboard
 
-## What Needs to Be Built
+### What's Outdated or Missing
 
-### New Database Tables (5 tables)
+**Admin Side — Missing Tutorials (19 gaps):**
+| Missing Topic | Why It's Needed |
+|--------------|-----------------|
+| Client Workspace navigation (3-column layout, tab groups) | Major UI overhaul not reflected |
+| CRM pipeline and stages | No tutorial exists |
+| Estimate/Proposal Builder (create, send, track) | Only invoices covered, not estimates |
+| Field Inspection mode | Feature exists, no tutorial |
+| Knowledge Base usage | Feature exists, no tutorial |
+| Goals management | Feature exists, no tutorial |
+| Referral tracking | Feature exists, no tutorial |
+| Annual Reviews | Feature exists, no tutorial |
+| Analytics dashboard interpretation | Feature exists, no tutorial |
+| Calendar management | Feature exists, no tutorial |
+| Task Board (standalone tasks) | Feature exists, no tutorial |
+| Vendor management (full lifecycle) | Only mentioned in passing |
+| AI Agent usage (workspace rail, global) | Major new feature, no tutorial |
+| Self-Learning Intelligence Layer | New feature, no tutorial |
+| Digital Twin / Document Intelligence | Feature exists, no tutorial |
+| Services Library configuration | Feature exists, no tutorial |
+| Membership tier setup | No tutorial |
+| Command Palette & shortcuts | Reference card exists but no guide |
+| Announcements (create, manage) | No tutorial |
 
-1. **`advisor_patterns`** — Learned playbooks from admin behavior
-   - `admin_id`, `pattern_type` (report_structure, estimate_template, workflow_sequence, communication_style, pricing_pattern), `pattern_key` (e.g., "kitchen_report", "hvac_estimate"), `pattern_data` (JSONB — the learned template/structure), `usage_count`, `last_used_at`, `confidence_score` (0-1, increases with repeated use)
+**Client Side — Missing Tutorials (9 gaps):**
+| Missing Topic | Why It's Needed |
+|--------------|-----------------|
+| AI Home Concierge (ClientAgentPanel) | Major feature, no tutorial |
+| Estimates/Proposals (view, accept, decline) | Feature exists, no tutorial |
+| Services & Concierge Requests | Feature exists, no tutorial |
+| Billing & Subscriptions | Feature exists, no tutorial |
+| Photos (upload, gallery, flagging) | Feature exists, no tutorial |
+| Referral Portal | Feature exists, no tutorial |
+| Notification Preferences | Feature exists, no tutorial |
+| Goal/Wishlist items | Feature exists, no tutorial |
+| Property Selector (multi-property) | Feature exists, no tutorial |
 
-2. **`ai_suggestion_outcomes`** — Feedback loop for every AI suggestion
-   - `suggestion_type` (draft_narrative, auto_fill, estimate_prefill, smart_reply, agent_recommendation), `suggestion_data` (JSONB — what was suggested), `outcome` (accepted, edited, rejected), `edited_data` (JSONB — what the admin changed it to, if edited), `context` (JSONB — what entity, what page), `admin_id`, `created_at`
-
-3. **`client_behavior_profiles`** — Per-client engagement/personality model
-   - `client_id` (unique), `engagement_level` (high, medium, low, dormant), `communication_preference` (detailed, summary, minimal), `response_speed_avg_hours`, `portal_focus_areas` (JSONB — array of most-visited tabs), `goals_active`, `satisfaction_trend` (improving, stable, declining), `churn_risk_score` (0-100), `last_computed_at`
-
-4. **`cross_client_insights`** — Aggregated anonymous patterns
-   - `insight_type` (common_issue, budget_pattern, timeline_pattern, seasonal_trend, churn_signal), `insight_key` (e.g., "homes_1960s_electrical"), `insight_data` (JSONB), `affected_client_count`, `confidence`, `last_updated`
-
-5. **`learning_events`** — Raw event bus for all learnable moments
-   - `event_type` (report_completed, estimate_sent, estimate_responded, project_closed, draft_edited, goal_added, agent_query, etc.), `actor_id`, `actor_role`, `entity_type`, `entity_id`, `event_data` (JSONB — full payload), `created_at`
-
-### New Edge Functions (2 functions)
-
-1. **`learn-from-activity`** — Background processor triggered by cron or event
-   - Reads recent `learning_events`, aggregates into `advisor_patterns`, `client_behavior_profiles`, and `cross_client_insights`
-   - Updates `narrative_snippets.usage_count` when snippets are reused
-   - Computes client engagement levels from `page_views` + `client_sessions`
-   - Identifies churn signals from declining engagement + overdue invoices
-
-2. **`get-smart-context`** — Called by `hbc-agent` before each AI call
-   - Given an entity type + context, returns relevant learned patterns:
-     - For report drafting: advisor's typical structure, preferred language, past narratives for similar systems
-     - For estimates: typical pricing for this service type, acceptance rate data
-     - For client interactions: client's behavior profile, preferred communication style
-     - Cross-client insights relevant to this property (age, location, systems)
-
-### Modified Edge Functions
-
-1. **`hbc-agent/index.ts`** — Inject learned context into system prompt
-   - Before the ReAct loop, call `get-smart-context` to fetch relevant patterns
-   - Append to system prompt: "Based on your past work: [patterns]"
-   - After tool execution, log a `learning_event` for each action taken
-   - Log suggestion outcomes when admin edits or overrides AI-suggested content
-
-2. **`draft-page-narrative/index.ts`** — Use advisor patterns for style
-   - Query `advisor_patterns` for this admin's report writing style
-   - Include past narratives for the same system type as few-shot examples
-   - After generation, log to `ai_suggestion_outcomes`
-
-### Modified Frontend Components (3 files)
-
-1. **`AgentChat.tsx`** — Track suggestion outcomes
-   - When agent suggests something and admin modifies it, capture the delta
-   - Send outcome events to a new `/learning-event` endpoint or inline in next agent call
-
-2. **`ClientAgentPanel.tsx`** — Personalize based on behavior profile
-   - Fetch `client_behavior_profiles` for this client on mount
-   - Adjust quick chips and greeting based on engagement level
-   - High engagement → proactive suggestions; Low engagement → simpler prompts
-
-3. **Report editor (ReportPage.tsx)** — Log when AI drafts are edited
-   - After AI draft is generated and admin saves edits, log the diff as a `learning_event`
+**Structural Issues:**
+- Admin help is a monolithic 343-line file with all content hardcoded inline
+- Client help is a small sliding panel — adequate for original 8 features, insufficient for 15+ tabs
+- No search functionality on admin side
+- No shared data structure — tutorials are JSX, not data-driven
+- "Interactive Walkthroughs" are non-functional (instant complete, no actual tour)
 
 ---
 
-## Phased Build Plan
+## STEP 2 — Proposed Architecture
 
-### Phase 1 — Event Bus + Suggestion Tracking (highest value, lowest complexity)
-**Tables:** `learning_events`, `ai_suggestion_outcomes`
-**Changes:** Instrument `hbc-agent` to log learning events after every tool call. Instrument `draft-page-narrative` to log suggestion outcomes. Add a simple outcome tracker in `AgentChat.tsx`.
-**Value:** Starts capturing data immediately. Every interaction becomes training data.
-**Effort:** ~2 hours
+### Data-Driven Tutorial System
 
-### Phase 2 — Advisor Pattern Recognition
-**Tables:** `advisor_patterns`
-**Edge function:** `learn-from-activity` (cron, runs daily)
-**What it does:** Analyzes `learning_events` + `report_pages` + `estimates` + `ai_suggestion_outcomes` to extract:
-- Report structure preferences (section order, rating tendencies, language style)
-- Estimate pricing patterns (avg price per service type, typical line items)
-- Workflow sequences (what steps admin takes for common tasks)
-**Value:** Pre-fill reports/estimates based on how the advisor actually works.
-**Effort:** ~3 hours
+Replace hardcoded JSX with a shared data model so tutorials are maintainable, searchable, and independently editable:
 
-### Phase 3 — Smart Context Injection into Agents
-**Edge function:** `get-smart-context`
-**Changes:** `hbc-agent` calls `get-smart-context` before each conversation to load:
-- Advisor's patterns (for admin) or client's behavior profile (for client)
-- Relevant cross-client insights
-- Past suggestion outcomes to improve current suggestions
-**Value:** Every AI response becomes personalized and historically informed.
-**Effort:** ~3 hours
+```typescript
+// src/data/tutorials/types.ts
+interface Tutorial {
+  id: string;
+  category: string;
+  title: string;
+  description: string;  // One-sentence summary
+  audience: "admin" | "client" | "both";
+  steps: { title: string; body: string }[];
+  tip?: string;
+  keywords: string[];   // For search
+}
+```
 
-### Phase 4 — Client Behavior Profiling
-**Tables:** `client_behavior_profiles`
-**Changes:** `learn-from-activity` computes profiles from `page_views`, `client_sessions`, `feedback`, `estimates` (response time), agent interaction frequency.
-**Frontend:** `ClientAgentPanel` adapts tone and suggestions per profile.
-**Value:** Passive clients get gentle nudges, power users get advanced suggestions.
-**Effort:** ~2 hours
+All tutorials live in separate data files per category, imported into a registry.
 
-### Phase 5 — Cross-Client Intelligence
-**Tables:** `cross_client_insights`
-**Changes:** `learn-from-activity` aggregates anonymized patterns:
-- "Homes built before 1970 commonly need electrical panel upgrades" (from `report_pages` condition data + property year)
-- "Projects of type X typically run Y% over budget" (from `projects` actual vs estimated)
-- "Clients who ignore 3+ maintenance items show churn signals" (from engagement data)
-**Value:** Proactive alerts like "Based on homes similar to yours, you may want to consider..."
-**Effort:** ~3 hours
+### Admin Tutorial Library — Proposed Categories (13 categories, ~35 guides)
 
-### Phase 6 — Approval Layer + Labeling
-**Changes:** All learned patterns that could result in client-facing actions pass through the existing `requiresConfirmation` flow in the agent. AI suggestions are labeled with a "✨ Suggested based on your past work" badge in the UI. The admin always has final say.
-**Effort:** ~1 hour
+**1. Getting Started** (4 guides)
+- Setting up your HBC Creator account
+- Configuring branding and business profile
+- Setting up membership tiers and the Services Library
+- Connecting Stripe for payments
+
+**2. Client Management** (4 guides)
+- Adding your first client
+- Navigating the Client Workspace (3-column layout, tab groups)
+- Understanding the CRM pipeline and client stages
+- Reading the client activity timeline
+
+**3. Reports** (4 guides)
+- Creating a Home Clarity Report
+- Rating and scoring each section
+- Using the AI Draft Assistant for writing
+- Publishing, updating, and versioning a report
+
+**4. Projects & Proposals** (4 guides)
+- Creating a project and assigning it to a client
+- Building and sending an estimate/proposal
+- Managing proposal status (sent, accepted, declined, converted)
+- Tracking project progress, milestones, and change orders
+
+**5. Equipment & Maintenance** (3 guides)
+- Adding equipment and logging warranty information
+- Setting up maintenance reminders and seasonal checklists
+- Resolving overdue service items
+
+**6. Payments & Billing** (3 guides)
+- Creating and sending an invoice
+- Tracking payment status and escalation rules
+- Managing subscriptions and reading revenue analytics
+
+**7. Communication** (3 guides)
+- Messaging clients through the portal
+- Creating and managing announcements
+- Using the AI Agent to draft communications
+
+**8. AI & Intelligence** (3 guides)
+- Using the AI Agent (global and workspace rail)
+- AI tools: Score Explainer, Cost Estimator, Meeting Prep
+- How the Self-Learning Intelligence Layer works
+
+**9. Scheduling & Calendar** (2 guides)
+- Managing your calendar and events
+- Annual Reviews overview
+
+**10. Vendors** (2 guides)
+- Adding and managing vendors
+- Requesting bids and assigning vendors to projects
+
+**11. Tools** (3 guides)
+- Using the Knowledge Base
+- Managing Goals
+- Tracking Referrals
+
+**12. Automations** (1 guide)
+- Configuring and monitoring automation rules
+
+**13. Settings & Admin** (2 guides)
+- Account settings and notification preferences
+- Using the Command Palette and keyboard shortcuts
+
+**Quick Reference Cards** — Keep existing 8, add 2:
+- Client Workspace Tab Groups
+- Estimate/Proposal Status Labels
+
+### Client Tutorial Library — Proposed Categories (9 categories, ~25 guides)
+
+**1. Getting Started** (3 guides)
+- Welcome to your Home Clarity Portal
+- How to navigate your portal (tabs, More menu)
+- How to use the AI Home Concierge
+
+**2. Your Home Report** (3 guides)
+- How to read your Home Clarity Report
+- Understanding your Home Health Score
+- Viewing your property history and past versions
+
+**3. Maintenance & Equipment** (3 guides)
+- Viewing your equipment registry
+- Understanding warranty and service status
+- Your seasonal maintenance checklist
+
+**4. Projects & Goals** (3 guides)
+- Viewing your active projects
+- Adding a goal or wishlist item
+- Reviewing and responding to a proposal
+
+**5. Payments** (3 guides)
+- Viewing your invoices
+- Making a payment
+- Understanding your billing and subscription
+
+**6. Schedule** (2 guides)
+- Viewing your maintenance calendar
+- Scheduling a consultation with your advisor
+
+**7. Photos & Documents** (3 guides)
+- Uploading photos of your home
+- Uploading and managing documents
+- Requesting a service
+
+**8. Communication** (3 guides)
+- Messaging your advisor
+- Using the AI assistant for home questions
+- Contacting your home team and vendors
+
+**9. Referrals** (2 guides)
+- How the referral program works
+- How to share your referral link
+
+### Updated FAQ — expand from 11 to ~20 items covering estimates, AI concierge, subscriptions, photos, referrals, services.
 
 ---
 
-## Technical Decisions
+## STEP 3 — File Structure
 
-### No vector database or RAG pipeline needed (yet)
-The data volume for a single advisor with <500 clients is small enough that structured JSONB queries in Postgres are faster and simpler than a vector DB. The `advisor_patterns` and `cross_client_insights` tables use JSONB with indexed keys. If the platform scales to multiple advisors with thousands of clients, a pgvector extension could be added later for semantic search across narratives — but that's a scale concern, not a current need.
+```
+src/data/tutorials/
+  types.ts                          — Tutorial interface
+  admin/
+    getting-started.ts
+    client-management.ts
+    reports.ts
+    projects-proposals.ts
+    equipment-maintenance.ts
+    payments-billing.ts
+    communication.ts
+    ai-intelligence.ts
+    scheduling.ts
+    vendors.ts
+    tools.ts
+    automations.ts
+    settings.ts
+    reference-cards.ts
+    index.ts                        — Re-export all admin tutorials
+  client/
+    getting-started.ts
+    report.ts
+    maintenance-equipment.ts
+    projects-goals.ts
+    payments.ts
+    schedule.ts
+    photos-documents.ts
+    communication.ts
+    referrals.ts
+    faq.ts
+    index.ts                        — Re-export all client tutorials
 
-### No third-party services required
-- AI: Already using Lovable AI gateway (Gemini 2.5 Flash)
-- Storage: All in existing Supabase Postgres
-- Processing: Edge functions with cron scheduling (already used for `payment-escalation-check`, `maintenance-alerts`)
+src/components/help/
+  TutorialSearch.tsx                — Shared search component
+  TutorialGuide.tsx                 — Renders a single tutorial (steps + tip)
+  TutorialCategory.tsx              — Accordion of tutorials in a category
+  // Existing files updated:
+  HelpCenterPanel.tsx               — Rebuilt with new data + search
+  GettingStartedTab.tsx             — Keep checklist, update items
+  HowToGuidesTab.tsx                — Rebuilt with client tutorial data
+  FAQTab.tsx                        — Rebuilt with expanded FAQ data
 
-### Privacy architecture
-- `client_behavior_profiles` are per-client, accessible only to the admin
-- `cross_client_insights` contain only aggregated, anonymous patterns — never individual client data
-- Learning events are scoped to `actor_id` and never cross tenant boundaries
-- Client agent only sees its own profile, never other clients' data
+src/pages/admin/
+  AdminHelpCenter.tsx               — Rebuilt with admin tutorial data + search
+```
+
+### Key Design Decisions
+- **Each tutorial is a standalone object** — easy to add, edit, or remove independently
+- **Keyword search** across both admin and client libraries
+- **Same rendering components** shared between admin and client
+- **Remove fake walkthroughs** — replace with the actual step-by-step guides (which are more useful)
+- **Keep the admin setup checklist and client onboarding modal** — they serve different purposes (progressive disclosure vs reference library)
 
 ---
 
-## Files Summary
+## STEP 4 — Gaps Between Plan and App
 
-| Action | File | Phase |
-|--------|------|-------|
-| Migration | 5 new tables | 1-5 |
-| Create | `supabase/functions/learn-from-activity/index.ts` | 2 |
-| Create | `supabase/functions/get-smart-context/index.ts` | 3 |
-| Edit | `supabase/functions/hbc-agent/index.ts` | 1, 3 |
-| Edit | `supabase/functions/draft-page-narrative/index.ts` | 1 |
-| Edit | `src/components/agent/AgentChat.tsx` | 1, 6 |
-| Edit | `src/components/agent/ClientAgentPanel.tsx` | 4 |
-| Edit | `src/components/report/ReportPage.tsx` | 1 |
+Every admin sidebar item and client portal tab is covered. The only features NOT covered by tutorials are:
+- **Notification Preferences** (client) — included in Communication category
+- **Digital Twin** — mentioned in Client Management workspace guide
+- **Multi-property switching** — mentioned in Getting Started navigation guide
+
+No gaps remain between the planned tutorial library and current app features.
+
+## Files Changed Summary
+
+| Action | File Count | Description |
+|--------|-----------|-------------|
+| Create | ~25 data files | Tutorial content in `src/data/tutorials/` |
+| Create | 3 components | TutorialSearch, TutorialGuide, TutorialCategory |
+| Rebuild | 1 page | `AdminHelpCenter.tsx` |
+| Rebuild | 3 components | HelpCenterPanel, HowToGuidesTab, FAQTab |
+| Update | 1 component | GettingStartedTab (add missing checklist items) |
+| No change | 3 files | HelpTooltip, ClientOnboardingModal, AdminSetupChecklist |
 
