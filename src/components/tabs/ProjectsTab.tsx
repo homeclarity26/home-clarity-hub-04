@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight, ChevronDown, CheckCircle, Calendar, DollarSign, User, Loader2, MessageSquare, PlusCircle } from "lucide-react";
+import EmptyState from "@/components/EmptyState";
 import HomeGoals from "@/components/HomeGoals";
 import HomeImprovementWishlist from "@/components/portal/HomeImprovementWishlist";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -343,14 +344,13 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
 
         {/* Empty state */}
         {projects.length === 0 && (
-          <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Project Status</p>
-            <div className={`${cardBase} p-8`}>
-              <Hammer className="w-5 h-5 text-accent mb-3" />
-              <h2 className="font-display text-xl text-foreground mb-1">No Active Projects</h2>
-              <p className="font-sans text-sm text-muted-foreground">Projects will appear here once your advisor creates them from the report.</p>
-            </div>
-          </div>
+          <EmptyState
+            icon={Hammer}
+            title="No Active Projects"
+            description="Projects will appear here once your advisor creates them from the report."
+            actionLabel="View Report"
+            onAction={() => onNavigate("report")}
+          />
         )}
 
         {/* Project Archive */}

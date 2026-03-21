@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Hammer, Thermometer, Zap, TreePine, Phone, MessageCircle, ChevronRight, Wrench } from "lucide-react";
+import EmptyState from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CreatorInfo {
@@ -136,10 +137,12 @@ const ContactsTab = ({ creator, onTabChange, propertyId }: ContactsTabProps) => 
                 </div>
               );
             }) : (
-              <div className={`${cardBase} opacity-60 cursor-default col-span-full`}>
-                <Wrench className="w-5 h-5 text-muted-foreground" />
-                <h3 className="font-display text-xl text-foreground">No Vendors Assigned Yet</h3>
-                <p className="font-sans text-sm text-muted-foreground">Your HBC advisor will assign approved vendor partners here.</p>
+              <div className="col-span-full">
+                <EmptyState
+                  icon={Wrench}
+                  title="No Vendors Assigned Yet"
+                  description="Your HBC advisor will assign approved vendor partners as part of your home plan."
+                />
               </div>
             )}
           </div>
