@@ -19,6 +19,7 @@ import EquipmentWarrantyCalendar from "@/components/admin/EquipmentWarrantyCalen
 import PortfolioHealthDashboard from "@/components/admin/PortfolioHealthDashboard";
 import CrossClientInsightsCard from "@/components/admin/CrossClientInsightsCard";
 import AdminSetupChecklist from "@/components/admin/AdminSetupChecklist";
+import ServiceRequestsManager from "@/components/admin/ServiceRequestsManager";
 import DailyBrief from "@/components/admin/DailyBrief";
 import CRMDashboardWidget from "@/components/admin/CRMDashboardWidget";
 import SubscriptionDashboardWidget from "@/components/admin/SubscriptionDashboardWidget";
@@ -114,6 +115,10 @@ const AdminDashboard = () => {
           <div className="space-y-4">
             <WidgetErrorBoundary name="OverdueActionCenter">
               <OverdueActionCenter />
+            </WidgetErrorBoundary>
+
+            <WidgetErrorBoundary name="ServiceRequestsManager">
+              <ServiceRequestsManager />
             </WidgetErrorBoundary>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
