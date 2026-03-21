@@ -82,7 +82,7 @@ const CompactHealthBar = ({ pages, onNavigate }: CompactHealthBarProps) => {
   if (Object.keys(pages).length === 0) return null;
 
   return (
-    <div className="w-full px-6 md:px-20 max-w-[1400px] mx-auto">
+    <div className="w-full">
       <div className="bg-card rounded-lg border border-border shadow-hbc-sm">
         {/* Main bar */}
         <div className="flex items-center gap-6 px-6 py-4" style={{ maxHeight: "80px" }}>

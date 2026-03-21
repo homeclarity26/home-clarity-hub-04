@@ -32,7 +32,7 @@ const AICommandBar = ({ onSubmit }: AICommandBarProps) => {
   };
 
   return (
-    <div className="w-full px-6 md:px-20 max-w-[1400px] mx-auto">
+    <div className="w-full">
       <div className="bg-card rounded-lg border border-border shadow-hbc-sm">
         <form onSubmit={handleSubmit} className="relative">
           <Sparkles className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-accent" />
