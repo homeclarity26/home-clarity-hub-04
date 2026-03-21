@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Receipt, ShieldCheck, Calendar, List, MessageCircle, FileText, ChevronRight, Eye, CreditCard } from "lucide-react";
+import { Receipt, ShieldCheck, Calendar, List, MessageCircle, FileText, ChevronRight, Eye, CreditCard, Loader2 } from "lucide-react";
 import EmptyState from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -310,6 +310,9 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                 <span className={`font-display text-lg ${Number(inv.balance_due) > 0 ? "text-destructive" : "text-green-700"}`}>{fmt(Number(inv.balance_due))}</span>
               </div>
             </div>
+            {Number(inv.balance_due) > 0 && inv.status !== "draft" && (
+              <PayNowButton invoice={inv} />
+            )}
           </div>
 
           {inv.notes && (
@@ -496,12 +499,15 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
               <p className="font-sans text-sm text-muted-foreground">Review the services included in your membership</p>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
-            <div className={`${cardBase} cursor-default relative`}>
-              <CreditCard className="w-5 h-5 text-accent" />
-              <h2 className="font-display text-xl text-foreground mb-1">Make a Payment</h2>
-              <p className="font-sans text-sm text-muted-foreground">Pay invoices online securely via Stripe</p>
-              <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground absolute top-4 right-4">Coming Soon</span>
-            </div>
+            {nextPayment ? (
+              <PayNowButton invoice={nextPayment} />
+            ) : (
+              <div className={`${cardBase} cursor-default`}>
+                <CreditCard className="w-5 h-5 text-accent" />
+                <h2 className="font-display text-xl text-foreground mb-1">Make a Payment</h2>
+                <p className="font-sans text-sm text-muted-foreground">No outstanding invoices — you're all set!</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
