@@ -114,24 +114,16 @@ const HomeTab = ({
 
         {/* Cost Comparison Tool */}
         {hasReportData && (
-          <CostComparisonTool reportPages={reportPages} onNavigate={handleNavigateTracked} />
+          <CostComparisonTool pages={reportPages!} />
         )}
 
         {/* Document & Warranty Expiration Tracker */}
         {propertyId && <DocumentExpirationTracker propertyId={propertyId} />}
 
-        {/* Two-column: Photo Inspector + Home Story */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {propertyId && <PhotoInspectionSidebar propertyId={propertyId} />}
-          {hasReportData && (
-            <MyHomeStory
-              propertyName={propertyName}
-              propertyAddress={propertyAddress}
-              reportPages={reportPages}
-              propertyId={propertyId}
-            />
-          )}
-        </div>
+        {/* Home Story */}
+        {propertyId && (
+          <MyHomeStory propertyId={propertyId} propertyName={propertyName} />
+        )}
 
         {/* Seasonal Maintenance Checklist */}
         <SeasonalChecklist propertyId={propertyId} />
