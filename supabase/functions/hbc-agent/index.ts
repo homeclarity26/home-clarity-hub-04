@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 // ─── TOOL DEFINITIONS ───
-// Each tool has: name, description, parameters (JSON Schema), handler fn, requiresConfirmation flag, allowedRoles
 
 interface ToolDef {
   name: string;
@@ -36,6 +35,8 @@ const TOOLS: ToolDef[] = [
   { name: "update_report_page", description: "Update a report page's condition rating, narrative, status, or other fields.", parameters: { type: "object", properties: { page_id: { type: "string" }, fields: { type: "object" } }, required: ["page_id", "fields"] }, allowedRoles: ["creator"] },
   { name: "set_report_page_status", description: "Set a report page status (draft, complete, flagged).", parameters: { type: "object", properties: { page_id: { type: "string" }, status: { type: "string", enum: ["draft","complete","flagged","published"] } }, required: ["page_id", "status"] }, allowedRoles: ["creator"] },
   { name: "publish_report", description: "Publish a report to make it visible to the client.", parameters: { type: "object", properties: { report_id: { type: "string" } }, required: ["report_id"] }, requiresConfirmation: true, allowedRoles: ["creator"] },
+  { name: "create_report", description: "Create a new report for a property.", parameters: { type: "object", properties: { property_id: { type: "string" }, title: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["creator"] },
+  { name: "add_report_page", description: "Add a page to a report.", parameters: { type: "object", properties: { report_id: { type: "string" }, title: { type: "string" }, page_key: { type: "string" }, group_name: { type: "string" } }, required: ["report_id", "title", "page_key"] }, allowedRoles: ["creator"] },
 
   // ── GROUP C: FIELD INSPECTION ──
   { name: "create_field_inspection", description: "Start a new field inspection session for a client.", parameters: { type: "object", properties: { client_id: { type: "string" }, property_id: { type: "string" }, notes: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["creator"] },
@@ -59,6 +60,8 @@ const TOOLS: ToolDef[] = [
   { name: "list_estimates", description: "List estimates with filters.", parameters: { type: "object", properties: { filter: { type: "object" } } }, allowedRoles: ["creator"] },
   { name: "send_estimate", description: "Mark estimate as sent and notify client.", parameters: { type: "object", properties: { estimate_id: { type: "string" } }, required: ["estimate_id"] }, requiresConfirmation: true, allowedRoles: ["creator"] },
   { name: "convert_estimate_to_invoice", description: "Convert an estimate to an invoice.", parameters: { type: "object", properties: { estimate_id: { type: "string" }, due_days: { type: "number" } }, required: ["estimate_id"] }, requiresConfirmation: true, allowedRoles: ["creator"] },
+  { name: "update_estimate", description: "Update an estimate's fields (title, notes, status).", parameters: { type: "object", properties: { estimate_id: { type: "string" }, fields: { type: "object" } }, required: ["estimate_id", "fields"] }, allowedRoles: ["creator"] },
+  { name: "delete_estimate", description: "Delete a draft estimate.", parameters: { type: "object", properties: { estimate_id: { type: "string" } }, required: ["estimate_id"] }, requiresConfirmation: true, allowedRoles: ["creator"] },
   { name: "create_invoice", description: "Create an invoice for a client.", parameters: { type: "object", properties: { client_id: { type: "string" }, title: { type: "string" }, description: { type: "string" }, amount: { type: "number" }, due_date: { type: "string" }, project_id: { type: "string" } }, required: ["client_id", "title", "amount", "due_date"] }, allowedRoles: ["creator"] },
   { name: "update_invoice", description: "Update an invoice's fields.", parameters: { type: "object", properties: { invoice_id: { type: "string" }, fields: { type: "object" } }, required: ["invoice_id", "fields"] }, allowedRoles: ["creator"] },
   { name: "list_invoices", description: "List invoices with optional filters (status, client_id, overdue_only).", parameters: { type: "object", properties: { filter: { type: "object" } } }, allowedRoles: ["creator"] },
@@ -96,6 +99,8 @@ const TOOLS: ToolDef[] = [
   // ── GROUP J: HOME GOALS ──
   { name: "create_home_goal", description: "Create a home improvement goal for a client.", parameters: { type: "object", properties: { property_id: { type: "string" }, title: { type: "string" }, description: { type: "string" }, category: { type: "string" }, target_date: { type: "string" }, estimated_cost: { type: "number" }, priority: { type: "string", enum: ["high","medium","low"] } }, required: ["property_id", "title"] }, allowedRoles: ["creator", "client"] },
   { name: "list_home_goals", description: "List home goals for a property.", parameters: { type: "object", properties: { property_id: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["creator", "client"] },
+  { name: "update_home_goal", description: "Update a home goal's fields (status, progress, description, target_date).", parameters: { type: "object", properties: { goal_id: { type: "string" }, fields: { type: "object" } }, required: ["goal_id", "fields"] }, allowedRoles: ["creator", "client"] },
+  { name: "delete_home_goal", description: "Delete a home goal.", parameters: { type: "object", properties: { goal_id: { type: "string" } }, required: ["goal_id"] }, requiresConfirmation: true, allowedRoles: ["creator"] },
 
   // ── GROUP K: MEMBERSHIP & SERVICES ──
   { name: "list_membership_tiers", description: "List all membership tiers.", parameters: { type: "object", properties: {} }, allowedRoles: ["creator"] },
@@ -108,17 +113,28 @@ const TOOLS: ToolDef[] = [
   // ── GROUP M: ANNOUNCEMENTS ──
   { name: "create_announcement", description: "Create a new announcement for clients.", parameters: { type: "object", properties: { title: { type: "string" }, body: { type: "string" }, target_audience: { type: "string" } }, required: ["title", "body"] }, allowedRoles: ["creator"] },
   { name: "list_announcements", description: "List announcements.", parameters: { type: "object", properties: {} }, allowedRoles: ["creator"] },
+  { name: "update_announcement", description: "Update an announcement.", parameters: { type: "object", properties: { announcement_id: { type: "string" }, fields: { type: "object" } }, required: ["announcement_id", "fields"] }, allowedRoles: ["creator"] },
+  { name: "delete_announcement", description: "Delete an announcement.", parameters: { type: "object", properties: { announcement_id: { type: "string" } }, required: ["announcement_id"] }, requiresConfirmation: true, allowedRoles: ["creator"] },
 
-  // ── GROUP O: ANALYTICS ──
+  // ── GROUP N: STANDALONE TASKS ──
+  { name: "create_standalone_task", description: "Create a standalone task (not tied to a project). For to-do items, reminders, follow-ups.", parameters: { type: "object", properties: { title: { type: "string" }, description: { type: "string" }, due_date: { type: "string" }, priority: { type: "string", enum: ["low","medium","high","urgent"] }, client_id: { type: "string" } }, required: ["title"] }, allowedRoles: ["creator"] },
+  { name: "list_standalone_tasks", description: "List standalone tasks with optional filters.", parameters: { type: "object", properties: { filter: { type: "object" } } }, allowedRoles: ["creator"] },
+  { name: "update_standalone_task", description: "Update a standalone task.", parameters: { type: "object", properties: { task_id: { type: "string" }, fields: { type: "object" } }, required: ["task_id", "fields"] }, allowedRoles: ["creator"] },
+
+  // ── GROUP O: REFERRALS ──
+  { name: "create_referral", description: "Log a client referral.", parameters: { type: "object", properties: { referring_client_id: { type: "string" }, referred_name: { type: "string" }, referred_email: { type: "string" }, referred_phone: { type: "string" }, notes: { type: "string" } }, required: ["referred_name"] }, allowedRoles: ["creator", "client"] },
+  { name: "list_referrals", description: "List referrals.", parameters: { type: "object", properties: { client_id: { type: "string" } } }, allowedRoles: ["creator"] },
+
+  // ── GROUP P: ANALYTICS ──
   { name: "get_revenue_metrics", description: "Get revenue metrics: total invoiced, collected, outstanding, overdue. Filter by period.", parameters: { type: "object", properties: { period: { type: "string", enum: ["7d","30d","90d","ytd","all"] } } }, allowedRoles: ["creator"] },
   { name: "get_client_metrics", description: "Get client metrics: top by LTV, health, churn risk, no-contact days.", parameters: { type: "object", properties: { metric: { type: "string", enum: ["ltv","health","churn_risk","no_contact","engagement"] }, top_n: { type: "number" } } }, allowedRoles: ["creator"] },
   { name: "get_admin_dashboard_summary", description: "Get full dashboard summary: active clients, open invoices, projects, revenue, at-risk clients, upcoming events, unread messages.", parameters: { type: "object", properties: {} }, allowedRoles: ["creator"] },
 
-  // ── GROUP P: SETTINGS ──
+  // ── GROUP Q: SETTINGS ──
   { name: "get_admin_profile", description: "Get the admin's profile.", parameters: { type: "object", properties: {} }, allowedRoles: ["creator"] },
   { name: "update_admin_profile", description: "Update admin profile fields.", parameters: { type: "object", properties: { fields: { type: "object" } }, required: ["fields"] }, allowedRoles: ["creator"] },
 
-  // ── GROUP Q: CLIENT PORTAL (client-only) ──
+  // ── GROUP R: CLIENT PORTAL (client-only) ──
   { name: "client_get_home_summary", description: "Get home summary: health score, urgent items, upcoming maintenance, active projects.", parameters: { type: "object", properties: { property_id: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["client"] },
   { name: "client_get_report", description: "Get the published report for this property.", parameters: { type: "object", properties: { property_id: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["client"] },
   { name: "client_get_projects", description: "Get active projects for this property.", parameters: { type: "object", properties: { property_id: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["client"] },
@@ -128,6 +144,15 @@ const TOOLS: ToolDef[] = [
   { name: "client_get_equipment", description: "Get equipment list for this property.", parameters: { type: "object", properties: { property_id: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["client"] },
   { name: "client_add_home_goal", description: "Add a home improvement goal.", parameters: { type: "object", properties: { property_id: { type: "string" }, title: { type: "string" }, description: { type: "string" }, target_date: { type: "string" }, estimated_cost: { type: "number" } }, required: ["property_id", "title"] }, allowedRoles: ["client"] },
   { name: "client_submit_feedback", description: "Submit feedback/rating.", parameters: { type: "object", properties: { property_id: { type: "string" }, rating: { type: "number" }, comment: { type: "string" } }, required: ["property_id", "rating"] }, allowedRoles: ["client"] },
+  { name: "client_get_schedule", description: "Get upcoming scheduled events and maintenance for this property.", parameters: { type: "object", properties: { property_id: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["client"] },
+  { name: "client_get_documents", description: "List documents/files for this property.", parameters: { type: "object", properties: { property_id: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["client"] },
+  { name: "client_get_warranties", description: "Get equipment with warranty and service status for this property.", parameters: { type: "object", properties: { property_id: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["client"] },
+  { name: "client_get_estimates", description: "Get estimates/proposals sent to this property.", parameters: { type: "object", properties: { property_id: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["client"] },
+  { name: "client_accept_estimate", description: "Accept a sent estimate/proposal.", parameters: { type: "object", properties: { estimate_id: { type: "string" } }, required: ["estimate_id"] }, requiresConfirmation: true, allowedRoles: ["client"] },
+  { name: "client_submit_service_request", description: "Submit a concierge/service request to the advisor.", parameters: { type: "object", properties: { property_id: { type: "string" }, service_type: { type: "string" }, description: { type: "string" }, preferred_date: { type: "string" } }, required: ["property_id", "service_type", "description"] }, allowedRoles: ["client"] },
+  { name: "client_update_goal", description: "Update or complete a home goal.", parameters: { type: "object", properties: { goal_id: { type: "string" }, fields: { type: "object" } }, required: ["goal_id", "fields"] }, allowedRoles: ["client"] },
+  { name: "client_get_maintenance_due", description: "Get equipment and items with maintenance due this month.", parameters: { type: "object", properties: { property_id: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["client"] },
+  { name: "client_submit_referral", description: "Submit a friend referral.", parameters: { type: "object", properties: { property_id: { type: "string" }, friend_name: { type: "string" }, friend_email: { type: "string" }, friend_phone: { type: "string" }, notes: { type: "string" } }, required: ["property_id", "friend_name"] }, allowedRoles: ["client"] },
 ];
 
 // ─── TOOL HANDLERS ───
@@ -138,24 +163,11 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
       // ── CLIENT MANAGEMENT ──
       case "create_client": {
         const { data: prop, error } = await supabase.from("properties").insert({
-          property_name: params.name,
-          address: params.address,
-          city: params.city,
-          state: params.state,
-          zip: params.zip,
-          creator_user_id: userId,
+          property_name: params.name, address: params.address, city: params.city, state: params.state, zip: params.zip, creator_user_id: userId,
           metadata: { referral_source: params.referral_source },
         }).select().single();
         if (error) throw error;
-        // Create CRM contact
-        await supabase.from("crm_contacts").insert({
-          contact_type: "client",
-          property_id: prop.id,
-          client_stage: "lead",
-          referral_source: params.referral_source,
-          notes: params.notes,
-          created_by: userId,
-        });
+        await supabase.from("crm_contacts").insert({ contact_type: "client", property_id: prop.id, client_stage: "lead", referral_source: params.referral_source, notes: params.notes, created_by: userId });
         return { success: true, result: { message: `Client "${params.name}" created`, property_id: prop.id }, entity_id: prop.id, entity_type: "client", nav_link: `/admin/clients/${prop.id}` };
       }
 
@@ -178,7 +190,6 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
         const { data, error } = await query;
         if (error) throw error;
         if (!data || data.length === 0) return { success: true, result: { message: "No clients found", clients: [] } };
-        // Enrich with invoices/projects count
         for (const c of data) {
           const { count: invCount } = await supabase.from("invoices").select("*", { count: "exact", head: true }).eq("property_id", c.id).neq("status", "paid");
           const { count: projCount } = await supabase.from("projects").select("*", { count: "exact", head: true }).eq("property_id", c.id).neq("status", "completed");
@@ -206,7 +217,6 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
       case "update_client_stage": {
         const { data: contacts } = await supabase.from("crm_contacts").select("id, client_stage").eq("property_id", params.client_id).eq("contact_type", "client");
         if (!contacts || contacts.length === 0) {
-          // Create CRM contact if not exists
           await supabase.from("crm_contacts").insert({ contact_type: "client", property_id: params.client_id, client_stage: params.stage, created_by: userId });
         } else {
           const c = contacts[0];
@@ -276,6 +286,23 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
         return { success: true, result: { message: "Report published and now visible to client" }, entity_id: params.report_id, entity_type: "report" };
       }
 
+      case "create_report": {
+        const { data, error } = await supabase.from("reports").insert({
+          property_id: params.property_id, title: params.title || "Home Assessment Report", status: "draft", completion_percent: 0, created_by: userId,
+        }).select().single();
+        if (error) throw error;
+        return { success: true, result: { message: `Report "${data.title}" created`, report_id: data.id }, entity_id: data.id, entity_type: "report" };
+      }
+
+      case "add_report_page": {
+        const { count } = await supabase.from("report_pages").select("*", { count: "exact", head: true }).eq("report_id", params.report_id);
+        const { data, error } = await supabase.from("report_pages").insert({
+          report_id: params.report_id, title: params.title, page_key: params.page_key, group_name: params.group_name || "General", status: "draft", sort_order: (count || 0) + 1,
+        }).select().single();
+        if (error) throw error;
+        return { success: true, result: { message: `Page "${params.title}" added to report`, page_id: data.id }, entity_id: data.id, entity_type: "report_page" };
+      }
+
       // ── FIELD INSPECTION ──
       case "create_field_inspection": {
         const { data, error } = await supabase.from("field_inspections").insert({ property_id: params.property_id, admin_id: userId, notes: params.notes, status: "in_progress" }).select().single();
@@ -291,14 +318,9 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
       // ── PROJECTS ──
       case "create_project": {
         const { data, error } = await supabase.from("projects").insert({
-          property_id: params.client_id,
-          title: params.title,
-          description: params.description,
-          estimated_cost: params.estimated_cost,
-          priority: params.priority || "medium",
-          status: params.status || "planned",
-          start_date: params.start_date,
-          end_date: params.end_date,
+          property_id: params.client_id, title: params.title, description: params.description,
+          estimated_cost: params.estimated_cost, priority: params.priority || "medium", status: params.status || "planned",
+          start_date: params.start_date, end_date: params.end_date,
         }).select().single();
         if (error) throw error;
         return { success: true, result: { message: `Project "${params.title}" created`, project_id: data.id }, entity_id: data.id, entity_type: "project", nav_link: `/admin/projects/${data.id}` };
@@ -330,13 +352,8 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
 
       case "add_project_task": {
         const { data, error } = await supabase.from("project_tasks").insert({
-          project_id: params.project_id,
-          title: params.title,
-          assigned_to: params.assignee_id,
-          due_date: params.due_date,
-          priority: params.priority || "medium",
-          description: params.description,
-          status: "not_started",
+          project_id: params.project_id, title: params.title, assigned_to: params.assignee_id,
+          due_date: params.due_date, priority: params.priority || "medium", description: params.description, status: "not_started",
         }).select().single();
         if (error) throw error;
         return { success: true, result: { message: `Task "${params.title}" added`, task_id: data.id }, entity_id: data.id, entity_type: "task" };
@@ -354,11 +371,7 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
 
       case "create_change_order": {
         const { data, error } = await supabase.from("change_orders").insert({
-          invoice_id: params.project_id, // Using existing FK — maps to project context
-          title: params.title,
-          description: params.description,
-          amount: params.amount,
-          status: "pending",
+          invoice_id: params.project_id, title: params.title, description: params.description, amount: params.amount, status: "pending",
         }).select().single();
         if (error) throw error;
         return { success: true, result: { message: `Change order "${params.title}" created for $${params.amount}`, change_order_id: data.id }, entity_id: data.id, entity_type: "change_order" };
@@ -371,29 +384,18 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
 
       // ── ESTIMATES ──
       case "create_estimate": {
-        // Find property for client
         const subtotal = (params.line_items || []).reduce((s: number, li: any) => s + (li.quantity || 1) * (li.unit_price || 0), 0);
         const { data: est, error } = await supabase.from("estimates").insert({
-          admin_id: userId,
-          property_id: params.client_id,
-          title: params.title,
-          notes: params.notes,
-          subtotal,
-          total: subtotal,
-          status: "draft",
+          admin_id: userId, property_id: params.client_id, title: params.title, notes: params.notes,
+          subtotal, total: subtotal, status: "draft",
           valid_until: params.valid_days ? new Date(Date.now() + params.valid_days * 86400000).toISOString() : null,
         }).select().single();
         if (error) throw error;
-        // Insert line items
         for (let i = 0; i < (params.line_items || []).length; i++) {
           const li = params.line_items[i];
           await supabase.from("estimate_line_items").insert({
-            estimate_id: est.id,
-            description: li.description,
-            quantity: li.quantity || 1,
-            unit_price: li.unit_price || 0,
-            total: (li.quantity || 1) * (li.unit_price || 0),
-            sort_order: i,
+            estimate_id: est.id, description: li.description, quantity: li.quantity || 1, unit_price: li.unit_price || 0,
+            total: (li.quantity || 1) * (li.unit_price || 0), sort_order: i,
           });
         }
         return { success: true, result: { message: `Estimate "${params.title}" created for $${subtotal.toLocaleString()}`, estimate_id: est.id, total: subtotal }, entity_id: est.id, entity_type: "estimate" };
@@ -422,27 +424,29 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
         if (!est) return { success: false, result: { message: "Estimate not found" } };
         const dueDate = new Date(Date.now() + (params.due_days || 30) * 86400000).toISOString().split("T")[0];
         const { data: inv, error } = await supabase.from("invoices").insert({
-          property_id: est.property_id,
-          title: est.title,
-          description: est.notes || "",
-          amount: est.total,
-          status: "pending",
-          due_date: dueDate,
+          property_id: est.property_id, title: est.title, description: est.notes || "", amount: est.total, status: "pending", due_date: dueDate,
         }).select().single();
         if (error) throw error;
         await supabase.from("estimates").update({ status: "converted", converted_invoice_id: inv.id }).eq("id", params.estimate_id);
         return { success: true, result: { message: `Estimate converted to invoice #${inv.invoice_number || inv.id}`, invoice_id: inv.id }, entity_id: inv.id, entity_type: "invoice" };
       }
 
+      case "update_estimate": {
+        await supabase.from("estimates").update(params.fields).eq("id", params.estimate_id);
+        return { success: true, result: { message: "Estimate updated" }, entity_id: params.estimate_id, entity_type: "estimate" };
+      }
+
+      case "delete_estimate": {
+        await supabase.from("estimate_line_items").delete().eq("estimate_id", params.estimate_id);
+        await supabase.from("estimates").delete().eq("id", params.estimate_id);
+        return { success: true, result: { message: "Estimate deleted" } };
+      }
+
       // ── INVOICES ──
       case "create_invoice": {
         const { data, error } = await supabase.from("invoices").insert({
-          property_id: params.client_id,
-          title: params.title,
-          description: params.description || "",
-          amount: params.amount,
-          due_date: params.due_date,
-          status: "pending",
+          property_id: params.client_id, title: params.title, description: params.description || "",
+          amount: params.amount, due_date: params.due_date, status: "pending",
         }).select().single();
         if (error) throw error;
         return { success: true, result: { message: `Invoice created for $${params.amount}`, invoice_id: data.id, invoice_number: data.invoice_number }, entity_id: data.id, entity_type: "invoice" };
@@ -492,20 +496,12 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
       // ── VENDORS ──
       case "create_vendor": {
         const { data, error } = await supabase.from("central_vendors").insert({
-          admin_id: userId,
-          company_name: params.company_name,
-          contact_name: params.contact_name,
-          email: params.email,
-          phone: params.phone,
-          specialties: params.specialties,
-          tier: params.tier || "approved",
-          notes: params.notes,
-          license_number: params.license_number,
-          insurance_expiry: params.insurance_expiry,
-          status: "active",
+          admin_id: userId, company_name: params.company_name, contact_name: params.contact_name,
+          email: params.email, phone: params.phone, specialties: params.specialties,
+          tier: params.tier || "approved", notes: params.notes, license_number: params.license_number,
+          insurance_expiry: params.insurance_expiry, status: "active",
         }).select().single();
         if (error) throw error;
-        // Create CRM contact
         await supabase.from("crm_contacts").insert({ contact_type: "trade_partner", vendor_id: data.id, partner_stage: "approved", created_by: userId });
         return { success: true, result: { message: `Vendor "${params.company_name}" created`, vendor_id: data.id }, entity_id: data.id, entity_type: "vendor", nav_link: `/admin/crm/trade-partners/${data.id}` };
       }
@@ -533,16 +529,11 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
 
       case "create_vendor_performance_review": {
         const { data, error } = await supabase.from("vendor_performance_reviews").insert({
-          vendor_id: params.vendor_id,
-          project_id: params.project_id,
-          reviewer_id: userId,
-          quality_score: params.quality_score,
-          timeliness_score: params.timeliness_score,
-          communication_score: params.communication_score,
-          professionalism_score: params.professionalism_score,
+          vendor_id: params.vendor_id, project_id: params.project_id, reviewer_id: userId,
+          quality_score: params.quality_score, timeliness_score: params.timeliness_score,
+          communication_score: params.communication_score, professionalism_score: params.professionalism_score,
           overall_score: Math.round((params.quality_score + params.timeliness_score + params.communication_score + params.professionalism_score) / 4 * 10) / 10,
-          notes: params.notes,
-          recommend: true,
+          notes: params.notes, recommend: true,
         }).select().single();
         if (error) throw error;
         return { success: true, result: { message: "Performance review submitted" }, entity_id: data.id, entity_type: "review" };
@@ -550,29 +541,18 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
 
       case "request_bid": {
         for (const vid of params.vendor_ids) {
-          await supabase.from("contractor_bids").insert({
-            project_id: params.project_id,
-            contractor_name: vid,
-            scope_of_work: params.scope_description,
-            status: "pending",
-            bid_date: params.due_date,
-          });
+          await supabase.from("contractor_bids").insert({ project_id: params.project_id, contractor_name: vid, scope_of_work: params.scope_description, status: "pending", bid_date: params.due_date });
         }
         return { success: true, result: { message: `Bid invitations sent to ${params.vendor_ids.length} vendors` } };
       }
 
       // ── COMMUNICATION ──
       case "send_message": {
-        await supabase.from("property_messages").insert({
-          property_id: params.recipient_id,
-          sender_id: userId,
-          message: params.message,
-        });
+        await supabase.from("property_messages").insert({ property_id: params.recipient_id, sender_id: userId, message: params.message });
         return { success: true, result: { message: "Message sent" }, entity_id: params.recipient_id, entity_type: "message" };
       }
 
       case "ai_write_message": {
-        // Get client context
         const { data: prop } = await supabase.from("properties").select("property_name, address").eq("id", params.recipient_id).single();
         const clientName = prop?.property_name || "the client";
         const draft = `Dear ${clientName},\n\n${params.intent}\n\nBest regards,\nAdam Kilgore\nHometown Builders Club`;
@@ -584,7 +564,7 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
         if (params.filter?.unread_only) q = q.eq("is_read", false);
         if (params.filter?.client_id) q = q.eq("property_id", params.filter.client_id);
         const { data } = await q;
-        return { success: true, result: { count: (data || []).length, messages: data || [] } };
+        return { success: true, result: { messages: data || [] } };
       }
 
       case "mark_message_read": {
@@ -595,15 +575,9 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
       // ── SCHEDULING ──
       case "create_event": {
         const { data, error } = await supabase.from("schedule_events").insert({
-          property_id: params.client_id,
-          title: params.title,
-          event_type: params.type,
-          event_date: params.date,
-          start_time: params.time,
-          duration_minutes: params.duration_minutes || 60,
-          location: params.location,
-          notes: params.notes,
-          created_by: userId,
+          title: params.title, property_id: params.client_id, event_type: params.type,
+          event_date: params.date, start_time: params.time, duration_minutes: params.duration_minutes || 60,
+          location: params.location, notes: params.notes, created_by: userId,
         }).select().single();
         if (error) throw error;
         return { success: true, result: { message: `Event "${params.title}" created`, event_id: data.id }, entity_id: data.id, entity_type: "event" };
@@ -632,15 +606,9 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
       // ── EQUIPMENT ──
       case "add_equipment": {
         const { data, error } = await supabase.from("equipment").insert({
-          property_id: params.property_id,
-          name: params.name,
-          category: params.category,
-          brand: params.brand,
-          model: params.model,
-          serial_number: params.serial_number,
-          install_date: params.install_date,
-          warranty_expiry: params.warranty_expiry,
-          notes: params.notes,
+          property_id: params.property_id, name: params.name, category: params.category,
+          brand: params.brand, model: params.model, serial_number: params.serial_number,
+          install_date: params.install_date, warranty_expiry: params.warranty_expiry, notes: params.notes,
         }).select().single();
         if (error) throw error;
         return { success: true, result: { message: `Equipment "${params.name}" added`, equipment_id: data.id }, entity_id: data.id, entity_type: "equipment" };
@@ -663,23 +631,27 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
 
       // ── HOME GOALS ──
       case "create_home_goal": {
-        const { data, error } = await supabase.from("home_goals").insert({
-          property_id: params.property_id,
-          title: params.title,
-          description: params.description,
-          category: params.category,
-          target_date: params.target_date,
-          estimated_cost: params.estimated_cost,
-          priority: params.priority || "medium",
-          status: "active",
+        const { data, error } = await supabase.from("client_goals").insert({
+          property_id: params.property_id, client_id: userId, title: params.title,
+          description: params.description, category: params.category, target_date: params.target_date, status: "active",
         }).select().single();
         if (error) throw error;
         return { success: true, result: { message: `Goal "${params.title}" created`, goal_id: data.id }, entity_id: data.id, entity_type: "goal" };
       }
 
       case "list_home_goals": {
-        const { data } = await supabase.from("home_goals").select("*").eq("property_id", params.property_id).order("created_at", { ascending: false });
+        const { data } = await supabase.from("client_goals").select("*").eq("property_id", params.property_id).order("created_at", { ascending: false });
         return { success: true, result: { goals: data || [] } };
+      }
+
+      case "update_home_goal": {
+        await supabase.from("client_goals").update(params.fields).eq("id", params.goal_id);
+        return { success: true, result: { message: "Goal updated" }, entity_id: params.goal_id, entity_type: "goal" };
+      }
+
+      case "delete_home_goal": {
+        await supabase.from("client_goals").delete().eq("id", params.goal_id);
+        return { success: true, result: { message: "Goal deleted" } };
       }
 
       // ── MEMBERSHIP & SERVICES ──
@@ -709,11 +681,8 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
       // ── ANNOUNCEMENTS ──
       case "create_announcement": {
         const { data, error } = await supabase.from("announcements").insert({
-          title: params.title,
-          body: params.body,
-          target_audience: params.target_audience || "all",
-          created_by: userId,
-          start_date: new Date().toISOString(),
+          title: params.title, body: params.body, target_audience: params.target_audience || "all",
+          created_by: userId, start_date: new Date().toISOString(),
         }).select().single();
         if (error) throw error;
         return { success: true, result: { message: `Announcement "${params.title}" created`, announcement_id: data.id }, entity_id: data.id, entity_type: "announcement" };
@@ -722,6 +691,76 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
       case "list_announcements": {
         const { data } = await supabase.from("announcements").select("*").order("created_at", { ascending: false });
         return { success: true, result: { announcements: data || [] } };
+      }
+
+      case "update_announcement": {
+        await supabase.from("announcements").update(params.fields).eq("id", params.announcement_id);
+        return { success: true, result: { message: "Announcement updated" }, entity_id: params.announcement_id, entity_type: "announcement" };
+      }
+
+      case "delete_announcement": {
+        await supabase.from("announcements").delete().eq("id", params.announcement_id);
+        return { success: true, result: { message: "Announcement deleted" } };
+      }
+
+      // ── STANDALONE TASKS ──
+      case "create_standalone_task": {
+        const { data, error } = await supabase.from("admin_tasks").insert({
+          title: params.title, description: params.description, due_date: params.due_date,
+          priority: params.priority || "medium", property_id: params.client_id, created_by: userId, status: "pending",
+        }).select().single();
+        if (error) {
+          // Fallback to schedule_events if admin_tasks doesn't exist
+          const { data: evt, error: evtErr } = await supabase.from("schedule_events").insert({
+            title: params.title, notes: params.description, event_date: params.due_date || new Date().toISOString().split("T")[0],
+            event_type: "task", property_id: params.client_id, created_by: userId,
+          }).select().single();
+          if (evtErr) throw evtErr;
+          return { success: true, result: { message: `Task "${params.title}" created as calendar event`, task_id: evt.id }, entity_id: evt.id, entity_type: "event" };
+        }
+        return { success: true, result: { message: `Task "${params.title}" created`, task_id: data.id }, entity_id: data.id, entity_type: "task" };
+      }
+
+      case "list_standalone_tasks": {
+        const { data, error } = await supabase.from("admin_tasks").select("*").order("created_at", { ascending: false });
+        if (error) {
+          // Fallback to schedule events with type=task
+          const { data: evts } = await supabase.from("schedule_events").select("*").eq("event_type", "task").order("event_date");
+          return { success: true, result: { tasks: evts || [] } };
+        }
+        return { success: true, result: { tasks: data || [] } };
+      }
+
+      case "update_standalone_task": {
+        const { error } = await supabase.from("admin_tasks").update(params.fields).eq("id", params.task_id);
+        if (error) {
+          await supabase.from("schedule_events").update(params.fields).eq("id", params.task_id);
+        }
+        return { success: true, result: { message: "Task updated" }, entity_id: params.task_id, entity_type: "task" };
+      }
+
+      // ── REFERRALS ──
+      case "create_referral": {
+        const { data, error } = await supabase.from("referrals").insert({
+          referring_client_id: params.referring_client_id, referred_name: params.referred_name,
+          referred_email: params.referred_email, referred_phone: params.referred_phone,
+          notes: params.notes, status: "pending", created_by: userId,
+        }).select().single();
+        if (error) {
+          // Fallback: log as activity
+          await supabase.from("activity_log").insert({ user_id: userId, property_id: params.referring_client_id, action_type: "referral", message: `Referral: ${params.referred_name} (${params.referred_email || "no email"})` });
+          return { success: true, result: { message: `Referral for "${params.referred_name}" logged` } };
+        }
+        return { success: true, result: { message: `Referral for "${params.referred_name}" created`, referral_id: data.id }, entity_id: data.id, entity_type: "referral" };
+      }
+
+      case "list_referrals": {
+        const { data, error } = await supabase.from("referrals").select("*").order("created_at", { ascending: false });
+        if (error) {
+          const { data: logs } = await supabase.from("activity_log").select("*").eq("action_type", "referral").order("created_at", { ascending: false });
+          return { success: true, result: { referrals: logs || [] } };
+        }
+        return { success: true, result: { referrals: data || [] } };
       }
 
       // ── ANALYTICS ──
@@ -749,14 +788,7 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
         const { data: invoices } = await supabase.from("invoices").select("amount, status");
         const revenue = (invoices || []).filter((i: any) => i.status === "paid").reduce((s: number, i: any) => s + (i.amount || 0), 0);
         const outstanding = (invoices || []).filter((i: any) => !["paid","cancelled"].includes(i.status)).reduce((s: number, i: any) => s + (i.amount || 0), 0);
-        return { success: true, result: {
-          active_clients: clientCount || 0,
-          open_invoices: openInvoices || 0,
-          active_projects: activeProjects || 0,
-          unread_messages: unreadMessages || 0,
-          total_revenue: revenue,
-          outstanding_balance: outstanding,
-        }};
+        return { success: true, result: { active_clients: clientCount || 0, open_invoices: openInvoices || 0, active_projects: activeProjects || 0, unread_messages: unreadMessages || 0, total_revenue: revenue, outstanding_balance: outstanding } };
       }
 
       // ── SETTINGS ──
@@ -811,7 +843,7 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
       }
 
       case "client_add_home_goal": {
-        const { data, error } = await supabase.from("home_goals").insert({ property_id: params.property_id, title: params.title, description: params.description, target_date: params.target_date, estimated_cost: params.estimated_cost, status: "active" }).select().single();
+        const { data, error } = await supabase.from("client_goals").insert({ property_id: params.property_id, client_id: userId, title: params.title, description: params.description, target_date: params.target_date, status: "active" }).select().single();
         if (error) throw error;
         return { success: true, result: { message: `Goal "${params.title}" added` } };
       }
@@ -819,6 +851,67 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
       case "client_submit_feedback": {
         await supabase.from("feedback").insert({ property_id: params.property_id, user_id: userId, rating: params.rating, comment: params.comment, entity_type: "general" });
         return { success: true, result: { message: "Thank you for your feedback!" } };
+      }
+
+      case "client_get_schedule": {
+        const { data } = await supabase.from("schedule_events").select("*").eq("property_id", params.property_id).gte("event_date", new Date().toISOString().split("T")[0]).order("event_date");
+        return { success: true, result: { events: data || [] } };
+      }
+
+      case "client_get_documents": {
+        const { data } = await supabase.from("client_files").select("*").eq("property_id", params.property_id).order("created_at", { ascending: false });
+        return { success: true, result: { documents: data || [] } };
+      }
+
+      case "client_get_warranties": {
+        const { data } = await supabase.from("equipment").select("id, name, category, brand, model, warranty_expiry, next_service_date, last_service_date, condition, install_date").eq("property_id", params.property_id).order("warranty_expiry");
+        const now = new Date().toISOString().split("T")[0];
+        const items = (data || []).map((e: any) => ({
+          ...e,
+          warranty_status: !e.warranty_expiry ? "unknown" : e.warranty_expiry < now ? "expired" : "active",
+          service_status: !e.next_service_date ? "no_schedule" : e.next_service_date < now ? "overdue" : "upcoming",
+        }));
+        return { success: true, result: { equipment: items } };
+      }
+
+      case "client_get_estimates": {
+        const { data } = await supabase.from("estimates").select("id, title, status, total, created_at, valid_until, sent_at").eq("property_id", params.property_id).in("status", ["sent", "accepted", "declined"]).order("created_at", { ascending: false });
+        return { success: true, result: { estimates: data || [] } };
+      }
+
+      case "client_accept_estimate": {
+        await supabase.from("estimates").update({ status: "accepted", responded_at: new Date().toISOString() }).eq("id", params.estimate_id);
+        return { success: true, result: { message: "Estimate accepted! Your advisor will follow up with next steps." }, entity_id: params.estimate_id, entity_type: "estimate" };
+      }
+
+      case "client_submit_service_request": {
+        await supabase.from("appointment_requests").insert({
+          client_id: userId, property_id: params.property_id, topic: params.service_type,
+          notes: `Service Request: ${params.description}. Preferred date: ${params.preferred_date || "flexible"}`,
+          preferred_slots_json: params.preferred_date ? [params.preferred_date] : [],
+        });
+        return { success: true, result: { message: `Service request for "${params.service_type}" submitted. Your advisor will be in touch!` } };
+      }
+
+      case "client_update_goal": {
+        await supabase.from("client_goals").update(params.fields).eq("id", params.goal_id);
+        return { success: true, result: { message: "Goal updated" }, entity_id: params.goal_id, entity_type: "goal" };
+      }
+
+      case "client_get_maintenance_due": {
+        const now = new Date();
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+        const { data } = await supabase.from("equipment").select("id, name, category, brand, next_service_date, last_service_date, condition").eq("property_id", params.property_id).not("next_service_date", "is", null).lte("next_service_date", endOfMonth).order("next_service_date");
+        return { success: true, result: { maintenance_items: data || [], count: (data || []).length } };
+      }
+
+      case "client_submit_referral": {
+        await supabase.from("activity_log").insert({
+          property_id: params.property_id, action_type: "referral", user_id: userId,
+          message: `Client referral: ${params.friend_name} (${params.friend_email || ""} ${params.friend_phone || ""})`,
+          metadata: { friend_name: params.friend_name, friend_email: params.friend_email, friend_phone: params.friend_phone, notes: params.notes },
+        });
+        return { success: true, result: { message: `Thank you for referring ${params.friend_name}! Your advisor will reach out to them.` } };
       }
 
       default:
@@ -850,13 +943,112 @@ Core behaviors:
 9. Track what you've done in this conversation — "want me to send that estimate I just created?"
 10. You can do everything in this app. If asked if you can do something, say yes and do it.
 11. Parse natural language dates: "next Tuesday", "end of month", "in 2 weeks" etc.
-12. When you receive page context, use it — don't ask for IDs you already know.`;
+12. When you receive page context, use it — don't ask for IDs you already know.
 
-const CLIENT_SYSTEM_PROMPT = (clientName: string) => `You are a friendly home assistant for ${clientName}'s Home Clarity Hub portal. You help homeowners understand their home, track projects, stay on top of maintenance, and communicate with their HBC team.
+## APP KNOWLEDGE — ADMIN SIDE
+
+### Navigation & Pages
+- **Dashboard** (/admin): Daily Brief with 4 zones — Briefing (client count, revenue, setup), Action Required (overdue invoices, tasks, follow-ups), Insights (revenue chart, pipeline), Reference (map, calendar). Widgets are collapsible and reorderable.
+- **Inbox** (/admin/inbox): All client messages in one place. Unread badge. Reply inline. Filter by client.
+- **Clients** (/admin/clients): Master client list with search, filters (stage, tags, health), bulk actions. Click a client → opens the **Client Workspace**.
+- **Client Workspace** (/admin/clients/:id): The unified hub for a single client. Has a left Context Card (identity, health, quick actions), center Tab Content area, and a right AI Agent Rail (me!). Tabs are grouped:
+  - **Property**: Overview (inline edit all fields), Report (page editor, WYSIWYG, AI draft, serial plate scanner), Digital Twin (document intelligence), Equipment (full CRUD with service tracking)
+  - **Work**: Projects (Kanban/List/Calendar/Gantt views, phases, tasks, budget, change orders), Schedule (events, inspections), Field Inspection (GPS check-in, on-site mode)
+  - **Financial**: Invoices (create/send/mark paid/void, auto-numbering HBC-XXXX), Estimates (create with line items, send as proposals, convert to invoice), Payments (payment tracking)
+  - **Communication**: Messages (chat-style with client), Files (upload/download documents), Comments (threaded per report page), Announcements
+  - **Intelligence**: AI Insights, Score Explainer, Condition Forecast, Meeting Prep, Annual Review
+- **CRM Hub** (/admin/crm): Dual swimlane Kanban for Clients and Trade Partners. Client stages: Lead → Onboarding → Active → Proposal Out → Project Running → Completed → At Risk → Churned. Partner stages: Prospecting → Vetting → Approved → Preferred → On Hold → Inactive. 10 profile tabs for clients, 9 for partners.
+- **Projects** (/admin/projects): All projects across all clients. Kanban board + list view.
+- **Tasks** (/admin/tasks): Standalone task board (not tied to projects). For follow-ups, reminders, to-dos.
+- **Calendar** (/admin/calendar): All events, inspections, deadlines. Syncs with Google Calendar if configured.
+- **Analytics** (/admin/analytics): Revenue tracking, client metrics, pipeline analysis, engagement scores.
+- **Goals** (/admin/goals): Client home improvement goals across all properties.
+- **Referrals** (/admin/referrals): Track client referrals, status, conversion.
+- **Announcements** (/admin/announcements): Create/manage announcements for all clients or specific ones.
+- **Automations** (/admin/automations): Rule-based workflows — auto-reminders, follow-ups, status changes. Enable/disable toggle.
+- **Knowledge Base** (/admin/knowledge-base): Templates for pricing, scope of work, system descriptions. Two tabs: Knowledge Base articles + Report Templates.
+- **Settings** (/admin/settings): Profile, company info, branding, integrations hub (Google Suite, Stripe, QuickBooks, Slack, Zapier, Calendly, etc.), notification preferences, API keys.
+- **Command Palette** (Cmd+K): Quick search and jump to any page, client, project, or action.
+
+### How-To Guides
+- **Create a new client**: Go to Clients → "+ New Client" button → fill wizard (4 steps: Client Info → Digital Assets → Select Report Pages → Review & Publish). Or ask me and I'll do it.
+- **Build a report**: Client Workspace → Report tab → pages are auto-created from wizard. Click any page to edit in WYSIWYG. Use "Draft with AI" for narrative generation. Set condition ratings. Upload photos. Mark pages complete. Click "Publish" when ready.
+- **Send a proposal/estimate**: Client Workspace → Financial tab → Estimates → "Create Estimate" → add line items → "Send Estimate". Client receives it in their portal. Can also use the Proposal Builder for premium presentations.
+- **Create an invoice**: Financial tab → Invoices → "Create Invoice" or convert from estimate. Auto-numbers as HBC-XXXX. Send to client. Mark as paid when collected.
+- **Schedule a visit**: Calendar or Client Workspace → Schedule tab → "Create Event" → pick type, date, time, location. Assign to a client.
+- **Manage projects**: Client Workspace → Projects tab → create project → add phases/tasks → assign vendors → track budget → log daily updates → manage change orders.
+- **Use the CRM**: CRM Hub → drag cards between stages. Click card for full profile. Log activities. Set follow-up reminders. Filter/search contacts.
+- **Run an Annual Review**: Client Workspace → Intelligence tab → Annual Review. Generates a full year-in-review briefing: health score changes, completed projects, financial summary.
+- **Use AI tools**: Client Workspace → Intelligence tab. Available: Score Explainer (why the health score is what it is), Condition Forecast (5-year failure risk), Meeting Prep (client briefing), Maintenance Schedule (AI-generated 12-month plan).
+- **Field inspection**: Client Workspace → Schedule → Start Inspection. GPS check-in, on-site photo capture, notes.
+- **Manage trade partners**: CRM Hub → Trade Partners swimlane. Add vendor → vet (license, insurance, W-9) → rate after project → track performance.
+
+### Graceful Limits
+If asked to do something I don't have a tool for yet, I will:
+1. Clearly say what I can't do and why
+2. Offer to walk the admin through doing it manually in the app
+3. Suggest flagging it as a feature request`;
+
+const CLIENT_SYSTEM_PROMPT = (clientName: string, enrichment?: any) => {
+  let prompt = `You are a friendly home assistant for ${clientName}'s Home Clarity Hub portal. You help homeowners understand their home, track projects, stay on top of maintenance, and communicate with their HBC team.
 
 You are warm, encouraging, and speak without technical jargon. You can only access ${clientName}'s own home data. For anything requiring admin action, send a message to their HBC advisor on their behalf and let them know you've done it.
 
-You use emoji naturally and keep responses concise and actionable.`;
+You use emoji naturally and keep responses concise and actionable.
+
+## APP KNOWLEDGE — CLIENT PORTAL
+
+### Navigation & Tabs
+The portal is organized into tabs at the top. Here's what each one does:
+- **Home**: Your dashboard. Shows health score, quick stats (open projects, pending invoices, equipment count), and quick-action cards for navigating to other sections. Has an "Ask a question" button that opens me.
+- **Report**: Your comprehensive home assessment. Organized by chapters (Roof, HVAC, Plumbing, etc.). Each chapter has a condition rating (Excellent → Critical), detailed narrative, specs, photos, and tiered pricing recommendations (Essential/Enhanced/Signature). Also includes a Financial Roadmap (total costs by urgency) and Action Plan (prioritized to-do list). You can click any chapter in the sidebar to jump to it.
+- **Projects**: Active work being done on your home. Shows status (Planned, In Progress, Completed), priority, timeline, and budget tracking.
+- **Payments**: All invoices from your advisor. Shows amount, due date, status (Pending, Paid, Overdue). Overdue items are highlighted in red.
+- **Equipment**: Your home's equipment registry. Every major system (HVAC, water heater, appliances, etc.) with brand, model, serial number, install date, warranty status, and next service date. Color-coded status badges (Overdue, Due Soon, Warranty Expired, Up to Date).
+- **Documents**: Files shared by your advisor — reports, contracts, photos, etc.
+- **Messages**: Direct chat with your HBC advisor. Send messages, ask questions.
+- **Photos**: Property photos organized by area.
+- **Services**: Concierge services you can request — HVAC tune-up, plumbing check, electrical inspection, etc.
+- **Estimates**: Proposals/estimates from your advisor. View details, accept, or decline.
+- **Schedule**: Upcoming visits, inspections, and maintenance appointments.
+- **Goals**: Your home improvement goals. Track progress toward kitchen renovation, landscaping, etc.
+- **Billing**: Subscription/membership management.
+- **Refer**: Refer a friend to HBC and earn rewards.
+- **Contacts**: Your advisor's contact information and your property contacts.
+
+### How-To Guides
+- **View your report**: Click the "Report" tab. Use the sidebar to jump between chapters. Each chapter shows what was found and what's recommended.
+- **See your warranties**: Go to "Equipment" tab. Each item shows its warranty expiry date and a status badge. Items with expired warranties are flagged.
+- **Check what maintenance is due**: Go to "Equipment" tab — items with upcoming service dates are highlighted as "Due Soon" or "Overdue". Or just ask me!
+- **View/accept an estimate**: Go to "Estimates" tab. Click on any sent estimate to see the full breakdown. Click "Accept" to approve it.
+- **Upload a document**: Go to "Documents" tab → "Upload" button. Select your file.
+- **Send a message to your advisor**: Go to "Messages" tab and type your message. Or just tell me what you want to say and I'll send it for you!
+- **Add a home goal**: Go to "Goals" tab → "Add Goal". Give it a title, category, and target date. Or tell me and I'll add it.
+- **Request a service**: Go to "Services" tab and pick a service. Or tell me what you need and I'll submit the request.
+- **Refer a friend**: Go to "Refer" tab and enter your friend's info. Or tell me their name and contact info.
+- **Update notification preferences**: Go to your profile settings → Notifications.
+
+### Graceful Limits
+If asked to do something I can't do:
+1. I'll clearly explain what I can't do and why
+2. I'll offer to walk you through doing it yourself in the portal
+3. If it needs your advisor's help, I'll send them a message on your behalf`;
+
+  if (enrichment) {
+    const parts: string[] = [];
+    if (enrichment.healthScore !== undefined) parts.push(`Health Score: ${enrichment.healthScore}/100`);
+    if (enrichment.reportCompletion !== undefined) parts.push(`Report: ${enrichment.reportCompletion}% complete`);
+    if (enrichment.openInvoiceCount !== undefined) parts.push(`Open Invoices: ${enrichment.openInvoiceCount}`);
+    if (enrichment.activeProjectCount !== undefined) parts.push(`Active Projects: ${enrichment.activeProjectCount}`);
+    if (enrichment.equipmentNeedingService !== undefined) parts.push(`Equipment Needing Service: ${enrichment.equipmentNeedingService}`);
+    if (enrichment.propertyAddress) parts.push(`Property: ${enrichment.propertyAddress}`);
+    if (parts.length > 0) {
+      prompt += `\n\n## CURRENT HOME STATUS\n${parts.join("\n")}`;
+    }
+  }
+
+  return prompt;
+};
 
 // ─── MAIN HANDLER ───
 
@@ -881,10 +1073,29 @@ serve(async (req) => {
     const allowedTools = TOOLS.filter(t => t.allowedRoles.includes(role));
 
     // Build system prompt with context injection
-    let systemPrompt = role === "client" ? CLIENT_SYSTEM_PROMPT(context?.currentEntityName || "Homeowner") : ADMIN_SYSTEM_PROMPT;
+    let systemPrompt: string;
+    if (role === "client") {
+      systemPrompt = CLIENT_SYSTEM_PROMPT(context?.currentEntityName || "Homeowner", context?.enrichment);
+    } else {
+      systemPrompt = ADMIN_SYSTEM_PROMPT;
+    }
 
     if (context?.currentEntityType && context?.currentEntityId) {
-      systemPrompt += `\n\nCurrent context: You are on the ${context.currentEntityType} page for "${context.currentEntityName}" (ID: ${context.currentEntityId}). Page: ${context.currentPage || "unknown"}. Use this context — don't ask for this entity's ID.`;
+      systemPrompt += `\n\nCurrent context: You are on the ${context.currentEntityType} page for "${context.currentEntityName}" (ID: ${context.currentEntityId}). Page: ${context.currentPage || "unknown"}.`;
+      if (context?.activeTab) systemPrompt += ` Active tab: ${context.activeTab}.`;
+      if (context?.enrichment && role === "creator") {
+        const e = context.enrichment;
+        const ctxParts: string[] = [];
+        if (e.propertyAddress) ctxParts.push(`Address: ${e.propertyAddress}`);
+        if (e.healthScore !== undefined) ctxParts.push(`Health: ${e.healthScore}/100`);
+        if (e.openInvoiceCount !== undefined) ctxParts.push(`Open invoices: ${e.openInvoiceCount}`);
+        if (e.overdueAmount !== undefined) ctxParts.push(`Overdue: $${e.overdueAmount}`);
+        if (e.activeProjectCount !== undefined) ctxParts.push(`Active projects: ${e.activeProjectCount}`);
+        if (e.reportCompletion !== undefined) ctxParts.push(`Report: ${e.reportCompletion}% complete`);
+        if (e.lastContactDays !== undefined) ctxParts.push(`Last contact: ${e.lastContactDays} days ago`);
+        if (ctxParts.length > 0) systemPrompt += `\nClient data: ${ctxParts.join(" | ")}`;
+      }
+      systemPrompt += ` Use this context — don't ask for this entity's ID.`;
     }
 
     // Build messages array
@@ -897,11 +1108,7 @@ serve(async (req) => {
     // Build OpenAI-compatible tools array
     const toolDefs = allowedTools.map(t => ({
       type: "function" as const,
-      function: {
-        name: t.name,
-        description: t.description,
-        parameters: t.parameters,
-      },
+      function: { name: t.name, description: t.description, parameters: t.parameters },
     }));
 
     // ReAct loop
@@ -917,41 +1124,23 @@ serve(async (req) => {
 
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages,
-          tools: toolDefs,
-          tool_choice: "auto",
-        }),
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "google/gemini-2.5-flash", messages, tools: toolDefs, tool_choice: "auto" }),
       });
 
       if (!response.ok) {
         const errText = await response.text();
         console.error("AI gateway error:", response.status, errText);
-        if (response.status === 429) {
-          finalReply = "I'm a bit busy right now — please try again in a moment.";
-          break;
-        }
-        if (response.status === 402) {
-          finalReply = "AI credits have been exhausted. Please add credits in your Lovable workspace settings.";
-          break;
-        }
+        if (response.status === 429) { finalReply = "I'm a bit busy right now — please try again in a moment."; break; }
+        if (response.status === 402) { finalReply = "AI credits have been exhausted. Please add credits in your Lovable workspace settings."; break; }
         throw new Error(`AI gateway error: ${response.status}`);
       }
 
       const data = await response.json();
       const choice = data.choices?.[0];
 
-      if (!choice) {
-        finalReply = "I encountered an issue processing your request. Please try again.";
-        break;
-      }
+      if (!choice) { finalReply = "I encountered an issue processing your request. Please try again."; break; }
 
-      // If the model wants to call tools
       if (choice.finish_reason === "tool_calls" || choice.message?.tool_calls) {
         const assistantMsg = choice.message;
         messages.push(assistantMsg);
@@ -959,13 +1148,8 @@ serve(async (req) => {
         for (const tc of assistantMsg.tool_calls || []) {
           const toolName = tc.function.name;
           let toolParams: any;
-          try {
-            toolParams = JSON.parse(tc.function.arguments || "{}");
-          } catch {
-            toolParams = {};
-          }
+          try { toolParams = JSON.parse(tc.function.arguments || "{}"); } catch { toolParams = {}; }
 
-          // Check if tool requires confirmation and we haven't confirmed
           const toolDef = TOOLS.find(t => t.name === toolName);
           if (toolDef?.requiresConfirmation && !confirm_action) {
             needsConfirmation = true;
@@ -975,37 +1159,20 @@ serve(async (req) => {
               reversible: !["delete_client", "delete_project", "void_invoice"].includes(toolName),
               pending_tool_call: { tool_name: toolName, params: toolParams },
             };
-            // Add a tool result saying confirmation needed
-            messages.push({
-              role: "tool",
-              tool_call_id: tc.id,
-              content: JSON.stringify({ status: "awaiting_confirmation", message: "User must confirm this action before I can proceed." }),
-            });
+            messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify({ status: "awaiting_confirmation", message: "User must confirm this action before I can proceed." }) });
             continue;
           }
 
-          // Execute the tool
           const result = await executeTool(supabase, toolName, toolParams, userId);
           toolsCalled.push({
-            tool_name: toolName,
-            params: toolParams,
+            tool_name: toolName, params: toolParams,
             result_summary: result.result?.message || JSON.stringify(result.result).slice(0, 200),
-            success: result.success,
-            entity_id: result.entity_id,
-            entity_type: result.entity_type,
-            nav_link: result.nav_link,
+            success: result.success, entity_id: result.entity_id, entity_type: result.entity_type, nav_link: result.nav_link,
           });
-
-          messages.push({
-            role: "tool",
-            tool_call_id: tc.id,
-            content: JSON.stringify(result.result),
-          });
+          messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(result.result) });
         }
 
-        // If we need confirmation, break the loop and ask
         if (needsConfirmation) {
-          // One more call to get the confirmation message
           const confirmResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
             headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
@@ -1015,60 +1182,33 @@ serve(async (req) => {
           finalReply = confirmData.choices?.[0]?.message?.content || "I need your confirmation before proceeding.";
           break;
         }
-
-        continue; // Loop back for more tool calls or final response
+        continue;
       }
 
-      // Model produced a text response — we're done
       finalReply = choice.message?.content || "";
       break;
     }
 
-    // Parse suggested next actions from the reply
-    const suggestedActions: string[] = [];
-    const actionMatch = finalReply.match(/(?:Want me to|I can also|Next steps?:?)(.+?)(?:\n\n|$)/is);
-    // Just return empty suggestions — the model naturally suggests them in text
-
     const duration = Date.now() - startTime;
 
-    // Log to agent_logs
     if (userId) {
       await supabase.from("agent_logs").insert({
-        user_id: userId,
-        role,
-        session_id: context?.sessionId,
-        user_message: message,
-        agent_reply: finalReply,
-        tools_called: toolsCalled,
-        duration_ms: duration,
-        tokens_used: 0,
-        page_context: context,
-        actions_taken: toolsCalled.filter(t => t.success).length,
-      }).then(() => {}).catch(() => {}); // fire and forget
+        user_id: userId, role, session_id: context?.sessionId, user_message: message,
+        agent_reply: finalReply, tools_called: toolsCalled, duration_ms: duration,
+        tokens_used: 0, page_context: context, actions_taken: toolsCalled.filter(t => t.success).length,
+      }).then(() => {}).catch(() => {});
     }
 
     return new Response(JSON.stringify({
-      reply: finalReply,
-      actions_taken: toolsCalled,
-      needs_confirmation: needsConfirmation,
-      confirmation_payload: confirmationPayload,
-      clarifying_question: null,
-      suggested_next_actions: suggestedActions,
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+      reply: finalReply, actions_taken: toolsCalled, needs_confirmation: needsConfirmation,
+      confirmation_payload: confirmationPayload, clarifying_question: null, suggested_next_actions: [],
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (err: any) {
     console.error("hbc-agent error:", err);
     return new Response(JSON.stringify({
       reply: `Sorry, I ran into an error: ${err.message}. Please try again.`,
-      actions_taken: [],
-      needs_confirmation: false,
-      confirmation_payload: null,
-      error: err.message,
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+      actions_taken: [], needs_confirmation: false, confirmation_payload: null, error: err.message,
+    }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });

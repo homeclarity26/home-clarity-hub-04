@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Sparkles, X, Send, Loader2, Home } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 
@@ -13,9 +13,24 @@ interface AgentMessage {
   content: string;
 }
 
+interface ClientAgentPanelProps {
+  propertyName?: string;
+  propertyAddress?: string;
+  enrichment?: {
+    healthScore?: number;
+    reportCompletion?: number;
+    openInvoiceCount?: number;
+    activeProjectCount?: number;
+    equipmentNeedingService?: number;
+    lastAdvisorContactDate?: string;
+  };
+}
+
 const QUICK_CHIPS = [
   "What needs attention?",
   "My projects",
+  "Maintenance due this month",
+  "My warranties",
   "Schedule a visit",
   "Message my advisor",
   "My invoices",
@@ -24,7 +39,7 @@ const QUICK_CHIPS = [
 
 const genId = () => Math.random().toString(36).slice(2, 10);
 
-const ClientAgentPanel = () => {
+const ClientAgentPanel = ({ propertyName, propertyAddress, enrichment }: ClientAgentPanelProps) => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [input, setInput] = useState("");
@@ -34,16 +49,22 @@ const ClientAgentPanel = () => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { user } = useAuth();
   const { propertyId } = useParams<{ propertyId?: string }>();
+  const location = useLocation();
+
+  // Derive active tab from URL
+  const searchParams = new URLSearchParams(location.search);
+  const activeTab = searchParams.get("tab") || "home";
 
   useEffect(() => {
     if (open && messages.length === 0) {
+      const name = propertyName || "your home";
       setMessages([{
         id: genId(),
         role: "assistant",
-        content: "🏠 Hi! I'm your **Home Assistant**. I can help you:\n\n- Check what needs attention at your home\n- View your projects and invoices\n- Schedule visits with your advisor\n- Set home improvement goals\n\nWhat would you like to know?",
+        content: `🏠 Hi! I'm your **Home Assistant** for ${name}. I can help you:\n\n- Check what needs attention at your home\n- View your projects, invoices, and warranties\n- Schedule visits with your advisor\n- Set home improvement goals\n- Request services or refer a friend\n\nWhat would you like to know?`,
       }]);
     }
-  }, [open, messages.length]);
+  }, [open, messages.length, propertyName]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -68,8 +89,13 @@ const ClientAgentPanel = () => {
             currentPage: `/portal/${propertyId}`,
             currentEntityType: "client_portal",
             currentEntityId: propertyId || "",
-            currentEntityName: "",
+            currentEntityName: propertyName || "",
+            activeTab,
             sessionId,
+            enrichment: {
+              propertyAddress,
+              ...enrichment,
+            },
           },
         },
       });
@@ -80,7 +106,7 @@ const ClientAgentPanel = () => {
     } finally {
       setIsThinking(false);
     }
-  }, [messages, user, propertyId, sessionId]);
+  }, [messages, user, propertyId, sessionId, propertyName, propertyAddress, enrichment, activeTab]);
 
   return (
     <>
@@ -99,7 +125,7 @@ const ClientAgentPanel = () => {
             <div className="flex-1">
               <h2 className="text-sm font-sans font-semibold text-foreground">Your Home Assistant 🏠</h2>
               <span className="text-[10px] font-sans text-muted-foreground">
-                {isThinking ? "Thinking..." : "Here to help"}
+                {isThinking ? "Thinking..." : propertyName || "Here to help"}
               </span>
             </div>
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)} className="h-7 w-7 p-0">

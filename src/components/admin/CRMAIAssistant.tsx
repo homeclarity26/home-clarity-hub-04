@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sparkles, Send, Loader2, HelpCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Message {
   role: "user" | "assistant";
@@ -33,17 +35,21 @@ const HELP_TEXT = `**What can I do?** Here are some examples:
 • "Which trade partners have the best ratings?"
 `;
 
+const genId = () => Math.random().toString(36).slice(2, 10);
+
 const CRMAIAssistant = ({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const [sessionId] = useState(() => genId() + genId());
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
-  const send = async () => {
+  const send = useCallback(async () => {
     if (!input.trim() || loading) return;
     const userMsg: Message = { role: "user", content: input.trim() };
     const allMessages = [...messages, userMsg];
@@ -51,64 +57,38 @@ const CRMAIAssistant = ({ open, onOpenChange }: { open: boolean; onOpenChange: (
     setInput("");
     setLoading(true);
 
-    let assistantContent = "";
-    const upsert = (chunk: string) => {
-      assistantContent += chunk;
-      setMessages(prev => {
-        const last = prev[prev.length - 1];
-        if (last?.role === "assistant") return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
-        return [...prev, { role: "assistant", content: assistantContent }];
-      });
-    };
-
     try {
-      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crm-ai-assistant`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      const history = allMessages.slice(-12).map(m => ({ role: m.role, content: m.content }));
+      const { data, error } = await supabase.functions.invoke("hbc-agent", {
+        body: {
+          message: userMsg.content,
+          history: history.slice(0, -1),
+          context: {
+            userId: user?.id || "",
+            role: "creator",
+            currentPage: "/admin/crm",
+            currentEntityType: "crm",
+            currentEntityId: "",
+            currentEntityName: "CRM Hub",
+            sessionId,
+          },
         },
-        body: JSON.stringify({ messages: allMessages }),
       });
 
-      if (!resp.ok || !resp.body) {
-        if (resp.status === 429) { upsert("Rate limit reached. Please try again in a moment."); setLoading(false); return; }
-        if (resp.status === 402) { upsert("AI credits exhausted. Please add funds."); setLoading(false); return; }
-        upsert("Sorry, something went wrong. Please try again.");
-        setLoading(false);
-        return;
+      if (error) throw error;
+      setMessages(prev => [...prev, { role: "assistant", content: data.reply || "Done!" }]);
+    } catch (err: any) {
+      if (err?.message?.includes("429") || err?.status === 429) {
+        setMessages(prev => [...prev, { role: "assistant", content: "Rate limit reached. Please try again in a moment." }]);
+      } else if (err?.message?.includes("402") || err?.status === 402) {
+        setMessages(prev => [...prev, { role: "assistant", content: "AI credits exhausted. Please add funds." }]);
+      } else {
+        setMessages(prev => [...prev, { role: "assistant", content: "Sorry, something went wrong. Please try again." }]);
       }
-
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let done = false;
-
-      while (!done) {
-        const { done: readerDone, value } = await reader.read();
-        if (readerDone) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        let nlIdx: number;
-        while ((nlIdx = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, nlIdx);
-          buffer = buffer.slice(nlIdx + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || !line.trim() || !line.startsWith("data: ")) continue;
-          const json = line.slice(6).trim();
-          if (json === "[DONE]") { done = true; break; }
-          try {
-            const parsed = JSON.parse(json);
-            const c = parsed.choices?.[0]?.delta?.content;
-            if (c) upsert(c);
-          } catch { buffer = line + "\n" + buffer; break; }
-        }
-      }
-    } catch {
-      upsert("Connection error. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, [input, loading, messages, user, sessionId]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
