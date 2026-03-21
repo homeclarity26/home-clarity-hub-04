@@ -114,8 +114,8 @@ const HomeHealthScore = ({ reportPages, onNavigate }: HomeHealthScoreProps) => {
           <div className="space-y-1.5">
             {health.needsAttention.map((page) => (
               <button
-                key={page.slug || page.title}
-                onClick={() => onNavigate("report", page.slug)}
+                key={page.key || page.title}
+                onClick={() => onNavigate("report", page.key)}
                 className="w-full flex items-center gap-2 text-left bg-transparent border-none cursor-pointer p-2 rounded-md hover:bg-muted/50 transition-colors"
               >
                 <Wrench className="w-3.5 h-3.5 text-destructive shrink-0" />
