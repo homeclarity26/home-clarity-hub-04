@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Wrench, AlertTriangle, Clock, CheckCircle, ShieldAlert, ChevronRight, FileText, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, isPast, isAfter, addDays } from "date-fns";
+import PredictiveMaintenanceCard from "@/components/portal/PredictiveMaintenanceCard";
 import { Button } from "@/components/ui/button";
 
 interface EquipmentTabProps {
@@ -286,6 +287,9 @@ const EquipmentTab = ({ propertyId, onTabChange, onSendMessage }: EquipmentTabPr
             </button>
           </div>
         </div>
+
+        {/* Predictive Maintenance — relocated from Home */}
+        {propertyId && <PredictiveMaintenanceCard propertyId={propertyId} clientId={undefined} />}
       </div>
     </div>
   );

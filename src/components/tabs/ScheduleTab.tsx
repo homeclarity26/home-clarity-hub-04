@@ -4,6 +4,10 @@ import {
   Phone, Hammer, ChevronRight, ChevronLeft, Wrench,
   AlertCircle, CheckCircle2, Star, FileText,
 } from "lucide-react";
+import MaintenanceReminders from "@/components/MaintenanceReminders";
+import SeasonalMaintenanceTips from "@/components/portal/SeasonalMaintenanceTips";
+import PredictiveMaintenanceCard from "@/components/portal/PredictiveMaintenanceCard";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
@@ -312,6 +316,17 @@ const ScheduleTab = ({ propertyId, onTabChange }: ScheduleTabProps) => {
             })}
           </div>
         </div>
+
+        {/* Maintenance Reminders — relocated from Home */}
+        {propertyId && !propertyId?.startsWith("mock-") && (
+          <MaintenanceReminders propertyId={propertyId} />
+        )}
+
+        {/* Predictive Maintenance — relocated from Home */}
+        {propertyId && <PredictiveMaintenanceCard propertyId={propertyId} clientId={undefined} />}
+
+        {/* Seasonal Maintenance Tips — relocated from Home */}
+        <SeasonalMaintenanceTips />
 
         {/* Quick Actions */}
         <div>
