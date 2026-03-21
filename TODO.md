@@ -6,15 +6,15 @@
 
 ---
 
-## 🔴 CRITICAL — Must Complete Before App Works in Production
+## 🔴 CRITICAL — Remaining Blockers
 
-These are blockers. Nothing AI-powered works until these are done.
-
-- [ ] **Set Supabase Secrets**
-  - `STRIPE_SECRET_KEY` — needed for payment features (user will add later)
-  - `STRIPE_WEBHOOK_SECRET` — needed for Stripe webhook verification
-  - `GEMINI_API_KEY` — needed for all AI features (currently using Lovable AI gateway)
-  - `RENTCAST_API_KEY` — needed for property auto-lookup
+- [ ] **Add STRIPE_SECRET_KEY** — needed for payment features (user will add later)
+- [ ] **Add STRIPE_WEBHOOK_SECRET** — needed for Stripe webhook verification
+- [x] All 61 edge functions deployed ✅
+- [x] GEMINI_API_KEY configured ✅
+- [x] RESEND_API_KEY configured ✅
+- [x] RENTCAST_API_KEY configured ✅
+- [x] LOVABLE_API_KEY configured ✅
 
 - [ ] **Set Frontend Env Var**
   - Add `VITE_GOOGLE_MAPS_API_KEY=your_key_here` to `.env`
