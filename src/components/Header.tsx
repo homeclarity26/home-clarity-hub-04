@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Menu, X, Settings, Pencil, Bell } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Menu, X, Settings, Pencil, Bell, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { Switch } from "@/components/ui/switch";
@@ -14,28 +14,47 @@ interface HeaderProps {
   propertyId?: string;
 }
 
+const primaryTabs = [
+  { id: "home", label: "Home" },
+  { id: "report", label: "Report" },
+  { id: "projects", label: "Projects" },
+  { id: "messages", label: "Messages" },
+];
+
+const moreTabs = [
+  { id: "photos", label: "Photos" },
+  { id: "equipment", label: "Equipment" },
+  { id: "documents", label: "Documents" },
+  { id: "schedule", label: "Schedule" },
+  { id: "payments", label: "Payments" },
+  { id: "estimates", label: "Proposals" },
+  { id: "services", label: "Services" },
+  { id: "contacts", label: "Contacts" },
+  { id: "billing", label: "Billing" },
+  { id: "refer", label: "Refer" },
+];
+
+const allTabs = [...primaryTabs, ...moreTabs];
+
 const Header = ({ activeTab, onTabChange, propertyId }: HeaderProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
 
   const { profile, isCreator, signOut } = useAuth();
   const { editMode, toggleEditMode } = useEditMode();
 
-  const tabs = [
-    { id: "home", label: "Home" },
-    { id: "report", label: "Report" },
-    { id: "photos", label: "Photos" },
-    { id: "projects", label: "Projects" },
-    { id: "payments", label: "Payments" },
-    { id: "estimates", label: "Proposals" },
-    { id: "services", label: "Services" },
-    { id: "equipment", label: "Equipment" },
-    { id: "documents", label: "Documents" },
-    { id: "messages", label: "Messages" },
-    { id: "contacts", label: "Contacts" },
-    { id: "schedule", label: "Schedule" },
-    { id: "billing", label: "Billing" },
-    { id: "refer", label: "Refer" },
-  ];
+  // Close "More" dropdown on outside click
+  useEffect(() => {
+    if (!moreOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [moreOpen]);
+
+  const isMoreActive = moreTabs.some((t) => t.id === activeTab);
 
   return (
     <header className="fixed top-0 left-0 right-0 h-20 bg-card shadow-hbc-sm z-50 flex items-center justify-between px-6 md:px-20">
@@ -47,8 +66,8 @@ const Header = ({ activeTab, onTabChange, propertyId }: HeaderProps) => {
       </button>
 
       {/* Desktop Navigation */}
-      <nav className="hidden md:flex gap-6 overflow-x-auto ml-8 scrollbar-hide">
-        {tabs.map((tab) => (
+      <nav className="hidden md:flex gap-6 ml-8 items-center">
+        {primaryTabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
@@ -64,6 +83,39 @@ const Header = ({ activeTab, onTabChange, propertyId }: HeaderProps) => {
             />
           </button>
         ))}
+
+        {/* More dropdown */}
+        <div ref={moreRef} className="relative">
+          <button
+            onClick={() => setMoreOpen((p) => !p)}
+            className={`font-mono text-[11px] uppercase tracking-[0.15em] py-2 border-none bg-transparent cursor-pointer transition-colors flex items-center gap-1 relative ${
+              isMoreActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            More
+            <ChevronDown className={`w-3 h-3 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
+            <span
+              className={`absolute bottom-0 left-0 h-0.5 bg-accent transition-all duration-300 ${
+                isMoreActive ? "w-full" : "w-0"
+              }`}
+            />
+          </button>
+          {moreOpen && (
+            <div className="absolute top-full left-0 mt-2 bg-card border border-border rounded-lg shadow-lg py-2 min-w-[160px] z-50">
+              {moreTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => { onTabChange(tab.id); setMoreOpen(false); }}
+                  className={`w-full text-left px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.15em] transition-colors border-none cursor-pointer ${
+                    activeTab === tab.id ? "text-foreground bg-muted" : "text-muted-foreground hover:text-foreground hover:bg-muted/50 bg-transparent"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </nav>
 
       {/* Mobile Menu Button */}
@@ -142,7 +194,7 @@ const Header = ({ activeTab, onTabChange, propertyId }: HeaderProps) => {
         )}
 
         <div className="flex-1 p-6">
-          {tabs.map((tab) => (
+          {allTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => { onTabChange(tab.id); setMobileMenuOpen(false); }}

@@ -207,9 +207,6 @@ const AdminDashboard = () => {
                 <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => navigate("/admin/clients/new")}>
                   <Plus className="w-4 h-4" />New Client
                 </Button>
-                <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => navigate("/admin/clients/new")}>
-                  <UserPlus className="w-4 h-4" />Invite / Add Client
-                </Button>
                 <Button variant="outline" className="w-full justify-start gap-2 text-sm font-sans" onClick={() => {
                   // Trigger Cmd+K
                   window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
