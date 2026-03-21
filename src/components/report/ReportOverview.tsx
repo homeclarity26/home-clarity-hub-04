@@ -88,7 +88,7 @@ const ReportOverview = ({
   hoverPdfUrl,
   iguideUrl,
   iguidePdfUrl,
-  estimatedValue,
+  propertyId,
 }: ReportOverviewProps) => {
   // Calculate health scores
   const allPagesList = useMemo(() => Object.values(pages), [pages]);
@@ -394,6 +394,22 @@ const ReportOverview = ({
           iguideUrl={iguideUrl}
           iguidePdfUrl={iguidePdfUrl}
         />
+
+        {/* Cost Comparison Tool — relocated from Home */}
+        {Object.keys(pages).length > 0 && <CostComparisonTool pages={pages} />}
+
+        {/* Annual Report Card — relocated from Home */}
+        {propertyId && !propertyId?.startsWith("mock-") && (
+          <AnnualReportCard propertyId={propertyId} />
+        )}
+
+        {/* Property Timeline — relocated from Home */}
+        {propertyId && <PropertyTimeline propertyId={propertyId} />}
+
+        {/* My Home's Story — relocated from Home */}
+        {propertyId && !propertyId?.startsWith("mock-") && (
+          <MyHomeStory propertyId={propertyId} propertyName={propertyName} />
+        )}
       </div>
     </div>
   );
