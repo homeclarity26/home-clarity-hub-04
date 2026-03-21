@@ -17,7 +17,7 @@ import BillingTab from "@/components/portal/BillingTab";
 import EquipmentTab from "@/components/tabs/EquipmentTab";
 import ServicesMenu from "@/components/portal/ServicesMenu";
 import EstimatesPortal from "@/components/portal/EstimatesPortal";
-import OnboardingOverlay from "@/components/OnboardingOverlay";
+// OnboardingOverlay removed — consolidated into ClientOnboardingModal
 import MembershipBanner from "@/components/MembershipBanner";
 import NotificationPreferences from "@/components/NotificationPreferences";
 import ClientReferralPortal from "@/components/portal/ClientReferralPortal";
@@ -45,7 +45,7 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [reportPageId, setReportPageId] = useState<string | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  // showOnboarding removed — consolidated into tutorial modal
   const [helpOpen, setHelpOpen] = useState(false);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const { editMode, toggleEditMode, canEdit } = useEditMode();
@@ -72,12 +72,7 @@ const Index = () => {
   usePortalTracking(activeTab);
   const { progress: tutorialProgress, markChecklistItem, ensureRecord } = useTutorialProgress();
 
-  // Check onboarding status for new clients
-  useEffect(() => {
-    if (!isCreator && profile && !(profile as any).has_completed_onboarding && portal.property) {
-      setShowOnboarding(true);
-    }
-  }, [profile, isCreator, portal.property]);
+  // Onboarding consolidated: only ClientOnboardingModal is used now
 
   // Show tutorial modal for first-time clients
   useEffect(() => {
@@ -205,15 +200,6 @@ const Index = () => {
             setShowTutorialModal(false);
             if (navigateTo === "report") handleTabChange("report");
           }}
-        />
-      )}
-      {showOnboarding && portal.property && (
-        <OnboardingOverlay
-          propertyName={propertyName}
-          propertyAddress={portal.property.address}
-          creatorName={portal.creatorName}
-          onComplete={() => setShowOnboarding(false)}
-          onSendMessage={() => { setShowOnboarding(false); handleTabChange("messages"); }}
         />
       )}
       {isEditLink && canEdit && (
