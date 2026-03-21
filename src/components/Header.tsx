@@ -194,7 +194,7 @@ const Header = ({ activeTab, onTabChange, propertyId }: HeaderProps) => {
         )}
 
         <div className="flex-1 p-6">
-          {tabs.map((tab) => (
+          {allTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => { onTabChange(tab.id); setMobileMenuOpen(false); }}
