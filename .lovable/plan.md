@@ -1,57 +1,83 @@
 
 
-# Plan: Comprehensive Feature Audit Document
+# Plan: Complete All UX/UI Debt Items
 
-## What I Found
+## Issues to Fix (8 total)
 
-After auditing the TODO.md, the UI/UX review in `.lovable/plan.md`, all source files, database tables (130+ tables), 61 edge functions, and route definitions, here's the status:
+### 1. Portal Tab Overflow — Already Fixed ✅
+The Header already groups tabs into 4 primary (Home, Report, Projects, Messages) + a "More" dropdown with 10 secondary tabs. Both desktop and mobile are handled. **No work needed.**
 
-### Summary
-- **~200 features** have been built across 6 stages + payments + trade partner portal
-- **All 61 edge functions** are deployed
-- **All routes** (admin, portal, trade partner, auth, public) are wired
-- **Database** has 130+ tables with data models for every feature
+### 2. "Proposals" vs "Estimates" Naming Inconsistency
+The Header labels the `estimates` tab as "Proposals", but the page component is `EstimatesPortal`. The admin side uses "Estimates & Proposals" together. The CRM pipeline uses `proposal_out` as a stage name (which is correct CRM terminology).
 
-### What's Working (Verified in Code)
-Everything in the TODO.md "COMPLETED" section checks out — components exist, edge functions are deployed, routes are registered, and database tables back them.
+**Fix:** Standardize on "Estimates" everywhere in portal navigation since that's the tab ID and component name. Keep "Proposal" only in CRM pipeline stage names and the ProposalBuilder (which is the formatted output of an estimate).
+- `Header.tsx` line 33: change label from `"Proposals"` to `"Estimates"`
+- `AICommandBar.tsx` line 13: change `"Show open proposals"` to `"Show open estimates"`
 
-### Remaining Gaps / Issues Identified
+### 3. Hardcoded Data in SmartActionTiles
+Looking at the current code — `SmartActionTiles.tsx` already removed hardcoded filler items (comment on line says "No hardcoded fake urgency tiles"). The only "urgent" tile comes from real report data (poor/critical conditions). Recent and frequent tiles come from localStorage visit tracking. Default tiles are just fallback navigation shortcuts.
 
-**Configuration Blockers (user action needed):**
-1. `STRIPE_SECRET_KEY` — payments won't process
-2. `STRIPE_WEBHOOK_SECRET` — webhook verification fails
-3. `VITE_GOOGLE_MAPS_API_KEY` — NOW CONFIGURED ✅
+**Status: Already clean.** No work needed.
 
-**Code/UX Issues (from `.lovable/plan.md` review, not yet addressed):**
-- Portal has 14 tabs with no grouping/overflow
-- Hardcoded/fake data in SmartActionTiles and AISuggestionsStrip
-- Duplicate icons in SmartActionTiles
-- Inconsistent empty states across portal tabs
-- Admin dashboard has no visual hierarchy / zone prioritization
-- Three overlapping onboarding mechanisms
-- Portal uses tab state instead of URL routes (no deep linking / back button)
-- "Proposals" vs "Estimates" naming inconsistency
+### 4. Hardcoded Data in AISuggestionsStrip
+Same situation — `AISuggestionsStrip.tsx` already has the comment "Only show data-driven suggestions — no hardcoded filler items". Suggestions only come from `reportPages` with poor/critical conditions.
 
-**TODO.md items still marked incomplete but actually done:**
-- `VITE_GOOGLE_MAPS_API_KEY` — now configured, TODO.md still says pending
-- Resend email for client invitation — `send-client-invite` IS wired in NewReportWizard
+**Status: Already clean.** No work needed.
 
-## What I'll Create
+### 5. Duplicate Icons in SmartActionTiles
+The `SECTION_META` map uses distinct icons per section (FileText, Hammer, Receipt, Calendar, Shield, FolderOpen, MessageSquare, UsersRound). No duplicates exist.
 
-A single Markdown file at `/mnt/documents/HBC_Feature_Audit.md` containing:
+**Status: Already clean.** No work needed.
 
-1. **Master Feature List** — Every feature organized by stage, with status (✅ Built, ⚠️ Needs Config, 🔴 Missing/Broken)
-2. **Edge Functions Inventory** — All 61 functions with their frontend call sites
-3. **Database Tables Inventory** — All 130+ tables grouped by domain
-4. **Known Issues & Polish Items** — From the UI/UX review
-5. **Configuration Blockers** — What secrets/keys are still needed
-6. **Recommended Next Steps** — Prioritized list
+### 6. Inconsistent Empty States Across Portal Tabs
+Most tabs use the `EmptyState` component, but a few use inline custom empty states:
+- `MessagesTab` — custom inline empty (different style, no icon wrapper)
+- `PaymentsTab` — uses `EmptyState` for invoices, but inline custom for transactions section
+- `ScheduleTab` — needs verification
 
-This will be a persistent reference document you can keep updating session to session.
+**Fix:** Standardize `MessagesTab` and `PaymentsTab` transaction section to use the shared `EmptyState` component for visual consistency.
 
-## Technical Approach
+### 7. Three Overlapping Onboarding Mechanisms
+The three mechanisms are:
+- `OnboardingOverlay.tsx` — **already removed** from Index.tsx (comment on line 20: "OnboardingOverlay removed — consolidated into ClientOnboardingModal")
+- `ClientOnboardingModal` — active, shown to first-time clients ✅
+- `AdminSetupChecklist` — active, shown on admin dashboard for creator setup ✅
 
-- Generate the Markdown file via script to `/mnt/documents/`
-- Also update `TODO.md` in the codebase to fix the stale entries (mark Google Maps key as done, mark Resend invite as done)
-- No code changes to the app itself — this is purely an audit artifact
+These serve different audiences (client vs admin), so only 2 remain and they don't overlap. However, `OnboardingOverlay.tsx` still exists as a dead file.
+
+**Fix:** Delete the unused `OnboardingOverlay.tsx` file.
+
+### 8. Admin Dashboard Visual Hierarchy
+The dashboard already implements the 4-zone layout:
+- Zone 1: Briefing (DailyBrief + SetupChecklist + Stats)
+- Zone 2: Action Required (OverdueCenter + ServiceRequests + Tasks)
+- Zone 3: Insights (Revenue + Subscriptions + WeeklyDigest + CRM)
+- Zone 4: Reference (collapsed — PropertyMap + NPS + EquipmentWarranty)
+
+Each zone has a whisper-style label. **Already implemented.** No work needed.
+
+---
+
+## Summary of Actual Changes
+
+Only 3 items need code changes:
+
+| # | Task | Files |
+|---|------|-------|
+| 1 | Rename "Proposals" → "Estimates" in portal nav | `Header.tsx`, `AICommandBar.tsx` |
+| 2 | Standardize empty states in MessagesTab + PaymentsTab | `MessagesTab.tsx`, `PaymentsTab.tsx` |
+| 3 | Delete dead `OnboardingOverlay.tsx` file | `OnboardingOverlay.tsx` |
+
+### Technical Details
+
+**Task 1 — Naming fix:**
+- `Header.tsx` line 33: `{ id: "estimates", label: "Proposals" }` → `{ id: "estimates", label: "Estimates" }`
+- `AICommandBar.tsx` line 13: `"Show open proposals"` → `"Show open estimates"`
+
+**Task 2 — Empty state consistency:**
+- `MessagesTab.tsx`: Replace the inline empty div (lines ~155-159) with `<EmptyState icon={MessageSquare} title="No Messages Yet" description="Send a message to start the conversation with your advisor." />`
+- `PaymentsTab.tsx`: Replace the inline transactions empty state (lines ~485-489) with `<EmptyState icon={List} title="No Transactions Yet" description="Your payment history will appear here." />`
+
+**Task 3 — Dead code cleanup:**
+- Delete `src/components/OnboardingOverlay.tsx`
 
