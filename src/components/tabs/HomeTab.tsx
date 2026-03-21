@@ -13,6 +13,8 @@ import ConciergeRequestModal from "@/components/portal/ConciergeRequestModal";
 import DocumentExpirationTracker from "@/components/portal/DocumentExpirationTracker";
 import CostComparisonTool from "@/components/portal/CostComparisonTool";
 import MyHomeStory from "@/components/portal/MyHomeStory";
+import ClientReferralPortal from "@/components/portal/ClientReferralPortal";
+import PropertyValueWidget from "@/components/portal/PropertyValueWidget";
 import MembershipBanner from "@/components/MembershipBanner";
 import AppointmentRequestModal from "@/components/portal/AppointmentRequestModal";
 import { useAuth } from "@/contexts/AuthContext";
@@ -196,6 +198,12 @@ const HomeTab = ({
             <AppointmentRequestModal open={showAppointment} onOpenChange={setShowAppointment} propertyId={propertyId} />
           </div>
         )}
+
+        {/* Property Value */}
+        {propertyId && <PropertyValueWidget propertyId={propertyId} estimatedValue={estimatedValue} />}
+
+        {/* Referral Widget */}
+        {propertyId && <ClientReferralPortal propertyId={propertyId} />}
 
         {/* Advisor Signature */}
         {customization?.advisor_signature && (

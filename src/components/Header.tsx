@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Menu, Settings, Pencil, ChevronDown } from "lucide-react";
 import NotificationBell from "@/components/portal/NotificationBell";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { Switch } from "@/components/ui/switch";
@@ -205,6 +206,7 @@ const Header = ({ activeTab, onTabChange, propertyId }: HeaderProps) => {
         {!isCreator && propertyId && (
           <NotificationBell propertyId={propertyId} onNavigate={(tab) => onTabChange(tab)} />
         )}
+        <ThemeToggle />
         {isCreator && (
           <button
             onClick={toggleEditMode}
