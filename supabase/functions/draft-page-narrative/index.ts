@@ -76,6 +76,28 @@ serve(async (req) => {
             return `--- ${a.title} (${a.category}${a.region ? `, ${a.region}` : ""}) ---\n${contentStr}`;
           }).join("\n\n");
       }
+
+      // --- Advisor Pattern Injection (Self-Learning Layer) ---
+      const { data: patterns } = await supabase
+        .from("advisor_patterns")
+        .select("pattern_data, confidence_score")
+        .eq("pattern_type", "report_structure")
+        .gte("confidence_score", 0.3)
+        .order("confidence_score", { ascending: false })
+        .limit(3);
+
+      if (patterns && patterns.length > 0) {
+        kbContext += "\n\nADVISOR WRITING PREFERENCES (learned from past reports):\n";
+        for (const p of patterns) {
+          if (p.pattern_data?.avg_narrative_paragraphs) {
+            kbContext += `- Preferred narrative length: ~${p.pattern_data.avg_narrative_paragraphs} paragraphs\n`;
+          }
+          if (p.pattern_data?.recent_condition_ratings?.length > 0) {
+            const ratings = p.pattern_data.recent_condition_ratings;
+            kbContext += `- Recent rating tendency: ${ratings.slice(-5).join(", ")}\n`;
+          }
+        }
+      }
     } catch (kbErr) {
       console.warn("KB lookup failed (non-fatal):", kbErr);
     }

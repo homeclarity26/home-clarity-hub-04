@@ -196,6 +196,22 @@ const AgentChat = ({ contextOverride, quickChips, onNavigate, onboardingMessage,
       } else {
         setPendingConfirm(null);
       }
+
+      // ── Log learning event for agent interaction ──
+      if (data.actions_taken?.length > 0) {
+        supabase.from("learning_events").insert({
+          event_type: "agent_action_completed",
+          actor_id: buildContext().userId || undefined,
+          actor_role: buildContext().role || "creator",
+          entity_type: "agent_interaction",
+          entity_id: sessionId,
+          event_data: {
+            user_message: text,
+            actions_count: data.actions_taken.length,
+            action_types: data.actions_taken.map((a: any) => a.tool_name),
+          },
+        }).then(() => {}).catch(() => {});
+      }
     } catch (err: any) {
       setMessages(prev => [...prev, {
         id: genId(),
@@ -206,7 +222,7 @@ const AgentChat = ({ contextOverride, quickChips, onNavigate, onboardingMessage,
       setIsThinking(false);
       setThinkingStep("");
     }
-  }, [messages, buildContext]);
+  }, [messages, buildContext, sessionId]);
 
   const handleConfirm = () => {
     if (pendingConfirm?.pending_tool_call) {

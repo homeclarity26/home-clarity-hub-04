@@ -101,6 +101,20 @@ const ClientAgentPanel = ({ propertyName, propertyAddress, enrichment }: ClientA
       });
       if (error) throw error;
       setMessages(prev => [...prev, { id: genId(), role: "assistant", content: data.reply || "Done!" }]);
+
+      // ── Log learning event for client interaction ──
+      supabase.from("learning_events").insert({
+        event_type: "client_agent_query",
+        actor_id: user?.id || undefined,
+        actor_role: "client",
+        entity_type: "client_portal",
+        entity_id: propertyId || "",
+        event_data: {
+          query_topic: text.slice(0, 100),
+          tab: activeTab,
+          had_actions: (data.actions_taken?.length || 0) > 0,
+        },
+      }).then(() => {}).catch(() => {});
     } catch (err: any) {
       setMessages(prev => [...prev, { id: genId(), role: "assistant", content: `Oops, something went wrong. Please try again! 🙏` }]);
     } finally {
