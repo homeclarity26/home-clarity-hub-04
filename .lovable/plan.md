@@ -1,83 +1,126 @@
 
 
-# Plan: Complete All UX/UI Debt Items
+# Plan: Embed AI Agent into Client Workspace
 
-## Issues to Fix (8 total)
+## Current State
 
-### 1. Portal Tab Overflow — Already Fixed ✅
-The Header already groups tabs into 4 primary (Home, Report, Projects, Messages) + a "More" dropdown with 10 secondary tabs. Both desktop and mobile are handled. **No work needed.**
+The HBC Agent already exists as a fully-featured agentic AI assistant with 70+ tools (clients, invoices, projects, reports, vendors, scheduling, messaging, etc.). It currently renders as a **global floating button + right-side Sheet** via `AgentPanel.tsx` in `AdminLayout.tsx`. It's context-aware — it detects the current route and passes `currentEntityType` / `currentEntityId` to the backend.
 
-### 2. "Proposals" vs "Estimates" Naming Inconsistency
-The Header labels the `estimates` tab as "Proposals", but the page component is `EstimatesPortal`. The admin side uses "Estimates & Proposals" together. The CRM pipeline uses `proposal_out` as a stage name (which is correct CRM terminology).
+The problem: it's a floating overlay that feels disconnected from the client workspace. It doesn't automatically scope to the current client, and the admin has to explain context manually.
 
-**Fix:** Standardize on "Estimates" everywhere in portal navigation since that's the tab ID and component name. Keep "Proposal" only in CRM pipeline stage names and the ProposalBuilder (which is the formatted output of an estimate).
-- `Header.tsx` line 33: change label from `"Proposals"` to `"Estimates"`
-- `AICommandBar.tsx` line 13: change `"Show open proposals"` to `"Show open estimates"`
+## What Changes
 
-### 3. Hardcoded Data in SmartActionTiles
-Looking at the current code — `SmartActionTiles.tsx` already removed hardcoded filler items (comment on line says "No hardcoded fake urgency tiles"). The only "urgent" tile comes from real report data (poor/critical conditions). Recent and frequent tiles come from localStorage visit tracking. Default tiles are just fallback navigation shortcuts.
+Instead of just a floating sheet, the AI agent becomes a **first-class panel inside the Client Workspace** — a persistent, collapsible right rail that is always scoped to the active client.
 
-**Status: Already clean.** No work needed.
+### Architecture
 
-### 4. Hardcoded Data in AISuggestionsStrip
-Same situation — `AISuggestionsStrip.tsx` already has the comment "Only show data-driven suggestions — no hardcoded filler items". Suggestions only come from `reportPages` with poor/critical conditions.
+```text
+┌──────────────────────────────────────────────────────────┐
+│ Breadcrumb: Clients > Smith Residence                    │
+├────────────┬──────────────────────────┬──────────────────┤
+│            │                          │                  │
+│  Context   │   Tab Content Area       │  AI Agent Rail   │
+│  Card      │                          │  (collapsible)   │
+│  (280px)   │   [Tab Groups here]      │                  │
+│            │                          │  Pre-loaded w/   │
+│            │                          │  client context:  │
+│            │                          │  - name, address │
+│            │                          │  - health score  │
+│            │                          │  - open invoices │
+│            │                          │  - active projs  │
+│            │                          │  - report status │
+│            │                          │                  │
+│            │                          │  Quick chips:    │
+│            │                          │  "Draft estimate"│
+│            │                          │  "Summarize rpt" │
+│            │                          │  "Schedule visit"│
+│            │                          │  "Check overdue" │
+│            │                          │                  │
+└────────────┴──────────────────────────┴──────────────────┘
+```
 
-**Status: Already clean.** No work needed.
+### Key Behaviors
 
-### 5. Duplicate Icons in SmartActionTiles
-The `SECTION_META` map uses distinct icons per section (FileText, Hammer, Receipt, Calendar, Shield, FolderOpen, MessageSquare, UsersRound). No duplicates exist.
+1. **Auto-scoped context**: When the workspace loads, it pre-injects the client's ID, name, property, report summary, open invoices, and active projects into every agent call — the admin never has to say "for client Smith."
 
-**Status: Already clean.** No work needed.
+2. **Client-specific quick chips**: Instead of generic chips ("+ New client"), the workspace agent shows contextual ones:
+   - "Draft an estimate for this client"
+   - "Summarize the report"
+   - "What needs attention?"
+   - "Schedule a follow-up"
+   - "Check overdue invoices"
+   - "Write a check-in email"
 
-### 6. Inconsistent Empty States Across Portal Tabs
-Most tabs use the `EmptyState` component, but a few use inline custom empty states:
-- `MessagesTab` — custom inline empty (different style, no icon wrapper)
-- `PaymentsTab` — uses `EmptyState` for invoices, but inline custom for transactions section
-- `ScheduleTab` — needs verification
+3. **Collapsible rail**: A toggle button (sparkle icon) in the workspace header expands/collapses the right rail. State persists in localStorage. When collapsed, the global FAB still works as a fallback.
 
-**Fix:** Standardize `MessagesTab` and `PaymentsTab` transaction section to use the shared `EmptyState` component for visual consistency.
+4. **Action results navigate in-workspace**: When the agent creates an invoice or project, the action card's "View" link switches to the relevant workspace tab instead of navigating away.
 
-### 7. Three Overlapping Onboarding Mechanisms
-The three mechanisms are:
-- `OnboardingOverlay.tsx` — **already removed** from Index.tsx (comment on line 20: "OnboardingOverlay removed — consolidated into ClientOnboardingModal")
-- `ClientOnboardingModal` — active, shown to first-time clients ✅
-- `AdminSetupChecklist` — active, shown on admin dashboard for creator setup ✅
+5. **Tab-aware prompting**: The agent knows which workspace tab is active. If the admin is on the "Financial" tab and asks "create an invoice", the agent skips asking for client ID and pre-fills context.
 
-These serve different audiences (client vs admin), so only 2 remain and they don't overlap. However, `OnboardingOverlay.tsx` still exists as a dead file.
+## Implementation Steps
 
-**Fix:** Delete the unused `OnboardingOverlay.tsx` file.
+### Step 1: Create WorkspaceAgentRail component
+New file: `src/components/admin/workspace/WorkspaceAgentRail.tsx`
 
-### 8. Admin Dashboard Visual Hierarchy
-The dashboard already implements the 4-zone layout:
-- Zone 1: Briefing (DailyBrief + SetupChecklist + Stats)
-- Zone 2: Action Required (OverdueCenter + ServiceRequests + Tasks)
-- Zone 3: Insights (Revenue + Subscriptions + WeeklyDigest + CRM)
-- Zone 4: Reference (collapsed — PropertyMap + NPS + EquipmentWarranty)
+Extracts the chat UI from `AgentPanel.tsx` into a reusable inner component (`AgentChat`), then wraps it in a workspace-aware rail that:
+- Receives `clientId`, `clientName`, `propertyId`, `propertyAddress` as props
+- Overrides the agent context to always scope to this client
+- Renders client-specific quick chips
+- Has a collapse/expand toggle
 
-Each zone has a whisper-style label. **Already implemented.** No work needed.
+### Step 2: Refactor AgentPanel into AgentChat + AgentPanel
+Split `AgentPanel.tsx` into:
+- `AgentChat.tsx` — the core chat logic (messages, send, voice, confirmation cards, markdown rendering). Accepts `contextOverride` and `quickChips` props.
+- `AgentPanel.tsx` — the global floating FAB + Sheet that wraps `AgentChat` (unchanged behavior for non-workspace pages)
 
----
+### Step 3: Integrate into ClientWorkspaceLayout
+The workspace layout renders:
+```text
+<div className="flex">
+  <WorkspaceContextCard />        {/* left sidebar */}
+  <div className="flex-1">        {/* center content */}
+    <WorkspaceTabGroups />
+  </div>
+  <WorkspaceAgentRail />          {/* right rail, collapsible */}
+</div>
+```
 
-## Summary of Actual Changes
+When the rail is open, the center content area shrinks. When collapsed, it gets full width.
 
-Only 3 items need code changes:
+### Step 4: Enhanced context injection
+The workspace fetches client summary data (already available from `useAdminData` hooks) and passes a rich context object to every agent call:
+```typescript
+contextOverride: {
+  currentEntityType: "client",
+  currentEntityId: clientId,
+  currentEntityName: clientName,
+  propertyId,
+  activeTab: currentTab,        // e.g. "financial"
+  enrichment: {
+    openInvoiceCount: 3,
+    overdueAmount: 1200,
+    activeProjectCount: 2,
+    reportCompletion: 85,
+    healthScore: 72,
+    lastContactDays: 14,
+  }
+}
+```
 
-| # | Task | Files |
-|---|------|-------|
-| 1 | Rename "Proposals" → "Estimates" in portal nav | `Header.tsx`, `AICommandBar.tsx` |
-| 2 | Standardize empty states in MessagesTab + PaymentsTab | `MessagesTab.tsx`, `PaymentsTab.tsx` |
-| 3 | Delete dead `OnboardingOverlay.tsx` file | `OnboardingOverlay.tsx` |
+The `hbc-agent` edge function already receives context — no backend changes needed. The enrichment data becomes part of the system prompt automatically.
 
-### Technical Details
+### Step 5: In-workspace navigation from action cards
+When `ActionCard` renders inside the workspace, its "View" links resolve to tab switches (e.g., creating an invoice navigates to `?tab=payments`) instead of full-page navigations. Pass an `onNavigate` callback from the workspace.
 
-**Task 1 — Naming fix:**
-- `Header.tsx` line 33: `{ id: "estimates", label: "Proposals" }` → `{ id: "estimates", label: "Estimates" }`
-- `AICommandBar.tsx` line 13: `"Show open proposals"` → `"Show open estimates"`
+## Files Changed
 
-**Task 2 — Empty state consistency:**
-- `MessagesTab.tsx`: Replace the inline empty div (lines ~155-159) with `<EmptyState icon={MessageSquare} title="No Messages Yet" description="Send a message to start the conversation with your advisor." />`
-- `PaymentsTab.tsx`: Replace the inline transactions empty state (lines ~485-489) with `<EmptyState icon={List} title="No Transactions Yet" description="Your payment history will appear here." />`
+| Action | File | Description |
+|--------|------|-------------|
+| Create | `src/components/admin/workspace/WorkspaceAgentRail.tsx` | Collapsible right rail wrapping AgentChat |
+| Create | `src/components/agent/AgentChat.tsx` | Extracted core chat logic from AgentPanel |
+| Refactor | `src/components/agent/AgentPanel.tsx` | Slim down to FAB+Sheet wrapping AgentChat |
+| Edit | `src/components/admin/workspace/ClientWorkspaceLayout.tsx` | Add agent rail to layout |
+| No change | `supabase/functions/hbc-agent/index.ts` | Already handles context — no backend changes |
 
-**Task 3 — Dead code cleanup:**
-- Delete `src/components/OnboardingOverlay.tsx`
+This adds ~2 new files and refactors 1 existing file. The global agent continues working everywhere else; the workspace just gets a smarter, always-visible version.
 
