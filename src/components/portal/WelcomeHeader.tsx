@@ -21,15 +21,10 @@ const WelcomeHeader = ({ firstName, propertyAddress, estimatedValue }: WelcomeHe
 
   return (
     <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto">
-      <div className="flex items-center justify-center gap-3 mb-3">
+      <div className="mb-3">
         <h1 className="font-display text-3xl md:text-[36px] text-foreground">
           {greeting}, {displayName}
         </h1>
-        {estimatedValue && (
-          <span className="font-mono text-[11px] tracking-[0.1em] text-accent">
-            ${estimatedValue.toLocaleString()}
-          </span>
-        )}
       </div>
       <p className="font-sans text-base text-muted-foreground">
         {propertyAddress ? `${propertyAddress} · ${today}` : today}
