@@ -1,9 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { X } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import GettingStartedTab from "./GettingStartedTab";
 import HowToGuidesTab from "./HowToGuidesTab";
 import FAQTab from "./FAQTab";
+import TutorialSearch from "./TutorialSearch";
+import { allClientTutorials } from "@/data/tutorials/client";
+import { clientFAQ } from "@/data/tutorials/client/faq";
+import type { Tutorial, FAQItem } from "@/data/tutorials/types";
 
 interface HelpCenterPanelProps {
   open: boolean;
@@ -11,10 +16,16 @@ interface HelpCenterPanelProps {
   onNavigate: (tab: string) => void;
 }
 
-const tabs = ["Getting Started", "How-To Guides", "FAQ"] as const;
-
 const HelpCenterPanel = ({ open, onClose, onNavigate }: HelpCenterPanelProps) => {
-  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Getting Started");
+  const [filteredTutorials, setFilteredTutorials] = useState<Tutorial[]>(allClientTutorials);
+  const [filteredFAQ, setFilteredFAQ] = useState<FAQItem[]>(clientFAQ);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleResults = (tutorials: Tutorial[], faq: FAQItem[]) => {
+    setFilteredTutorials(tutorials);
+    setFilteredFAQ(faq);
+    setIsSearching(tutorials.length !== allClientTutorials.length || faq.length !== clientFAQ.length);
+  };
 
   const handleNavigate = (tab: string) => {
     onClose();
@@ -35,28 +46,37 @@ const HelpCenterPanel = ({ open, onClose, onNavigate }: HelpCenterPanelProps) =>
           </button>
         </div>
 
-        {/* Tab bar */}
-        <div className="flex border-b border-border">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-2.5 text-xs font-sans font-medium transition-colors bg-transparent border-none cursor-pointer ${
-                activeTab === tab
-                  ? "text-accent border-b-2 border-accent"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+        {/* Search */}
+        <div className="px-5 pt-4">
+          <TutorialSearch
+            tutorials={allClientTutorials}
+            faqItems={clientFAQ}
+            onResults={handleResults}
+            placeholder="Search help articles..."
+          />
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5">
-          {activeTab === "Getting Started" && <GettingStartedTab onNavigate={handleNavigate} />}
-          {activeTab === "How-To Guides" && <HowToGuidesTab />}
-          {activeTab === "FAQ" && <FAQTab onNavigate={handleNavigate} />}
+        <div className="flex-1 overflow-y-auto">
+          <Tabs defaultValue="started" className="flex flex-col h-full">
+            <TabsList className="mx-5 mt-3 mb-0">
+              <TabsTrigger value="started" className="text-xs font-sans">Getting Started</TabsTrigger>
+              <TabsTrigger value="guides" className="text-xs font-sans">How-To Guides</TabsTrigger>
+              <TabsTrigger value="faq" className="text-xs font-sans">FAQ</TabsTrigger>
+            </TabsList>
+
+            <div className="flex-1 overflow-y-auto p-5">
+              <TabsContent value="started" className="mt-0">
+                <GettingStartedTab onNavigate={handleNavigate} />
+              </TabsContent>
+              <TabsContent value="guides" className="mt-0">
+                <HowToGuidesTab tutorials={filteredTutorials} isSearching={isSearching} />
+              </TabsContent>
+              <TabsContent value="faq" className="mt-0">
+                <FAQTab faqItems={filteredFAQ} isSearching={isSearching} onNavigate={handleNavigate} />
+              </TabsContent>
+            </div>
+          </Tabs>
         </div>
       </SheetContent>
     </Sheet>

@@ -1,0 +1,55 @@
+import { Tutorial } from "../types";
+
+export const adminEquipmentMaintenance: Tutorial[] = [
+  {
+    id: "admin-add-equipment",
+    category: "Equipment & Maintenance",
+    title: "Adding Equipment & Logging Warranty Information",
+    description: "Build a complete equipment registry for a client's home with warranty and service tracking.",
+    audience: "admin",
+    steps: [
+      { title: "Open Equipment tab", body: "From a client workspace, click the Equipment tab." },
+      { title: "Click +Add Equipment", body: "A dialog opens for entering equipment details." },
+      { title: "Enter basic info", body: "Fill in the name (e.g., 'Central AC Unit'), category (HVAC, Plumbing, Electrical, etc.), brand, model, and serial number." },
+      { title: "Set dates", body: "Enter the install date, warranty expiry date, last service date, and next scheduled service date." },
+      { title: "Set condition and cost", body: "Select the current condition (Excellent through Poor) and enter the estimated replacement cost." },
+      { title: "Link to a report page", body: "Optionally link this equipment to a specific report page so findings and equipment stay connected." },
+      { title: "Save", body: "The item appears in the registry, organized by category with service status badges." },
+    ],
+    tip: "Use the Serial Plate Scanner in the report editor to auto-populate equipment details from a photo of the data plate — it reads brand, model, serial, and more using AI vision.",
+    keywords: ["equipment", "add", "warranty", "serial number", "registry", "appliance", "system"],
+  },
+  {
+    id: "admin-maintenance-reminders",
+    category: "Equipment & Maintenance",
+    title: "Setting Up Maintenance Reminders & Seasonal Checklists",
+    description: "Configure service schedules and seasonal maintenance tasks for each client's home.",
+    audience: "admin",
+    steps: [
+      { title: "Set next service dates", body: "When adding or editing equipment, always set the 'Next Service Date' field. This drives the service reminder system." },
+      { title: "Understand status badges", body: "Equipment shows automatic badges: 'Overdue' (past due), 'Due Soon' (within 60 days), 'Warranty Expired', or 'Up to Date.'" },
+      { title: "Configure seasonal checklists", body: "Go to the Schedule tab and review the seasonal maintenance checklist. Tasks are auto-generated based on the client's equipment and property type." },
+      { title: "Customize tasks", body: "Add, remove, or edit checklist items for each season (Spring, Summer, Fall, Winter) based on what's relevant to this home." },
+      { title: "Automation integration", body: "The 'Equipment service due, no project' automation rule automatically creates a task when a service date is approaching and no project exists to address it." },
+    ],
+    tip: "Generate a personalized maintenance schedule using the AI — it analyzes the client's equipment, property age, and local climate to recommend the right tasks for each season.",
+    keywords: ["maintenance", "reminders", "seasonal", "checklist", "service date", "schedule", "overdue"],
+  },
+  {
+    id: "admin-resolve-overdue",
+    category: "Equipment & Maintenance",
+    title: "Resolving Overdue Service Items",
+    description: "Handle equipment with past-due maintenance from the Action Center.",
+    audience: "admin",
+    steps: [
+      { title: "Check the Action Center", body: "Your admin dashboard shows overdue service items in the Action Center widget. These are equipment items past their next service date." },
+      { title: "Open the equipment item", body: "Click the overdue item to open the full equipment detail in the client workspace." },
+      { title: "Create a project if needed", body: "If the service requires a vendor or significant work, create a project linked to this equipment." },
+      { title: "Update the service date", body: "After the service is completed, update the 'Last Service Date' to today and set a new 'Next Service Date.'" },
+      { title: "Update condition if needed", body: "If the service improved the equipment's condition, update the condition rating accordingly." },
+      { title: "Notify the client", body: "Send a message through the Messages tab letting the client know the service was completed and their registry has been updated." },
+    ],
+    tip: "You can also resolve overdue items directly from the Action Center on your dashboard without navigating to the client workspace.",
+    keywords: ["overdue", "service", "action center", "resolve", "maintenance", "past due"],
+  },
+];
