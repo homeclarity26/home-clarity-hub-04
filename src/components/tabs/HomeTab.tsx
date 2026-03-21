@@ -12,7 +12,7 @@ import NotificationNudges from "@/components/portal/NotificationNudges";
 import ConciergeRequestModal from "@/components/portal/ConciergeRequestModal";
 import DocumentExpirationTracker from "@/components/portal/DocumentExpirationTracker";
 import CostComparisonTool from "@/components/portal/CostComparisonTool";
-import PhotoInspectionSidebar from "@/components/portal/PhotoInspectionSidebar";
+import MyHomeStory from "@/components/portal/MyHomeStory";
 import MyHomeStory from "@/components/portal/MyHomeStory";
 import MembershipBanner from "@/components/MembershipBanner";
 import AppointmentRequestModal from "@/components/portal/AppointmentRequestModal";
