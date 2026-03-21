@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Share2, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import CreatorBar from "./CreatorBar";
@@ -22,6 +24,23 @@ interface ReportPageProps {
   propertyAddress?: string;
   propertyContext?: PropertyContext;
 }
+
+const ShareSectionButton = ({ pageSlug }: { pageSlug: string }) => {
+  const [copied, setCopied] = useState(false);
+  const handleShare = () => {
+    const url = `${window.location.origin}${window.location.pathname}?page=${pageSlug}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    toast.success("Link copied — share it with anyone!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <Button variant="ghost" size="sm" className="gap-1.5 text-xs font-sans text-muted-foreground" onClick={handleShare}>
+      {copied ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
+      {copied ? "Copied!" : "Share Section"}
+    </Button>
+  );
+};
 
 const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, reportId, propertyId, propertyAddress, propertyContext }: ReportPageProps) => {
   const { canEdit } = useEditMode();
@@ -119,7 +138,11 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
         />
       )}
 
-      <div className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-24">
+      <div className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-24 report-page">
+        {/* Share button */}
+        <div className="flex justify-end mb-4 no-print">
+          <ShareSectionButton pageSlug={page.id} />
+        </div>
         <BlockRenderer
           blockConfig={blockConfig}
           pageData={extendedPageData}
