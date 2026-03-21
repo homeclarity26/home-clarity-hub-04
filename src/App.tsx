@@ -175,6 +175,16 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/portal/:propertyId/:tab"
+        element={
+          <ProtectedRoute>
+            <EditModeProvider>
+              <Index />
+            </EditModeProvider>
+          </ProtectedRoute>
+        }
+      />
 
       {/* Admin routes */}
       <Route
