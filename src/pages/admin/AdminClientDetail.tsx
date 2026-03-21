@@ -45,6 +45,7 @@ import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 import ReportAITools from "@/components/admin/ReportAITools";
 import VoiceAndPhotoTools from "@/components/admin/VoiceAndPhotoTools";
 import AIClientBrief from "@/components/admin/AIClientBrief";
+import AIMeetingPrep from "@/components/admin/AIMeetingPrep";
 import ConditionForecast from "@/components/admin/ConditionForecast";
 import AIFollowUpSuggestions from "@/components/admin/AIFollowUpSuggestions";
 import ClientTags from "@/components/admin/ClientTags";
