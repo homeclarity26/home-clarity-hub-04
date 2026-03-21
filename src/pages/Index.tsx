@@ -25,7 +25,6 @@ import AnnouncementBanner from "@/components/AnnouncementBanner";
 import PushNotificationBanner from "@/components/PushNotificationBanner";
 import NPSSurveyCard from "@/components/NPSSurveyCard";
 import PropertySelector from "@/components/PropertySelector";
-import HelpFloatingButton from "@/components/help/HelpFloatingButton";
 import HelpCenterPanel from "@/components/help/HelpCenterPanel";
 import ClientOnboardingModal from "@/components/help/ClientOnboardingModal";
 import { useClientPortal } from "@/hooks/useClientPortal";
@@ -55,7 +54,7 @@ const Index = () => {
   const [reportPageId, setReportPageId] = useState<string | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   // showOnboarding removed — consolidated into tutorial modal
-  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpOpen, _setHelpOpen] = useState(false);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const { editMode, toggleEditMode, canEdit } = useEditMode();
 
@@ -347,16 +346,13 @@ const Index = () => {
         <NPSSurveyCard propertyId={portal.property.id} />
       )}
 
-      {/* Help Center */}
+      {/* Help Center — accessible via AI Command Bar and chat FAB */}
       {!isCreator && (
-        <>
-          <HelpFloatingButton onClick={() => setHelpOpen(true)} />
-          <HelpCenterPanel
-            open={helpOpen}
-            onClose={() => setHelpOpen(false)}
-            onNavigate={handleTabChange}
-          />
-        </>
+        <HelpCenterPanel
+          open={helpOpen}
+          onClose={() => _setHelpOpen(false)}
+          onNavigate={handleTabChange}
+        />
       )}
 
       <Footer
