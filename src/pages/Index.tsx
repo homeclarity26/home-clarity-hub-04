@@ -196,9 +196,12 @@ const Index = () => {
       {/* Tutorial onboarding modal for first-time clients */}
       {showTutorialModal && !isCreator && (
         <ClientOnboardingModal
+          propertyName={propertyName}
+          creatorName={portal.creatorName}
           onComplete={(navigateTo) => {
             setShowTutorialModal(false);
             if (navigateTo === "report") handleTabChange("report");
+            if (navigateTo === "messages") handleTabChange("messages");
           }}
         />
       )}
