@@ -52,6 +52,45 @@ export type Database = {
           },
         ]
       }
+      advisor_patterns: {
+        Row: {
+          admin_id: string
+          confidence_score: number
+          created_at: string
+          id: string
+          last_used_at: string
+          pattern_data: Json | null
+          pattern_key: string
+          pattern_type: string
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          admin_id: string
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          last_used_at?: string
+          pattern_data?: Json | null
+          pattern_key: string
+          pattern_type: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          admin_id?: string
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          last_used_at?: string
+          pattern_data?: Json | null
+          pattern_key?: string
+          pattern_type?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: []
+      }
       agent_logs: {
         Row: {
           actions_taken: number | null
@@ -332,6 +371,39 @@ export type Database = {
           id?: string
           score_value?: number | null
           section?: string
+        }
+        Relationships: []
+      }
+      ai_suggestion_outcomes: {
+        Row: {
+          admin_id: string | null
+          context: Json | null
+          created_at: string
+          edited_data: Json | null
+          id: string
+          outcome: string
+          suggestion_data: Json | null
+          suggestion_type: string
+        }
+        Insert: {
+          admin_id?: string | null
+          context?: Json | null
+          created_at?: string
+          edited_data?: Json | null
+          id?: string
+          outcome?: string
+          suggestion_data?: Json | null
+          suggestion_type: string
+        }
+        Update: {
+          admin_id?: string | null
+          context?: Json | null
+          created_at?: string
+          edited_data?: Json | null
+          id?: string
+          outcome?: string
+          suggestion_data?: Json | null
+          suggestion_type?: string
         }
         Relationships: []
       }
@@ -901,6 +973,51 @@ export type Database = {
           },
         ]
       }
+      client_behavior_profiles: {
+        Row: {
+          churn_risk_score: number
+          client_id: string
+          communication_preference: string
+          created_at: string
+          engagement_level: string
+          goals_active: number
+          id: string
+          last_computed_at: string
+          portal_focus_areas: Json | null
+          response_speed_avg_hours: number | null
+          satisfaction_trend: string
+          updated_at: string
+        }
+        Insert: {
+          churn_risk_score?: number
+          client_id: string
+          communication_preference?: string
+          created_at?: string
+          engagement_level?: string
+          goals_active?: number
+          id?: string
+          last_computed_at?: string
+          portal_focus_areas?: Json | null
+          response_speed_avg_hours?: number | null
+          satisfaction_trend?: string
+          updated_at?: string
+        }
+        Update: {
+          churn_risk_score?: number
+          client_id?: string
+          communication_preference?: string
+          created_at?: string
+          engagement_level?: string
+          goals_active?: number
+          id?: string
+          last_computed_at?: string
+          portal_focus_areas?: Json | null
+          response_speed_avg_hours?: number | null
+          satisfaction_trend?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_files: {
         Row: {
           category: string
@@ -1459,6 +1576,39 @@ export type Database = {
           filter_json?: Json
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      cross_client_insights: {
+        Row: {
+          affected_client_count: number
+          confidence: number
+          created_at: string
+          id: string
+          insight_data: Json | null
+          insight_key: string
+          insight_type: string
+          last_updated: string
+        }
+        Insert: {
+          affected_client_count?: number
+          confidence?: number
+          created_at?: string
+          id?: string
+          insight_data?: Json | null
+          insight_key: string
+          insight_type: string
+          last_updated?: string
+        }
+        Update: {
+          affected_client_count?: number
+          confidence?: number
+          created_at?: string
+          id?: string
+          insight_data?: Json | null
+          insight_key?: string
+          insight_type?: string
+          last_updated?: string
         }
         Relationships: []
       }
@@ -2561,6 +2711,39 @@ export type Database = {
           title?: string
           updated_at?: string
           version?: number
+        }
+        Relationships: []
+      }
+      learning_events: {
+        Row: {
+          actor_id: string | null
+          actor_role: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_role?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_role?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
         }
         Relationships: []
       }
