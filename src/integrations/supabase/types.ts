@@ -226,6 +226,56 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_notification_nudges: {
+        Row: {
+          action_url: string | null
+          client_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_dismissed: boolean | null
+          is_read: boolean | null
+          message: string
+          nudge_type: string
+          property_id: string
+          title: string
+        }
+        Insert: {
+          action_url?: string | null
+          client_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message: string
+          nudge_type: string
+          property_id: string
+          title: string
+        }
+        Update: {
+          action_url?: string | null
+          client_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message?: string
+          nudge_type?: string
+          property_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_notification_nudges_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_priority_cards: {
         Row: {
           client_id: string
@@ -885,6 +935,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "client_files_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_goals: {
+        Row: {
+          category: string | null
+          client_id: string
+          created_at: string
+          description: string | null
+          id: string
+          progress: number | null
+          property_id: string
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          client_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          progress?: number | null
+          property_id: string
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          progress?: number | null
+          property_id?: string
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_goals_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
@@ -3301,6 +3401,42 @@ export type Database = {
           },
         ]
       }
+      portfolio_snapshots: {
+        Row: {
+          admin_id: string
+          avg_health_score: number | null
+          created_at: string
+          id: string
+          metrics_json: Json | null
+          snapshot_date: string
+          total_clients: number | null
+          total_projects: number | null
+          total_revenue: number | null
+        }
+        Insert: {
+          admin_id: string
+          avg_health_score?: number | null
+          created_at?: string
+          id?: string
+          metrics_json?: Json | null
+          snapshot_date?: string
+          total_clients?: number | null
+          total_projects?: number | null
+          total_revenue?: number | null
+        }
+        Update: {
+          admin_id?: string
+          avg_health_score?: number | null
+          created_at?: string
+          id?: string
+          metrics_json?: Json | null
+          snapshot_date?: string
+          total_clients?: number | null
+          total_projects?: number | null
+          total_revenue?: number | null
+        }
+        Relationships: []
+      }
       prediction_factors: {
         Row: {
           description: string | null
@@ -5386,6 +5522,56 @@ export type Database = {
           report_type?: string
         }
         Relationships: []
+      }
+      seasonal_checklist_items: {
+        Row: {
+          category: string | null
+          client_id: string
+          completed_at: string | null
+          id: string
+          is_completed: boolean | null
+          property_id: string
+          season: string
+          sort_order: number | null
+          task_description: string | null
+          task_title: string
+          year: number
+        }
+        Insert: {
+          category?: string | null
+          client_id: string
+          completed_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          property_id: string
+          season: string
+          sort_order?: number | null
+          task_description?: string | null
+          task_title: string
+          year: number
+        }
+        Update: {
+          category?: string | null
+          client_id?: string
+          completed_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          property_id?: string
+          season?: string
+          sort_order?: number | null
+          task_description?: string | null
+          task_title?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seasonal_checklist_items_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       service_history: {
         Row: {
