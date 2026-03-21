@@ -30,7 +30,7 @@ const moreTabs = [
   { id: "documents", label: "Documents" },
   { id: "schedule", label: "Schedule" },
   { id: "payments", label: "Payments" },
-  { id: "estimates", label: "Proposals" },
+  { id: "estimates", label: "Estimates" },
   { id: "services", label: "Services" },
   { id: "contacts", label: "Contacts" },
   { id: "billing", label: "Billing" },

@@ -10,7 +10,7 @@ const SUGGESTED_PROMPTS = [
   "Schedule a service",
   "Review my spending",
   "What's coming up?",
-  "Show open proposals",
+  "Show open estimates",
   "View schedule",
 ];
 
