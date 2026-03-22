@@ -118,7 +118,7 @@ const WorkspaceTabGroups = ({ activeTab, onTabChange, unreadMessages }: Workspac
                   {group.tabs.map((tab) => (
                     <button
                       key={tab.id}
-                      onClick={() => handleTabClick(tab.id)}
+                      onClick={(e) => { e.stopPropagation(); handleTabClick(tab.id); }}
                       className={`px-2.5 py-2 text-xs font-sans whitespace-nowrap transition-colors border-b-2 bg-transparent cursor-pointer relative ${
                         activeTab === tab.id
                           ? "border-primary text-foreground font-medium"
