@@ -276,7 +276,10 @@ const BulkClientImport = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 {result.failed === 0 ? (
-                  <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                  <CheckCircle2 className="w-8 h-8 text-primary" />
+                ) : (
+                  <AlertCircle className="w-8 h-8 text-accent" />
+                )}
                 ) : (
                   <AlertCircle className="w-8 h-8 text-amber-500" />
                 )}
