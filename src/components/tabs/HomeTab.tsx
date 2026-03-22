@@ -128,6 +128,9 @@ const HomeTab = ({
         {/* Seasonal Maintenance Checklist */}
         <SeasonalChecklist propertyId={propertyId} />
 
+        {/* Home Health Score */}
+        <HomeHealthScore reportPages={reportPages} onNavigate={handleNavigateTracked} />
+
         {/* Compact Health Bar */}
         {reportPages && <CompactHealthBar pages={reportPages} onNavigate={handleNavigateTracked} />}
 
