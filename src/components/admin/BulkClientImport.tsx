@@ -280,9 +280,6 @@ const BulkClientImport = () => {
                 ) : (
                   <AlertCircle className="w-8 h-8 text-accent" />
                 )}
-                ) : (
-                  <AlertCircle className="w-8 h-8 text-amber-500" />
-                )}
                 <div>
                   <p className="font-sans text-sm font-medium text-foreground">
                     {result.success} of {result.total} imported successfully
