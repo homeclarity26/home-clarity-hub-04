@@ -103,6 +103,7 @@ const PDFReport = ({ data }: { data: PDFReportData }) => {
       }),
     ])}
   </Document>
-);
+  );
+};
 
 export default PDFReport;
