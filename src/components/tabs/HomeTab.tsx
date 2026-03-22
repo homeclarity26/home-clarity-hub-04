@@ -131,8 +131,6 @@ const HomeTab = ({
         {/* Home Health Score */}
         <HomeHealthScore reportPages={reportPages} onNavigate={handleNavigateTracked} />
 
-        {/* Compact Health Bar */}
-        {reportPages && <CompactHealthBar pages={reportPages} onNavigate={handleNavigateTracked} />}
 
         {/* Membership Banner (conditional) */}
         {membershipEndDate && (
