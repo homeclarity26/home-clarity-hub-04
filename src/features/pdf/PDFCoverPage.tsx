@@ -1,6 +1,6 @@
 import { Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import { colors } from "./pdfStyles";
-import type { PDFBrandConfig } from "./PDFReport";
+import type { PDFBrandConfig } from "./pdfStyles";
 
 interface PDFCoverPageProps {
   propertyName: string;

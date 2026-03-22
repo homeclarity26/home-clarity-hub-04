@@ -11,16 +11,9 @@ import type { ReportPageData } from "@/data/reportContent";
 // Import styles to trigger font registration
 import "./pdfStyles";
 
-export interface PDFBrandConfig {
-  companyName: string;
-  tagline?: string;
-  logoUrl?: string;
-}
+import { type PDFBrandConfig, DEFAULT_BRAND } from "./pdfStyles";
 
-export const DEFAULT_BRAND: PDFBrandConfig = {
-  companyName: "Home Clarity Hub",
-  tagline: "Professional Home Stewardship",
-};
+export type { PDFBrandConfig };
 
 export interface PDFReportData {
   propertyName: string;
