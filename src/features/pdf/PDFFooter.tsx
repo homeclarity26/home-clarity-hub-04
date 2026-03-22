@@ -3,11 +3,12 @@ import { s } from "./pdfStyles";
 
 interface PDFFooterProps {
   sectionName: string;
+  companyName?: string;
 }
 
-const PDFFooter = ({ sectionName }: PDFFooterProps) => (
+const PDFFooter = ({ sectionName, companyName = "Home Clarity Hub" }: PDFFooterProps) => (
   <View style={s.footer} fixed>
-    <Text style={s.footerText}>Hometown Builders Club</Text>
+    <Text style={s.footerText}>{companyName}</Text>
     <Text
       style={s.footerText}
       render={({ pageNumber }) => `${pageNumber}`}

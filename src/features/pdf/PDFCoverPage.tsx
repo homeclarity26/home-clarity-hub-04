@@ -1,11 +1,13 @@
 import { Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import { colors } from "./pdfStyles";
+import type { PDFBrandConfig } from "./PDFReport";
 
 interface PDFCoverPageProps {
   propertyName: string;
   address: string;
   date: string;
   coverImageUrl?: string;
+  brand?: PDFBrandConfig;
 }
 
 const cs = StyleSheet.create({
@@ -26,6 +28,12 @@ const cs = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 72,
+  },
+  logo: {
+    width: 120,
+    height: 60,
+    objectFit: "contain" as const,
+    marginBottom: 24,
   },
   title: {
     fontFamily: "Playfair Display",
@@ -50,6 +58,15 @@ const cs = StyleSheet.create({
     textAlign: "center",
     marginBottom: 8,
   },
+  tagline: {
+    fontFamily: "IBM Plex Mono",
+    fontSize: 8,
+    color: colors.grey500,
+    textTransform: "uppercase",
+    letterSpacing: 2,
+    textAlign: "center",
+    marginBottom: 8,
+  },
   date: {
     fontFamily: "IBM Plex Mono",
     fontSize: 9,
@@ -64,25 +81,38 @@ const cs = StyleSheet.create({
   },
 });
 
-const PDFCoverPage = ({ propertyName, address, date, coverImageUrl }: PDFCoverPageProps) => (
-  <Page size="LETTER" style={cs.page}>
-    <View style={cs.imageSection}>
-      {coverImageUrl ? (
-        <Image src={coverImageUrl} style={cs.coverImage} />
-      ) : (
-        <View style={{ flex: 1, backgroundColor: colors.navy, justifyContent: "center", alignItems: "center" }}>
-          <Text style={{ fontFamily: "Playfair Display", fontSize: 48, color: colors.gold }}>HBC</Text>
-        </View>
-      )}
-    </View>
-    <View style={cs.contentSection}>
-      <Text style={cs.title}>Home Clarity Report</Text>
-      <Text style={cs.address}>{propertyName || address}</Text>
-      <View style={cs.goldBar} />
-      <Text style={cs.preparedBy}>Prepared by Hometown Builders Club</Text>
-      <Text style={cs.date}>{date}</Text>
-    </View>
-  </Page>
-);
+const PDFCoverPage = ({ propertyName, address, date, coverImageUrl, brand }: PDFCoverPageProps) => {
+  const companyName = brand?.companyName || "Home Clarity Hub";
+  const tagline = brand?.tagline || "Professional Home Stewardship";
+
+  return (
+    <Page size="LETTER" style={cs.page}>
+      <View style={cs.imageSection}>
+        {coverImageUrl ? (
+          <Image src={coverImageUrl} style={cs.coverImage} />
+        ) : (
+          <View style={{ flex: 1, backgroundColor: colors.navy, justifyContent: "center", alignItems: "center" }}>
+            {brand?.logoUrl ? (
+              <Image src={brand.logoUrl} style={{ width: 160, height: 80, objectFit: "contain" as const }} />
+            ) : (
+              <Text style={{ fontFamily: "Playfair Display", fontSize: 48, color: colors.gold }}>HBC</Text>
+            )}
+          </View>
+        )}
+      </View>
+      <View style={cs.contentSection}>
+        {brand?.logoUrl && coverImageUrl && (
+          <Image src={brand.logoUrl} style={cs.logo} />
+        )}
+        <Text style={cs.title}>Home Clarity Report</Text>
+        <Text style={cs.address}>{propertyName || address}</Text>
+        <View style={cs.goldBar} />
+        <Text style={cs.preparedBy}>Prepared by {companyName}</Text>
+        {tagline && <Text style={cs.tagline}>{tagline}</Text>}
+        <Text style={cs.date}>{date}</Text>
+      </View>
+    </Page>
+  );
+};
 
 export default PDFCoverPage;
