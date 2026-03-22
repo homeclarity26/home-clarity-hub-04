@@ -94,8 +94,7 @@ const HomeTab = ({
         {/* Smart Notification Nudges */}
         <NotificationNudges propertyId={propertyId} onNavigate={(tab) => handleNavigateTracked(tab)} />
 
-        {/* Home Health Score */}
-        <HomeHealthScore reportPages={reportPages} onNavigate={handleNavigateTracked} />
+        {/* Home Health Score — moved below seasonal checklist */}
 
         {/* AI Command Bar */}
         <AICommandBar onSubmit={handleAskQuestion} />
