@@ -11,6 +11,17 @@ import type { ReportPageData } from "@/data/reportContent";
 // Import styles to trigger font registration
 import "./pdfStyles";
 
+export interface PDFBrandConfig {
+  companyName: string;
+  tagline?: string;
+  logoUrl?: string;
+}
+
+export const DEFAULT_BRAND: PDFBrandConfig = {
+  companyName: "Home Clarity Hub",
+  tagline: "Professional Home Stewardship",
+};
+
 export interface PDFReportData {
   propertyName: string;
   address: string;
@@ -22,17 +33,20 @@ export interface PDFReportData {
   groups: PortalGroup[];
   pages: Record<string, ReportPageData>;
   pageImages: Record<string, string[]>;
+  brand?: PDFBrandConfig;
 }
 
 // Pages that should use the roadmap layout
 const roadmapPageIds = ["financial-roadmap", "action-plan"];
 
-const PDFReport = ({ data }: { data: PDFReportData }) => (
+const PDFReport = ({ data }: { data: PDFReportData }) => {
+  const brand = data.brand || DEFAULT_BRAND;
+  return (
   <Document
     title={`Home Clarity Report — ${data.propertyName}`}
-    author="Hometown Builders Club"
+    author={brand.companyName}
     subject="Home Clarity Report"
-    creator="Hometown Builders Club"
+    creator={brand.companyName}
   >
     {/* Cover */}
     <PDFCoverPage
@@ -40,6 +54,7 @@ const PDFReport = ({ data }: { data: PDFReportData }) => (
       address={data.address}
       date={data.date}
       coverImageUrl={data.coverImageUrl}
+      brand={brand}
     />
 
     {/* Title / Inside Cover */}
