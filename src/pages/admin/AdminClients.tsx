@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus, Loader2, Download, BarChart3, Sparkles } from "lucide-react";
+import BulkClientImport from "@/components/admin/BulkClientImport";
 import { useNavigate } from "react-router-dom";
 import AdminHeader from "@/components/admin/AdminHeader";
 import ClientTable from "@/components/admin/ClientTable";
@@ -63,9 +64,12 @@ const AdminClients = () => {
               <TabsTrigger value="compare" className="text-xs font-sans gap-1"><BarChart3 className="w-3.5 h-3.5" />Compare</TabsTrigger>
               <TabsTrigger value="bulk" className="text-xs font-sans gap-1"><Sparkles className="w-3.5 h-3.5" />Bulk Generate</TabsTrigger>
             </TabsList>
-            <Button onClick={() => navigate("/admin/clients/new")} className="gap-1.5 font-sans" size="sm">
-              <Plus className="w-4 h-4" />New Client
-            </Button>
+            <div className="flex items-center gap-2">
+              <BulkClientImport />
+              <Button onClick={() => navigate("/admin/clients/new")} className="gap-1.5 font-sans" size="sm">
+                <Plus className="w-4 h-4" />New Client
+              </Button>
+            </div>
           </div>
 
           <TabsContent value="clients">

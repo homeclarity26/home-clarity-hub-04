@@ -29,6 +29,18 @@ Font.register({
 // Disable hyphenation for cleaner text
 Font.registerHyphenationCallback((word) => [word]);
 
+// Brand configuration
+export interface PDFBrandConfig {
+  companyName: string;
+  tagline?: string;
+  logoUrl?: string;
+}
+
+export const DEFAULT_BRAND: PDFBrandConfig = {
+  companyName: "Home Clarity Hub",
+  tagline: "Professional Home Stewardship",
+};
+
 // Design tokens
 export const colors = {
   navy: "#1B2B4D",
