@@ -13,6 +13,7 @@ import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import Landing from "./pages/Landing";
 import ProposalView from "./pages/ProposalView";
 import InvoiceView from "./pages/InvoiceView";
 import Privacy from "./pages/Privacy";
@@ -241,6 +242,9 @@ const AppRoutes = () => {
         <Route path="documents" element={<TradePartnerDocuments />} />
         <Route path="bids" element={<TradePartnerBids />} />
       </Route>
+
+      {/* Public landing page */}
+      <Route path="/welcome" element={<Landing />} />
 
       {/* Auth routes */}
       <Route
