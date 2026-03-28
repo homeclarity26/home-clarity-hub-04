@@ -1,132 +1,118 @@
 
 
-# Pre-Launch Fix Plan — Items 1 through 9
+# Polished Proposal Output — Redesign Plan
 
-## Item 1: Fix RLS Security Vulnerabilities (Critical)
+## The Gap
 
-The security scan found 41 findings. The work breaks into three sub-tasks:
+Your current proposal system produces an **interactive web page** (`/proposal/:token`) with scroll animations and theme colors. That works for online viewing, but you also need **print-quality .docx downloads** that look as polished as your AK Renovations proposals — locked layout, branded cover, structured scope sections with sidebar numbering, client selections table, investment box, and terms grid.
 
-### 1a. Remove anon access to financial data
-Drop anon SELECT policies on `invoices`, `invoice_line_items`, `estimates`, `estimate_line_items`, and `home_value_snapshots`. The token-based anon UPDATE policies on `invoices` and `estimates` (for tracking views) are acceptable — only the broad SELECT exposure is the issue.
+Your AK system uses a `docx-js` template script that produces pixel-perfect documents every time. The HBC proposal system currently has no .docx export at all.
 
-**Why token-based reads can't just be removed:** Clients receive proposal/invoice links with tokens. Solution: create two SECURITY DEFINER functions (`get_invoice_by_token` and `get_estimate_by_token`) that accept a token, return only the fields needed for the payment/response flow, and are callable by anon. Drop the broad anon SELECT policies.
+## What Gets Built
 
-### 1b. Lock down 19 tables with `USING (true)` on write/all operations
-These tables currently let any authenticated user read/write all rows. Each needs ownership-based policies using `has_role()` for creators and property-ownership joins for clients:
+### 1. Proposal DOCX Template Engine
 
-| Table | Ownership Path |
-|-------|---------------|
-| `annual_reviews` | `property_id → properties.client_user_id` |
-| `project_scopes` | `project_id → projects.property_id → properties.client_user_id` |
-| `voice_interactions` | `user_id` directly |
-| `permit_registry` | `property_id → properties.client_user_id` |
-| `service_history` | `equipment_id → equipment.property_id → properties.client_user_id` |
-| `document_extractions` | `document_id → documents.property_id → properties.client_user_id` |
-| `warranty_registry` | `property_id → properties.client_user_id` |
-| `structural_specifications` | `property_id → properties.client_user_id` |
-| `home_knowledge_base` | `property_id → properties.client_user_id` |
-| `property_timeline` | `property_id → properties.client_user_id` |
-| `scheduled_reports` | creator-only (use `has_role`) |
-| `export_jobs` | `user_id` directly |
-| `photo_analyses` | `photo_id → report_photos/property_photos → property_id` |
-| `referral_events` | `referral_code_id → referral_codes.property_id` |
-| `referral_credits` | `property_id → properties.client_user_id` |
-| `cross_client_insights` | creator-only read |
-| `ai_notification_nudges` | `client_id` = user or creator |
-| `push_notification_log` | creator-only insert |
-| `home_value_snapshots` | `property_id → properties.client_user_id` |
+A reusable `docx-js` template script (run via edge function) that generates branded .docx proposals from the data already stored in the `estimates` table. The template will be **locked** — same design every time, only the data changes.
 
-**Pattern for each:** Drop the permissive policy, replace with:
-- Creators can do everything: `USING (has_role(auth.uid(), 'creator'))`
-- Clients can read their own: `USING (property_id IN (SELECT id FROM properties WHERE client_user_id = auth.uid()))` (adjusted per ownership path)
+**Document structure (matching your AK quality standard):**
 
-This will be a single large migration with ~60 policy statements.
+```text
+Page 1  — Full-bleed cover (brand color background, company name,
+           project title, client name, address, date)
+Page 2  — Overview (project summary paragraph, total price box)
+Page 3+ — Scope sections (numbered: Section 01, 02... with
+           sidebar layout, bold-label bullet points, accent rule dividers)
+Page N  — Client Selections / Shopping List (category rows with
+           item name, description, where to shop)
+Page N+1— Investment summary (base price box, optional add-ons,
+           grand total)
+Page N+2— Timeline (phase table or cards)
+Page N+3— Terms & Conditions (2-column grid)
+Page N+4— Next Steps / CTA
+Footer  — Company phone + website on every page
+```
 
-### 1c. Create helper functions for ownership checks
-To avoid repetition and recursion, create 1-2 SECURITY DEFINER functions:
-- `owns_property(uuid)` — returns true if `auth.uid()` is the `client_user_id` of that property
-- `is_creator()` — shorthand for `has_role(auth.uid(), 'creator')`
+### 2. Proposal Data Model Upgrade
 
----
+Add structured scope sections and client selections to the estimates table (JSONB columns):
 
-## Item 2: Add Stripe Secrets
+- `proposal_scope_sections` — array of `{ number, title, bullets: [{ label, desc }] }` (matching your AK format exactly)
+- `proposal_client_selections` — array of `{ label, items: [{ name, desc, shop }] }`
+- `proposal_terms` — array of `{ label, value }` for the terms grid
+- `proposal_multi_option` — boolean flag + `proposal_option_prices` JSONB for multi-option proposals
 
-**Requires your input.** I will prompt you to enter `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` using the secrets tool. No code changes needed — the edge functions already reference these env vars.
+### 3. Scope Section Builder in ProposalBuilder UI
 
----
+Replace the current single "Plain Language Description" textarea with a **structured scope section editor**:
 
-## Item 3: Enable Leaked Password Protection
+- Add/remove/reorder numbered sections (Section 01, 02...)
+- Each section has a title and bullet points (bold label + description)
+- AI "Auto-Generate Scope" button that takes the project type + line items and produces structured sections following your frameworks (Bathroom: Site Prep → Demo → Rough-In → ..., Kitchen: ..., etc.)
+- Project type selector that pre-loads the standard section framework
 
-Use the `configure_auth` tool to enable `leaked_password_protection`. Single setting change.
+### 4. Client Selections / Shopping List Builder
 
----
+New accordion section in ProposalBuilder for items the client selects and buys separately:
 
-## Item 4: Remove Dev Auth Bypass Code
+- Category groups (e.g., "SHOWER", "VANITY", "FLOORING")
+- Each item: name, what to look for, where to shop
+- AI "Suggest Selections" button based on project type
 
-Delete lines 30-61 from `AuthContext.tsx` (the `DEV_BYPASS_AUTH` constant, `MOCK_USER`, `MOCK_SESSION`, `MOCK_PROFILE`). Update the state initializers on lines 72-76 to remove the ternary checks that reference `DEV_BYPASS_AUTH`. Also remove the early return on line 103.
+### 5. Multi-Option Support
 
-**1 file changed:** `src/contexts/AuthContext.tsx`
+When the proposal has multiple build options (e.g., screened porch vs. enclosed room):
 
----
+- Toggle "Multi-Option Proposal" in the builder
+- Each option gets its own scope section + price
+- Total displays "See Options Below" instead of a single number
+- Comparison summary section auto-generated
 
-## Item 5: Fix forwardRef Console Warning
+### 6. DOCX Download Button + Edge Function
 
-Search for the component triggering the warning in `ClientAgentPanel` and its child components. The warning typically comes from passing a ref through a component that doesn't use `forwardRef`. Will inspect and fix the specific component.
+- "Download .docx" button in ProposalBuilder (next to Preview and Copy Link)
+- Calls a `generate-proposal-docx` edge function
+- Edge function uses `docx-js` to render the locked template with the estimate data
+- Returns the .docx file as a download
+- The web proposal (`/proposal/:token`) also gets a download button so clients can save a copy
 
-*(Note: initial search found no `forwardRef` usage — the warning likely comes from a library component like Radix UI's Sheet/ScrollArea receiving a ref. Will trace the exact source during implementation.)*
+### 7. Invoice DOCX (Same Engine)
 
----
+The same template engine produces invoice .docx files:
 
-## Item 6: Set Up Custom Domain + Branded Email
+- Pulls line items, payment terms, and client data from the invoice record
+- If linked to a proposal, inherits scope and client selections
+- Clean, branded layout matching the proposal style
 
-**Requires your input.** I'll guide you through:
-1. Connecting your custom domain in project Settings → Domains
-2. Setting up an email sending domain via the email setup dialog
+## How the AI Wizard Connects
 
-No code changes — configuration only.
+The Q&A wizard (from the previously approved plan) feeds directly into these structured fields. When the wizard completes:
 
----
+1. AI maps answers → `proposal_scope_sections` (structured sections with numbered phases)
+2. AI maps answers → `proposal_client_selections` (shopping list)
+3. AI maps answers → timeline, pricing, terms
+4. All fields auto-populate in ProposalBuilder
+5. One click generates the .docx
 
-## Item 7: Add PWA Icons
+## Implementation Order
 
-Generate proper 192x192 and 512x512 PNG icons and update `manifest.json` to reference them. Also add `<link rel="apple-touch-icon">` to `index.html`.
+| Step | What | 
+|------|------|
+| 1 | Migration: add `proposal_scope_sections`, `proposal_client_selections`, `proposal_terms`, `proposal_option_prices` JSONB columns to estimates |
+| 2 | Scope Section Builder UI in ProposalBuilder (numbered sections + bullets + AI generate) |
+| 3 | Client Selections Builder UI (categories + items + AI suggest) |
+| 4 | Terms editor (2-column key/value pairs) |
+| 5 | `generate-proposal-docx` edge function with locked docx-js template |
+| 6 | Download buttons in ProposalBuilder + ProposalView |
+| 7 | Multi-option support (toggle + per-option pricing) |
+| 8 | Invoice .docx generation using same engine |
+| 9 | Update ProposalView web page to render structured scope sections instead of flat line items |
 
-**Files changed:** `public/manifest.json`, `index.html`, plus 2 new icon files.
+## Brand Customization
 
----
+The .docx template will read from the admin's brand settings (already stored):
+- Company name, phone, website
+- Brand colors (mapped from the 5 theme swatches to docx color values)
+- Logo (if uploaded)
 
-## Item 8: Add OG Meta Tags
-
-Add `og:image`, `og:url`, and `twitter:image` meta tags to `index.html`. Create or reference a 1200x630 OG image.
-
-**1 file changed:** `index.html`
-
----
-
-## Item 9: Add Error Monitoring
-
-Add a lightweight global error handler that logs uncaught errors and unhandled promise rejections. Options:
-- **Minimal (no dependency):** Add `window.onerror` and `window.onunhandledrejection` handlers in `main.tsx` that log to the `activity_log` table or console
-- **If you want a service:** I can integrate Sentry (requires adding the dependency and a DSN secret)
-
-I'll implement the minimal approach unless you prefer Sentry.
-
-**1 file changed:** `src/main.tsx`
-
----
-
-## Execution Order
-
-| Step | Item | Blocking? |
-|------|------|-----------|
-| 1 | #4 Remove dev bypass | No dependencies |
-| 2 | #1 RLS migration (single large migration) | No dependencies |
-| 3 | #3 Enable leaked password protection | No dependencies |
-| 4 | #5 Fix forwardRef warning | No dependencies |
-| 5 | #7 PWA icons + #8 OG tags | No dependencies |
-| 6 | #9 Error monitoring | No dependencies |
-| 7 | #2 Stripe secrets | Needs your input |
-| 8 | #6 Custom domain + email | Needs your input |
-
-Steps 1-6 can be done without any input from you. Steps 7-8 require you to provide credentials/domain info.
+The design is locked — admins choose a theme, the template handles the rest. No manual formatting.
 
