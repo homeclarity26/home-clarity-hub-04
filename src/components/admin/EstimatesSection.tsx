@@ -376,35 +376,135 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
            </div>
          </div>
 
-         <Table>
-           <TableHeader>
-             <TableRow>
-               <TableHead className="font-sans text-xs">Description</TableHead>
-               <TableHead className="font-sans text-xs text-right">Qty</TableHead>
-               <TableHead className="font-sans text-xs text-right">Unit Price</TableHead>
-               <TableHead className="font-sans text-xs text-right">Total</TableHead>
-             </TableRow>
-           </TableHeader>
-           <TableBody>
-             {lis.map((li: any) => (
-               <TableRow key={li.id}>
-                 <TableCell className="font-sans text-sm">{li.description}</TableCell>
-                 <TableCell className="font-mono text-sm text-right">{li.quantity}</TableCell>
-                 <TableCell className="font-mono text-sm text-right">{fmt(li.unit_price)}</TableCell>
-                 <TableCell className="font-mono text-sm text-right">{fmt(li.total)}</TableCell>
-               </TableRow>
-             ))}
-           </TableBody>
-         </Table>
+         {/* Intro / Tagline */}
+         {(est.proposal_tagline || est.proposal_intro_text) && (
+           <div className="bg-accent/5 rounded-lg p-4 border border-accent/20 space-y-2">
+             {est.proposal_tagline && <p className="text-sm font-sans font-semibold text-accent">{est.proposal_tagline}</p>}
+             {est.proposal_intro_text && <p className="text-sm font-sans text-muted-foreground leading-relaxed">{est.proposal_intro_text}</p>}
+           </div>
+         )}
 
-         <div className="flex justify-end">
-           <div className="w-64 space-y-1 text-sm font-sans">
-             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="font-mono">{fmt(est.subtotal)}</span></div>
-             {est.discount_amount > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Discount</span><span className="font-mono text-destructive">-{fmt(est.discount_type === "percent" ? est.subtotal * est.discount_amount / 100 : est.discount_amount)}</span></div>}
-             {est.tax > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span className="font-mono">{fmt(est.tax)}</span></div>}
-             <div className="flex justify-between font-bold pt-1 border-t border-border"><span>Total</span><span className="font-mono">{fmt(est.total)}</span></div>
+         {/* Scope of Work */}
+         {est.proposal_scope_sections && Array.isArray(est.proposal_scope_sections) && est.proposal_scope_sections.length > 0 && (
+           <div className="space-y-3">
+             <h4 className="text-sm font-sans font-semibold text-foreground flex items-center gap-2">
+               <FileText className="w-4 h-4 text-accent" />Scope of Work
+             </h4>
+             <div className="space-y-3">
+               {(est.proposal_scope_sections as any[]).map((section: any, i: number) => (
+                 <div key={i} className="rounded-md border border-border p-3 space-y-2">
+                   <p className="text-sm font-sans font-medium text-foreground">
+                     <span className="text-accent font-mono mr-2">{section.number || String(i + 1).padStart(2, '0')}</span>
+                     {section.title}
+                   </p>
+                   <ul className="space-y-1.5 ml-6">
+                     {section.bullets?.map((b: any, j: number) => (
+                       <li key={j} className="text-xs font-sans text-muted-foreground">
+                         <span className="font-medium text-foreground">{b.label}:</span> {b.desc}
+                       </li>
+                     ))}
+                   </ul>
+                 </div>
+               ))}
+             </div>
+           </div>
+         )}
+
+         {/* Line Items / Investment */}
+         <div className="space-y-3">
+           <h4 className="text-sm font-sans font-semibold text-foreground">Investment</h4>
+           <Table>
+             <TableHeader>
+               <TableRow>
+                 <TableHead className="font-sans text-xs">Description</TableHead>
+                 <TableHead className="font-sans text-xs text-right">Qty</TableHead>
+                 <TableHead className="font-sans text-xs text-right">Unit Price</TableHead>
+                 <TableHead className="font-sans text-xs text-right">Total</TableHead>
+               </TableRow>
+             </TableHeader>
+             <TableBody>
+               {lis.length > 0 ? lis.map((li: any) => (
+                 <TableRow key={li.id}>
+                   <TableCell className="font-sans text-sm">{li.description}</TableCell>
+                   <TableCell className="font-mono text-sm text-right">{li.quantity}</TableCell>
+                   <TableCell className="font-mono text-sm text-right">{fmt(li.unit_price)}</TableCell>
+                   <TableCell className="font-mono text-sm text-right">{fmt(li.total)}</TableCell>
+                 </TableRow>
+               )) : (
+                 <TableRow>
+                   <TableCell colSpan={4} className="text-center text-xs text-muted-foreground py-4">Loading line items...</TableCell>
+                 </TableRow>
+               )}
+             </TableBody>
+           </Table>
+           <div className="flex justify-end">
+             <div className="w-64 space-y-1 text-sm font-sans">
+               <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="font-mono">{fmt(est.subtotal)}</span></div>
+               {est.discount_amount > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Discount</span><span className="font-mono text-destructive">-{fmt(est.discount_type === "percent" ? est.subtotal * est.discount_amount / 100 : est.discount_amount)}</span></div>}
+               {est.tax > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span className="font-mono">{fmt(est.tax)}</span></div>}
+               <div className="flex justify-between font-bold pt-1 border-t border-border"><span>Total</span><span className="font-mono">{fmt(est.total)}</span></div>
+             </div>
            </div>
          </div>
+
+         {/* Client Selections */}
+         {est.proposal_client_selections && Array.isArray(est.proposal_client_selections) && est.proposal_client_selections.length > 0 && (
+           <div className="space-y-3">
+             <h4 className="text-sm font-sans font-semibold text-foreground flex items-center gap-2">
+               <ShoppingCart className="w-4 h-4 text-accent" />Client Selections
+             </h4>
+             <div className="space-y-3">
+               {(est.proposal_client_selections as any[]).map((cat: any, i: number) => (
+                 <div key={i} className="rounded-md border border-border p-3">
+                   <p className="text-sm font-sans font-medium text-foreground mb-2">{cat.label}</p>
+                   <div className="space-y-1.5">
+                     {cat.items?.map((item: any, j: number) => (
+                       <div key={j} className="flex items-start gap-2 text-xs font-sans">
+                         <span className="font-medium text-foreground min-w-[120px]">{item.name}</span>
+                         <span className="text-muted-foreground flex-1">{item.desc}</span>
+                         {item.shop && <span className="text-accent text-[10px]">{item.shop}</span>}
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               ))}
+             </div>
+           </div>
+         )}
+
+         {/* Timeline */}
+         {est.proposal_timeline_phases && Array.isArray(est.proposal_timeline_phases) && est.proposal_timeline_phases.length > 0 && (
+           <div className="space-y-3">
+             <h4 className="text-sm font-sans font-semibold text-foreground flex items-center gap-2">
+               <CalendarDays className="w-4 h-4 text-accent" />Timeline
+             </h4>
+             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+               {(est.proposal_timeline_phases as any[]).map((phase: any, i: number) => (
+                 <div key={i} className="rounded-md border border-border p-3 text-center">
+                   <p className="text-xs font-sans font-medium text-foreground">{phase.phase}</p>
+                   <p className="text-[11px] font-sans text-muted-foreground mt-1">{phase.duration}</p>
+                 </div>
+               ))}
+             </div>
+           </div>
+         )}
+
+         {/* Terms */}
+         {est.proposal_terms && Array.isArray(est.proposal_terms) && est.proposal_terms.length > 0 && (
+           <div className="space-y-3">
+             <h4 className="text-sm font-sans font-semibold text-foreground flex items-center gap-2">
+               <Scale className="w-4 h-4 text-accent" />Terms & Conditions
+             </h4>
+             <div className="grid grid-cols-2 gap-2">
+               {(est.proposal_terms as any[]).map((term: any, i: number) => (
+                 <div key={i} className="flex items-start gap-2 p-2 rounded border border-border">
+                   <span className="text-xs font-sans font-medium text-foreground min-w-[100px]">{term.label}</span>
+                   <span className="text-xs font-sans text-muted-foreground">{term.value}</span>
+                 </div>
+               ))}
+             </div>
+           </div>
+         )}
 
          {est.notes && <div className="bg-muted/50 rounded-md p-3"><p className="text-xs font-sans text-muted-foreground">{est.notes}</p></div>}
 
