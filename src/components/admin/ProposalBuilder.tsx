@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,9 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Eye, Copy, Send, Sparkles, Loader2, Plus, Trash2, Image as ImageIcon } from "lucide-react";
+import { Eye, Copy, Send, Sparkles, Loader2, Plus, Trash2, FileText, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import ScopeSectionBuilder, { type ScopeSection } from "./proposal/ScopeSectionBuilder";
+import ClientSelectionsBuilder, { type SelectionCategory } from "./proposal/ClientSelectionsBuilder";
+import TermsEditor, { type TermItem } from "./proposal/TermsEditor";
+import MultiOptionPricing, { type OptionPrice } from "./proposal/MultiOptionPricing";
 
 interface ProposalBuilderProps {
   estimate: any;
@@ -30,6 +34,7 @@ const THEME_SWATCHES = [
 const ProposalBuilder = ({ estimate, lineItems, clientName, propertyAddress, onUpdate }: ProposalBuilderProps) => {
   const [saving, setSaving] = useState(false);
   const [aiLoading, setAiLoading] = useState("");
+  const [docxLoading, setDocxLoading] = useState(false);
   const [form, setForm] = useState({
     proposal_color_theme: estimate.proposal_color_theme || "navy",
     proposal_cover_image_url: estimate.proposal_cover_image_url || "",
@@ -48,6 +53,11 @@ const ProposalBuilder = ({ estimate, lineItems, clientName, propertyAddress, onU
     proposal_cta_headline: estimate.proposal_cta_headline || "Ready to move forward?",
     proposal_cta_subtext: estimate.proposal_cta_subtext || "",
     proposal_optional_line_items: estimate.proposal_optional_line_items || [],
+    proposal_scope_sections: estimate.proposal_scope_sections || [],
+    proposal_client_selections: estimate.proposal_client_selections || [],
+    proposal_terms: estimate.proposal_terms || [],
+    proposal_multi_option: estimate.proposal_multi_option || false,
+    proposal_option_prices: estimate.proposal_option_prices || [],
   });
 
   const update = (field: string, value: any) => setForm((f) => ({ ...f, [field]: value }));
@@ -87,6 +97,40 @@ const ProposalBuilder = ({ estimate, lineItems, clientName, propertyAddress, onU
     }
   };
 
+  const downloadDocx = async () => {
+    setDocxLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-proposal-docx", {
+        body: { estimateId: estimate.id },
+      });
+      if (error) throw error;
+      
+      // data should be base64 encoded docx
+      if (data?.base64) {
+        const byteCharacters = atob(data.base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${(form.proposal_prepared_for || "Proposal").replace(/[^a-zA-Z0-9]/g, "_")}_Proposal.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success("Proposal .docx downloaded");
+      }
+    } catch {
+      toast.error("DOCX generation failed");
+    } finally {
+      setDocxLoading(false);
+    }
+  };
+
   const proposalUrl = `${window.location.origin}/proposal/${estimate.proposal_token}`;
 
   return (
@@ -103,13 +147,17 @@ const ProposalBuilder = ({ estimate, lineItems, clientName, propertyAddress, onU
         <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={() => { navigator.clipboard.writeText(proposalUrl); toast.success("Link copied"); }}>
           <Copy className="w-3.5 h-3.5" /> Copy Link
         </Button>
+        <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={downloadDocx} disabled={docxLoading}>
+          {docxLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+          Download .docx
+        </Button>
         <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={save} disabled={saving}>
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
           Save Proposal
         </Button>
       </div>
 
-      <Accordion type="multiple" defaultValue={["cover", "intro", "scope", "investment"]} className="space-y-2">
+      <Accordion type="multiple" defaultValue={["cover", "intro", "scope"]} className="space-y-2">
         {/* ── COVER ── */}
         <AccordionItem value="cover" className="border rounded-lg px-4">
           <AccordionTrigger className="text-sm font-sans font-semibold">Cover</AccordionTrigger>
@@ -158,18 +206,41 @@ const ProposalBuilder = ({ estimate, lineItems, clientName, propertyAddress, onU
           </AccordionContent>
         </AccordionItem>
 
-        {/* ── SCOPE ── */}
+        {/* ── SCOPE OF WORK (Structured) ── */}
         <AccordionItem value="scope" className="border rounded-lg px-4">
           <AccordionTrigger className="text-sm font-sans font-semibold">Scope of Work</AccordionTrigger>
-          <AccordionContent className="space-y-3 pb-4">
-            <p className="text-[11px] text-muted-foreground">{lineItems.length} line items auto-pulled from estimate.</p>
-            <div>
-              <Label className="text-xs font-sans">Plain Language Description</Label>
-              <Textarea value={form.proposal_scope_description} onChange={(e) => update("proposal_scope_description", e.target.value)} rows={3} className="text-xs" placeholder="Describe the scope in client-friendly language..." />
-              <Button size="sm" variant="outline" className="gap-1.5 text-xs mt-2" onClick={() => aiGenerate("proposal_scope_description", "scope_description")} disabled={!!aiLoading}>
-                {aiLoading === "proposal_scope_description" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />} Generate Description
-              </Button>
-            </div>
+          <AccordionContent className="space-y-4 pb-4">
+            <p className="text-[11px] text-muted-foreground">{lineItems.length} line items from estimate. Build structured scope sections below for the proposal document.</p>
+            
+            <ScopeSectionBuilder
+              sections={form.proposal_scope_sections as ScopeSection[]}
+              onChange={(sections) => update("proposal_scope_sections", sections)}
+              lineItems={lineItems}
+              projectType={estimate.title?.toLowerCase()}
+            />
+
+            {/* Legacy plain text description (collapsed) */}
+            <details className="text-xs">
+              <summary className="text-muted-foreground cursor-pointer hover:text-foreground">Plain text description (legacy)</summary>
+              <div className="mt-2 space-y-2">
+                <Textarea value={form.proposal_scope_description} onChange={(e) => update("proposal_scope_description", e.target.value)} rows={3} className="text-xs" />
+                <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => aiGenerate("proposal_scope_description", "scope_description")} disabled={!!aiLoading}>
+                  {aiLoading === "proposal_scope_description" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />} Generate
+                </Button>
+              </div>
+            </details>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* ── CLIENT SELECTIONS / SHOPPING LIST ── */}
+        <AccordionItem value="selections" className="border rounded-lg px-4">
+          <AccordionTrigger className="text-sm font-sans font-semibold">Client Selections / Shopping List</AccordionTrigger>
+          <AccordionContent className="pb-4">
+            <ClientSelectionsBuilder
+              selections={form.proposal_client_selections as SelectionCategory[]}
+              onChange={(selections) => update("proposal_client_selections", selections)}
+              projectType={estimate.title?.toLowerCase()}
+            />
           </AccordionContent>
         </AccordionItem>
 
@@ -177,34 +248,46 @@ const ProposalBuilder = ({ estimate, lineItems, clientName, propertyAddress, onU
         <AccordionItem value="investment" className="border rounded-lg px-4">
           <AccordionTrigger className="text-sm font-sans font-semibold">Investment</AccordionTrigger>
           <AccordionContent className="space-y-3 pb-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs font-sans">Enable Interactive Pricing</Label>
-              <Switch checked={form.proposal_show_pricing_toggle} onCheckedChange={(v) => update("proposal_show_pricing_toggle", v)} />
-            </div>
-            {form.proposal_show_pricing_toggle && (
-              <div className="space-y-2">
-                <Label className="text-xs font-sans">Optional Add-On Items</Label>
-                {(form.proposal_optional_line_items as any[]).map((item: any, i: number) => (
-                  <div key={i} className="flex gap-2 items-center">
-                    <Input value={item.description} onChange={(e) => {
-                      const next = [...form.proposal_optional_line_items as any[]];
-                      next[i] = { ...next[i], description: e.target.value };
-                      update("proposal_optional_line_items", next);
-                    }} className="text-xs flex-1" placeholder="Description" />
-                    <Input type="number" value={item.amount} onChange={(e) => {
-                      const next = [...form.proposal_optional_line_items as any[]];
-                      next[i] = { ...next[i], amount: Number(e.target.value) };
-                      update("proposal_optional_line_items", next);
-                    }} className="text-xs w-24 font-mono" placeholder="$" />
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => {
-                      update("proposal_optional_line_items", (form.proposal_optional_line_items as any[]).filter((_: any, idx: number) => idx !== i));
-                    }}><Trash2 className="w-3 h-3" /></Button>
+            {/* Multi-option pricing */}
+            <MultiOptionPricing
+              enabled={form.proposal_multi_option as boolean}
+              onToggle={(v) => update("proposal_multi_option", v)}
+              options={form.proposal_option_prices as OptionPrice[]}
+              onChange={(opts) => update("proposal_option_prices", opts)}
+            />
+
+            {!form.proposal_multi_option && (
+              <>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-sans">Enable Interactive Pricing</Label>
+                  <Switch checked={form.proposal_show_pricing_toggle} onCheckedChange={(v) => update("proposal_show_pricing_toggle", v)} />
+                </div>
+                {form.proposal_show_pricing_toggle && (
+                  <div className="space-y-2">
+                    <Label className="text-xs font-sans">Optional Add-On Items</Label>
+                    {(form.proposal_optional_line_items as any[]).map((item: any, i: number) => (
+                      <div key={i} className="flex gap-2 items-center">
+                        <Input value={item.description} onChange={(e) => {
+                          const next = [...form.proposal_optional_line_items as any[]];
+                          next[i] = { ...next[i], description: e.target.value };
+                          update("proposal_optional_line_items", next);
+                        }} className="text-xs flex-1" placeholder="Description" />
+                        <Input type="number" value={item.amount} onChange={(e) => {
+                          const next = [...form.proposal_optional_line_items as any[]];
+                          next[i] = { ...next[i], amount: Number(e.target.value) };
+                          update("proposal_optional_line_items", next);
+                        }} className="text-xs w-24 font-mono" placeholder="$" />
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => {
+                          update("proposal_optional_line_items", (form.proposal_optional_line_items as any[]).filter((_: any, idx: number) => idx !== i));
+                        }}><Trash2 className="w-3 h-3" /></Button>
+                      </div>
+                    ))}
+                    <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => {
+                      update("proposal_optional_line_items", [...(form.proposal_optional_line_items as any[]), { id: crypto.randomUUID(), description: "", amount: 0, selected_by_default: false }]);
+                    }}><Plus className="w-3 h-3" /> Add Option</Button>
                   </div>
-                ))}
-                <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => {
-                  update("proposal_optional_line_items", [...(form.proposal_optional_line_items as any[]), { id: crypto.randomUUID(), description: "", amount: 0, selected_by_default: false }]);
-                }}><Plus className="w-3 h-3" /> Add Option</Button>
-              </div>
+                )}
+              </>
             )}
           </AccordionContent>
         </AccordionItem>
@@ -280,6 +363,17 @@ const ProposalBuilder = ({ estimate, lineItems, clientName, propertyAddress, onU
               <div><Label className="text-xs font-sans">Author</Label><Input value={form.proposal_testimonial_author} onChange={(e) => update("proposal_testimonial_author", e.target.value)} className="text-xs" /></div>
               <div><Label className="text-xs font-sans">Role/Location</Label><Input value={form.proposal_testimonial_role} onChange={(e) => update("proposal_testimonial_role", e.target.value)} className="text-xs" /></div>
             </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* ── TERMS & CONDITIONS ── */}
+        <AccordionItem value="terms" className="border rounded-lg px-4">
+          <AccordionTrigger className="text-sm font-sans font-semibold">Terms & Conditions</AccordionTrigger>
+          <AccordionContent className="pb-4">
+            <TermsEditor
+              terms={form.proposal_terms as TermItem[]}
+              onChange={(terms) => update("proposal_terms", terms)}
+            />
           </AccordionContent>
         </AccordionItem>
 
