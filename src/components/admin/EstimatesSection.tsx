@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Plus, Send, ArrowRight, ArrowLeft, Trash2, FileText, Loader2, Sparkles, MessageSquareText, Wand2, ChevronDown, Clock, ShoppingCart, Scale, CalendarDays } from "lucide-react";
+import { Plus, Send, ArrowRight, ArrowLeft, Trash2, FileText, Loader2, Sparkles, MessageSquareText, Wand2, ChevronDown, Clock, ShoppingCart, Scale, CalendarDays, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -61,6 +61,38 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
   const [aiKickoffInput, setAiKickoffInput] = useState("");
   const [aiKickoffLoading, setAiKickoffLoading] = useState(false);
   const kickoffRef = useRef<HTMLTextAreaElement>(null);
+  const [downloadingDocx, setDownloadingDocx] = useState(false);
+
+  const handleDownloadDocx = async (estimateId: string, title: string) => {
+    setDownloadingDocx(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-proposal-docx", {
+        body: { estimateId },
+      });
+      if (error) throw error;
+      if (!data?.base64) throw new Error("No document returned");
+
+      const byteChars = atob(data.base64);
+      const byteArray = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
+
+      const blob = new Blob([byteArray], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${title.replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, "_")}_Proposal.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Proposal downloaded!");
+    } catch (err: any) {
+      console.error("DOCX download error:", err);
+      toast.error("Failed to download proposal");
+    } finally {
+      setDownloadingDocx(false);
+    }
+  };
 
   const { data: estimates = [], isLoading } = useQuery({
     queryKey: ["estimates", propertyId],
@@ -357,6 +389,10 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
             <p className="text-xs font-sans text-muted-foreground">{format(new Date(est.created_at), "MMM d, yyyy")}</p>
           </div>
            <div className="flex gap-2">
+             <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={() => handleDownloadDocx(est.id, est.title)} disabled={downloadingDocx}>
+               {downloadingDocx ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+               Download .docx
+             </Button>
              {est.status === "draft" && (
                <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => updateStatus(est.id, "sent")}>
                  <Send className="w-3.5 h-3.5" />Send to Client
