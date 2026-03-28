@@ -287,6 +287,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
       const aiTotal = aiSubtotal;
 
       // Create estimate
+      const proposalToken = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
       const { data: est, error: estErr } = await (supabase.from("estimates") as any).insert({
         property_id: propertyId,
         admin_id: user.id,
@@ -305,6 +306,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
         proposal_terms: data.terms || [],
         proposal_timeline_phases: data.timelinePhases || [],
         proposal_color_theme: "navy",
+        proposal_token: proposalToken,
       }).select("id").single();
       if (estErr || !est) throw estErr;
 
