@@ -61,6 +61,38 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
   const [aiKickoffInput, setAiKickoffInput] = useState("");
   const [aiKickoffLoading, setAiKickoffLoading] = useState(false);
   const kickoffRef = useRef<HTMLTextAreaElement>(null);
+  const [downloadingDocx, setDownloadingDocx] = useState(false);
+
+  const handleDownloadDocx = async (estimateId: string, title: string) => {
+    setDownloadingDocx(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-proposal-docx", {
+        body: { estimateId },
+      });
+      if (error) throw error;
+      if (!data?.base64) throw new Error("No document returned");
+
+      const byteChars = atob(data.base64);
+      const byteArray = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
+
+      const blob = new Blob([byteArray], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${title.replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, "_")}_Proposal.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Proposal downloaded!");
+    } catch (err: any) {
+      console.error("DOCX download error:", err);
+      toast.error("Failed to download proposal");
+    } finally {
+      setDownloadingDocx(false);
+    }
+  };
 
   const { data: estimates = [], isLoading } = useQuery({
     queryKey: ["estimates", propertyId],
