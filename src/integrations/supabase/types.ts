@@ -1836,14 +1836,18 @@ export type Database = {
           proposal_first_viewed_at: string | null
           proposal_intro_text: string | null
           proposal_last_viewed_at: string | null
+          proposal_multi_option: boolean | null
+          proposal_option_prices: Json | null
           proposal_optional_line_items: Json | null
           proposal_prepared_for: string | null
           proposal_scope_description: string | null
+          proposal_scope_sections: Json | null
           proposal_sections_viewed: Json | null
           proposal_show_pricing_toggle: boolean | null
           proposal_stat_callouts: Json | null
           proposal_status: string | null
           proposal_tagline: string | null
+          proposal_terms: Json | null
           proposal_testimonial_author: string | null
           proposal_testimonial_quote: string | null
           proposal_testimonial_role: string | null
@@ -1883,14 +1887,18 @@ export type Database = {
           proposal_first_viewed_at?: string | null
           proposal_intro_text?: string | null
           proposal_last_viewed_at?: string | null
+          proposal_multi_option?: boolean | null
+          proposal_option_prices?: Json | null
           proposal_optional_line_items?: Json | null
           proposal_prepared_for?: string | null
           proposal_scope_description?: string | null
+          proposal_scope_sections?: Json | null
           proposal_sections_viewed?: Json | null
           proposal_show_pricing_toggle?: boolean | null
           proposal_stat_callouts?: Json | null
           proposal_status?: string | null
           proposal_tagline?: string | null
+          proposal_terms?: Json | null
           proposal_testimonial_author?: string | null
           proposal_testimonial_quote?: string | null
           proposal_testimonial_role?: string | null
@@ -1930,14 +1938,18 @@ export type Database = {
           proposal_first_viewed_at?: string | null
           proposal_intro_text?: string | null
           proposal_last_viewed_at?: string | null
+          proposal_multi_option?: boolean | null
+          proposal_option_prices?: Json | null
           proposal_optional_line_items?: Json | null
           proposal_prepared_for?: string | null
           proposal_scope_description?: string | null
+          proposal_scope_sections?: Json | null
           proposal_sections_viewed?: Json | null
           proposal_show_pricing_toggle?: boolean | null
           proposal_stat_callouts?: Json | null
           proposal_status?: string | null
           proposal_tagline?: string | null
+          proposal_terms?: Json | null
           proposal_testimonial_author?: string | null
           proposal_testimonial_quote?: string | null
           proposal_testimonial_role?: string | null
