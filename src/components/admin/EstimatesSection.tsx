@@ -324,7 +324,8 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
 
       toast.success(`Proposal "${data.title}" created with ${data.lineItems.length} line items`);
       setAiKickoffInput("");
-      qc.invalidateQueries({ queryKey: ["estimates", propertyId] });
+      await qc.invalidateQueries({ queryKey: ["estimates", propertyId] });
+      await qc.invalidateQueries({ queryKey: ["estimate-line-items", propertyId] });
       // Auto-open the new estimate
       setSelectedId(est.id);
     } catch (err: any) {
