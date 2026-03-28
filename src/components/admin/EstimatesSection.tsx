@@ -259,6 +259,82 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
     setTitle("Estimate"); setNotes(""); setDiscountAmount(0); setDiscountType("dollar"); setTax(0); setLineItems([]); setAiTranscript("");
   };
 
+  // AI Kickoff: plain language → full proposal
+  const handleAiKickoff = async () => {
+    if (!aiKickoffInput.trim() || !user) return;
+    setAiKickoffLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-proposal-kickoff", {
+        body: {
+          userMessage: aiKickoffInput,
+          clientName,
+          propertyAddress,
+          sqft,
+          propertyType,
+        },
+      });
+      if (error) throw error;
+      if (!data?.lineItems?.length) { toast.error("AI couldn't generate line items — try being more specific"); return; }
+
+      // Calculate totals from AI line items
+      const aiLineItems = data.lineItems.map((li: any) => ({
+        service_id: null,
+        description: li.description || "",
+        quantity: String(li.quantity || 1),
+        unit_price: String(li.unit_price || 0),
+      }));
+      const aiSubtotal = data.lineItems.reduce((s: number, li: any) => s + (li.quantity || 1) * (li.unit_price || 0), 0);
+      const aiTotal = aiSubtotal;
+
+      // Create estimate
+      const { data: est, error: estErr } = await (supabase.from("estimates") as any).insert({
+        property_id: propertyId,
+        admin_id: user.id,
+        title: data.title || "Estimate",
+        notes: data.notes || "",
+        subtotal: aiSubtotal,
+        discount_amount: 0,
+        discount_type: "dollar",
+        tax: 0,
+        total: aiTotal,
+        proposal_prepared_for: clientName || "",
+        proposal_tagline: data.tagline || "",
+        proposal_intro_text: data.introText || "",
+        proposal_scope_sections: data.scopeSections || [],
+        proposal_client_selections: data.clientSelections || [],
+        proposal_terms: data.terms || [],
+        proposal_timeline_phases: data.timelinePhases || [],
+        proposal_color_theme: "navy",
+      }).select("id").single();
+      if (estErr || !est) throw estErr;
+
+      // Insert line items
+      await (supabase.from("estimate_line_items") as any).insert(
+        data.lineItems.map((li: any, i: number) => ({
+          estimate_id: est.id,
+          description: li.description || "",
+          quantity: li.quantity || 1,
+          unit_price: li.unit_price || 0,
+          total: (li.quantity || 1) * (li.unit_price || 0),
+          sort_order: i,
+        }))
+      );
+
+      toast.success(`Proposal "${data.title}" created with ${data.lineItems.length} line items`);
+      setAiKickoffInput("");
+      qc.invalidateQueries({ queryKey: ["estimates", propertyId] });
+      // Auto-open the new estimate
+      setSelectedId(est.id);
+    } catch (err: any) {
+      if (err?.status === 429) toast.error("Rate limited — try again in a moment");
+      else if (err?.status === 402) toast.error("AI credits exhausted");
+      else toast.error("Failed to generate proposal — try again");
+      console.error("AI kickoff error:", err);
+    } finally {
+      setAiKickoffLoading(false);
+    }
+  };
+
   // Detail view
   if (selectedId) {
     const est = estimates.find((e: any) => e.id === selectedId);
@@ -379,17 +455,58 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
           <h3 className="text-base font-sans font-semibold text-foreground">Estimates & Proposals</h3>
           <Badge variant="outline" className="text-[10px] font-mono">{estimates.length}</Badge>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => { resetForm(); addLine(); setCreateOpen(true); }}>
-          <Plus className="w-3.5 h-3.5" />New Estimate
+        <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={() => { resetForm(); addLine(); setCreateOpen(true); }}>
+          <Plus className="w-3.5 h-3.5" />Manual Estimate
         </Button>
       </div>
 
-      {estimates.length === 0 ? (
-        <div className="text-center py-8">
-          <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm font-sans text-muted-foreground">No estimates yet. Create one to send a proposal to this client.</p>
+      {/* AI Kickoff — always visible */}
+      <div className="rounded-lg border border-accent/30 bg-accent/5 p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Wand2 className="w-4 h-4 text-accent" />
+          <p className="text-sm font-sans font-medium text-foreground">AI Proposal Builder</p>
         </div>
-      ) : (
+        <p className="text-xs font-sans text-muted-foreground">
+          Describe the project in plain language — the AI will generate a complete proposal with scope, pricing, timeline, and terms.
+        </p>
+        <Textarea
+          ref={kickoffRef}
+          value={aiKickoffInput}
+          onChange={e => setAiKickoffInput(e.target.value)}
+          placeholder={`e.g. "Full master bathroom remodel — gut to studs, new tile shower with niche, double vanity, heated floors. Budget around $25k. 3 week timeline."`}
+          className="text-sm font-sans min-h-[80px] resize-none"
+          rows={3}
+          onKeyDown={e => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              handleAiKickoff();
+            }
+          }}
+        />
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-sans text-muted-foreground">⌘+Enter to send</p>
+          <Button
+            size="sm"
+            className="gap-1.5 text-xs font-sans"
+            onClick={handleAiKickoff}
+            disabled={aiKickoffLoading || !aiKickoffInput.trim()}
+          >
+            {aiKickoffLoading ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Building Proposal...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5" />
+                Generate Proposal
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {estimates.length > 0 && (
         <div className="space-y-2">
           {estimates.map((est: any) => (
             <div key={est.id} className="flex items-center justify-between py-3 px-4 rounded-md border border-border hover:bg-muted/30 cursor-pointer transition-colors" onClick={() => setSelectedId(est.id)}>
