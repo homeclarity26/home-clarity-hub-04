@@ -60,7 +60,6 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
   const [aiKickoffInput, setAiKickoffInput] = useState("");
   const [aiKickoffLoading, setAiKickoffLoading] = useState(false);
   const kickoffRef = useRef<HTMLTextAreaElement>(null);
-  const [selectedLineItemIds, setSelectedLineItemIds] = useState<Set<string>>(new Set());
 
   const { data: estimates = [], isLoading } = useQuery({
     queryKey: ["estimates", propertyId],
