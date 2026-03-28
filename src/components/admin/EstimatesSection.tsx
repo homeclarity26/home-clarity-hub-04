@@ -389,6 +389,10 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
             <p className="text-xs font-sans text-muted-foreground">{format(new Date(est.created_at), "MMM d, yyyy")}</p>
           </div>
            <div className="flex gap-2">
+             <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={() => handleDownloadDocx(est.id, est.title)} disabled={downloadingDocx}>
+               {downloadingDocx ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+               Download .docx
+             </Button>
              {est.status === "draft" && (
                <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => updateStatus(est.id, "sent")}>
                  <Send className="w-3.5 h-3.5" />Send to Client
