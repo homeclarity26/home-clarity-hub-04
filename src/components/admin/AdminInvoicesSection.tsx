@@ -206,6 +206,8 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
       notes: invoiceForm.notes || null,
       subtotal, tax: 0, total: subtotal, balance_due: subtotal,
       amount: subtotal,
+      original_total: subtotal,
+      co_total: 0,
     }).select().single();
 
     if (error || !inv) { toast.error("Failed to create invoice"); return; }
@@ -686,9 +688,38 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans"><Plus className="w-3.5 h-3.5" /> Add Change Order</Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-lg">
                 <DialogHeader><DialogTitle className="font-sans">Add Change Order</DialogTitle></DialogHeader>
-                <div className="space-y-4">
+                <div className="space-y-5">
+                  {/* 5B — CO Mode Selector */}
+                  <div>
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-3">How do you want to handle this change order?</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {([
+                        { mode: "verbal" as const, icon: <MessageSquare className="w-4 h-4" />, label: "Verbal / Informal", sub: "Add to next invoice", detail: "No signature needed" },
+                        { mode: "formal" as const, icon: <FileSignature className="w-4 h-4" />, label: "Formal — Client Signs", sub: "Send for approval", detail: "Client must sign" },
+                        { mode: "interim" as const, icon: <Receipt className="w-4 h-4" />, label: "Interim Invoice", sub: "Create new invoice", detail: "Separate document" },
+                      ] as const).map(({ mode, icon, label, sub, detail }) => (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => setCoMode(mode)}
+                          className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 text-center transition-all ${
+                            coMode === mode
+                              ? "border-[#C4A265] bg-[#C4A265]/10 text-[#C4A265]"
+                              : "border-border hover:border-[#C4A265]/40 text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {icon}
+                          <span className="font-sans text-[11px] font-semibold leading-tight">{label}</span>
+                          <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-wide">{sub}</span>
+                          <span className="font-sans text-[10px] text-muted-foreground">{detail}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* AI Draft */}
                   <div className="space-y-2">
                     <Label className="font-sans text-xs">Describe the change (AI will draft)</Label>
                     <Textarea value={aiChangeDescription} onChange={e => setAiChangeDescription(e.target.value)} placeholder="e.g. Client wants to add gutter guards to the scope..." className="text-sm" />
@@ -699,7 +730,9 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
                   <div><Label className="font-sans">Title</Label><Input value={changeOrderForm.title} onChange={e => setChangeOrderForm({ ...changeOrderForm, title: e.target.value })} /></div>
                   <div><Label className="font-sans">Description</Label><Textarea value={changeOrderForm.description} onChange={e => setChangeOrderForm({ ...changeOrderForm, description: e.target.value })} /></div>
                   <div><Label className="font-sans">Amount ($)</Label><Input type="number" value={changeOrderForm.amount} onChange={e => setChangeOrderForm({ ...changeOrderForm, amount: e.target.value })} /></div>
-                  <Button onClick={handleAddChangeOrder} className="w-full font-sans" disabled={!changeOrderForm.title}>Add Change Order</Button>
+                  <Button onClick={handleAddChangeOrder} className="w-full font-sans bg-[#C4A265] hover:bg-[#C4A265]/90 text-white" disabled={!changeOrderForm.title}>
+                    {coMode === "verbal" ? "Document Change Order" : coMode === "formal" ? "Create & Send for Signature" : "Create & Generate Invoice"}
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -802,8 +835,63 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
   }
 
   // ─── LIST VIEW ───
+  const draftInvoices = invoices.filter(i => i.status === "draft");
+
+  // CO Document Modal
+  if (showCoDocument && pendingCoForDocument && selectedInvoice) {
+    const origTotal = Number((selectedInvoice as any).original_total ?? selectedInvoice.subtotal);
+    return (
+      <div className="space-y-4">
+        <Button variant="ghost" size="sm" className="gap-1 font-sans" onClick={() => { setShowCoDocument(false); setPendingCoForDocument(null); }}>
+          <ArrowLeft className="w-4 h-4" /> Back to Invoice
+        </Button>
+        <ChangeOrderDocument
+          changeOrder={pendingCoForDocument}
+          originalContractTotal={origTotal}
+          propertyAddress={propertyContext?.propertyAddress}
+          clientName={propertyContext?.clientName}
+          brand="hbc"
+          onApprove={async () => {
+            await (supabase.from("change_orders" as any) as any).update({ status: "approved" }).eq("id", pendingCoForDocument.id);
+            toast.success("Change order approved");
+            setShowCoDocument(false);
+            setPendingCoForDocument(null);
+            loadData();
+            setTimeout(() => applyApprovedCOs(pendingCoForDocument.invoice_id), 500);
+          }}
+          onReject={async () => {
+            await (supabase.from("change_orders" as any) as any).update({ status: "rejected" }).eq("id", pendingCoForDocument.id);
+            toast.success("Change order rejected");
+            setShowCoDocument(false);
+            setPendingCoForDocument(null);
+            loadData();
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
+      {/* Invoice Approval Queue — shown when there are drafts */}
+      {draftInvoices.length > 0 && (
+        <div className="mb-2">
+          <InvoiceApprovalQueue
+            invoices={invoices}
+            lineItems={lineItems}
+            clientName={propertyContext?.clientName}
+            propertyAddress={propertyContext?.propertyAddress}
+            onApproved={loadData}
+            onEdit={(id) => {
+              const inv = invoices.find(i => i.id === id);
+              if (inv) setSelectedInvoice(inv);
+            }}
+          />
+          {draftInvoices.length < invoices.length && (
+            <div className="border-t border-border my-4" />
+          )}
+        </div>
+      )}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h3 className="text-sm font-sans font-semibold text-foreground">Invoices & Estimates</h3>
         <Dialog open={createOpen} onOpenChange={o => { setCreateOpen(o); if (!o) resetForm(); }}>
