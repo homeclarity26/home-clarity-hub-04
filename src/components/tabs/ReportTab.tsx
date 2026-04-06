@@ -171,6 +171,7 @@ const ReportTab = ({
           activePageId={activePageId}
           onChapterChange={handleChapterChange}
           onPageSelect={handlePageSelect}
+          onBackToHome={() => onNavigate?.("")}
         />
 
         <div className="max-w-[800px] mx-auto px-6 md:px-20 pt-8">
@@ -316,39 +317,33 @@ const ReportTab = ({
 
         {/* Prev / Next Navigation */}
         <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-16">
-          <div className="border-t border-border pt-8 flex items-center justify-between gap-4">
+          <div className="border-t border-border pt-8 grid grid-cols-2 gap-3">
+            {/* Prev */}
             {prevPage ? (
               <button
                 onClick={() => onNavigate?.(prevPageId!)}
-                className="group flex items-center gap-3 text-left hover:text-accent transition-colors"
+                className="group flex items-center gap-3 text-left bg-card border border-border rounded-xl px-4 py-4 hover:border-accent/40 hover:bg-accent/5 transition-all"
               >
-                <ArrowLeft className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
-                <div>
-                  <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground mb-0.5">
-                    Previous
-                  </p>
-                  <p className="font-sans text-sm text-foreground group-hover:text-accent transition-colors">
-                    {prevPage.title}
-                  </p>
+                <ArrowLeft className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground mb-0.5">← Previous</p>
+                  <p className="font-sans text-sm text-foreground group-hover:text-accent transition-colors truncate">{prevPage.title}</p>
                 </div>
               </button>
             ) : (
               <div />
             )}
+            {/* Next */}
             {nextPage ? (
               <button
                 onClick={() => onNavigate?.(nextPageId!)}
-                className="group flex items-center gap-3 text-right hover:text-accent transition-colors"
+                className="group flex items-center gap-3 text-right justify-end bg-card border border-border rounded-xl px-4 py-4 hover:border-accent/40 hover:bg-accent/5 transition-all"
               >
-                <div>
-                  <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground mb-0.5">
-                    Next
-                  </p>
-                  <p className="font-sans text-sm text-foreground group-hover:text-accent transition-colors">
-                    {nextPage.title}
-                  </p>
+                <div className="min-w-0">
+                  <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground mb-0.5">Next →</p>
+                  <p className="font-sans text-sm text-foreground group-hover:text-accent transition-colors truncate">{nextPage.title}</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors flex-shrink-0" />
               </button>
             ) : (
               <div />
@@ -391,6 +386,7 @@ const ReportTab = ({
       iguidePdfUrl={iguidePdfUrl}
       estimatedValue={estimatedValue}
       propertyId={propertyId}
+      creatorName="Adam Kilgore"
     />
   );
 };
