@@ -4,6 +4,9 @@ import WelcomeHeader from "@/components/portal/WelcomeHeader";
 import AICommandBar from "@/components/portal/AICommandBar";
 import SmartActionTiles, { trackSectionVisit } from "@/components/portal/SmartActionTiles";
 import AISuggestionsStrip from "@/components/portal/AISuggestionsStrip";
+import ActiveProjectCard from "@/components/portal/ActiveProjectCard";
+import LiveInvoiceStrip from "@/components/portal/LiveInvoiceStrip";
+import ReportCompletionRing from "@/components/portal/ReportCompletionRing";
 import CompactHealthBar from "@/components/portal/CompactHealthBar";
 import HomeHealthScore from "@/components/portal/HomeHealthScore";
 import SeasonalChecklist from "@/components/portal/SeasonalChecklist";
@@ -94,7 +97,12 @@ const HomeTab = ({
         {/* Smart Notification Nudges */}
         <NotificationNudges propertyId={propertyId} onNavigate={(tab) => handleNavigateTracked(tab)} />
 
-        {/* Home Health Score — moved below seasonal checklist */}
+        {/* Report Completion Ring — shown near welcome when < 100% */}
+        {completionPercent < 100 && completionPercent > 0 && (
+          <div className="flex justify-center">
+            <ReportCompletionRing completionPercent={completionPercent} totalSections={57} />
+          </div>
+        )}
 
         {/* AI Command Bar */}
         <AICommandBar onSubmit={handleAskQuestion} />
@@ -105,6 +113,12 @@ const HomeTab = ({
           propertyId={propertyId}
           reportPages={reportPages}
         />
+
+        {/* Active Project Card — live real-time */}
+        {propertyId && <ActiveProjectCard propertyId={propertyId} onNavigate={handleNavigateTracked} />}
+
+        {/* Live Invoice Strip — real-time payment status */}
+        {propertyId && <LiveInvoiceStrip propertyId={propertyId} onNavigate={handleNavigateTracked} />}
 
         {/* AI Suggestions Strip */}
         <AISuggestionsStrip onNavigate={handleNavigateTracked} reportPages={reportPages} />

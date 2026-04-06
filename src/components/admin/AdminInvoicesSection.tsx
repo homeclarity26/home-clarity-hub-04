@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { syncInvoiceToQBO, syncPaymentToQBO, isQBOConfigured } from "@/lib/qboSync";
 import { format, isPast } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -236,10 +237,38 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
     if (error) { toast.error("Failed to post payment"); return; }
     toast.success("Payment posted");
     setPaymentOpen(false);
+    const paymentData = { ...paymentForm, amount: amount.toString() };
     setPaymentForm({ amount: "", payment_date: new Date().toISOString().split("T")[0], method: "check", notes: "" });
     await loadData();
     // Wait for state to update, then recalc
     setTimeout(() => recalcInvoice(selectedInvoice.id), 500);
+
+    // QBO sync: push payment to QuickBooks if configured
+    if (isQBOConfigured()) {
+      const qboInvoiceId = (selectedInvoice as any).qbo_invoice_id;
+      if (qboInvoiceId) {
+        const clientName = propertyContext?.clientName || propertyContext?.propertyAddress || "Client";
+        syncPaymentToQBO(
+          {
+            id: `${selectedInvoice.id}-pay-${Date.now()}`,
+            amount,
+            payment_date: paymentData.payment_date,
+            method: paymentData.method,
+            notes: paymentData.notes || null,
+          },
+          qboInvoiceId,
+          { name: clientName }
+        ).then((result) => {
+          if (result.success) {
+            console.log(`[QBO] Payment synced. QBO Payment ID: ${result.qboId}`);
+          } else {
+            console.warn(`[QBO] Payment sync skipped: ${result.error}`);
+          }
+        });
+      } else {
+        console.log("[QBO] Skipping payment sync — no QBO invoice ID on file");
+      }
+    }
   };
 
   // ADD CHANGE ORDER
@@ -281,6 +310,32 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
   const updateStatus = async (id: string, status: string) => {
     await (supabase.from("invoices" as any) as any).update({ status }).eq("id", id);
     loadData();
+
+    // QBO sync: when an invoice is marked 'sent', push to QuickBooks
+    if (status === "sent" && isQBOConfigured()) {
+      const invoice = invoices.find((inv) => inv.id === id);
+      if (invoice) {
+        const invoiceLineItems = lineItems.filter((li) => li.invoice_id === id);
+        const clientName = propertyContext?.clientName || propertyContext?.propertyAddress || "Client";
+        syncInvoiceToQBO(
+          invoice,
+          invoiceLineItems.map((li) => ({
+            description: li.description,
+            quantity: li.quantity,
+            unit_price: li.unit_price,
+            total: li.total,
+            item_type: li.item_type,
+          })),
+          clientName
+        ).then((result) => {
+          if (result.success) {
+            console.log(`[QBO] Invoice ${id} synced. QBO ID: ${result.qboId}`);
+          } else {
+            console.warn(`[QBO] Invoice sync skipped: ${result.error}`);
+          }
+        });
+      }
+    }
   };
 
   // UPDATE INVOICE FIELD

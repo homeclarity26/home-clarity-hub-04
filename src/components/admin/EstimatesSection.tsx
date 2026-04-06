@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import ProposalInterviewWizard from "./ProposalInterviewWizard";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Plus, Send, ArrowRight, ArrowLeft, Trash2, FileText, Loader2, Sparkles, MessageSquareText, Wand2, ChevronDown, Clock, ShoppingCart, Scale, CalendarDays, Download } from "lucide-react";
+import { Plus, Send, ArrowRight, ArrowLeft, Trash2, FileText, Loader2, Sparkles, MessageSquareText, Wand2, ChevronDown, Clock, ShoppingCart, Scale, CalendarDays, Download, BrainCircuit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -62,6 +63,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
   const [aiKickoffLoading, setAiKickoffLoading] = useState(false);
   const kickoffRef = useRef<HTMLTextAreaElement>(null);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
+  const [interviewOpen, setInterviewOpen] = useState(false);
 
   const handleDownloadDocx = async (estimateId: string, title: string) => {
     setDownloadingDocx(true);
@@ -600,51 +602,41 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
         </Button>
       </div>
 
-      {/* AI Kickoff — always visible */}
+      {/* AI Interview — always visible */}
       <div className="rounded-lg border border-accent/30 bg-accent/5 p-4 space-y-3">
         <div className="flex items-center gap-2">
-          <Wand2 className="w-4 h-4 text-accent" />
+          <BrainCircuit className="w-4 h-4 text-accent" />
           <p className="text-sm font-sans font-medium text-foreground">AI Proposal Builder</p>
         </div>
         <p className="text-xs font-sans text-muted-foreground">
-          Describe the project in plain language — the AI will generate a complete proposal with scope, pricing, timeline, and terms.
+          Answer 12 targeted questions — the AI will generate a complete proposal with scope, pricing, timeline, and terms.
         </p>
-        <Textarea
-          ref={kickoffRef}
-          value={aiKickoffInput}
-          onChange={e => setAiKickoffInput(e.target.value)}
-          placeholder={`e.g. "Full master bathroom remodel — gut to studs, new tile shower with niche, double vanity, heated floors. Budget around $25k. 3 week timeline."`}
-          className="text-sm font-sans min-h-[80px] resize-none"
-          rows={3}
-          onKeyDown={e => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              handleAiKickoff();
-            }
-          }}
-        />
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] font-sans text-muted-foreground">⌘+Enter to send</p>
-          <Button
-            size="sm"
-            className="gap-1.5 text-xs font-sans"
-            onClick={handleAiKickoff}
-            disabled={aiKickoffLoading || !aiKickoffInput.trim()}
-          >
-            {aiKickoffLoading ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                Building Proposal...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-3.5 h-3.5" />
-                Generate Proposal
-              </>
-            )}
-          </Button>
-        </div>
+        <Button
+          size="sm"
+          className="gap-1.5 text-xs font-sans w-full"
+          onClick={() => setInterviewOpen(true)}
+          style={{ background: "#C4A265", color: "#fff" }}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          Start AI Interview
+        </Button>
       </div>
+
+      {/* Interview Wizard Modal */}
+      {interviewOpen && (
+        <ProposalInterviewWizard
+          propertyId={propertyId}
+          propertyAddress={propertyAddress}
+          clientName={clientName}
+          onComplete={async (estimateId) => {
+            setInterviewOpen(false);
+            await qc.invalidateQueries({ queryKey: ["estimates", propertyId] });
+            await qc.invalidateQueries({ queryKey: ["estimate-line-items", propertyId] });
+            setSelectedId(estimateId);
+          }}
+          onCancel={() => setInterviewOpen(false)}
+        />
+      )}
 
       {estimates.length > 0 && (
         <div className="space-y-2">

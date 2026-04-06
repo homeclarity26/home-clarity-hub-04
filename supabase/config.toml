@@ -1,4 +1,4 @@
-project_id = "abarpsxwglxuessimrkk"
+project_id = "vvwojahsianpmwjvkunn"
 
 [functions.insurance-assistant]
 verify_jwt = false
@@ -100,4 +100,100 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.get-smart-context]
+verify_jwt = false
+
+[functions.activity-summary-email]
+verify_jwt = false
+
+[functions.ai-client-brief]
+verify_jwt = false
+
+[functions.ai-cross-client-insights]
+verify_jwt = false
+
+[functions.ai-document-intelligence]
+verify_jwt = false
+
+[functions.ai-edit]
+verify_jwt = false
+
+[functions.ai-invoice-assistant]
+verify_jwt = false
+
+[functions.ai-predictive-maintenance]
+verify_jwt = false
+
+[functions.ai-priority-recommendations]
+verify_jwt = false
+
+[functions.ai-proposal-kickoff]
+verify_jwt = false
+
+[functions.ai-smart-notifications]
+verify_jwt = false
+
+[functions.analyze-discovery-notes]
+verify_jwt = false
+
+[functions.categorize-document]
+verify_jwt = false
+
+[functions.chat-assistant]
+verify_jwt = false
+
+[functions.convert-referral]
+verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.create-client-account]
+verify_jwt = false
+
+[functions.draft-page-narrative]
+verify_jwt = false
+
+[functions.extract-serial-plate]
+verify_jwt = false
+
+[functions.generate-export]
+verify_jwt = false
+
+[functions.generate-proposal-docx]
+verify_jwt = false
+
+[functions.get-property-value]
+verify_jwt = false
+
+[functions.lookup-property-data]
+verify_jwt = false
+
+[functions.payment-escalation-check]
+verify_jwt = false
+
+[functions.qa-report]
+verify_jwt = false
+
+[functions.recommend-report-pages]
+verify_jwt = false
+
+[functions.send-client-invite]
+verify_jwt = false
+
+[functions.send-notification-email]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.send-sms-verification]
+verify_jwt = false
+
+[functions.send-weekly-digest]
+verify_jwt = false
+
+[functions.track-referral]
+verify_jwt = false
+
+[functions.verify-sms-code]
 verify_jwt = false

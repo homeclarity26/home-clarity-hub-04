@@ -8,7 +8,6 @@ import EditableSection from "@/components/editor/EditableSection";
 import EditableSpecs from "./EditableSpecs";
 import EditableTiers from "./EditableTiers";
 import PricingTiers from "./PricingTiers";
-import HealthBar from "./HealthBar";
 import KeyObservations from "./KeyObservations";
 import DependenciesList from "./DependenciesList";
 import RisksConcerns from "./RisksConcerns";
@@ -47,14 +46,182 @@ function inferCategory(slug?: string): string {
 
 const conditionOptions = ["Excellent", "Good", "Fair", "Poor", "Critical", "N/A"];
 
+// ── Condition badge pill styles ──────────────────────────────────────────────
+const conditionBadgeStyles: Record<string, string> = {
+  Excellent: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  Good: "bg-[#1B2B4D]/10 text-[#1B2B4D] border-[#1B2B4D]/20",
+  Fair: "bg-[#C4A265]/15 text-[#7a612a] border-[#C4A265]/30",
+  Poor: "bg-orange-100 text-orange-700 border-orange-200",
+  Critical: "bg-[#B5450B]/10 text-[#B5450B] border-[#B5450B]/25",
+  "N/A": "bg-muted text-muted-foreground border-border",
+};
+
+// Legacy color map used in EditableDropdown className (kept for compat)
 const conditionColors: Record<string, string> = {
-  Excellent: "text-accent",
+  Excellent: "text-emerald-600",
   Good: "text-foreground",
-  Fair: "text-muted-foreground",
+  Fair: "text-[#C4A265]",
   Poor: "text-orange-500",
-  Critical: "text-destructive",
+  Critical: "text-[#B5450B]",
   "N/A": "text-muted-foreground",
 };
+
+// ── System Cliff Gauge ───────────────────────────────────────────────────────
+interface SystemCliffGaugeProps {
+  label: string;
+  currentAge: number;
+  lifespan: number;
+  equipmentName?: string;
+  replacementHorizon?: string;
+}
+
+const SystemCliffGauge = ({
+  label,
+  currentAge,
+  lifespan,
+  equipmentName,
+  replacementHorizon,
+}: SystemCliffGaugeProps) => {
+  const pct = Math.min((currentAge / lifespan) * 100, 100);
+  const isOverdue = currentAge > lifespan;
+  const yearsLeft = lifespan - currentAge;
+
+  // Zone color for the fill bar
+  const fillColor =
+    pct <= 50 ? "#4CAF81" : pct <= 75 ? "#C4A265" : "#B5450B";
+
+  return (
+    <div
+      className="rounded-lg border border-border/60 shadow-sm overflow-hidden mb-8"
+      style={{ background: "#F8F6F2" }}
+    >
+      {/* Header */}
+      <div className="px-6 pt-5 pb-3">
+        {equipmentName && (
+          <p
+            className="font-mono text-[10px] uppercase tracking-[0.15em] mb-1"
+            style={{ color: "#8A8E99" }}
+          >
+            {equipmentName}
+          </p>
+        )}
+        <h4
+          className="font-display text-xl"
+          style={{ color: "#1B2B4D" }}
+        >
+          {label} — Service Life
+        </h4>
+      </div>
+
+      {/* Age / lifespan labels */}
+      <div className="px-6 pb-1 flex justify-between">
+        <span
+          className="font-mono text-[11px] uppercase tracking-[0.12em]"
+          style={{ color: "#1B2B4D" }}
+        >
+          Install: yr {currentAge}
+        </span>
+        <span
+          className="font-mono text-[11px] uppercase tracking-[0.12em]"
+          style={{ color: "#1B2B4D" }}
+        >
+          Expected: {lifespan} yrs
+        </span>
+      </div>
+
+      {/* Track */}
+      <div className="px-6 pb-2">
+        <div
+          className="relative w-full h-7 rounded-full overflow-hidden"
+          style={{
+            background:
+              "linear-gradient(90deg, #4CAF81 0%, #4CAF81 50%, #C4A265 50%, #C4A265 75%, #B5450B 75%, #B5450B 100%)",
+          }}
+        >
+          {/* Marker line */}
+          <div
+            className="absolute top-0 bottom-0 w-0.5 z-10"
+            style={{
+              left: `${Math.min(pct, 100)}%`,
+              background: "#1B2B4D",
+              boxShadow: "0 0 0 2px rgba(255,255,255,0.6)",
+            }}
+          />
+          {isOverdue && (
+            <div
+              className="absolute top-0 bottom-0 right-0"
+              style={{
+                width: `${Math.min(((currentAge - lifespan) / lifespan) * 100, 20)}%`,
+                background:
+                  "repeating-linear-gradient(90deg, #B5450B 0px, #B5450B 6px, #8a2c06 6px, #8a2c06 12px)",
+                borderLeft: "2px dashed rgba(255,255,255,0.5)",
+              }}
+            />
+          )}
+        </div>
+
+        {/* Zone labels */}
+        <div className="flex mt-1">
+          <span
+            className="font-mono text-[9px] uppercase tracking-[0.1em]"
+            style={{ width: "50%", color: "#4CAF81" }}
+          >
+            Good
+          </span>
+          <span
+            className="font-mono text-[9px] uppercase tracking-[0.1em]"
+            style={{ width: "25%", color: "#C4A265" }}
+          >
+            Watch
+          </span>
+          <span
+            className="font-mono text-[9px] uppercase tracking-[0.1em]"
+            style={{ width: "25%", color: "#B5450B" }}
+          >
+            Replace
+          </span>
+        </div>
+      </div>
+
+      {/* Callout */}
+      <div className="px-6 pb-5">
+        <div
+          className="rounded-lg px-5 py-3 flex flex-wrap items-center justify-center gap-6"
+          style={{ background: isOverdue ? "#B5450B" : fillColor }}
+        >
+          <span
+            className="font-mono text-[11px] uppercase tracking-[0.1em] text-white"
+          >
+            Age: {currentAge} / {lifespan} yrs
+          </span>
+          {isOverdue ? (
+            <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white">
+              ⚠ Past Expected Life
+            </span>
+          ) : (
+            <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white">
+              {yearsLeft} yr{yearsLeft !== 1 ? "s" : ""} remaining
+            </span>
+          )}
+          {replacementHorizon && (
+            <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white">
+              Replace by: {replacementHorizon}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Condition Badge Pill ─────────────────────────────────────────────────────
+const ConditionBadge = ({ rating }: { rating: string }) => (
+  <span
+    className={`inline-flex items-center px-3 py-1 rounded-full border text-[10px] font-mono uppercase tracking-[0.12em] font-medium ${conditionBadgeStyles[rating] || conditionBadgeStyles["N/A"]}`}
+  >
+    {rating}
+  </span>
+);
 
 interface BlockRendererProps {
   blockConfig: BlockConfig | null;
@@ -112,7 +279,6 @@ const BlockRenderer = ({
   const handleScanSerialPlate = async (file: File) => {
     setIsScanning(true);
     try {
-      // Convert file to base64
       const arrayBuffer = await file.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
       let binary = "";
@@ -129,7 +295,6 @@ const BlockRenderer = ({
 
       if (error) throw error;
 
-      // Map extracted data to specs format
       const existingSpecs = Array.isArray(pageData.specs) ? pageData.specs : [];
       const specKeyMap: Record<string, string> = {
         brand: "Brand",
@@ -161,8 +326,6 @@ const BlockRenderer = ({
       });
 
       onUpdate({ specs: newSpecs });
-
-      // Store scan result for optional "Save to Equipment Registry" prompt
       setScanResult(data as ScanResult);
       setEquipmentSaved(false);
 
@@ -220,9 +383,8 @@ const BlockRenderer = ({
     }
   };
 
-  // Helper to check if a block should be rendered
   const shouldRender = (blockName: keyof BlockConfig): boolean => {
-    if (!blockConfig) return true; // Render all if no config
+    if (!blockConfig) return true;
     const config = blockConfig[blockName];
     return config?.active ?? false;
   };
@@ -261,34 +423,45 @@ const BlockRenderer = ({
     }
   };
 
+  // ── Derive healthBar data from pageData ──────────────────────────────────
+  const healthBarData = (pageData as unknown as Record<string, unknown>).healthBar as
+    | { label?: string; current?: number; total?: number; unit?: string; currentAge?: number; lifespan?: number; equipmentName?: string; replacementHorizon?: string }
+    | undefined;
+
   return (
     <div className="space-y-8">
-      {/* Page Header Block */}
+      {/* ── Page Header Block ─────────────────────────────────────────── */}
       {shouldRender("page_header") && (
         <div>
           <EditableField
             value={pageData.title}
             onSave={(title) => onUpdate({ title })}
-            className="font-display text-3xl md:text-4xl text-foreground mb-4 block"
+            className="font-display text-3xl md:text-4xl text-foreground mb-3 block"
             tag="h2"
           />
           {pageData.conditionRating && (
-            <EditableDropdown
-              value={pageData.conditionRating}
-              options={conditionOptions}
-              onSave={(v) =>
-                onUpdate({ conditionRating: v as ReportPageData["conditionRating"] })
-              }
-              className={`font-mono text-[11px] uppercase tracking-[0.15em] mb-10 ${
-                conditionColors[pageData.conditionRating]
-              }`}
-              renderValue={(v) => `Condition: ${v}`}
-            />
+            <div className="flex items-center gap-3 mb-10">
+              <ConditionBadge rating={pageData.conditionRating} />
+              {/* Keep the editable dropdown hidden so edit mode still works */}
+              {canEdit && (
+                <EditableDropdown
+                  value={pageData.conditionRating}
+                  options={conditionOptions}
+                  onSave={(v) =>
+                    onUpdate({ conditionRating: v as ReportPageData["conditionRating"] })
+                  }
+                  className={`font-mono text-[11px] uppercase tracking-[0.15em] ${
+                    conditionColors[pageData.conditionRating]
+                  }`}
+                  renderValue={(v) => `Edit: ${v}`}
+                />
+              )}
+            </div>
           )}
         </div>
       )}
 
-      {/* Narrative Block */}
+      {/* ── Narrative Block ───────────────────────────────────────────── */}
       {shouldRender("narrative") && pageData.narrative && (
         <EditableSection
           content={narrativeToHtml(pageData.narrative)}
@@ -296,31 +469,71 @@ const BlockRenderer = ({
           onSave={handleNarrativeSave}
           contentType="narrative"
         >
-          {pageData.narrative.map((paragraph, i) => (
-            <p
-              key={i}
-              className="text-base text-foreground max-w-[65ch] mb-6 leading-relaxed"
-            >
-              {paragraph}
-            </p>
-          ))}
+          <div className="space-y-0">
+            {pageData.narrative.map((paragraph, i) => (
+              <p
+                key={i}
+                className={`text-base text-foreground max-w-[65ch] mb-5 leading-relaxed font-sans ${
+                  i === 0
+                    ? "pl-4 border-l-2"
+                    : ""
+                }`}
+                style={i === 0 ? { borderLeftColor: "#C4A265" } : undefined}
+              >
+                {paragraph}
+              </p>
+            ))}
+          </div>
         </EditableSection>
       )}
 
-      {/* Key Observations Block */}
+      {/* ── Key Observations Block ────────────────────────────────────── */}
       {shouldRender("key_observations") && pageData.key_observations && (
-        <KeyObservations
-          observations={pageData.key_observations}
-          onSave={(observations) => onUpdate({ key_observations: observations })}
-        />
+        <div>
+          {/* Enhanced gold-accented observation list wrapping the existing component */}
+          <KeyObservations
+            observations={pageData.key_observations}
+            onSave={(observations) => onUpdate({ key_observations: observations })}
+          />
+        </div>
       )}
 
-      {/* Health Bar Block */}
-      {shouldRender("health_bar") && pageData.healthBar && (
-        <HealthBar {...pageData.healthBar} />
+      {/* ── System Cliff Gauge (enhanced HealthBar) ───────────────────── */}
+      {shouldRender("health_bar") && healthBarData && (
+        <>
+          {/* New System Cliff Gauge when currentAge + lifespan available */}
+          {(healthBarData.currentAge !== undefined || healthBarData.current !== undefined) &&
+          (healthBarData.lifespan !== undefined || healthBarData.total !== undefined) ? (
+            <SystemCliffGauge
+              label={healthBarData.label || pageData.title || "System"}
+              currentAge={healthBarData.currentAge ?? healthBarData.current ?? 0}
+              lifespan={healthBarData.lifespan ?? healthBarData.total ?? 20}
+              equipmentName={healthBarData.equipmentName}
+              replacementHorizon={healthBarData.replacementHorizon}
+            />
+          ) : (
+            /* Fallback: original HealthBar minimal render */
+            <div className="my-8">
+              <div className="w-full h-1 bg-border relative">
+                <div
+                  className="h-full bg-accent"
+                  style={{
+                    width: `${Math.min(
+                      ((healthBarData.current ?? 0) / (healthBarData.total ?? 1)) * 100,
+                      100
+                    )}%`,
+                  }}
+                />
+              </div>
+              <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground mt-3">
+                {healthBarData.label}: {healthBarData.current} / {healthBarData.total} {healthBarData.unit}
+              </p>
+            </div>
+          )}
+        </>
       )}
 
-      {/* Specs Block */}
+      {/* ── Specs Block ───────────────────────────────────────────────── */}
       {shouldRender("specs") && pageData.specs && pageData.specs.length > 0 && (
         <div className="mt-12">
           <div className="flex items-center justify-between mb-6">
@@ -356,12 +569,16 @@ const BlockRenderer = ({
               </>
             )}
           </div>
-          <EditableSpecs
-            specs={pageData.specs}
-            onSave={(specs) => onUpdate({ specs })}
-          />
 
-          {/* Save to Equipment Registry prompt — shown after a successful scan */}
+          {/* Enhanced spec table wrapper */}
+          <div className="rounded-lg border border-border/60 shadow-sm overflow-hidden bg-card">
+            <EditableSpecs
+              specs={pageData.specs}
+              onSave={(specs) => onUpdate({ specs })}
+            />
+          </div>
+
+          {/* Save to Equipment Registry prompt */}
           {canEdit && scanResult && propertyId && (
             <div className={`mt-4 flex items-center justify-between gap-3 px-4 py-3 rounded-lg border text-sm font-sans transition-colors ${
               equipmentSaved
@@ -403,7 +620,7 @@ const BlockRenderer = ({
         </div>
       )}
 
-      {/* Investment Tiers Block */}
+      {/* ── Investment Tiers Block ────────────────────────────────────── */}
       {shouldRender("tiers") && pageData.tiers && (
         <div className="mt-12">
           <h3 className="font-display text-2xl text-foreground mb-6">
@@ -424,7 +641,7 @@ const BlockRenderer = ({
         </div>
       )}
 
-      {/* Strategic Timing Block */}
+      {/* ── Strategic Timing Block ────────────────────────────────────── */}
       {shouldRender("timing") && pageData.timing && (
         <div className="mt-8">
           <h3 className="font-display text-2xl text-foreground mb-4">
@@ -439,7 +656,7 @@ const BlockRenderer = ({
         </div>
       )}
 
-      {/* Dependencies Block */}
+      {/* ── Dependencies Block ────────────────────────────────────────── */}
       {shouldRender("dependencies") && (
         <DependenciesList
           dependencies={pageData.dependencies || []}
@@ -449,7 +666,7 @@ const BlockRenderer = ({
         />
       )}
 
-      {/* Risks & Concerns Block */}
+      {/* ── Risks & Concerns Block ────────────────────────────────────── */}
       {shouldRender("risks") && pageData.risks && (
         <RisksConcerns
           risks={pageData.risks}
@@ -457,15 +674,30 @@ const BlockRenderer = ({
         />
       )}
 
-      {/* Photos Block */}
+      {/* ── Photos Block ──────────────────────────────────────────────── */}
       {shouldRender("photos") && images.length > 0 && (
         <div className="mt-8">
-          <h3 className="font-display text-2xl text-foreground mb-4">Photos</h3>
-          <ImageGrid images={images} />
+          <h3
+            className="font-display text-2xl mb-5"
+            style={{ color: "#1B2B4D" }}
+          >
+            Photos
+          </h3>
+          <div className="columns-2 sm:columns-3 gap-3 space-y-3">
+            {images.map((src, i) => (
+              <img
+                key={i}
+                src={src}
+                alt={`Photo ${i + 1}`}
+                className="w-full rounded-sm shadow-sm object-cover break-inside-avoid"
+                loading="lazy"
+              />
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Maintenance Notes Block */}
+      {/* ── Maintenance Notes Block ───────────────────────────────────── */}
       {shouldRender("maintenance") && pageData.maintenance && (
         <MaintenanceNotes
           maintenance={pageData.maintenance}
@@ -473,7 +705,7 @@ const BlockRenderer = ({
         />
       )}
 
-      {/* Recommendations Block (legacy support) */}
+      {/* ── Recommendations Block (legacy support) ────────────────────── */}
       {pageData.recommendations && pageData.recommendations.length > 0 && (
         <div className="mt-12">
           <h3 className="font-display text-2xl text-foreground mb-6">
@@ -500,7 +732,7 @@ const BlockRenderer = ({
         </div>
       )}
 
-      {/* Recommended Vendors Block */}
+      {/* ── Recommended Vendors Block ─────────────────────────────────── */}
       {propertyId && (
         <RecommendedVendors
           propertyId={propertyId}
@@ -508,7 +740,7 @@ const BlockRenderer = ({
         />
       )}
 
-      {/* Creator Notes Block (only visible to creators) */}
+      {/* ── Creator Notes Block ───────────────────────────────────────── */}
       {shouldRender("creator_notes") && (
         <CreatorNotes
           notes={pageData.creator_notes || ""}
@@ -516,7 +748,7 @@ const BlockRenderer = ({
         />
       )}
 
-      {/* Client Comments Block */}
+      {/* ── Client Comments Block ─────────────────────────────────────── */}
       {shouldRender("client_comments") && dbPageId && (
         <CommentsSection reportPageId={dbPageId} />
       )}

@@ -6,12 +6,12 @@ interface AICommandBarProps {
 }
 
 const SUGGESTED_PROMPTS = [
+  "What's my balance due?",
+  "What should I fix first?",
+  "When is my next milestone?",
   "What needs attention?",
-  "Schedule a service",
+  "Tell me about my equipment",
   "Review my spending",
-  "What's coming up?",
-  "Show open estimates",
-  "View schedule",
 ];
 
 const AICommandBar = ({ onSubmit }: AICommandBarProps) => {

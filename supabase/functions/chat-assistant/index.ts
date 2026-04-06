@@ -44,8 +44,9 @@ serve(async (req) => {
             ? (p.tiers as Record<string, unknown>[]).map((t) => `${t.label}: ${t.cost}`).join(" | ")
             : "";
           const recs = Array.isArray(p.recommendations) ? (p.recommendations as string[]).join("; ") : "";
+          const isPriority = p.priority === true || p.is_priority === true;
           return [
-            `### ${title} [PAGE:${slug}] (${group}) — Condition: ${condition}`,
+            `### ${title} [PAGE:${slug}] (${group}) — Condition: ${condition}${isPriority ? " ⚠️ PRIORITY" : ""}`,
             narrative,
             specs ? `Specs: ${specs}` : "",
             tiers ? `Cost tiers: ${tiers}` : "",
@@ -58,13 +59,64 @@ serve(async (req) => {
       ? ctx.goals.map((g: Record<string, unknown>) => `- ${g.title} (${g.status})${g.target_year ? ` target: ${g.target_year}` : ""}${g.estimated_budget ? ` budget: $${g.estimated_budget}` : ""}`).join("\n")
       : "";
 
+    // Build equipment context
+    const equipmentText = Array.isArray(ctx.equipment) && ctx.equipment.length > 0
+      ? (ctx.equipment as Record<string, unknown>[]).map((e) => {
+          const aging = e.is_aging || e.flagged_aging ? " ⚠️ AGING" : "";
+          const critical = e.is_critical || e.flagged_critical ? " 🔴 CRITICAL" : "";
+          return `- ${e.name || e.equipment_name || "Equipment"} (${e.type || e.category || "General"})${aging}${critical}${e.year ? ` installed ${e.year}` : ""}${e.model ? ` — ${e.model}` : ""}${e.notes ? ` — ${e.notes}` : ""}`;
+        }).join("\n")
+      : "";
+
+    // Build active project context
+    const projectText = Array.isArray(ctx.projects) && ctx.projects.length > 0
+      ? (ctx.projects as Record<string, unknown>[]).map((p) => {
+          const lines = [`- **${p.title}** (${p.status})`];
+          if (p.phase) lines.push(`  Phase: ${p.phase}`);
+          if (p.progress_percent != null) lines.push(`  Progress: ${p.progress_percent}% complete`);
+          if (p.total_cost) lines.push(`  Contract value: $${p.total_cost}`);
+          if (p.next_milestone) lines.push(`  Next milestone: ${p.next_milestone}`);
+          return lines.join("\n");
+        }).join("\n\n")
+      : "";
+
+    // Build invoice context
+    const invoiceText = ctx.latestInvoice
+      ? (() => {
+          const inv = ctx.latestInvoice as Record<string, unknown>;
+          return [
+            `- Title: ${inv.title || "Invoice"}`,
+            `- Status: ${inv.status}`,
+            `- Balance due: $${inv.balance_due ?? inv.total ?? 0}`,
+            inv.due_date ? `- Due date: ${inv.due_date}` : "",
+          ].filter(Boolean).join("\n");
+        })()
+      : ctx.invoiceBalance
+        ? `Outstanding balance: $${ctx.invoiceBalance}`
+        : "";
+
+    // Priority pages
+    const priorityPages = Array.isArray(ctx.pages)
+      ? (ctx.pages as Record<string, unknown>[]).filter((p) => p.priority === true || p.is_priority === true)
+      : [];
+    const priorityText = priorityPages.length > 0
+      ? priorityPages.map((p) => `- ${p.title} (${p.conditionRating || "Unrated"})`).join("\n")
+      : "";
+
     const systemPrompt = `You are a friendly, knowledgeable home advisor for Home Clarity Hub. You help homeowners understand their Home Clarity Report and answer questions about their property. Speak plainly and warmly — no jargon, real answers.
 
-PROPERTY: ${ctx.propertyName || ctx.propertyAddress || "Unknown"}
-ADDRESS: ${ctx.propertyAddress || "Unknown"}
-REPORT STATUS: ${ctx.reportCompletionPercent ?? 0}% complete
-${ctx.invoiceBalance ? `OUTSTANDING BALANCE: $${ctx.invoiceBalance}` : ""}
-${Array.isArray(ctx.projects) && ctx.projects.length ? `ACTIVE PROJECTS:\n${(ctx.projects as Record<string, unknown>[]).map((p) => `- ${p.title}: ${p.status}${p.total_cost ? ` ($${p.total_cost})` : ""}`).join("\n")}` : ""}
+PROPERTY DETAILS:
+- Name/Address: ${ctx.propertyName || ctx.propertyAddress || "Unknown"}
+- Full address: ${ctx.propertyAddress || "Unknown"}
+- Year built: ${ctx.yearBuilt || "Unknown"}
+- Square footage: ${ctx.sqft ? `${ctx.sqft} sq ft` : "Unknown"}
+- Type: ${ctx.propertyType || "Residential"}
+
+REPORT STATUS: ${ctx.reportCompletionPercent ?? 0}% complete (${Math.round(((ctx.reportCompletionPercent as number ?? 0) / 100) * 57)} of 57 sections)
+${priorityText ? `\nPRIORITY SECTIONS (flagged by your advisor):\n${priorityText}` : ""}
+${projectText ? `\nACTIVE PROJECT(S):\n${projectText}` : ""}
+${invoiceText ? `\nINVOICE STATUS:\n${invoiceText}` : ""}
+${equipmentText ? `\nEQUIPMENT REGISTRY:\n${equipmentText}` : ""}
 
 REPORT PAGES:
 ${pagesText}
@@ -80,6 +132,10 @@ GENERAL GUIDELINES:
 - Reference specific findings from the report when answering
 - When discussing costs, cite the tier ranges (e.g., "Adam recommends budgeting $4,000–$8,000")
 - Flag anything rated Poor or Critical as urgent
+- If asked about balance due or payments, reference the invoice section above
+- If asked "what should I fix first?", prioritize: Critical > Poor condition items > Priority-flagged sections > upcoming project milestones
+- If asked about equipment, reference the equipment registry above
+- If asked about upcoming milestones, reference the active project data above
 - If asked about something not in the report, say so honestly
 - Keep answers concise. Use bullet points or bold for clarity
 - Never invent data that isn't in the report

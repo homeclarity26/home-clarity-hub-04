@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Receipt, ShieldCheck, Calendar, List, MessageCircle, FileText, ChevronRight, Eye, CreditCard, Loader2 } from "lucide-react";
+import { Receipt, ShieldCheck, Calendar, List, MessageCircle, FileText, ChevronRight, Eye, CreditCard, Loader2, ChevronDown, ChevronUp, Send } from "lucide-react";
 import EmptyState from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format, isPast } from "date-fns";
+import { format, isPast, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
 interface PaymentsTabProps {
@@ -33,6 +34,8 @@ interface Invoice {
   ai_summary: string | null;
   issue_date: string | null;
   created_at: string;
+  original_total?: number | null;
+  co_total?: number | null;
 }
 
 interface LineItem {
@@ -64,7 +67,7 @@ interface PaymentPosted {
   notes: string | null;
 }
 
-const PayNowButton = ({ invoice }: { invoice: Invoice }) => {
+const PayNowButton = ({ invoice, fullWidth = false }: { invoice: Invoice; fullWidth?: boolean }) => {
   const [loading, setLoading] = useState(false);
   const handlePay = async () => {
     setLoading(true);
@@ -92,7 +95,11 @@ const PayNowButton = ({ invoice }: { invoice: Invoice }) => {
     }
   };
   return (
-    <Button onClick={handlePay} disabled={loading} className="w-full mt-4 gap-2 font-sans">
+    <Button
+      onClick={handlePay}
+      disabled={loading}
+      className={`gap-2 font-sans bg-[#C4A265] hover:bg-[#C4A265]/90 text-white ${fullWidth ? "w-full" : ""}`}
+    >
       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
       {loading ? "Redirecting..." : `Pay ${fmt(Number(invoice.balance_due))} Now`}
     </Button>
@@ -106,10 +113,10 @@ const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
   sent: "bg-blue-100 text-blue-800",
   viewed: "bg-purple-100 text-purple-800",
-  partially_paid: "bg-accent/20 text-accent-foreground",
+  partially_paid: "bg-amber-100 text-amber-800",
   paid: "bg-green-100 text-green-800",
-  overdue: "bg-destructive/10 text-destructive",
-  pending: "bg-accent/20 text-accent-foreground",
+  overdue: "bg-red-100 text-red-800",
+  pending: "bg-amber-100 text-amber-800",
 };
 
 const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
@@ -122,6 +129,10 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [aiQuestion, setAiQuestion] = useState("");
+  const [aiResponse, setAiResponse] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!propertyId) { setLoading(false); return; }
@@ -169,13 +180,11 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
     setSelectedInvoice(inv);
     setAiSummary(inv.ai_summary);
 
-    // Mark as viewed if status is "sent"
     if (inv.status === "sent" && !propertyId?.startsWith("mock-")) {
       await (supabase.from("invoices" as any) as any).update({ status: "viewed" }).eq("id", inv.id);
       loadData();
     }
 
-    // Generate AI summary if not cached
     if (!inv.ai_summary && !propertyId?.startsWith("mock-")) {
       setSummaryLoading(true);
       try {
@@ -197,7 +206,6 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
         });
         if (!error && data?.summary) {
           setAiSummary(data.summary);
-          // Cache it
           await (supabase.from("invoices" as any) as any).update({ ai_summary: data.summary }).eq("id", inv.id);
         }
       } catch {
@@ -208,16 +216,87 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
     }
   };
 
+  const handleAiQuestion = async () => {
+    if (!aiQuestion.trim() || !nextPayment) return;
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("chat-assistant", {
+        body: {
+          message: aiQuestion,
+          context: {
+            type: "invoice_help",
+            invoiceTitle: nextPayment.title || nextPayment.description,
+            total: nextPayment.total,
+            balanceDue: nextPayment.balance_due,
+            dueDate: nextPayment.due_date,
+            status: nextPayment.status,
+          },
+        },
+      });
+      if (!error && data?.response) {
+        setAiResponse(data.response);
+      } else {
+        setAiResponse("I'm sorry, I couldn't process your question right now. Please contact us directly at (330) 203-1331.");
+      }
+    } catch {
+      setAiResponse("I'm sorry, I couldn't process your question right now. Please contact us directly.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleRequestACH = async () => {
+    if (!propertyId || propertyId.startsWith("mock-")) {
+      toast.success("ACH request sent — we'll be in touch with bank transfer details.");
+      return;
+    }
+    try {
+      await supabase.functions.invoke("send-notification-email", {
+        body: {
+          type: "ach_request",
+          propertyId,
+          message: "Client requested ACH payment details for invoice.",
+        },
+      });
+      toast.success("ACH request sent — we'll respond shortly with bank transfer details.");
+    } catch {
+      toast.success("Request noted. We'll send ACH details to your email.");
+    }
+  };
+
   // Computed values
+  const visibleInvoices = useMemo(() => invoices.filter(i => i.status !== "draft"), [invoices]);
+
+  const approvedCOs = useMemo(() => changeOrders.filter(co => co.status === "approved"), [changeOrders]);
+  const totalCOAmount = useMemo(() => approvedCOs.reduce((s, co) => s + Number(co.amount), 0), [approvedCOs]);
+  const originalContractTotal = useMemo(() => {
+    return invoices.reduce((s, inv) => s + Number(inv.original_total ?? inv.subtotal), 0);
+  }, [invoices]);
+  const grandTotal = originalContractTotal + totalCOAmount;
+  const totalPaid = useMemo(() =>
+    paymentsPosted.reduce((s, p) => s + Number(p.amount), 0) +
+    (propertyId?.startsWith("mock-") ? invoices.filter(i => i.status === "paid").reduce((s, i) => s + Number(i.total), 0) : 0),
+    [invoices, paymentsPosted, propertyId]
+  );
   const balance = useMemo(() => invoices.reduce((s, i) => s + Number(i.balance_due || 0), 0), [invoices]);
-  const totalPaid = useMemo(() => paymentsPosted.reduce((s, p) => s + Number(p.amount), 0) + invoices.filter(i => i.status === "paid" && propertyId?.startsWith("mock-")).reduce((s, i) => s + Number(i.total), 0), [invoices, paymentsPosted, propertyId]);
+
   const nextPayment = useMemo(() => {
     return invoices
       .filter(i => i.due_date && Number(i.balance_due) > 0 && i.status !== "paid" && i.status !== "draft")
       .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime())[0] || null;
   }, [invoices]);
 
-  const visibleInvoices = useMemo(() => invoices.filter(i => i.status !== "draft"), [invoices]);
+  const balanceStatus = useMemo(() => {
+    if (balance === 0) return { label: "Up to Date", color: "text-green-600", bg: "bg-green-50 border-green-200" };
+    const overdueInv = invoices.find(i => i.due_date && isPast(new Date(i.due_date)) && Number(i.balance_due) > 0);
+    if (overdueInv) return { label: "Overdue", color: "text-[#B5450B]", bg: "bg-red-50 border-red-200" };
+    return { label: "Payment Due", color: "text-amber-600", bg: "bg-amber-50 border-amber-200" };
+  }, [balance, invoices]);
+
+  const nextDueDays = useMemo(() => {
+    if (!nextPayment?.due_date) return null;
+    return differenceInDays(new Date(nextPayment.due_date), new Date());
+  }, [nextPayment]);
 
   // ─── DETAIL VIEW ───
   if (selectedInvoice) {
@@ -227,11 +306,12 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
     const ps = paymentsPosted.filter(p => p.invoice_id === inv.id);
     const coTotal = cos.reduce((s, c) => s + Number(c.amount), 0);
     const paidTotal = ps.reduce((s, p) => s + Number(p.amount), 0);
+    const origTotal = Number(inv.original_total ?? inv.subtotal);
 
     return (
       <div>
         <section className="text-center py-8 md:py-12 px-6 md:px-20 max-w-4xl mx-auto">
-          <button onClick={() => setSelectedInvoice(null)} className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent hover:text-accent/80 transition-colors mb-4 inline-block">
+          <button onClick={() => setSelectedInvoice(null)} className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] hover:text-[#C4A265]/80 transition-colors mb-4 inline-block">
             ← Back to Payments
           </button>
           <h1 className="font-display text-2xl md:text-3xl text-foreground mb-2">
@@ -242,9 +322,9 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
         </section>
 
         <div className="max-w-[900px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-8">
-          {/* AI Summary Callout */}
+          {/* AI Summary */}
           {(aiSummary || summaryLoading) && (
-            <div className="bg-accent/10 border border-accent/30 rounded-lg p-5">
+            <div className="bg-[#C4A265]/10 border border-[#C4A265]/30 rounded-lg p-5">
               {summaryLoading ? (
                 <p className="font-sans text-sm text-muted-foreground animate-pulse">Generating summary...</p>
               ) : (
@@ -261,7 +341,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
             </div>
             <div>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Due Date</p>
-              <p className={`font-sans text-sm mt-1 ${inv.due_date && isPast(new Date(inv.due_date)) && Number(inv.balance_due) > 0 ? "text-destructive font-medium" : ""}`}>
+              <p className={`font-sans text-sm mt-1 ${inv.due_date && isPast(new Date(inv.due_date)) && Number(inv.balance_due) > 0 ? "text-[#B5450B] font-medium" : ""}`}>
                 {inv.due_date ? format(new Date(inv.due_date), "MMM d, yyyy") : "—"}
               </p>
             </div>
@@ -270,7 +350,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
           {/* Line Items */}
           {lis.length > 0 && (
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Line Items</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Line Items</p>
               <div className={`${cardBase} cursor-default`}>
                 <table className="w-full border-collapse">
                   <thead>
@@ -299,7 +379,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
           {/* Change Orders */}
           {cos.length > 0 && (
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Change Orders</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Change Orders</p>
               <div className="space-y-2">
                 {cos.map(co => (
                   <div key={co.id} className={`${cardBase} cursor-default flex-row items-center justify-between`}>
@@ -317,7 +397,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
           {/* Payments Received */}
           {ps.length > 0 && (
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Payments Received</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Payments Received</p>
               <div className="space-y-2">
                 {ps.map(p => (
                   <div key={p.id} className={`${cardBase} cursor-default flex-row items-center justify-between`}>
@@ -332,21 +412,37 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
             </div>
           )}
 
-          {/* Financial Summary */}
+          {/* Enhanced Financial Summary */}
           <div className={`${cardBase} cursor-default bg-muted/30`}>
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-3">Summary</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-3">Summary</p>
             <div className="space-y-2 text-sm font-sans">
-              <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{fmt(Number(inv.subtotal))}</span></div>
-              {coTotal > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Change Orders</span><span>{fmt(coTotal)}</span></div>}
-              <div className="flex justify-between border-t border-border pt-2"><span className="font-medium">Total</span><span className="font-medium">{fmt(Number(inv.total))}</span></div>
-              {paidTotal > 0 && <div className="flex justify-between text-green-700"><span>Payments</span><span>-{fmt(paidTotal)}</span></div>}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Original Contract</span>
+                <span>{fmt(origTotal)}</span>
+              </div>
+              {coTotal > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>Change Orders</span>
+                  <span>+{fmt(coTotal)}</span>
+                </div>
+              )}
+              <div className="flex justify-between border-t border-border pt-2">
+                <span className="font-medium">Total</span>
+                <span className="font-medium">{fmt(origTotal + coTotal)}</span>
+              </div>
+              {paidTotal > 0 && (
+                <div className="flex justify-between text-green-700">
+                  <span>Paid</span>
+                  <span>-{fmt(paidTotal)}</span>
+                </div>
+              )}
               <div className="flex justify-between border-t border-border pt-2">
                 <span className="font-display text-lg">Balance Due</span>
-                <span className={`font-display text-lg ${Number(inv.balance_due) > 0 ? "text-destructive" : "text-green-700"}`}>{fmt(Number(inv.balance_due))}</span>
+                <span className={`font-display text-lg ${Number(inv.balance_due) > 0 ? "text-[#B5450B]" : "text-green-700"}`}>{fmt(Number(inv.balance_due))}</span>
               </div>
             </div>
             {Number(inv.balance_due) > 0 && inv.status !== "draft" && (
-              <PayNowButton invoice={inv} />
+              <PayNowButton invoice={inv} fullWidth />
             )}
           </div>
 
@@ -364,61 +460,116 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
   // ─── MAIN VIEW ───
   return (
     <div>
-      {/* Hero */}
+      {/* Hero — Your Project Balance */}
       <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto">
-        <h1 className="font-display text-3xl md:text-[36px] text-foreground mb-3">Payments & Invoices</h1>
-        <p className="font-sans text-base text-muted-foreground">
-          Manage your account and review transaction history with Home Clarity Hub.
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-3">Your Project Balance</p>
+        <p className={`font-display text-5xl md:text-6xl ${balanceStatus.color} mb-3`}>
+          {loading ? "..." : fmt(balance)}
         </p>
+        <span className={`inline-flex items-center px-4 py-1.5 rounded-full border text-sm font-sans font-medium ${balanceStatus.bg} ${balanceStatus.color}`}>
+          {balanceStatus.label}
+        </span>
+        {nextDueDays !== null && nextDueDays >= 0 && balance > 0 && (
+          <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground mt-3">
+            Due in {nextDueDays} day{nextDueDays !== 1 ? "s" : ""}
+          </p>
+        )}
       </section>
 
       <div className="max-w-[1400px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-10">
 
-        {/* Financial Status Cards */}
-        <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Financial Status</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className={`${cardBase} border-l-[3px] border-l-accent cursor-default`}>
-              <Receipt className="w-5 h-5 text-accent" />
-              <h2 className="font-display text-xl text-foreground mb-1">Current Balance</h2>
-              <p className="font-sans text-sm text-muted-foreground">Outstanding balance</p>
-              <p className="font-display text-3xl text-foreground mt-2">{loading ? "..." : fmt(balance)}</p>
-              {balance > 0 ? (
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent">
-                  {visibleInvoices.filter(i => Number(i.balance_due) > 0).length} pending
-                </span>
-              ) : (
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">All clear</span>
-              )}
+        {/* Current Milestone Card */}
+        {nextPayment && (
+          <Card className="p-6 md:p-8 shadow-[0_4px_12px_rgba(27,43,77,0.08)] border-l-4 border-[#C4A265]">
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Current Milestone</p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div className="flex-1">
+                <h2 className="font-display text-2xl text-foreground mb-1">
+                  {nextPayment.title || nextPayment.description}
+                </h2>
+                {nextPayment.due_date && (
+                  <p className="font-sans text-sm text-muted-foreground">
+                    Due {format(new Date(nextPayment.due_date), "MMMM d, yyyy")}
+                    {nextDueDays !== null && nextDueDays < 7 && nextDueDays >= 0 && (
+                      <span className="ml-2 text-amber-600 font-medium">— {nextDueDays === 0 ? "due today" : `in ${nextDueDays} days`}</span>
+                    )}
+                    {nextDueDays !== null && nextDueDays < 0 && (
+                      <span className="ml-2 text-[#B5450B] font-medium">— overdue</span>
+                    )}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col items-start md:items-end gap-3">
+                <p className="font-display text-3xl text-foreground">{fmt(Number(nextPayment.balance_due))}</p>
+                <PayNowButton invoice={nextPayment} fullWidth />
+              </div>
             </div>
-            <div className={`${cardBase} cursor-default`}>
-              <ShieldCheck className="w-5 h-5 text-accent" />
-              <h2 className="font-display text-xl text-foreground mb-1">Total Paid</h2>
-              <p className="font-sans text-sm text-muted-foreground">Payments to date</p>
-              <p className="font-display text-3xl text-foreground mt-2">{loading ? "..." : fmt(totalPaid)}</p>
-            </div>
-            <div className={`${cardBase} cursor-default`}>
-              <Calendar className="w-5 h-5 text-accent" />
-              <h2 className="font-display text-xl text-foreground mb-1">Next Payment</h2>
-              <p className="font-sans text-sm text-muted-foreground">Upcoming due date</p>
-              {nextPayment ? (
-                <>
-                  <p className="font-display text-3xl text-foreground mt-2">{fmt(Number(nextPayment.balance_due))}</p>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                    Due {format(new Date(nextPayment.due_date!), "MMM d")}
-                  </span>
-                </>
-              ) : (
-                <p className="font-sans text-sm text-muted-foreground mt-2">None scheduled</p>
-              )}
-            </div>
-          </div>
-        </div>
 
-        {/* Tabs: Invoices & Estimates / Transaction History */}
+            {/* Payment Method Options */}
+            <div className="mt-6 pt-6 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-[#F2EFEB] rounded-lg p-4">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Check Payable To</p>
+                <p className="font-sans text-sm font-medium text-foreground">Hometown Builders Club LLC</p>
+                <p className="font-sans text-xs text-muted-foreground mt-1">or AK Renovations</p>
+                <p className="font-mono text-[10px] text-muted-foreground mt-2">(330) 203-1331</p>
+              </div>
+              <div className="bg-[#F2EFEB] rounded-lg p-4 flex flex-col justify-between">
+                <div>
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">ACH / Bank Transfer</p>
+                  <p className="font-sans text-xs text-muted-foreground">Prefer bank transfer? We'll send you the account details.</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 gap-1.5 text-xs font-sans self-start"
+                  onClick={handleRequestACH}
+                >
+                  <Send className="w-3.5 h-3.5" /> Request ACH Details
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Financial Breakdown */}
+        {(originalContractTotal > 0 || totalCOAmount > 0) && (
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Financial Breakdown</p>
+            <Card className="p-6 shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
+              <div className="space-y-3 text-sm font-sans">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Original Contract</span>
+                  <span className="font-medium">{fmt(originalContractTotal)}</span>
+                </div>
+                {totalCOAmount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Change Orders</span>
+                    <span>+{fmt(totalCOAmount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t border-border pt-3">
+                  <span className="font-medium">Total</span>
+                  <span className="font-medium">{fmt(grandTotal)}</span>
+                </div>
+                {totalPaid > 0 && (
+                  <div className="flex justify-between text-green-700">
+                    <span>Paid</span>
+                    <span>-{fmt(totalPaid)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t border-border pt-3">
+                  <span className="font-display text-base">Balance Due</span>
+                  <span className={`font-display text-base ${balance === 0 ? "text-green-700" : "text-[#B5450B]"}`}>{fmt(balance)}</span>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Tabs: Invoices / Transaction History */}
         <Tabs defaultValue="invoices">
           <TabsList className="bg-muted/50 border border-border">
-            <TabsTrigger value="invoices" className="font-sans text-sm">Invoices & Estimates</TabsTrigger>
+            <TabsTrigger value="invoices" className="font-sans text-sm">Invoices</TabsTrigger>
             <TabsTrigger value="history" className="font-sans text-sm">Transaction History</TabsTrigger>
           </TabsList>
 
@@ -447,8 +598,8 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                     {visibleInvoices.map(inv => {
                       const isOverdue = inv.status === "overdue";
                       return (
-                        <tr key={inv.id} className={`${isOverdue ? "bg-destructive/5" : ""} hover:bg-muted/30 cursor-pointer transition-colors`} onClick={() => handleViewInvoice(inv)}>
-                          <td className={`text-sm py-5 border-b border-border ${isOverdue ? "text-destructive font-medium" : "text-foreground"}`}>
+                        <tr key={inv.id} className={`${isOverdue ? "bg-red-50/50" : ""} hover:bg-muted/30 cursor-pointer transition-colors`} onClick={() => handleViewInvoice(inv)}>
+                          <td className={`text-sm py-5 border-b border-border ${isOverdue ? "text-[#B5450B] font-medium" : "text-foreground"}`}>
                             <div>
                               <span className="font-mono text-[10px] text-muted-foreground">{inv.invoice_number || ""} </span>
                               {inv.title || inv.description}
@@ -457,7 +608,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                           <td className="text-sm text-muted-foreground py-5 border-b border-border hidden sm:table-cell">
                             {inv.due_date ? format(new Date(inv.due_date), "MMM d, yyyy") : "—"}
                           </td>
-                          <td className={`text-sm py-5 border-b border-border text-right font-medium ${isOverdue ? "text-destructive" : Number(inv.balance_due) > 0 ? "text-foreground" : "text-green-700"}`}>
+                          <td className={`text-sm py-5 border-b border-border text-right font-medium ${isOverdue ? "text-[#B5450B]" : Number(inv.balance_due) > 0 ? "text-foreground" : "text-green-700"}`}>
                             {fmt(Number(inv.balance_due))}
                           </td>
                           <td className="text-sm py-5 border-b border-border text-right">
@@ -514,27 +665,97 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
           </TabsContent>
         </Tabs>
 
+        {/* Payment History Accordion */}
+        {paymentsPosted.length > 0 && (
+          <div>
+            <button
+              className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] hover:text-[#C4A265]/80 transition-colors"
+              onClick={() => setHistoryExpanded(!historyExpanded)}
+            >
+              {historyExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              Payment History
+              <span className="font-sans text-xs normal-case tracking-normal text-muted-foreground ml-1">
+                ({paymentsPosted.length} record{paymentsPosted.length !== 1 ? "s" : ""})
+              </span>
+            </button>
+            {historyExpanded && (
+              <Card className="mt-4 p-5 shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
+                <div className="space-y-3">
+                  {[...paymentsPosted]
+                    .sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())
+                    .map(p => {
+                      const inv = invoices.find(i => i.id === p.invoice_id);
+                      return (
+                        <div key={p.id} className="flex items-center justify-between py-2 border-b border-border/50">
+                          <div>
+                            <p className="font-sans text-sm">{format(new Date(p.payment_date), "MMMM d, yyyy")}</p>
+                            <p className="font-sans text-xs text-muted-foreground capitalize">{p.method} — {inv?.title || "Invoice"}</p>
+                          </div>
+                          <span className="font-sans text-sm font-medium text-green-600">{fmt(Number(p.amount))}</span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* AI Payment Assistant */}
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Questions about your invoice?</p>
+          <Card className="p-5 shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
+            <div className="flex gap-3">
+              <Input
+                value={aiQuestion}
+                onChange={e => setAiQuestion(e.target.value)}
+                placeholder="e.g. What does this payment cover?"
+                className="font-sans text-sm flex-1"
+                onKeyDown={e => e.key === "Enter" && handleAiQuestion()}
+              />
+              <Button
+                size="sm"
+                onClick={handleAiQuestion}
+                disabled={aiLoading || !aiQuestion.trim()}
+                className="bg-[#C4A265] hover:bg-[#C4A265]/90 text-white font-sans flex-shrink-0"
+              >
+                {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ask"}
+              </Button>
+            </div>
+            {aiResponse && (
+              <div className="mt-4 p-3 bg-[#F2EFEB] rounded-lg">
+                <p className="font-sans text-sm text-foreground leading-relaxed">{aiResponse}</p>
+              </div>
+            )}
+          </Card>
+        </div>
+
         {/* Quick Actions */}
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-6">Quick Actions</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <button onClick={() => onTabChange?.("contacts")} className={cardBase}>
-              <MessageCircle className="w-5 h-5 text-accent" />
+              <MessageCircle className="w-5 h-5 text-[#C4A265]" />
               <h2 className="font-display text-xl text-foreground mb-1">Contact About Billing</h2>
               <p className="font-sans text-sm text-muted-foreground">Reach your HBC advisor about account questions</p>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-[#C4A265] self-end transition-colors" />
             </button>
             <button onClick={() => onTabChange?.("report")} className={cardBase}>
-              <FileText className="w-5 h-5 text-accent" />
+              <FileText className="w-5 h-5 text-[#C4A265]" />
               <h2 className="font-display text-xl text-foreground mb-1">View Your Report</h2>
               <p className="font-sans text-sm text-muted-foreground">Review the services included in your membership</p>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-[#C4A265] self-end transition-colors" />
             </button>
             {nextPayment ? (
-              <PayNowButton invoice={nextPayment} />
+              <div className={`${cardBase} cursor-default`}>
+                <CreditCard className="w-5 h-5 text-[#C4A265]" />
+                <h2 className="font-display text-xl text-foreground mb-1">Make a Payment</h2>
+                <p className="font-sans text-sm text-muted-foreground">{fmt(Number(nextPayment.balance_due))} due on {nextPayment.due_date ? format(new Date(nextPayment.due_date), "MMM d") : "—"}</p>
+                <PayNowButton invoice={nextPayment} fullWidth />
+              </div>
             ) : (
               <div className={`${cardBase} cursor-default`}>
-                <CreditCard className="w-5 h-5 text-accent" />
+                <CreditCard className="w-5 h-5 text-[#C4A265]" />
                 <h2 className="font-display text-xl text-foreground mb-1">Make a Payment</h2>
                 <p className="font-sans text-sm text-muted-foreground">No outstanding invoices — you're all set!</p>
               </div>

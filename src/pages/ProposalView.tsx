@@ -11,11 +11,24 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 // ───── COLOR THEMES ─────
 const THEMES: Record<string, Record<string, string>> = {
+  // Brand themes
+  hbc: { "--bg-hero": "#1B2B4D", "--bg-section-alt": "#F2EFEB", "--bg-section": "#ffffff", "--accent": "#C4A265", "--text-hero": "#ffffff", "--text-body": "#1B2B4D", "--accent-glow": "rgba(196,162,101,0.15)" },
+  akr: { "--bg-hero": "#B5450B", "--bg-section-alt": "#FEF3EC", "--bg-section": "#ffffff", "--accent": "#C4A265", "--text-hero": "#ffffff", "--text-body": "#3d1a08", "--accent-glow": "rgba(196,162,101,0.15)" },
+  // Legacy themes
   navy: { "--bg-hero": "#1a2744", "--bg-section-alt": "#f0ebe3", "--bg-section": "#ffffff", "--accent": "#c9a96e", "--text-hero": "#ffffff", "--text-body": "#2d3748", "--accent-glow": "rgba(201,169,110,0.15)" },
   slate: { "--bg-hero": "#334155", "--bg-section-alt": "#f1f5f9", "--bg-section": "#ffffff", "--accent": "#0ea5e9", "--text-hero": "#ffffff", "--text-body": "#1e293b", "--accent-glow": "rgba(14,165,233,0.15)" },
   forest: { "--bg-hero": "#1a3a2a", "--bg-section-alt": "#f0f4f0", "--bg-section": "#ffffff", "--accent": "#84cc16", "--text-hero": "#ffffff", "--text-body": "#1c2b1e", "--accent-glow": "rgba(132,204,22,0.15)" },
   midnight: { "--bg-hero": "#0f0f1a", "--bg-section-alt": "#1a1a2e", "--bg-section": "#111827", "--accent": "#6366f1", "--text-hero": "#ffffff", "--text-body": "#e2e8f0", "--accent-glow": "rgba(99,102,241,0.15)" },
   warm: { "--bg-hero": "#7c3d1e", "--bg-section-alt": "#fef9f0", "--bg-section": "#ffffff", "--accent": "#e07b39", "--text-hero": "#ffffff", "--text-body": "#3d1a08", "--accent-glow": "rgba(224,123,57,0.15)" },
+};
+
+// ───── BRAND CONFIG ─────
+const BRAND_INFO: Record<string, { company: string; email: string; phone: string; tagline: string }> = {
+  hbc: { company: "Hometown Builders Club LLC", email: "adam@hometownbuildersclub.com", phone: "(330) 203-1331", tagline: "Craftsmanship you can trust. Communication you deserve." },
+  akr: { company: "AK Renovations", email: "akrenovations01@gmail.com", phone: "(330) 203-1331", tagline: "Craftsmanship you can trust. Communication you deserve." },
+  // Legacy fallback
+  navy: { company: "Hometown Builders Club LLC", email: "adam@hometownbuildersclub.com", phone: "(330) 203-1331", tagline: "Craftsmanship you can trust. Communication you deserve." },
+  default: { company: "Hometown Builders Club LLC", email: "adam@hometownbuildersclub.com", phone: "(330) 203-1331", tagline: "Craftsmanship you can trust. Communication you deserve." },
 };
 
 const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
@@ -62,7 +75,9 @@ const ProposalView = () => {
     },
   });
 
-  const theme = THEMES[proposal?.proposal_color_theme || "navy"] || THEMES.navy;
+  const colorThemeKey = proposal?.proposal_color_theme || "hbc";
+  const theme = THEMES[colorThemeKey] || THEMES.hbc;
+  const brandInfo = BRAND_INFO[colorThemeKey] || BRAND_INFO.default;
 
   // ───── Tracking: view count, time, sections ─────
   useEffect(() => {
@@ -663,8 +678,14 @@ const ProposalView = () => {
 
       {/* ═══ FOOTER ═══ */}
       <footer className="py-12 px-6 text-center" style={{ background: theme["--bg-hero"] }}>
-        <p className="text-xs tracking-widest uppercase" style={{ color: `${theme["--text-hero"]}44` }}>
-          Prepared with HBC
+        <p className="text-sm font-semibold mb-1" style={{ color: `${theme["--text-hero"]}cc` }}>
+          {brandInfo.company}
+        </p>
+        <p className="text-xs mb-1" style={{ color: `${theme["--text-hero"]}77` }}>
+          {brandInfo.phone} · {brandInfo.email}
+        </p>
+        <p className="text-xs italic mt-3" style={{ color: `${theme["--accent"]}99` }}>
+          {brandInfo.tagline}
         </p>
       </footer>
     </div>

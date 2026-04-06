@@ -1,0 +1,103 @@
+project_id = "abarpsxwglxuessimrkk"
+
+[functions.insurance-assistant]
+verify_jwt = false
+
+[functions.pre-inspection-brief]
+verify_jwt = false
+
+[functions.consistency-check]
+verify_jwt = false
+
+[functions.generate-exec-summary]
+verify_jwt = false
+
+[functions.estimate-costs]
+verify_jwt = false
+
+[functions.categorize-photo]
+verify_jwt = false
+
+[functions.voice-to-narrative]
+verify_jwt = false
+
+[functions.qa-coach]
+verify_jwt = false
+
+[functions.ai-smart-reply]
+verify_jwt = false
+
+[functions.ai-meeting-prep]
+verify_jwt = false
+
+[functions.ai-weekly-digest]
+verify_jwt = false
+
+[functions.ai-condition-forecast]
+verify_jwt = false
+
+[functions.ai-auto-follow-up]
+verify_jwt = false
+
+[functions.ai-draft-assistant]
+verify_jwt = false
+
+[functions.ai-score-explainer]
+verify_jwt = false
+
+[functions.ai-client-insights]
+verify_jwt = false
+
+[functions.ai-maintenance-schedule]
+verify_jwt = false
+
+[functions.ai-transcript-summarizer]
+verify_jwt = false
+
+[functions.ai-vendor-match]
+verify_jwt = false
+
+[functions.maintenance-alerts]
+verify_jwt = false
+
+[functions.hbc-agent]
+verify_jwt = false
+
+[functions.analyze-photo]
+verify_jwt = false
+
+[functions.generate-predictions]
+verify_jwt = false
+
+[functions.generate-scope]
+verify_jwt = false
+
+[functions.generate-annual-review]
+verify_jwt = false
+
+[functions.process-document]
+verify_jwt = false
+
+[functions.analyze-knowledge-gaps]
+verify_jwt = false
+
+[functions.voice-command]
+verify_jwt = false
+
+[functions.create-subscription]
+verify_jwt = false
+
+[functions.cancel-subscription]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.fetch-home-value]
+verify_jwt = false
+
+[functions.learn-from-activity]
+verify_jwt = false
+
+[functions.get-smart-context]
+verify_jwt = false

@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Share2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import CreatorBar from "./CreatorBar";
 import QACoachPanel from "@/components/admin/QACoachPanel";
+import AdminAIAssistant from "@/components/admin/AdminAIAssistant";
 import BlockRenderer from "./BlockRenderer";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useReportPage } from "@/hooks/useReportPage";
@@ -24,6 +25,35 @@ interface ReportPageProps {
   propertyAddress?: string;
   propertyContext?: PropertyContext;
 }
+
+// ── Condition hero strip colors ──────────────────────────────────────────────
+const conditionStripColor: Record<string, string> = {
+  Excellent: "#4CAF81",
+  Good: "#1B2B4D",
+  Fair: "#C4A265",
+  Poor: "#f97316",
+  Critical: "#B5450B",
+  "N/A": "#8A8E99",
+};
+
+// ── Condition badge pill (compact, used in sticky header) ────────────────────
+const conditionBadgeMini = (rating: string) => {
+  const colorMap: Record<string, string> = {
+    Excellent: "bg-emerald-100 text-emerald-800",
+    Good: "bg-[#1B2B4D]/10 text-[#1B2B4D]",
+    Fair: "bg-[#C4A265]/15 text-[#7a612a]",
+    Poor: "bg-orange-100 text-orange-700",
+    Critical: "bg-[#B5450B]/10 text-[#B5450B]",
+    "N/A": "bg-muted text-muted-foreground",
+  };
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-[0.12em] font-medium ${colorMap[rating] || colorMap["N/A"]}`}
+    >
+      {rating}
+    </span>
+  );
+};
 
 const ShareSectionButton = ({ pageSlug }: { pageSlug: string }) => {
   const [copied, setCopied] = useState(false);
@@ -46,6 +76,17 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
   const { canEdit } = useEditMode();
   const { pageData, blockConfig, status, saveStatus, updatePageData, updateStatus, isLoading } = useReportPage(page.id, page, reportId);
   const [isDrafting, setIsDrafting] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // ── Scroll tracking for sticky breadcrumb ────────────────────────────────
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 100);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleUpdate = (updates: Partial<PageContent>) => {
     updatePageData(updates as Partial<ReportPageData>);
@@ -86,7 +127,6 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
       updatePageData(updates);
       toast.success("Draft generated — review and edit as needed.");
 
-      // ── Log learning event: draft generated ──
       supabase.from("learning_events" as any).insert({
         event_type: "draft_narrative_generated",
         actor_role: "creator",
@@ -123,10 +163,8 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
     );
   }
 
-  // Use images from props (portal) or from pageData
   const resolvedImages = propImages || (pageData as unknown as Record<string, unknown>).images as string[] || [];
 
-  // Build extended page data for BlockRenderer
   const extendedPageData = {
     ...pageData,
     key_observations: (pageData as unknown as Record<string, unknown>).key_observations as string[] | undefined,
@@ -136,8 +174,13 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
     creator_notes: (pageData as unknown as Record<string, unknown>).creator_notes as string | undefined,
   };
 
+  const stripColor = pageData.conditionRating
+    ? conditionStripColor[pageData.conditionRating] || "#C4A265"
+    : "#C4A265";
+
   return (
-    <div>
+    <div className="animate-in fade-in duration-300">
+      {/* ── Creator toolbar ──────────────────────────────────────────── */}
       {canEdit && (
         <CreatorBar
           status={status}
@@ -152,11 +195,33 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
         />
       )}
 
-      <div className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-24 report-page">
+      {/* ── Sticky breadcrumb (appears after scroll 100px) ────────────── */}
+      {scrolled && (
+        <div className="fixed top-16 left-0 right-0 z-40 flex items-center gap-3 px-6 py-2 border-b border-border/40"
+          style={{ background: "rgba(248, 246, 242, 0.95)", backdropFilter: "blur(8px)" }}
+        >
+          <span
+            className="font-mono text-[11px] uppercase tracking-[0.15em]"
+            style={{ color: "#1B2B4D" }}
+          >
+            {page.title}
+          </span>
+          {pageData.conditionRating && conditionBadgeMini(pageData.conditionRating)}
+        </div>
+      )}
+
+      <div ref={contentRef} className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-24 report-page">
+        {/* ── Page hero condition strip ─────────────────────────────── */}
+        <div
+          className="w-full h-1 rounded-full mb-6"
+          style={{ background: stripColor }}
+        />
+
         {/* Share button */}
         <div className="flex justify-end mb-4 no-print">
           <ShareSectionButton pageSlug={page.id} />
         </div>
+
         <BlockRenderer
           blockConfig={blockConfig}
           pageData={extendedPageData}
@@ -168,6 +233,21 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
           onNavigate={onNavigate}
         />
       </div>
+
+      {/* Admin AI Assistant — floating panel for report editing */}
+      {canEdit && (
+        <AdminAIAssistant
+          context="report"
+          contextData={{
+            title: page.title,
+            conditionRating: pageData.conditionRating,
+            group: page.group,
+            narrative: pageData.narrative,
+            specs: pageData.specs,
+          }}
+          propertyId={propertyId}
+        />
+      )}
     </div>
   );
 };
