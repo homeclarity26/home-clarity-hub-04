@@ -15,8 +15,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Pencil, ArrowLeft, DollarSign, CreditCard, FileText, Sparkles, Loader2, Send, X, MessageSquareText } from "lucide-react";
+import { Plus, Trash2, Pencil, ArrowLeft, DollarSign, CreditCard, FileText, Sparkles, Loader2, Send, X, MessageSquareText, MessageSquare, FileSignature, Receipt } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import InvoiceApprovalQueue from "@/components/admin/InvoiceApprovalQueue";
+import ChangeOrderDocument from "@/components/admin/ChangeOrderDocument";
 
 interface AdminInvoicesSectionProps {
   propertyId: string;
@@ -118,6 +120,14 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
   const [aiJobDescription, setAiJobDescription] = useState("");
   const [aiTranscript, setAiTranscript] = useState("");
   const [aiChangeDescription, setAiChangeDescription] = useState("");
+
+  // CO Mode Selector (5B)
+  const [coMode, setCoMode] = useState<"verbal" | "formal" | "interim">("formal");
+  const [showCoDocument, setShowCoDocument] = useState(false);
+  const [pendingCoForDocument, setPendingCoForDocument] = useState<ChangeOrder | null>(null);
+
+  // Approval queue tab
+  const [adminTab, setAdminTab] = useState<"queue" | "invoices">("invoices");
 
   // Edit mode
   const [editingInvoice, setEditingInvoice] = useState<string | null>(null);
@@ -271,22 +281,92 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
     }
   };
 
-  // ADD CHANGE ORDER
+  // 5C — Auto-adjust invoice totals when COs are approved
+  const applyApprovedCOs = async (invoiceId: string) => {
+    // 1. Fetch all approved COs for this invoice
+    const approvedCOs = changeOrders.filter(c => c.invoice_id === invoiceId && c.status === "approved");
+    // 2. Sum their amounts
+    const coSum = approvedCOs.reduce((s, c) => s + Number(c.amount), 0);
+    // 3. Get original total (from invoices state)
+    const inv = invoices.find(i => i.id === invoiceId);
+    if (!inv) return;
+    const origTotal = Number((inv as any).original_total ?? inv.subtotal);
+    const paidSum = payments.filter(p => p.invoice_id === invoiceId).reduce((s, p) => s + Number(p.amount), 0);
+    const newTotal = origTotal + coSum;
+    const newBalanceDue = Math.max(0, newTotal - paidSum);
+    // 4. Update invoice
+    await (supabase.from("invoices" as any) as any).update({
+      total: newTotal,
+      co_total: coSum,
+      balance_due: newBalanceDue,
+      amount: newTotal,
+    }).eq("id", invoiceId);
+    toast.success(`Invoice total updated: +${fmt(coSum)} from approved change order`);
+    loadData();
+  };
+
+  // ADD CHANGE ORDER (5B — mode-aware)
   const handleAddChangeOrder = async () => {
     if (!selectedInvoice) return;
     const amount = parseFloat(changeOrderForm.amount);
-    const { error } = await (supabase.from("change_orders" as any) as any).insert({
+
+    // Determine CO status based on mode
+    const coStatus = coMode === "verbal" ? "verbal" : "pending";
+
+    const { data: newCO, error } = await (supabase.from("change_orders" as any) as any).insert({
       invoice_id: selectedInvoice.id,
       title: changeOrderForm.title,
       description: changeOrderForm.description || null,
       amount: amount || 0,
-      status: "pending",
-    });
+      status: coStatus,
+      co_mode: coMode,
+    }).select().single();
+
     if (error) { toast.error("Failed to add change order"); return; }
-    toast.success("Change order added");
-    setChangeOrderOpen(false);
-    setChangeOrderForm({ title: "", description: "", amount: "" });
-    loadData();
+
+    if (coMode === "verbal") {
+      // Verbal: document it, will be added to next invoice automatically
+      toast.success("Change order documented as verbal — will appear on next invoice");
+      setChangeOrderOpen(false);
+      setChangeOrderForm({ title: "", description: "", amount: "" });
+      setCoMode("formal");
+      loadData();
+    } else if (coMode === "formal") {
+      // Formal: open CO document for client signature
+      setPendingCoForDocument(newCO);
+      setShowCoDocument(true);
+      setChangeOrderOpen(false);
+      setChangeOrderForm({ title: "", description: "", amount: "" });
+      setCoMode("formal");
+      loadData();
+      toast.success("Change order created — review document and send to client");
+    } else if (coMode === "interim") {
+      // Interim: create a new standalone invoice for this CO
+      const { error: invErr } = await (supabase.from("invoices" as any) as any).insert({
+        property_id: propertyId,
+        title: `Change Order: ${changeOrderForm.title}`,
+        description: changeOrderForm.description || `Change Order: ${changeOrderForm.title}`,
+        type: "invoice",
+        status: "draft",
+        issue_date: new Date().toISOString().split("T")[0],
+        subtotal: amount || 0,
+        tax: 0,
+        total: amount || 0,
+        balance_due: amount || 0,
+        amount: amount || 0,
+        original_total: amount || 0,
+        notes: `Interim invoice for change order: ${changeOrderForm.title}`,
+      });
+      if (invErr) {
+        toast.error("Change order created but failed to create interim invoice");
+      } else {
+        toast.success("Change order created — standalone interim invoice generated");
+      }
+      setChangeOrderOpen(false);
+      setChangeOrderForm({ title: "", description: "", amount: "" });
+      setCoMode("formal");
+      loadData();
+    }
   };
 
   // APPROVE/REJECT CHANGE ORDER
@@ -294,7 +374,12 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
     await (supabase.from("change_orders" as any) as any).update({ status }).eq("id", coId);
     toast.success(`Change order ${status}`);
     await loadData();
-    if (selectedInvoice) setTimeout(() => recalcInvoice(selectedInvoice.id), 500);
+    // 5C: When approved, auto-adjust invoice total
+    if (status === "approved" && selectedInvoice) {
+      setTimeout(() => applyApprovedCOs(selectedInvoice.id), 500);
+    } else if (selectedInvoice) {
+      setTimeout(() => recalcInvoice(selectedInvoice.id), 500);
+    }
   };
 
   // DELETE INVOICE

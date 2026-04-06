@@ -557,7 +557,7 @@ const ProposalInterviewWizard = ({
               This is the core AI input — be as detailed as possible.
             </p>
             <Textarea
-              placeholder="e.g. Full master bathroom gut-to-studs remodel: demo existing tile and fixtures, install new 3/4\" plywood subfloor, 12×24 porcelain tile floor with radiant heat mat, custom niche shower with glass door..."
+              placeholder="e.g. Full master bathroom gut-to-studs remodel: demo existing tile and fixtures, install new 3/4-inch plywood subfloor, 12x24 porcelain tile floor with radiant heat mat, custom niche shower with glass door..."
               value={answers.scopeDescription}
               onChange={(e) => set("scopeDescription", e.target.value)}
               className="font-sans text-sm min-h-[160px] resize-none"

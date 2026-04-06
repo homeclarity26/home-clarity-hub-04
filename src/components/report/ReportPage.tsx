@@ -192,6 +192,7 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
           onDraftNarrative={handleDraftNarrative}
           isDrafting={isDrafting}
           qaCoachSlot={dbPageId ? <QACoachPanel page={{ id: dbPageId, title: page.title, condition_rating: pageData.conditionRating, narrative: pageData.narrative, specs: pageData.specs, tiers: pageData.tiers, findings: (pageData as unknown as Record<string, unknown>).findings, key_observations: extendedPageData.key_observations, images: resolvedImages }} /> : undefined}
+          qaPageContext={dbPageId ? { id: dbPageId, title: page.title, condition_rating: pageData.conditionRating, narrative: pageData.narrative, specs: pageData.specs, tiers: pageData.tiers, findings: (pageData as unknown as Record<string, unknown>).findings, key_observations: extendedPageData.key_observations, images: resolvedImages } : undefined}
         />
       )}
 
