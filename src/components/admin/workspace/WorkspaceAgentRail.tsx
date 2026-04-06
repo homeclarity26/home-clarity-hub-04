@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Sparkles, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Sparkles, PanelRightClose, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AgentChat from "@/components/agent/AgentChat";
 import type { AgentContextOverride } from "@/components/agent/AgentChat";
@@ -33,7 +33,7 @@ const WorkspaceAgentRail = ({
   onNavigate,
 }: WorkspaceAgentRailProps) => {
   const [isOpen, setIsOpen] = useState(() => {
-    return localStorage.getItem("hbc-agent-rail-open") !== "false";
+    return localStorage.getItem("hbc-agent-rail-open") === "true";
   });
 
   const toggleRail = () => {
@@ -56,45 +56,58 @@ const WorkspaceAgentRail = ({
 
   const onboardingMessage = `👋 I'm scoped to **${clientName}** (${propertyAddress}).\n\nI can see everything about this client — report, invoices, projects, schedule, equipment.\n\nWhat would you like me to do?`;
 
-  if (!isOpen) {
-    return (
-      <div className="shrink-0 border-l border-border flex flex-col items-center py-3 px-1.5 bg-card">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleRail}
-          className="h-9 w-9 p-0"
-          title="Open AI Agent"
-        >
-          <PanelRightOpen className="w-4 h-4" />
-        </Button>
-        <div className="mt-2 writing-mode-vertical text-[10px] font-sans text-muted-foreground flex items-center gap-1" style={{ writingMode: "vertical-rl" }}>
-          <Sparkles className="w-3 h-3" />
-          AI Agent
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="shrink-0 w-[360px] border-l border-border flex flex-col bg-card h-full">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-        <div className="flex items-center gap-1.5">
-          <Sparkles className="w-4 h-4 text-primary" />
-          <span className="text-xs font-sans font-semibold text-foreground">AI Agent</span>
-          <span className="text-[10px] font-sans text-muted-foreground">· {clientName}</span>
+    <>
+      {/* Floating toggle button — always visible when panel is closed */}
+      {!isOpen && (
+        <button
+          onClick={toggleRail}
+          title="Open AI Agent"
+          className="fixed right-4 bottom-6 z-50 flex items-center gap-2 bg-foreground text-background rounded-full px-3 py-2 shadow-lg hover:opacity-90 transition-opacity text-xs font-sans font-semibold"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          AI Agent
+        </button>
+      )}
+
+      {/* Overlay panel — slides in from the right, floats over content */}
+      <div
+        className={`fixed top-0 right-0 h-full z-40 flex flex-col bg-card border-l border-border shadow-2xl transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+        style={{ width: "380px" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border shrink-0">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-xs font-sans font-semibold text-foreground">AI Agent</span>
+            <span className="text-[10px] font-sans text-muted-foreground">· {clientName}</span>
+          </div>
+          <Button variant="ghost" size="sm" onClick={toggleRail} className="h-7 w-7 p-0">
+            <X className="w-3.5 h-3.5" />
+          </Button>
         </div>
-        <Button variant="ghost" size="sm" onClick={toggleRail} className="h-7 w-7 p-0">
-          <PanelRightClose className="w-3.5 h-3.5" />
-        </Button>
+
+        {/* Chat */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <AgentChat
+            contextOverride={contextOverride}
+            quickChips={CLIENT_CHIPS}
+            onNavigate={onNavigate}
+            onboardingMessage={onboardingMessage}
+          />
+        </div>
       </div>
-      <AgentChat
-        contextOverride={contextOverride}
-        quickChips={CLIENT_CHIPS}
-        onNavigate={onNavigate}
-        onboardingMessage={onboardingMessage}
-      />
-    </div>
+
+      {/* Backdrop — clicking outside closes it on smaller screens */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/20 lg:hidden"
+          onClick={toggleRail}
+        />
+      )}
+    </>
   );
 };
 

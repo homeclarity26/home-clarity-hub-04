@@ -19,7 +19,7 @@ const WorkspaceContextCard = ({ client, invoiceCount = 0, overdueCount = 0, proj
   const navigate = useNavigate();
 
   return (
-    <div className="shrink-0 w-[260px] border-r border-border bg-card p-4 space-y-4 overflow-y-auto">
+    <div className="shrink-0 w-[220px] border-r border-border bg-card p-4 space-y-4 overflow-y-auto">
       {/* Client identity */}
       <div>
         <h2 className="text-sm font-sans font-bold text-foreground truncate">{client.propertyName}</h2>
