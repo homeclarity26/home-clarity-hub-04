@@ -175,10 +175,8 @@ const NewReportWizard = () => {
           .order("group_name")
           .order("default_order");
 
-        if (error) throw error;
-
-        // ── DEV FALLBACK: seed local templates if DB is empty ──────
-        let loadedTemplates = data || [];
+        // ── FALLBACK: use hardcoded templates if DB error or table empty ──
+        let loadedTemplates = (!error && data) ? data : [];
         if (loadedTemplates.length === 0) {
           console.warn("[Dev] page_templates table is empty — using hardcoded fallbacks");
           loadedTemplates = [
