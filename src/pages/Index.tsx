@@ -198,6 +198,10 @@ const Index = () => {
   }
 
   if (!portal.property) {
+    if (isCreator) {
+      navigate("/admin", { replace: true });
+      return null;
+    }
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-6">
         <div className="text-center space-y-4">
