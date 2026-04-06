@@ -178,6 +178,21 @@ const Index = () => {
     };
   }, [propertyName, portal]);
 
+  // Auth still resolving — show spinner, never flash wrong screen
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  // Creators should never see the client portal — redirect to admin
+  if (isCreator && !isEditLink) {
+    navigate("/admin", { replace: true });
+    return null;
+  }
+
   if (portal.isLoading) {
     return (
       <div className="min-h-screen bg-background">
