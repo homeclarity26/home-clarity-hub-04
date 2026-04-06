@@ -19,6 +19,7 @@ import { Plus, Trash2, Pencil, ArrowLeft, DollarSign, CreditCard, FileText, Spar
 import { useAuth } from "@/contexts/AuthContext";
 import InvoiceApprovalQueue from "@/components/admin/InvoiceApprovalQueue";
 import ChangeOrderDocument from "@/components/admin/ChangeOrderDocument";
+import MasterFinancialLedger from "@/components/admin/MasterFinancialLedger";
 
 interface AdminInvoicesSectionProps {
   propertyId: string;
@@ -892,6 +893,20 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
           )}
         </div>
       )}
+      {/* Master Financial Ledger Tab View */}
+      <Tabs defaultValue="invoices" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="invoices" className="font-sans text-xs">Invoices & Estimates</TabsTrigger>
+          <TabsTrigger value="ledger" className="font-sans text-xs">Financial Overview</TabsTrigger>
+        </TabsList>
+        <TabsContent value="ledger">
+          <MasterFinancialLedger
+            propertyId={propertyId}
+            propertyName={propertyContext?.propertyAddress}
+            clientName={propertyContext?.clientName}
+          />
+        </TabsContent>
+        <TabsContent value="invoices">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h3 className="text-sm font-sans font-semibold text-foreground">Invoices & Estimates</h3>
         <Dialog open={createOpen} onOpenChange={o => { setCreateOpen(o); if (!o) resetForm(); }}>
@@ -1028,6 +1043,8 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
           </TableBody>
         </Table>
       )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

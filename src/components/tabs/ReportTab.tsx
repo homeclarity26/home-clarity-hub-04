@@ -1,5 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
+import BuildMyReport from "@/components/admin/BuildMyReport";
+import { useEditMode } from "@/contexts/EditModeContext";
 import PortalBlockViewer from "@/components/wysiwyg/PortalBlockViewer";
 import type { ReportBlock } from "@/components/wysiwyg/types";
 import { reportPages as staticPages, reportGroups as staticGroups, type ReportPageData } from "@/data/reportContent";
@@ -93,6 +95,7 @@ const ReportTab = ({
   const reportGroups = groups || staticGroups;
   const reportPages = pages || staticPages;
   const [activeChapter, setActiveChapter] = useState("exterior");
+  const { canEdit } = useEditMode();
 
   // Determine chapter from active page
   const resolvedChapter = useMemo(() => {
@@ -352,6 +355,20 @@ const ReportTab = ({
             )}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // --- Build My Report (creator only, when no pages are populated yet) ---
+  const hasRealPages = pages && Object.keys(pages).length > 0;
+  if (canEdit && !hasRealPages && reportId && propertyId && !activePageId) {
+    return (
+      <div className="max-w-3xl mx-auto px-6 md:px-20 py-16">
+        <BuildMyReport
+          propertyId={propertyId}
+          reportId={reportId}
+          onComplete={() => toast.success("Report drafted — review each section and publish when ready.")}
+        />
       </div>
     );
   }
