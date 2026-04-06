@@ -46,7 +46,7 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isEditLink = searchParams.get("edit") === "true";
-  const { user, isCreator } = useAuth();
+  const { user, isCreator, isLoading: authLoading } = useAuth();
 
   // Derive active tab from URL — fall back to "home"
   const activeTab = urlTab && VALID_TABS.has(urlTab) ? urlTab : "home";
@@ -198,6 +198,14 @@ const Index = () => {
   }
 
   if (!portal.property) {
+    // Wait for auth roles to finish loading before deciding what to show
+    if (authLoading || portal.isLoading) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Loading...</div>
+        </div>
+      );
+    }
     if (isCreator) {
       navigate("/admin", { replace: true });
       return null;
