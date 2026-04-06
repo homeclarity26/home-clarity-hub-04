@@ -377,10 +377,11 @@ const Index = () => {
         </div>
       </main>
 
-      {/* NPS Survey — disabled */}
-      {/* {portal.property?.id && !isCreator && (
+      {/* NPS Survey — disabled
+      {portal.property?.id && !isCreator && (
         <NPSSurveyCard propertyId={portal.property.id} />
-      )} */
+      )}
+      */}
 
       {/* Help Center — accessible via AI Command Bar and chat FAB */}
       {!isCreator && (
