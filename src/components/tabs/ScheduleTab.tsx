@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import {
   Calendar as CalendarIcon, Clock, Sun, Thermometer, Leaf, Snowflake,
   Phone, Hammer, ChevronRight, ChevronLeft, Wrench,
-  AlertCircle, CheckCircle2, Star, FileText,
+  AlertCircle, CheckCircle2, Star, FileText, Download, CalendarPlus,
 } from "lucide-react";
 import MaintenanceReminders from "@/components/MaintenanceReminders";
 import SeasonalMaintenanceTips from "@/components/portal/SeasonalMaintenanceTips";
@@ -17,8 +17,56 @@ import {
 
 interface ScheduleTabProps {
   propertyId?: string;
+  propertyAddress?: string;
   onTabChange?: (tab: string) => void;
 }
+
+// Generate Google Calendar URL for a single event
+const googleCalUrl = (event: ScheduleEvent) => {
+  const start = new Date(event.event_date);
+  const end = new Date(start.getTime() + 60 * 60 * 1000); // 1 hour
+  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${fmt(start)}/${fmt(end)}&details=${encodeURIComponent(event.description || '')}&sf=true&output=xml`;
+};
+
+// Generate ICS file content for all events
+const generateICS = (events: ScheduleEvent[], propertyAddress: string) => {
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Home Clarity Hub//HCH//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    `X-WR-CALNAME:${propertyAddress} — HBC Schedule`,
+  ];
+  for (const ev of events) {
+    const start = new Date(ev.event_date);
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    lines.push(
+      'BEGIN:VEVENT',
+      `DTSTART:${fmt(start)}`,
+      `DTEND:${fmt(end)}`,
+      `SUMMARY:${ev.title}`,
+      `DESCRIPTION:${ev.description || ''}`,
+      `UID:hbc-${ev.id}@homeclarityhub.com`,
+      'END:VEVENT',
+    );
+  }
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+};
+
+const downloadICS = (events: ScheduleEvent[], propertyAddress: string) => {
+  const content = generateICS(events, propertyAddress);
+  const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'hbc-schedule.ics';
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
 interface ScheduleEvent {
   id: string;
@@ -65,7 +113,7 @@ const cardBase =
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-const ScheduleTab = ({ propertyId, onTabChange }: ScheduleTabProps) => {
+const ScheduleTab = ({ propertyId, propertyAddress, onTabChange }: ScheduleTabProps) => {
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -150,7 +198,18 @@ const ScheduleTab = ({ propertyId, onTabChange }: ScheduleTabProps) => {
 
         {/* Calendar */}
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Calendar</p>
+          <div className="flex items-center justify-between mb-6">
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent">Calendar</p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => downloadICS(events, propertyAddress || 'Your Home')}
+                className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground hover:text-foreground border border-border rounded-md px-2.5 py-1.5 transition-colors"
+                title="Export all events as ICS file (works with Apple Calendar & Outlook)"
+              >
+                <Download className="w-3 h-3" /> Export (.ics)
+              </button>
+            </div>
+          </div>
           <div className="bg-card rounded-lg border border-border overflow-hidden">
             {/* Month Nav */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
@@ -255,7 +314,12 @@ const ScheduleTab = ({ propertyId, onTabChange }: ScheduleTabProps) => {
                         <span className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${cfg.dotClass}`} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2 flex-wrap">
-                            <p className="font-sans text-sm font-medium text-foreground">{ev.title}</p>
+                            <p className="font-sans text-sm font-medium text-foreground">
+                              {ev.title}
+                              <a href={googleCalUrl(ev)} target="_blank" rel="noopener" className="ml-1 text-muted-foreground hover:text-accent" title="Add to Google Calendar">
+                                <CalendarPlus className="w-3 h-3 inline" />
+                              </a>
+                            </p>
                             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground flex-shrink-0">
                               {cfg.label}
                             </span>

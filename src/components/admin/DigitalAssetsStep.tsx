@@ -73,8 +73,8 @@ function PdfUploadField({
       const { error } = await supabase.storage.from("report-images").upload(path, file);
       if (error) throw error;
 
-      const { data: urlData } = supabase.storage.from("report-images").getPublicUrl(path);
-      onUpload(urlData.publicUrl);
+      const { data: urlData } = await supabase.storage.from("report-images").createSignedUrl(path, 3600);
+      onUpload(urlData?.signedUrl || path);
       toast.success("PDF uploaded.");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Upload failed";

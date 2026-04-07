@@ -77,9 +77,9 @@ const DocumentsTab = ({ propertyId }: DocumentsTabProps) => {
       });
   }, [propertyId]);
 
-  const getPublicUrl = (storagePath: string) => {
-    const { data } = supabase.storage.from("report-images").getPublicUrl(storagePath);
-    return data.publicUrl;
+  const openSignedUrl = async (storagePath: string) => {
+    const { data } = await supabase.storage.from("report-images").createSignedUrl(storagePath, 3600);
+    if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
   const handleUploadFiles = useCallback(async (fileList: FileList) => {
@@ -254,12 +254,10 @@ const DocumentsTab = ({ propertyId }: DocumentsTabProps) => {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {catFiles.map((file) => (
-                    <a
+                    <div
                       key={file.id}
-                      href={file.storage_path ? getPublicUrl(file.storage_path) : "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group bg-card rounded-lg p-5 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-2 border border-border no-underline"
+                      onClick={() => file.storage_path && openSignedUrl(file.storage_path)}
+                      className="group bg-card rounded-lg p-5 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-2 border border-border cursor-pointer"
                     >
                       <div className="flex items-start justify-between">
                         <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
@@ -271,7 +269,7 @@ const DocumentsTab = ({ propertyId }: DocumentsTabProps) => {
                       <p className="font-mono text-[10px] text-muted-foreground">
                         {file.file_size} · {new Date(file.created_at).toLocaleDateString()}
                       </p>
-                    </a>
+                    </div>
                   ))}
                 </div>
               </div>

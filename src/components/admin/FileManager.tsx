@@ -127,9 +127,9 @@ const FileManager = ({ propertyId }: FileManagerProps) => {
     e.target.value = "";
   };
 
-  const getPublicUrl = (storagePath: string) => {
-    const { data } = supabase.storage.from("report-images").getPublicUrl(storagePath);
-    return data.publicUrl;
+  const openSignedUrl = async (storagePath: string) => {
+    const { data } = await supabase.storage.from("report-images").createSignedUrl(storagePath, 3600);
+    if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
   if (isLoading) {
@@ -183,10 +183,8 @@ const FileManager = ({ propertyId }: FileManagerProps) => {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <Button variant="ghost" size="sm" asChild>
-                      <a href={getPublicUrl(file.storage_path)} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
+                    <Button variant="ghost" size="sm" onClick={() => openSignedUrl(file.storage_path)}>
+                      <ExternalLink className="w-3.5 h-3.5" />
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => deleteFile(file.id, file.storage_path)}>
                       <Trash2 className="w-3.5 h-3.5 text-destructive" />

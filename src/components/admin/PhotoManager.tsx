@@ -126,10 +126,11 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
         const path = `${propertyId}/${ts}_${file.name}`;
         const { error: upErr } = await supabase.storage.from("property-photos").upload(path, file);
         if (upErr) { console.error(upErr); continue; }
-        const { data: { publicUrl } } = supabase.storage.from("property-photos").getPublicUrl(path);
+        const { data: signedData } = await supabase.storage.from("property-photos").createSignedUrl(path, 3600);
+        const photoUrl = signedData?.signedUrl || path;
         await (supabase.from("property_photos") as any).insert({
           property_id: propertyId,
-          file_url: publicUrl,
+          file_url: photoUrl,
           title: file.name.replace(/\.[^/.]+$/, ""),
           taken_by: user.id,
           category: "other",

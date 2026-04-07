@@ -17,7 +17,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   GripVertical, Copy, Trash2, ChevronUp, ChevronDown,
-  Plus, Sparkles, Columns, Save, Loader2,
+  Plus, Sparkles, Columns, Save, Loader2, CheckCircle2,
 } from "lucide-react";
 import type { ReportBlock, BlockType, ColSpan } from "./types";
 import { createBlock, BLOCK_TEMPLATES } from "./types";
@@ -199,14 +199,17 @@ interface WYSIWYGReportEditorProps {
   reportId: string;
   propertyAddress?: string;
   initialBlocks?: ReportBlock[];
+  propertyId?: string;
 }
 
-const WYSIWYGReportEditor = ({ reportId, propertyAddress, initialBlocks }: WYSIWYGReportEditorProps) => {
+const WYSIWYGReportEditor = ({ reportId, propertyAddress, initialBlocks, propertyId }: WYSIWYGReportEditorProps) => {
   const [blocks, setBlocks] = useState<ReportBlock[]>(initialBlocks || []);
   const [pickerAfter, setPickerAfter] = useState<string | null>(null); // block id or "top"
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [showAutoSaved, setShowAutoSaved] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastAutoSaveRef = useRef<number>(Date.now());
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -230,6 +233,29 @@ const WYSIWYGReportEditor = ({ reportId, propertyAddress, initialBlocks }: WYSIW
         .eq("id", reportId);
       if (error) throw error;
       setLastSaved(new Date());
+      setShowAutoSaved(true);
+      setTimeout(() => setShowAutoSaved(false), 3000);
+
+      // Auto-snapshot every 5 minutes
+      const now = Date.now();
+      if (now - lastAutoSaveRef.current > 5 * 60 * 1000) {
+        lastAutoSaveRef.current = now;
+        try {
+          const { data: lastVer } = await (supabase.from('report_versions') as any)
+            .select('version_number').eq('client_id', propertyId).order('version_number', { ascending: false }).limit(1).maybeSingle();
+          const nextVersion = (lastVer?.version_number || 0) + 1;
+          await (supabase.from('report_versions') as any).insert({
+            client_id: propertyId,
+            report_id: reportId,
+            version_number: nextVersion,
+            report_snapshot_json: blocksToSave,
+            saved_by: 'auto',
+            saved_at: new Date().toISOString(),
+          });
+        } catch (e) {
+          console.warn('Auto-snapshot failed silently:', e);
+        }
+      }
     } catch {
       toast.error("Failed to save");
     } finally {
@@ -333,7 +359,13 @@ const WYSIWYGReportEditor = ({ reportId, propertyAddress, initialBlocks }: WYSIW
             </span>
           </div>
           <div className="flex items-center gap-3">
-            {lastSaved && (
+            {showAutoSaved && (
+              <span className="flex items-center gap-1 text-[10px] font-mono text-green-600 transition-opacity">
+                <CheckCircle2 className="h-3 w-3" />
+                Saved
+              </span>
+            )}
+            {lastSaved && !showAutoSaved && (
               <span className="text-[10px] font-mono text-muted-foreground">
                 Saved {lastSaved.toLocaleTimeString()}
               </span>

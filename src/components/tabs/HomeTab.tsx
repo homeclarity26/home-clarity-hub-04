@@ -183,20 +183,9 @@ const HomeTab = ({
           </div>
         )}
 
-        {/* Concierge + Schedule CTAs */}
+        {/* Schedule CTA */}
         {propertyId && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              onClick={() => setShowConcierge(true)}
-              className={`${cardBase} w-full group p-6 hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4 text-left`}
-            >
-              <Sparkles className="w-5 h-5 text-primary" />
-              <div className="flex-1">
-                <h3 className="font-display text-lg text-foreground">Concierge Request</h3>
-                <p className="font-sans text-sm text-muted-foreground">Ask your advisor for anything</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary transition-colors" />
-            </button>
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
             <button
               onClick={() => setShowAppointment(true)}
               className={`${cardBase} w-full group p-6 hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4 text-left`}

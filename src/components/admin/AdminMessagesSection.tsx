@@ -198,8 +198,8 @@ const AdminMessagesSection = ({ propertyId, clientName, propertyAddress }: Admin
           <Button variant="ghost" size="sm" className="shrink-0 h-9 w-9 p-0" onClick={() => setVideoDialogOpen(true)} title="Send Video">
             <Video className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm" className="shrink-0 h-9 w-9 p-0" onClick={handleAIReply} disabled={loadingReplies || messages.length === 0} title="AI Smart Reply">
-            {loadingReplies ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+          <Button variant="outline" size="sm" onClick={handleAIReply} disabled={loadingReplies || messages.length === 0} className="gap-1.5 text-xs font-sans shrink-0">
+            {loadingReplies ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span style={{background:'#C4A265',color:'#1B2B4D'}} className="w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center shrink-0">B</span>}Ask Bobby
           </Button>
           <textarea
             value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleKeyDown}

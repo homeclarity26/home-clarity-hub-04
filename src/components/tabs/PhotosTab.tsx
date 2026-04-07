@@ -91,10 +91,11 @@ const PhotosTab = ({ propertyId }: PhotosTabProps) => {
         const path = `${propertyId}/${Date.now()}_${file.name}`;
         const { error } = await supabase.storage.from("property-photos").upload(path, file);
         if (error) continue;
-        const { data: { publicUrl } } = supabase.storage.from("property-photos").getPublicUrl(path);
+        const { data: signedPData } = await supabase.storage.from("property-photos").createSignedUrl(path, 3600);
+        const photoFileUrl = signedPData?.signedUrl || path;
         await (supabase.from("property_photos") as any).insert({
           property_id: propertyId,
-          file_url: publicUrl,
+          file_url: photoFileUrl,
           title: file.name.replace(/\.[^/.]+$/, ""),
           taken_by: user.id,
           category: "other",

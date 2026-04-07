@@ -29,8 +29,12 @@ const PhotoBlock = ({ content, editable, onChange, reportId, isAnalyzing, hasAna
       toast.error("Upload failed");
       return;
     }
-    const { data: urlData } = supabase.storage.from("report-images").getPublicUrl(path);
-    const url = urlData.publicUrl;
+    const { data: urlData, error: signErr } = await supabase.storage.from("report-images").createSignedUrl(path, 3600);
+    if (signErr || !urlData?.signedUrl) {
+      toast.error("Failed to get image URL");
+      return;
+    }
+    const url = urlData.signedUrl;
     onChange?.({ ...content, url });
     onPhotoUploaded?.(url);
   }, [content, onChange, reportId, onPhotoUploaded]);

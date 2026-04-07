@@ -57,12 +57,13 @@ const ProjectPhotoTimeline = ({ projectId, projectTitle, isAdmin = false }: Proj
       const { error: uploadErr } = await supabase.storage.from("project-photos").upload(path, file);
       if (uploadErr) { toast.error(`Failed to upload ${file.name}`); continue; }
 
-      const { data: { publicUrl } } = supabase.storage.from("project-photos").getPublicUrl(path);
+      const { data: signedPhotoData } = await supabase.storage.from("project-photos").createSignedUrl(path, 3600);
+      const photoUrl = signedPhotoData?.signedUrl || path;
       await (supabase.from("project_photos" as any) as any).insert({
         project_id: projectId,
         uploaded_by: user.id,
         uploader_type: isAdmin ? "admin" : "client",
-        photo_url: publicUrl,
+        photo_url: photoUrl,
         caption: form.caption || null,
         taken_date: form.taken_date,
         photo_stage: form.photo_stage,

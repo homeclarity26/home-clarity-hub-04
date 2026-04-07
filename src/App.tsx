@@ -44,6 +44,7 @@ import AdminCRMClientProfile from "./pages/admin/AdminCRMClientProfile";
 import AdminCRMTradePartnerProfile from "./pages/admin/AdminCRMTradePartnerProfile";
 import AdminCRMPipeline from "./pages/admin/AdminCRMPipeline";
 import AdminAnnualReviews from "./pages/admin/AdminAnnualReviews";
+import AdminTeam from "./pages/admin/AdminTeam";
 import TradePartnerLayout from "./layouts/TradePartnerLayout";
 import TradePartnerDashboard from "./pages/trade/TradePartnerDashboard";
 import TradePartnerProjects from "./pages/trade/TradePartnerProjects";
@@ -223,6 +224,7 @@ const AppRoutes = () => {
         <Route path="crm/trade-partners/:id" element={<AdminCRMTradePartnerProfile />} />
         <Route path="crm/pipeline" element={<AdminCRMPipeline />} />
         <Route path="annual-reviews" element={<AdminAnnualReviews />} />
+        <Route path="team" element={<AdminTeam />} />
       </Route>
 
       {/* Trade Partner routes */}

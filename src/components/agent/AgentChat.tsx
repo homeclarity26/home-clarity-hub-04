@@ -286,7 +286,7 @@ const AgentChat = ({ contextOverride, quickChips, onNavigate, onboardingMessage,
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((msg) => (
-          <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+          <div key={msg.id} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
             <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm font-sans ${
               msg.role === "user"
                 ? "bg-primary text-primary-foreground"
@@ -307,6 +307,18 @@ const AgentChat = ({ contextOverride, quickChips, onNavigate, onboardingMessage,
                 </div>
               )}
             </div>
+            {msg.role === "assistant" && (
+              <button
+                className="text-[10px] font-sans text-muted-foreground hover:text-accent flex items-center gap-1 mt-1 transition-colors"
+                onClick={() => {
+                  setInput(`Bobby, help me reply to this message: ${msg.content}`);
+                  setTimeout(() => inputRef.current?.focus(), 50);
+                }}
+              >
+                <span style={{background:'#C4A265',color:'#1B2B4D'}} className="w-3.5 h-3.5 rounded-full text-[8px] font-bold flex items-center justify-center">B</span>
+                Ask Bobby
+              </button>
+            )}
           </div>
         ))}
 
