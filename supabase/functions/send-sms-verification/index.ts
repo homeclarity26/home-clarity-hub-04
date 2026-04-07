@@ -1,5 +1,9 @@
+/**
+ * send-notification-verification
+ * Sends a 6-digit verification code via email (Resend).
+ * Replaces the old Twilio SMS flow — no SMS provider needed.
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callAI, parseJSON } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -11,69 +15,82 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { phone, userId } = await req.json();
-    if (!phone || !userId) throw new Error("Missing phone or userId");
+    const { phone: emailOrPhone, userId, email } = await req.json();
+    // Accept either field name — frontend may pass phone or email
+    const recipient = email || emailOrPhone;
+    if (!recipient || !userId) throw new Error("Missing recipient or userId");
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const sb = createClient(supabaseUrl, supabaseKey);
+    const sb = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
 
     // Generate 6-digit code
     const code = String(Math.floor(100000 + Math.random() * 900000));
 
-    // Upsert SMS subscription with verification code
-    const { data: existing } = await sb.from("sms_subscriptions")
+    // Upsert subscription record
+    const { data: existing } = await sb
+      .from("sms_subscriptions")
       .select("id")
       .eq("user_id", userId)
       .limit(1);
 
     if (existing && existing.length > 0) {
       await sb.from("sms_subscriptions").update({
-        phone_number: phone,
+        phone_number: recipient,
         verification_code: code,
         is_verified: false,
       }).eq("id", existing[0].id);
     } else {
       await sb.from("sms_subscriptions").insert({
         user_id: userId,
-        phone_number: phone,
+        phone_number: recipient,
         verification_code: code,
         is_verified: false,
       });
     }
 
-    // Try to send via Twilio if configured
-    const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
+    // Send via Resend
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY not configured");
 
-    if (TWILIO_API_KEY) {
-      // Direct Twilio REST API (no gateway)
-      const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID") || TWILIO_API_KEY;
-      const twilioResponse = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${btoa(TWILIO_ACCOUNT_SID + ":" + TWILIO_API_KEY)}`,
-          "X-Connection-Api-Key": TWILIO_API_KEY,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          To: phone,
-          From: Deno.env.get("TWILIO_FROM_NUMBER") || "+15005550006",
-          Body: `Your Home Clarity Hub verification code is: ${code}`,
-        }),
-      });
+    const emailRes = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "Home Clarity Hub <noreply@hometownbuildersclub.com>",
+        to: [recipient],
+        subject: "Your verification code",
+        html: `
+          <div style="font-family: 'Inter', sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px; background: #f8f6f2;">
+            <div style="background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+              <p style="font-family: Georgia, serif; font-size: 22px; color: #1b2b4d; margin: 0 0 8px;">Your verification code</p>
+              <p style="font-size: 14px; color: #8a8e99; margin: 0 0 32px;">Enter this code in your Home Clarity Hub portal to verify your contact details.</p>
+              <div style="background: #f2efeb; border-radius: 8px; padding: 24px; text-align: center; letter-spacing: 0.4em; font-size: 32px; font-weight: 700; color: #1b2b4d; font-family: 'Courier New', monospace;">
+                ${code}
+              </div>
+              <p style="font-size: 12px; color: #8a8e99; margin: 24px 0 0; text-align: center;">This code expires in 10 minutes. If you didn't request this, you can ignore this email.</p>
+            </div>
+          </div>
+        `,
+      }),
+    });
 
-      if (!twilioResponse.ok) {
-        console.error("Twilio send failed:", await twilioResponse.text());
-      }
-    } else {
-      console.log(`[DEV] SMS verification code for ${phone}: ${code}`);
+    if (!emailRes.ok) {
+      const err = await emailRes.text();
+      console.error("Resend error:", emailRes.status, err);
+      throw new Error("Failed to send verification email");
     }
 
     return new Response(JSON.stringify({ sent: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (e) {
-    console.error("SMS verification error:", e);
+
+  } catch (e: any) {
+    console.error("Verification error:", e);
     return new Response(JSON.stringify({ error: e.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

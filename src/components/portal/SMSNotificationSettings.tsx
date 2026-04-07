@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { Phone, CheckCircle, Loader2, ShieldCheck } from "lucide-react";
+import { Mail, CheckCircle, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-const smsEvents = [
+const notificationEvents = [
   { key: "new_message", label: "New message from advisor" },
   { key: "report_published", label: "New report published" },
   { key: "invoice_due", label: "Invoice due tomorrow" },
@@ -16,7 +16,7 @@ const smsEvents = [
 
 const SMSNotificationSettings = () => {
   const { user } = useAuth();
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [isVerified, setIsVerified] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
@@ -29,13 +29,17 @@ const SMSNotificationSettings = () => {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
+      // Pre-fill with account email
+      if (user.email) setEmail(user.email);
+
       const { data } = await (supabase.from("sms_subscriptions" as any) as any)
         .select("*")
         .eq("user_id", user.id)
         .limit(1);
+
       if (data && data.length > 0) {
         const sub = data[0];
-        setPhone(sub.phone_number);
+        setEmail(sub.phone_number || user.email || "");
         setIsVerified(sub.is_verified);
         setEvents(sub.opted_in_events_json || []);
         setSubId(sub.id);
@@ -46,18 +50,18 @@ const SMSNotificationSettings = () => {
   }, [user]);
 
   const handleSendCode = async () => {
-    if (!phone || phone.length < 10) {
-      toast.error("Please enter a valid phone number");
+    if (!email || !email.includes("@")) {
+      toast.error("Please enter a valid email address");
       return;
     }
     setVerifying(true);
     try {
       const { error } = await supabase.functions.invoke("send-sms-verification", {
-        body: { phone, userId: user?.id },
+        body: { email, userId: user?.id },
       });
       if (error) throw error;
       setShowCodeInput(true);
-      toast.success("Verification code sent!");
+      toast.success("Verification code sent to " + email);
     } catch {
       toast.error("Failed to send verification code");
     } finally {
@@ -73,13 +77,13 @@ const SMSNotificationSettings = () => {
     setVerifying(true);
     try {
       const { data, error } = await supabase.functions.invoke("verify-sms-code", {
-        body: { phone, code: verificationCode, userId: user?.id },
+        body: { phone: email, code: verificationCode, userId: user?.id },
       });
       if (error) throw error;
       if (data?.verified) {
         setIsVerified(true);
         setShowCodeInput(false);
-        toast.success("Phone number verified!");
+        toast.success("Email verified — notifications enabled");
       } else {
         toast.error("Invalid code — please try again");
       }
@@ -105,12 +109,12 @@ const SMSNotificationSettings = () => {
       } else {
         await (supabase.from("sms_subscriptions" as any) as any).insert({
           user_id: user.id,
-          phone_number: phone,
+          phone_number: email,
           is_verified: isVerified,
           opted_in_events_json: events,
         });
       }
-      toast.success("SMS preferences saved");
+      toast.success("Notification preferences saved");
     } catch {
       toast.error("Failed to save preferences");
     } finally {
@@ -123,23 +127,25 @@ const SMSNotificationSettings = () => {
   return (
     <div className="space-y-6">
       <div>
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">SMS Notifications</p>
-        <p className="font-sans text-sm text-muted-foreground mb-4">
-          Receive text message alerts for important updates about your home.
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-2">Email Notifications</p>
+        <p className="font-sans text-sm text-muted-foreground">
+          Receive email alerts for important updates about your home.
         </p>
       </div>
 
-      {/* Phone number */}
+      {/* Email field */}
       <div>
-        <label className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-2 block">Phone Number</label>
+        <label className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-2 block">
+          Email Address
+        </label>
         <div className="flex gap-2">
           <div className="flex-1 relative">
-            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <input
-              type="tel"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              placeholder="+1 (555) 000-0000"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="your@email.com"
               disabled={isVerified}
               className="w-full pl-9 pr-3 py-2 border border-input rounded-md text-sm font-sans bg-background text-foreground disabled:opacity-60"
             />
@@ -157,29 +163,43 @@ const SMSNotificationSettings = () => {
         </div>
       </div>
 
-      {/* Verification code input */}
+      {/* Code input */}
       {showCodeInput && !isVerified && (
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={verificationCode}
-            onChange={e => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-            placeholder="6-digit code"
-            maxLength={6}
-            className="flex-1 px-3 py-2 border border-input rounded-md text-sm font-sans bg-background text-foreground text-center tracking-[0.3em]"
-          />
-          <Button onClick={handleVerifyCode} disabled={verifying} size="sm">
-            {verifying ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Confirm"}
-          </Button>
+        <div className="space-y-2">
+          <p className="font-sans text-xs text-muted-foreground">
+            Check your inbox for a 6-digit code and enter it below.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={verificationCode}
+              onChange={e => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="000000"
+              maxLength={6}
+              className="flex-1 px-3 py-2 border border-input rounded-md text-sm font-sans bg-background text-foreground text-center tracking-[0.4em]"
+            />
+            <Button onClick={handleVerifyCode} disabled={verifying} size="sm">
+              {verifying ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Confirm"}
+            </Button>
+          </div>
+          <button
+            onClick={handleSendCode}
+            className="font-sans text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+          >
+            Resend code
+          </button>
         </div>
       )}
 
       {/* Event toggles */}
       {isVerified && (
         <div>
-          <label className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-3 block">Alert Preferences</label>
+          <label className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-3 block">
+            Alert Preferences
+          </label>
           <div className="space-y-3">
-            {smsEvents.map(ev => (
+            {notificationEvents.map(ev => (
               <label key={ev.key} className="flex items-center gap-3 cursor-pointer">
                 <Checkbox
                   checked={events.includes(ev.key)}
@@ -189,7 +209,6 @@ const SMSNotificationSettings = () => {
               </label>
             ))}
           </div>
-
           <Button onClick={handleSave} disabled={saving} className="mt-4 w-full">
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             Save Preferences
