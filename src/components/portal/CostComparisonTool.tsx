@@ -53,7 +53,7 @@ const CostComparisonTool = ({ pages }: CostComparisonToolProps) => {
       <div className="bg-card rounded-lg border border-border shadow-hbc-sm p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="font-display text-lg text-foreground">What Happens If You Wait?</h3>
+            <h3 className="font-display text-lg text-foreground">Deferred Maintenance Cost Analysis</h3>
             <p className="font-sans text-sm text-muted-foreground">See estimated cost increases from deferring maintenance</p>
           </div>
           <Select value={deferYears} onValueChange={setDeferYears}>
