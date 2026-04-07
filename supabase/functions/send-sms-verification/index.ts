@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -43,14 +44,14 @@ serve(async (req) => {
 
     // Try to send via Twilio if configured
     const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-    if (TWILIO_API_KEY && LOVABLE_API_KEY) {
-      const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
-      const twilioResponse = await fetch(`${GATEWAY_URL}/Messages.json`, {
+    if (TWILIO_API_KEY) {
+      // Direct Twilio REST API (no gateway)
+      const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID") || TWILIO_API_KEY;
+      const twilioResponse = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Basic ${btoa(TWILIO_ACCOUNT_SID + ":" + TWILIO_API_KEY)}`,
           "X-Connection-Api-Key": TWILIO_API_KEY,
           "Content-Type": "application/x-www-form-urlencoded",
         },

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -1059,9 +1060,6 @@ serve(async (req) => {
 
   try {
     const { message, history, context, confirm_action } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -1183,11 +1181,8 @@ serve(async (req) => {
     while (iterations < MAX_ITERATIONS) {
       iterations++;
 
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "google/gemini-2.5-flash", messages, tools: toolDefs, tool_choice: "auto" }),
-      });
+      const _aiText = await callAI({ messages: messages, model: "google/gemini-2.5-flash" });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
       if (!response.ok) {
         const errText = await response.text();
@@ -1234,11 +1229,8 @@ serve(async (req) => {
         }
 
         if (needsConfirmation) {
-          const confirmResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "google/gemini-2.5-flash", messages }),
-          });
+          const _confirmText = await callAI({ messages, model: "google/gemini-2.5-flash" });
+          const confirmResp = { ok: true, json: async () => ({ choices: [{ message: { content: _confirmText } }] }) };
           const confirmData = await confirmResp.json();
           finalReply = confirmData.choices?.[0]?.message?.content || "I need your confirmation before proceeding.";
           break;

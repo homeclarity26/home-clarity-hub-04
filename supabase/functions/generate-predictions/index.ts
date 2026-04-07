@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -15,9 +16,6 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
     const sb = createClient(supabaseUrl, serviceKey);
 
     // Load all home data
@@ -101,76 +99,11 @@ For each prediction, provide:
 
 Generate predictions ONLY for items that have meaningful data. Aim for 5-15 predictions per home.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
+    const _aiText = await callAI({ messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Analyze this home and generate maintenance predictions:\n\n${JSON.stringify(homeContext, null, 2)}` },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "submit_predictions",
-            description: "Submit the array of maintenance predictions",
-            parameters: {
-              type: "object",
-              properties: {
-                predictions: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      system_type: { type: "string" },
-                      prediction_type: { type: "string", enum: ["service", "replacement", "inspection"] },
-                      probability_score: { type: "integer", minimum: 0, maximum: 100 },
-                      predicted_timeframe: { type: "string", enum: ["immediate", "3_months", "6_months", "1_year", "2_years", "3_years", "5_years"] },
-                      confidence_level: { type: "string", enum: ["low", "medium", "high"] },
-                      reasoning: {
-                        type: "array",
-                        items: {
-                          type: "object",
-                          properties: {
-                            factor: { type: "string" },
-                            detail: { type: "string" },
-                            impact: { type: "string", enum: ["high", "medium", "low"] },
-                          },
-                          required: ["factor", "detail", "impact"],
-                        },
-                      },
-                      estimated_cost_low: { type: "number" },
-                      estimated_cost_high: { type: "number" },
-                      equipment_id: { type: ["string", "null"] },
-                      factors: {
-                        type: "array",
-                        items: {
-                          type: "object",
-                          properties: {
-                            factor_name: { type: "string" },
-                            factor_value: { type: "string" },
-                            weight: { type: "number" },
-                            description: { type: "string" },
-                          },
-                          required: ["factor_name", "factor_value", "weight", "description"],
-                        },
-                      },
-                    },
-                    required: ["system_type", "prediction_type", "probability_score", "predicted_timeframe", "confidence_level", "reasoning", "estimated_cost_low", "estimated_cost_high", "factors"],
-                  },
-                },
-              },
-              required: ["predictions"],
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "submit_predictions" } },
-      }),
-    });
+        ], model: "google/gemini-2.5-flash" });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) {
       const errText = await response.text();

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,10 +14,6 @@ serve(async (req) => {
     if (!pages || !Array.isArray(pages)) {
       return new Response(JSON.stringify({ error: "pages array required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
     const pagesContext = pages.map((p: any) => {
       const narrative = Array.isArray(p.narrative) ? p.narrative.join(" ") : "";
       return `## ${p.title} (Condition: ${p.conditionRating || "N/A"}, Timing: ${p.timing || "N/A"})\n${narrative}\nRecommendations: ${(p.recommendations || []).join("; ")}`;
@@ -34,37 +31,11 @@ Return JSON:
 - "keyStrengths": array of 3 strings
 - "criticalConcerns": array of 3 strings`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
+    const _aiText = await callAI({ messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Property: ${propertyName || "Home"} at ${propertyAddress || ""}.\n\nReport Pages:\n${pagesContext}\n\nGenerate the executive summary.` },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "generate_summary",
-            description: "Generate executive summary",
-            parameters: {
-              type: "object",
-              properties: {
-                summary: { type: "array", items: { type: "string" } },
-                topPriorities: { type: "array", items: { type: "object", properties: { title: { type: "string" }, urgency: { type: "string" }, estimatedCost: { type: "string" }, reason: { type: "string" } }, required: ["title", "urgency", "estimatedCost", "reason"] } },
-                overallHealthScore: { type: "number" },
-                investmentRange: { type: "object", properties: { low: { type: "string" }, high: { type: "string" } }, required: ["low", "high"] },
-                keyStrengths: { type: "array", items: { type: "string" } },
-                criticalConcerns: { type: "array", items: { type: "string" } },
-              },
-              required: ["summary", "topPriorities", "overallHealthScore", "investmentRange", "keyStrengths", "criticalConcerns"],
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "generate_summary" } },
-      }),
-    });
+        ], model: "google/gemini-3-flash-preview" });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) {
       if (response.status === 429) return new Response(JSON.stringify({ error: "Rate limited" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });

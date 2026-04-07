@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,10 +14,6 @@ serve(async (req) => {
     if (!pages || !Array.isArray(pages)) {
       return new Response(JSON.stringify({ error: "pages array required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
     // Build combined text for analysis
     const allText = pages.map((p: any) => {
       const narrative = Array.isArray(p.narrative) ? p.narrative.join(" ") : (p.narrative || "");
@@ -32,36 +29,11 @@ Analyze the report and return a JSON object with:
 - "summary": 2-3 sentence overview of report quality
 - "toneConsistency": "consistent"|"mostly consistent"|"inconsistent"`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
+    const _aiText = await callAI({ messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Review this report for quality and consistency:\n\n${allText}` },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "review_report",
-            description: "Review report quality",
-            parameters: {
-              type: "object",
-              properties: {
-                score: { type: "number" },
-                readabilityGrade: { type: "string" },
-                issues: { type: "array", items: { type: "object", properties: { type: { type: "string" }, page: { type: "string" }, description: { type: "string" }, suggestion: { type: "string" } }, required: ["type", "page", "description", "suggestion"] } },
-                summary: { type: "string" },
-                toneConsistency: { type: "string" },
-              },
-              required: ["score", "readabilityGrade", "issues", "summary", "toneConsistency"],
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "review_report" } },
-      }),
-    });
+        ], model: "google/gemini-3-flash-preview" });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) {
       if (response.status === 429) return new Response(JSON.stringify({ error: "Rate limited" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });

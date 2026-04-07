@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,9 +11,6 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -59,28 +57,11 @@ Use colors: primary #1a2744 (navy), accent #c9a96e (gold), text #2d3748, backgro
 Keep the HTML simple and email-client compatible (tables, inline styles, no CSS classes).
 Return ONLY the HTML string, no markdown code blocks.`;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "You are an email template designer. Return only valid HTML for email clients. No markdown." },
-          { role: "user", content: prompt },
-        ],
-      }),
+    let emailHtml = await callAI({
+      system: "You are an email template designer. Return only valid HTML for email clients. No markdown.",
+      prompt,
+      model: "google/gemini-2.5-flash",
     });
-
-    if (!aiRes.ok) {
-      const t = await aiRes.text();
-      console.error("AI error:", aiRes.status, t);
-      throw new Error("AI generation failed");
-    }
-
-    const aiData = await aiRes.json();
-    let emailHtml = aiData.choices?.[0]?.message?.content || "";
-    
-    // Strip markdown code blocks if present
     emailHtml = emailHtml.replace(/```html\n?/g, "").replace(/```\n?/g, "").trim();
 
     // Get admin email

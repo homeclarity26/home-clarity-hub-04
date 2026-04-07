@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,9 +11,6 @@ serve(async (req) => {
 
   try {
     const { task, context } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
     let systemPrompt = "";
     let userPrompt = "";
 
@@ -65,31 +63,11 @@ Return JSON with:
         });
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
+    const _aiText = await callAI({ messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "return_result",
-              description: "Return the structured result",
-              parameters: getSchema(task),
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "return_result" } },
-      }),
-    });
+        ], model: "google/gemini-2.5-flash" });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) {
       const errText = await response.text();

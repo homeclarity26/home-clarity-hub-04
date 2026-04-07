@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,10 +11,6 @@ serve(async (req) => {
 
   try {
     const { pageSlug, pageName, sqft, propertyType, regionHint } = await req.json();
-
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
     const systemPrompt = `You are a home renovation cost estimator. Based on the system/room type, property size, and region, provide realistic cost estimates for three tiers of work.
 
 Return JSON:
@@ -23,36 +20,11 @@ Return JSON:
 - "costFactors": array of strings explaining what affects pricing
 - "regionNote": string with any regional pricing considerations`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
+    const _aiText = await callAI({ messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Estimate costs for: ${pageName || pageSlug}\nProperty: ${sqft || "Unknown"} sqft ${propertyType || "single family"}\nRegion: ${regionHint || "Midwest US"}` },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "estimate_costs",
-            description: "Estimate renovation/repair costs",
-            parameters: {
-              type: "object",
-              properties: {
-                essential: { type: "object", properties: { price: { type: "string" }, description: { type: "string" } }, required: ["price", "description"] },
-                enhanced: { type: "object", properties: { price: { type: "string" }, description: { type: "string" } }, required: ["price", "description"] },
-                signature: { type: "object", properties: { price: { type: "string" }, description: { type: "string" } }, required: ["price", "description"] },
-                costFactors: { type: "array", items: { type: "string" } },
-                regionNote: { type: "string" },
-              },
-              required: ["essential", "enhanced", "signature", "costFactors", "regionNote"],
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "estimate_costs" } },
-      }),
-    });
+        ], model: "google/gemini-3-flash-preview" });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) {
       if (response.status === 429) return new Response(JSON.stringify({ error: "Rate limited" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });

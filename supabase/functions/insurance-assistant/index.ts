@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -12,9 +13,6 @@ serve(async (req) => {
 
   try {
     const { propertyId } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const sb = createClient(supabaseUrl, supabaseKey);
@@ -64,33 +62,8 @@ Provide exactly 4 sections as JSON with these keys:
 
 Return ONLY valid JSON with these 4 keys.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [{ role: "user", content: prompt }],
-        tools: [{
-          type: "function",
-          function: {
-            name: "insurance_review",
-            description: "Return insurance review data",
-            parameters: {
-              type: "object",
-              properties: {
-                premium_risks: { type: "array", items: { type: "string" } },
-                premium_reducers: { type: "array", items: { type: "string" } },
-                documentation_checklist: { type: "array", items: { type: "string" } },
-                questions_for_insurer: { type: "array", items: { type: "string" } },
-              },
-              required: ["premium_risks", "premium_reducers", "documentation_checklist", "questions_for_insurer"],
-              additionalProperties: false,
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "insurance_review" } },
-      }),
-    });
+    const _aiText = await callAI({ messages: [{ role: "user", content: prompt }], model: "google/gemini-2.5-flash" });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) {
       const t = await response.text();

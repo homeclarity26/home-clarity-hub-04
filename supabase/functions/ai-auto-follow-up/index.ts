@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -11,9 +12,6 @@ serve(async (req) => {
 
   try {
     const { propertyId } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -53,48 +51,11 @@ Recent messages preview: ${messages.slice(0, 5).map((m: any) => m.message.substr
 
 Suggest 3-5 follow-up actions with timing and draft messages.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
+    const _aiText = await callAI({ system: "You are a client relationship management AI for a home consulting business.", messages: [
           { role: "system", content: "You are a client relationship management AI for a home consulting business." },
           { role: "user", content: prompt },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "return_follow_ups",
-            description: "Return suggested follow-up actions",
-            parameters: {
-              type: "object",
-              properties: {
-                engagement_score: { type: "number", description: "0-100 client engagement score" },
-                engagement_status: { type: "string", enum: ["active", "cooling", "at_risk", "dormant"] },
-                actions: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      urgency: { type: "string", enum: ["immediate", "this_week", "next_week", "this_month"] },
-                      action: { type: "string" },
-                      reason: { type: "string" },
-                      draft_message: { type: "string" },
-                    },
-                    required: ["urgency", "action", "reason", "draft_message"],
-                    additionalProperties: false,
-                  },
-                },
-              },
-              required: ["engagement_score", "engagement_status", "actions"],
-              additionalProperties: false,
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "return_follow_ups" } },
-      }),
-    });
+        ], model: "google/gemini-3-flash-preview" });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) {
       const t = await response.text();

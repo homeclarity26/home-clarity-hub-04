@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -11,9 +12,6 @@ serve(async (req) => {
 
   try {
     const { propertyId } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -45,56 +43,11 @@ ${equipment.map((e: any) => `- ${e.name} (${e.category}): ${e.condition}, Instal
 
 Return structured JSON with forecasts array.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
+    const _aiText = await callAI({ system: "You are a property condition forecasting expert. Analyze building systems and predict deterioration patterns.", messages: [
           { role: "system", content: "You are a property condition forecasting expert. Analyze building systems and predict deterioration patterns." },
           { role: "user", content: prompt },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "return_forecast",
-            description: "Return condition forecasts for property systems",
-            parameters: {
-              type: "object",
-              properties: {
-                overall_health_trend: { type: "string", enum: ["improving", "stable", "declining", "critical"] },
-                total_5yr_estimated_cost: { type: "number" },
-                forecasts: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      system: { type: "string" },
-                      current_condition: { type: "string" },
-                      year_1: { type: "string" },
-                      year_3: { type: "string" },
-                      year_5: { type: "string" },
-                      failure_risk: { type: "string", enum: ["low", "moderate", "high", "critical"] },
-                      estimated_cost_5yr: { type: "number" },
-                      recommendation: { type: "string" },
-                    },
-                    required: ["system", "current_condition", "year_1", "year_3", "year_5", "failure_risk", "estimated_cost_5yr", "recommendation"],
-                    additionalProperties: false,
-                  },
-                },
-                top_priorities: {
-                  type: "array",
-                  items: { type: "string" },
-                },
-              },
-              required: ["overall_health_trend", "total_5yr_estimated_cost", "forecasts", "top_priorities"],
-              additionalProperties: false,
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "return_forecast" } },
-      }),
-    });
+        ], model: "google/gemini-3-flash-preview" });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) {
       const t = await response.text();

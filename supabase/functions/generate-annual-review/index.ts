@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -15,9 +16,6 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
     const sb = createClient(supabaseUrl, supabaseKey);
 
     // Load all data in parallel
@@ -148,44 +146,11 @@ Generate a complete advisor briefing with these sections. Return a JSON object w
   "suggested_renewal_offer": { "recommendation": "standard"|"upgrade"|"loyalty_rate", "reasoning": string }
 }`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
+    const _aiText = await callAI({ messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: contextParts.join("\n") },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "generate_annual_review",
-            description: "Generate a structured annual review briefing",
-            parameters: {
-              type: "object",
-              properties: {
-                client_relationship_summary: { type: "object", properties: { member_since: { type: "string" }, relationship_health: { type: "string" }, engagement_level: { type: "string" }, summary: { type: "string" } }, required: ["member_since", "relationship_health", "engagement_level", "summary"] },
-                year_in_review: { type: "string" },
-                financial_summary: { type: "object", properties: { total_invested: { type: "number" }, total_invoiced: { type: "number" }, outstanding: { type: "number" }, roi_narrative: { type: "string" } }, required: ["total_invested", "total_invoiced", "outstanding", "roi_narrative"] },
-                home_health_trajectory: { type: "object", properties: { direction: { type: "string" }, explanation: { type: "string" } }, required: ["direction", "explanation"] },
-                top_three_wins: { type: "array", items: { type: "object", properties: { title: { type: "string" }, description: { type: "string" } }, required: ["title", "description"] } },
-                open_items: { type: "array", items: { type: "object", properties: { item: { type: "string" }, category: { type: "string" }, priority: { type: "string" } }, required: ["item", "category", "priority"] } },
-                client_signals: { type: "object", properties: { top_topics: { type: "array", items: { type: "string" } }, engagement_pattern: { type: "string" }, satisfaction_trend: { type: "string" }, risk_flags: { type: "array", items: { type: "string" } } }, required: ["top_topics", "engagement_pattern", "satisfaction_trend", "risk_flags"] },
-                renewal_talking_points: { type: "array", items: { type: "string" } },
-                recommended_next_year_priorities: { type: "array", items: { type: "object", properties: { title: { type: "string" }, rationale: { type: "string" }, estimated_investment: { type: "string" } }, required: ["title", "rationale"] } },
-                suggested_renewal_offer: { type: "object", properties: { recommendation: { type: "string" }, reasoning: { type: "string" } }, required: ["recommendation", "reasoning"] },
-              },
-              required: ["client_relationship_summary", "year_in_review", "financial_summary", "home_health_trajectory", "top_three_wins", "open_items", "client_signals", "renewal_talking_points", "recommended_next_year_priorities", "suggested_renewal_offer"],
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "generate_annual_review" } },
-      }),
-    });
+        ], model: "google/gemini-2.5-flash" });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) {
       const errText = await response.text();

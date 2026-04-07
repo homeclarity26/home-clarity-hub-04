@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,9 +11,6 @@ serve(async (req) => {
 
   try {
     const { page } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
     const narrativeText = Array.isArray(page.narrative) ? page.narrative.join("\n") : String(page.narrative || "");
     const specsText = Array.isArray(page.specs)
       ? page.specs.map((s: { label: string; value: string }) => `${s.label}: ${s.value}`).join(", ")
@@ -40,48 +38,11 @@ Rules:
 - Check for vague language and suggest specifics
 - Max 8 suggestions`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
+    const _aiText = await callAI({ system: "You are a QA coach. Return only valid JSON array.", messages: [
           { role: "system", content: "You are a QA coach. Return only valid JSON array." },
           { role: "user", content: prompt },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "return_suggestions",
-            description: "Return QA suggestions for the report page",
-            parameters: {
-              type: "object",
-              properties: {
-                suggestions: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      severity: { type: "string", enum: ["error", "warning", "info"] },
-                      message: { type: "string" },
-                      category: { type: "string" },
-                    },
-                    required: ["severity", "message", "category"],
-                    additionalProperties: false,
-                  },
-                },
-              },
-              required: ["suggestions"],
-              additionalProperties: false,
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "return_suggestions" } },
-      }),
-    });
+        ], model: "google/gemini-3-flash-preview" });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) {
       const t = await response.text();

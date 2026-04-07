@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,9 +11,6 @@ serve(async (req) => {
 
   try {
     const { property_address, equipment, report_pages, property_type, year_built, sqft } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not set");
-
     const now = new Date();
     const month = now.getMonth();
     const season = month >= 2 && month <= 4 ? "spring" : month >= 5 && month <= 7 ? "summer" : month >= 8 && month <= 10 ? "fall" : "winter";
@@ -46,21 +44,11 @@ Generate predictions in JSON:
   "upcoming_milestones": ["milestone 1", "milestone 2"]
 }`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
-        messages: [
+    const _aiText = await callAI({ system: "You are a home maintenance prediction expert. Provide practical, actionable maintenance predictions.", messages: [
           { role: "system", content: "You are a home maintenance prediction expert. Provide practical, actionable maintenance predictions." },
           { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
-    });
+        ], model: "google/gemini-2.5-flash-lite", json: true });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) throw new Error(`AI error: ${response.status}`);
 

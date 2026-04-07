@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -11,9 +12,6 @@ serve(async (req) => {
 
   try {
     const { client_id, transcript, current_page } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     // Load context snapshot
@@ -47,52 +45,30 @@ serve(async (req) => {
       report_pages: reportPages.slice(0, 20),
     };
 
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content: `You are an intelligent home portal voice assistant for Hometown Builders Club. The client is speaking to navigate their home portal, ask questions about their home, or take actions.
+    const _vcText = await callAI({
+      system: `You are an intelligent home portal voice assistant for Hometown Builders Club. The client is speaking to navigate their home portal, ask questions about their home, or take actions.
 
 Available navigation tabs: ${context.available_tabs.join(", ")}
-Report sections: ${reportPages.map(p => `${p.title} (${p.page_key})`).join(", ")}
+Current page: ${current_page}
 
-Client's current page: ${current_page}
-
-Home context:
+Home Context Summary:
 ${JSON.stringify(context, null, 2)}
 
-Classify the voice command and respond appropriately. Be concise and helpful.`,
-          },
-          { role: "user", content: `Voice command: "${transcript}"` },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "handle_voice_command",
-            description: "Process a voice command from the client portal",
-            parameters: {
-              type: "object",
-              properties: {
-                type: { type: "string", enum: ["navigate", "answer", "action"] },
-                destination: { type: "string", description: "Tab name for navigation commands" },
-                sub_destination: { type: "string", description: "Section or page within the tab" },
-                answer_text: { type: "string", description: "Answer text for query commands" },
-                answer_source: { type: "string", description: "Where the answer data came from" },
-                action_type: { type: "string", description: "Type of action to perform" },
-                prefill_data: { type: "object", description: "Data to prefill for actions" },
-                spoken_response: { type: "string", description: "Natural language confirmation to speak back to the client. Keep it brief and conversational." },
-              },
-              required: ["type", "spoken_response"],
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "handle_voice_command" } },
-      }),
+Parse the user's voice command and return JSON: {
+  "intent": "navigate"|"answer_question"|"take_action"|"clarify",
+  "navigate_to": string|null,
+  "report_page_key": string|null,
+  "answer": string|null,
+  "action": { "type": string, "params": object }|null,
+  "clarification_needed": string|null,
+  "confidence": number
+}`,
+      prompt: transcript,
+      model: "google/gemini-2.5-flash",
+      json: true,
     });
+    const aiResp = { ok: true };
+    const aiJson = { choices: [{ message: { content: _vcText, tool_calls: null } }] };
 
     if (!aiResp.ok) {
       if (aiResp.status === 429) {

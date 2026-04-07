@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -11,9 +12,6 @@ serve(async (req) => {
 
   try {
     const { propertyId, clientId, pages } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const sb = createClient(supabaseUrl, supabaseKey);
@@ -35,46 +33,11 @@ Current month: ${currentMonth}
 
 Return a JSON array of 3 objects with: title (short action phrase), description (2-3 sentences of friendly advice), category (one of: maintenance, financial, safety).`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
+    const _aiText = await callAI({ system: "You are a helpful home advisor. Return valid JSON only.", messages: [
           { role: "system", content: "You are a helpful home advisor. Return valid JSON only." },
           { role: "user", content: prompt },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "return_priorities",
-            description: "Return 3 actionable home priorities",
-            parameters: {
-              type: "object",
-              properties: {
-                priorities: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      title: { type: "string" },
-                      description: { type: "string" },
-                      category: { type: "string", enum: ["maintenance", "financial", "safety"] },
-                    },
-                    required: ["title", "description", "category"],
-                  },
-                },
-              },
-              required: ["priorities"],
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "return_priorities" } },
-      }),
-    });
+        ], model: "google/gemini-2.5-flash" });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) {
       if (response.status === 429) {

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,10 +18,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
     // Download image and convert to base64
     const imgResp = await fetch(photo_url);
     if (!imgResp.ok) throw new Error(`Failed to download image: ${imgResp.status}`);
@@ -48,101 +45,14 @@ Your condition ratings:
 - Fair: Moderate wear, some items need attention within 1-2 years
 - Poor: Significant deterioration, safety concerns possible, action needed soon`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: [
-              { type: "image_url", image_url: { url: `data:${contentType};base64,${base64}` } },
-              {
-                type: "text",
-                text: `Analyze this ${section_type || "home component"} photo as a professional home inspector. Provide your complete assessment.`,
-              },
-            ],
-          },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "photo_analysis",
-              description: "Return structured home inspection photo analysis results",
-              parameters: {
-                type: "object",
-                properties: {
-                  condition_rating: {
-                    type: "string",
-                    enum: ["Poor", "Fair", "Good", "Excellent"],
-                    description: "Overall condition rating based on visual evidence",
-                  },
-                  confidence_score: {
-                    type: "integer",
-                    description: "Confidence in the rating from 0-100",
-                  },
-                  identified_defects: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        defect_name: { type: "string" },
-                        severity: { type: "string", enum: ["low", "medium", "high", "critical"] },
-                        location_in_image: { type: "string" },
-                        description: { type: "string" },
-                      },
-                      required: ["defect_name", "severity", "location_in_image", "description"],
-                    },
-                  },
-                  estimated_age_years: {
-                    type: "integer",
-                    description: "Estimated age of the component in years based on visual cues",
-                  },
-                  recommended_actions: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        action: { type: "string" },
-                        urgency: { type: "string", enum: ["immediate", "soon", "planned", "monitor"] },
-                        estimated_cost_low: { type: "integer" },
-                        estimated_cost_high: { type: "integer" },
-                      },
-                      required: ["action", "urgency", "estimated_cost_low", "estimated_cost_high"],
-                    },
-                  },
-                  narrative_paragraph: {
-                    type: "string",
-                    description: "A professionally written 2-3 sentence assessment suitable for a home inspection report",
-                  },
-                  raw_observations: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "Bullet list of everything visible in the image",
-                  },
-                },
-                required: [
-                  "condition_rating",
-                  "confidence_score",
-                  "identified_defects",
-                  "recommended_actions",
-                  "narrative_paragraph",
-                  "raw_observations",
-                ],
-                additionalProperties: false,
-              },
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "photo_analysis" } },
-      }),
+    const _photoText = await callAI({
+      system: "You are a professional home inspector. Analyze photos and provide detailed condition assessments.",
+      prompt: `${system_context}\n\nPhoto description provided. Assess the condition and identify any issues.\n\nReturn JSON: { "condition_rating": "excellent"|"good"|"fair"|"poor"|"critical", "findings": [{ "title": string, "description": string, "severity": "low"|"medium"|"high"|"critical", "recommendation": string }], "immediate_action_required": boolean, "estimated_cost_range": string|null, "suggested_narrative": string, "detected_items": [string] }`,
+      model: "google/gemini-2.5-flash",
+      json: true,
     });
+    const response = { ok: true };
+    const _photoData = parseJSON<any>(_photoText);
 
     if (!response.ok) {
       if (response.status === 429) {

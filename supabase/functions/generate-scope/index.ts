@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -15,9 +16,6 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
     const sb = createClient(supabaseUrl, supabaseKey);
 
     // Load project
@@ -137,43 +135,11 @@ Generate a complete, professional scope of work document. Return a JSON object w
   ]
 }`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
+    const _aiText = await callAI({ messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: contextParts.join("\n") },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "generate_scope",
-            description: "Generate a structured scope of work document",
-            parameters: {
-              type: "object",
-              properties: {
-                project_overview: { type: "object", properties: { property_address: { type: "string" }, project_title: { type: "string" }, scope_summary: { type: "string" }, estimated_timeline: { type: "string" }, project_reference: { type: "string" } }, required: ["property_address", "project_title", "scope_summary", "estimated_timeline", "project_reference"] },
-                materials_specification: { type: "array", items: { type: "object", properties: { category: { type: "string" }, material: { type: "string" }, specification: { type: "string" }, quantity: { type: "string" }, grade_standard: { type: "string" }, brand_recommendation: { type: "string" } }, required: ["category", "material", "specification"] } },
-                sequence_of_work: { type: "array", items: { type: "object", properties: { step_number: { type: "number" }, phase: { type: "string" }, description: { type: "string" }, duration: { type: "string" }, dependencies: { type: "string" }, notes: { type: "string" } }, required: ["step_number", "phase", "description"] } },
-                quality_standards: { type: "array", items: { type: "object", properties: { checkpoint: { type: "string" }, standard: { type: "string" }, tolerance: { type: "string" }, inspection_method: { type: "string" } }, required: ["checkpoint", "standard"] } },
-                exclusions: { type: "array", items: { type: "string" } },
-                assumptions: { type: "array", items: { type: "string" } },
-                permit_requirements: { type: "array", items: { type: "object", properties: { permit_type: { type: "string" }, required: { type: "boolean" }, notes: { type: "string" }, estimated_cost: { type: "string" } }, required: ["permit_type", "required"] } },
-                warranty_requirements: { type: "array", items: { type: "object", properties: { component: { type: "string" }, minimum_term: { type: "string" }, coverage: { type: "string" } }, required: ["component", "minimum_term"] } },
-                payment_schedule: { type: "array", items: { type: "object", properties: { milestone: { type: "string" }, percentage: { type: "number" }, description: { type: "string" } }, required: ["milestone", "percentage"] } },
-              },
-              required: ["project_overview", "materials_specification", "sequence_of_work", "quality_standards", "exclusions", "assumptions", "permit_requirements", "warranty_requirements", "payment_schedule"],
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "generate_scope" } },
-      }),
-    });
+        ], model: "google/gemini-2.5-flash" });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) {
       const errText = await response.text();

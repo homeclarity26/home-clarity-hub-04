@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -11,9 +12,6 @@ serve(async (req) => {
 
   try {
     const { document_id, client_id, file_url, file_type, user_hint } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -91,59 +89,29 @@ Only include arrays that have actual data extracted. Return empty arrays for cat
       ];
     }
 
-    // Call Lovable AI with tool calling for structured output
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages,
-        tools: [{
-          type: "function",
-          function: {
-            name: "extract_document_data",
-            description: "Extract structured data from a home document",
-            parameters: {
-              type: "object",
-              properties: {
-                document_type: { type: "string", enum: ["appliance_manual", "warranty", "permit", "inspection_report", "invoice", "insurance_policy", "service_record", "hoa_document", "survey", "deed", "other"] },
-                confidence_score: { type: "number" },
-                equipment_records: { type: "array", items: { type: "object", properties: { name: { type: "string" }, category: { type: "string" }, brand: { type: "string" }, model: { type: "string" }, serial_number: { type: "string" }, install_date: { type: "string" }, condition: { type: "string" }, notes: { type: "string" } } } },
-                warranty_records: { type: "array", items: { type: "object", properties: { item_name: { type: "string" }, manufacturer: { type: "string" }, model_number: { type: "string" }, serial_number: { type: "string" }, purchase_date: { type: "string" }, warranty_type: { type: "string" }, warranty_duration_months: { type: "number" }, expiration_date: { type: "string" }, coverage_description: { type: "string" }, support_phone: { type: "string" }, support_email: { type: "string" } } } },
-                permit_records: { type: "array", items: { type: "object", properties: { permit_number: { type: "string" }, permit_type: { type: "string" }, description: { type: "string" }, issue_date: { type: "string" }, expiration_date: { type: "string" }, issued_by: { type: "string" }, contractor_name: { type: "string" }, estimated_cost: { type: "number" }, status: { type: "string" } } } },
-                service_records: { type: "array", items: { type: "object", properties: { service_date: { type: "string" }, service_type: { type: "string" }, description: { type: "string" }, contractor_name: { type: "string" }, cost: { type: "number" }, invoice_number: { type: "string" } } } },
-                knowledge_facts: { type: "array", items: { type: "object", properties: { knowledge_type: { type: "string" }, subject: { type: "string" }, content: { type: "string" }, confidence: { type: "string" }, date_of_fact: { type: "string" } } } },
-                timeline_events: { type: "array", items: { type: "object", properties: { event_date: { type: "string" }, event_type: { type: "string" }, title: { type: "string" }, description: { type: "string" }, cost: { type: "number" }, contractor_name: { type: "string" } } } },
-                structural_specs: { type: "array", items: { type: "object", properties: { spec_category: { type: "string" }, specification_name: { type: "string" }, specification_value: { type: "string" }, unit: { type: "string" } } } },
-                findings: { type: "array", items: { type: "object", properties: { title: { type: "string" }, description: { type: "string" }, severity: { type: "string" } } } },
-                action_items: { type: "array", items: { type: "object", properties: { title: { type: "string" }, description: { type: "string" }, priority: { type: "string" } } } },
-              },
-              required: ["document_type", "confidence_score"],
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "extract_document_data" } },
-      }),
+    // Call Gemini directly for structured extraction
+    const _extractText = await callAI({
+      system: systemPrompt,
+      messages: isImage ? [
+        { role: "user", parts: [{ text: "Extract all information from this document image." }] }
+      ] : [
+        { role: "user", parts: [{ text: `Document URL: ${file_url}\nFile type: ${file_type}\n\nAnalyze this document and extract all structured data.` }] }
+      ],
+      model: "google/gemini-2.5-flash",
+      json: true,
     });
+    const aiResp = { ok: true };
+    const aiJson = { choices: [{ message: { content: _extractText } }] };
 
     if (!aiResp.ok) {
-      const errText = await aiResp.text();
+      const errText = "AI error";
       console.error("AI error:", aiResp.status, errText);
       await supabase.from("document_extractions").update({ extraction_status: "failed" }).eq("id", extractionId);
       return new Response(JSON.stringify({ error: "AI processing failed" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const aiJson = await aiResp.json();
-    const toolCall = aiJson.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
-      await supabase.from("document_extractions").update({ extraction_status: "failed" }).eq("id", extractionId);
-      return new Response(JSON.stringify({ error: "No extraction result" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    const result = JSON.parse(toolCall.function.arguments);
+    const result = parseJSON<any>(aiJson.choices[0].message.content);
     let itemsCreated = 0;
     const equipmentIdsCreated: string[] = [];
 

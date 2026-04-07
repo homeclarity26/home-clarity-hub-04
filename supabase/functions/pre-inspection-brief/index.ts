@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,10 +11,6 @@ serve(async (req) => {
 
   try {
     const { propertyAddress, yearBuilt, sqft, propertyType, relationshipType, discoveryNotes, clientIntelligenceSummary } = await req.json();
-
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
     const systemPrompt = `You are an expert home inspector preparing for a property visit. Generate a comprehensive pre-inspection briefing document that helps the inspector know what to look for based on the property details.
 
 Return a JSON object with:
@@ -35,37 +32,11 @@ ${clientIntelligenceSummary ? `\nClient Intelligence: ${clientIntelligenceSummar
 
 Generate a pre-inspection briefing for this property.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
+    const _aiText = await callAI({ messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: prompt },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "generate_briefing",
-            description: "Generate a pre-inspection briefing document",
-            parameters: {
-              type: "object",
-              properties: {
-                summary: { type: "string" },
-                focusAreas: { type: "array", items: { type: "object", properties: { area: { type: "string" }, reason: { type: "string" }, priority: { type: "string", enum: ["high", "medium", "low"] } }, required: ["area", "reason", "priority"] } },
-                commonIssues: { type: "array", items: { type: "string" } },
-                questionsForOwner: { type: "array", items: { type: "string" } },
-                equipmentToCheck: { type: "array", items: { type: "object", properties: { name: { type: "string" }, expectedAge: { type: "string" }, concern: { type: "string" } }, required: ["name", "expectedAge", "concern"] } },
-                safetyFlags: { type: "array", items: { type: "string" } },
-              },
-              required: ["summary", "focusAreas", "commonIssues", "questionsForOwner", "equipmentToCheck", "safetyFlags"],
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "generate_briefing" } },
-      }),
-    });
+        ], model: "google/gemini-3-flash-preview" });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) {
       const t = await response.text();

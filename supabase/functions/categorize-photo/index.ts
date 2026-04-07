@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,10 +14,6 @@ serve(async (req) => {
     if (!imageBase64 && !imageUrl) {
       return new Response(JSON.stringify({ error: "imageBase64 or imageUrl required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
     const categories = ["exterior", "interior", "system", "damage", "progress", "before", "after", "other"];
 
     const systemPrompt = `You are an expert home inspector analyzing photos. Given a home inspection photo, determine:
@@ -30,40 +27,13 @@ Available report pages: ${(availablePages || []).map((p: any) => `${p.slug} (${p
       ? { type: "image_url", image_url: { url: `data:${mimeType || "image/jpeg"};base64,${imageBase64}` } }
       : { type: "image_url", image_url: { url: imageUrl } };
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: [
-            imageContent,
-            { type: "text", text: "Categorize this photo. Return the category, room/area, pageSlug (if applicable), and tags." },
-          ]},
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "categorize_photo",
-            description: "Categorize a home photo",
-            parameters: {
-              type: "object",
-              properties: {
-                category: { type: "string", enum: categories },
-                room_or_area: { type: "string", description: "e.g. Kitchen, Roof, HVAC Room" },
-                pageSlug: { type: "string", description: "Report page slug if applicable" },
-                description: { type: "string" },
-                tags: { type: "array", items: { type: "string" } },
-                confidence: { type: "string", enum: ["high", "medium", "low"] },
-              },
-              required: ["category", "room_or_area", "description", "confidence"],
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "categorize_photo" } },
-      }),
+    const _aiText = await callAI({
+      system: systemPrompt,
+      prompt: "Categorize this photo. Return the category, room/area, pageSlug (if applicable), and tags as JSON.",
+      model: "google/gemini-2.5-flash",
+      json: true,
     });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) {
       if (response.status === 429) return new Response(JSON.stringify({ error: "Rate limited" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });

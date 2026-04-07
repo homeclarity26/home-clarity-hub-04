@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAI, parseJSON } from "../_shared/ai-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,9 +11,6 @@ serve(async (req) => {
 
   try {
     const { client_name, property_address, report_pages, equipment, projects, invoices } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not set");
-
     const prompt = `Generate a comprehensive client briefing for a home stewardship advisor who is about to meet with this client.
 
 Client: ${client_name}
@@ -41,21 +39,11 @@ Create a briefing in JSON format:
   "summary": "2-3 sentence executive summary"
 }`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
-        messages: [
+    const _aiText = await callAI({ system: "You are a home stewardship business advisor. Create concise, actionable meeting briefs.", messages: [
           { role: "system", content: "You are a home stewardship business advisor. Create concise, actionable meeting briefs." },
           { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
-    });
+        ], model: "google/gemini-2.5-flash-lite", json: true });
+    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) throw new Error(`AI error: ${response.status}`);
 
