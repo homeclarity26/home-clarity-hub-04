@@ -75,7 +75,8 @@ const MyHomeStory = ({ propertyId, propertyName = "Your Home" }: Props) => {
       const { error: ue } = await supabase.storage.from("report-images").upload(path, file);
       if (ue) throw ue;
 
-      const { data: url } = supabase.storage.from("report-images").getPublicUrl(path);
+      const { data: signedStoryData } = await supabase.storage.from("report-images").createSignedUrl(path, 3600);
+      const storyFileUrl = signedStoryData?.signedUrl || path;
 
       // Save file record
       await supabase.from("client_files").insert({
@@ -88,7 +89,7 @@ const MyHomeStory = ({ propertyId, propertyName = "Your Home" }: Props) => {
       // Trigger AI processing
       toast.info("Reading document...");
       const { data, error } = await supabase.functions.invoke("process-document", {
-        body: { client_id: propertyId, file_url: url.publicUrl, file_type: file.type },
+        body: { client_id: propertyId, file_url: storyFileUrl, file_type: file.type },
       });
 
       if (error) throw error;

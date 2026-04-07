@@ -66,13 +66,14 @@ const ProjectPhotoGallery = ({ open, onOpenChange, projectId, projectTitle }: Pr
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
+        const { data: signedGalleryData } = await supabase.storage
           .from("project-photos")
-          .getPublicUrl(path);
+          .createSignedUrl(path, 3600);
+        const galleryPhotoUrl = signedGalleryData?.signedUrl || path;
 
         await supabase.from("project_photos").insert({
           project_id: projectId,
-          photo_url: publicUrl,
+          photo_url: galleryPhotoUrl,
           photo_stage: activePhase,
           uploaded_by: "client",
           caption: null,

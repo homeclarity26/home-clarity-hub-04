@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Pencil, ArrowLeft, DollarSign, CreditCard, FileText, Sparkles, Loader2, Send, X, MessageSquareText, MessageSquare, FileSignature, Receipt } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import InvoiceApprovalQueue from "@/components/admin/InvoiceApprovalQueue";
+import InvoiceNotesPanel from "@/components/admin/InvoiceNotesPanel";
 import ChangeOrderDocument from "@/components/admin/ChangeOrderDocument";
 import MasterFinancialLedger from "@/components/admin/MasterFinancialLedger";
 
@@ -643,12 +644,13 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
           </Card>
         </div>
 
-        {inv.notes && (
-          <Card className="p-4">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">Notes</p>
-            <p className="text-sm font-sans text-muted-foreground">{inv.notes}</p>
-          </Card>
-        )}
+        <Card className="p-4">
+          <InvoiceNotesPanel
+            invoiceId={inv.id}
+            initialNotes={inv.notes}
+            onUpdate={loadData}
+          />
+        </Card>
 
         {/* Line Items */}
         <div>

@@ -25,8 +25,9 @@ const DocumentsPhotosTab = ({ projectId }: Props) => {
     const path = `${projectId}/${Date.now()}.${file.name.split(".").pop()}`;
     const { error: ue } = await supabase.storage.from("project-photos").upload(path, file);
     if (ue) { toast.error("Upload failed"); return; }
-    const { data: url } = supabase.storage.from("project-photos").getPublicUrl(path);
-    const { error } = await supabase.from("project_files").insert({ project_id: projectId, file_name: file.name, file_url: url.publicUrl, file_size: `${(file.size / 1024).toFixed(0)} KB`, file_type: file.type, category: file.type.startsWith("image/") ? "photos" : "misc", uploaded_by: user?.id || null });
+    const { data: signedFileData } = await supabase.storage.from("project-photos").createSignedUrl(path, 3600);
+    const signedFileUrl = signedFileData?.signedUrl || path;
+    const { error } = await supabase.from("project_files").insert({ project_id: projectId, file_name: file.name, file_url: signedFileUrl, file_size: `${(file.size / 1024).toFixed(0)} KB`, file_type: file.type, category: file.type.startsWith("image/") ? "photos" : "misc", uploaded_by: user?.id || null });
     if (error) { toast.error("Save failed"); return; }
     await logProjectActivity(projectId, "file_uploaded", `"${file.name}" uploaded`, user?.id);
     qc.invalidateQueries({ queryKey: ["project-files", projectId] });

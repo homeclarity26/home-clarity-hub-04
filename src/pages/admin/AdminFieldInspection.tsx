@@ -174,7 +174,8 @@ const AdminFieldInspection = () => {
         .upload(fileName, file, { contentType: file.type });
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from("report-images").getPublicUrl(fileName);
+      const { data: signedInspData } = await supabase.storage.from("report-images").createSignedUrl(fileName, 3600);
+      const inspPhotoUrl = signedInspData?.signedUrl || fileName;
 
       // Get current GPS for photo
       let photoLat: number | undefined;
@@ -186,13 +187,13 @@ const AdminFieldInspection = () => {
 
       await supabase.from("inspection_photos" as any).insert({
         inspection_id: inspectionId,
-        photo_url: urlData.publicUrl,
+        photo_url: inspPhotoUrl,
         report_page_id: selectedPageForPhoto || null,
         gps_lat: photoLat,
         gps_lng: photoLng,
       } as any);
 
-      setPhotos((prev) => [...prev, { url: urlData.publicUrl, caption: "", pageId: selectedPageForPhoto }]);
+      setPhotos((prev) => [...prev, { url: inspPhotoUrl, caption: "", pageId: selectedPageForPhoto }]);
       toast.success("Photo captured");
     } catch (err: any) {
       toast.error(`Upload failed: ${err.message}`);

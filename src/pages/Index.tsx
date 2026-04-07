@@ -28,6 +28,7 @@ import PropertySelector from "@/components/PropertySelector";
 import HelpCenterPanel from "@/components/help/HelpCenterPanel";
 import ClientOnboardingModal from "@/components/help/ClientOnboardingModal";
 import { useClientPortal } from "@/hooks/useClientPortal";
+import PortalSidebar from "@/components/portal/PortalSidebar";
 import { usePortalTracking } from "@/hooks/usePortalTracking";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -271,6 +272,13 @@ const Index = () => {
           </div>
         </div>
       )}
+      <PortalSidebar
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        unreadMessages={undefined}
+        propertyName={propertyName}
+      />
+
       <Header
         activeTab={activeTab}
         onTabChange={handleTabChange}
@@ -278,7 +286,7 @@ const Index = () => {
         propertyId={portal.property?.id}
       />
 
-      <main className={`${isEditLink && canEdit ? "pt-[calc(2rem+36px)]" : "pt-20"} pb-16`}>
+      <main className={`${isEditLink && canEdit ? "pt-[calc(2rem+36px)]" : "pt-20"} md:pl-[188px] pb-16`}>
         <div className={`transition-opacity duration-300 ${activeTab === "home" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "home" && (
           <HomeTab

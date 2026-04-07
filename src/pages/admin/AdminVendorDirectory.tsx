@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Search, Star, Loader2, Phone, Mail, MapPin, Clock } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
+import VendorPerformanceCard from "@/components/admin/VendorPerformanceCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -168,6 +169,9 @@ const AdminVendorDirectory = () => {
             </div>
             <div><Label>Notes</Label><Textarea value={form.notes || ""} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
             <Button onClick={saveVendor} className="w-full">Save Vendor</Button>
+            {form.id && (
+              <VendorPerformanceCard vendorId={form.id} vendorName={form.company_name || "Vendor"} />
+            )}
           </div>
         </DialogContent>
       </Dialog>

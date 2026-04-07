@@ -43,11 +43,11 @@ const ImageUploader = ({ onUpload, multiple = true }: ImageUploaderProps) => {
           continue;
         }
 
-        const { data: publicUrl } = supabase.storage
+        const { data: signedImgData } = await supabase.storage
           .from("report-images")
-          .getPublicUrl(filePath);
+          .createSignedUrl(filePath, 3600);
 
-        uploadedUrls.push(publicUrl.publicUrl);
+        if (signedImgData?.signedUrl) uploadedUrls.push(signedImgData.signedUrl);
       }
 
       if (uploadedUrls.length > 0) {

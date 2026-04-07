@@ -75,6 +75,7 @@ import PhotoManager from "@/components/admin/PhotoManager";
 import PredictiveMaintenanceTab from "@/components/admin/PredictiveMaintenanceTab";
 import DigitalTwinTab from "@/components/admin/DigitalTwinTab";
 import ClientReferralsTab from "@/components/admin/ClientReferralsTab";
+import ReportBuildProgress from "@/components/admin/ReportBuildProgress";
 
 // Workspace components
 import WorkspaceContextCard from "@/components/admin/workspace/WorkspaceContextCard";
@@ -107,6 +108,12 @@ const ReportTabContent = ({ client, reportPages, pdfData }: { client: any; repor
 
   return (
     <div className="space-y-4">
+      {client.reportId && (
+        <ReportBuildProgress
+          reportId={client.reportId}
+          propertyId={client.propertyId}
+        />
+      )}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
           <button onClick={() => setEditorMode("pages")} className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${editorMode === "pages" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>Page Manager</button>

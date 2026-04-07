@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus, Loader2, Download, BarChart3, Sparkles } from "lucide-react";
 import BulkClientImport from "@/components/admin/BulkClientImport";
+import ClientCSVExport from "@/components/admin/ClientCSVExport";
 import { useNavigate } from "react-router-dom";
 import AdminHeader from "@/components/admin/AdminHeader";
 import ClientTable from "@/components/admin/ClientTable";
@@ -65,6 +66,7 @@ const AdminClients = () => {
               <TabsTrigger value="bulk" className="text-xs font-sans gap-1"><Sparkles className="w-3.5 h-3.5" />Bulk Generate</TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2">
+              <ClientCSVExport />
               <BulkClientImport />
               <Button onClick={() => navigate("/admin/clients/new")} className="gap-1.5 font-sans" size="sm">
                 <Plus className="w-4 h-4" />New Client

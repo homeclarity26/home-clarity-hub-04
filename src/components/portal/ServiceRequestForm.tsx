@@ -48,8 +48,8 @@ const ServiceRequestForm = ({ propertyId, onSubmitted }: ServiceRequestFormProps
         const path = `${propertyId}/service-requests/${Date.now()}-${photo.name}`;
         const { error } = await supabase.storage.from("report-images").upload(path, photo);
         if (!error) {
-          const { data } = supabase.storage.from("report-images").getPublicUrl(path);
-          photoUrls.push(data.publicUrl);
+          const { data: signedReqData } = await supabase.storage.from("report-images").createSignedUrl(path, 3600);
+          if (signedReqData?.signedUrl) photoUrls.push(signedReqData.signedUrl);
         }
       }
 

@@ -64,6 +64,8 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
   const kickoffRef = useRef<HTMLTextAreaElement>(null);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
   const [interviewOpen, setInterviewOpen] = useState(false);
+  const [showHCRImport, setShowHCRImport] = useState(false);
+  const [hcrSelectedPages, setHcrSelectedPages] = useState<Set<string>>(new Set());
 
   const handleDownloadDocx = async (estimateId: string, title: string) => {
     setDownloadingDocx(true);
@@ -121,6 +123,26 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
       const { data } = await (supabase.from("services") as any).select("*").eq("is_active", true).order("name");
       return data || [];
     },
+  });
+
+  const { data: reportData } = useQuery({
+    queryKey: ['active-report', propertyId],
+    queryFn: async () => {
+      const { data } = await supabase.from('reports').select('id').eq('property_id', propertyId).order('created_at', { ascending: false }).limit(1).maybeSingle();
+      return data;
+    },
+    enabled: !!propertyId,
+  });
+
+  const reportId = reportData?.id;
+
+  const { data: hcrReportPages = [] } = useQuery({
+    queryKey: ['report-pages-for-import', reportId],
+    queryFn: async () => {
+      const { data } = await (supabase.from('report_pages') as any).select('*').eq('report_id', reportId).order('page_order');
+      return data || [];
+    },
+    enabled: !!reportId && showHCRImport,
   });
 
   const addLine = () => setLineItems([...lineItems, { service_id: null, description: "", quantity: "1", unit_price: "0" }]);
@@ -597,9 +619,14 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
           <h3 className="text-base font-sans font-semibold text-foreground">Estimates & Proposals</h3>
           <Badge variant="outline" className="text-[10px] font-mono">{estimates.length}</Badge>
         </div>
-        <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={() => { resetForm(); addLine(); setCreateOpen(true); }}>
-          <Plus className="w-3.5 h-3.5" />Manual Estimate
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={() => { setHcrSelectedPages(new Set()); setShowHCRImport(true); }}>
+            <FileText className="w-3 h-3" />Import from HCR
+          </Button>
+          <Button size="sm" variant="outline" className="gap-1.5 text-xs font-sans" onClick={() => { resetForm(); addLine(); setCreateOpen(true); }}>
+            <Plus className="w-3.5 h-3.5" />Manual Estimate
+          </Button>
+        </div>
       </div>
 
       {/* AI Interview — always visible */}
@@ -755,6 +782,74 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)} className="font-sans">Cancel</Button>
             <Button onClick={createEstimate} disabled={lineItems.length === 0} className="font-sans">Create Estimate</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* HCR Import Dialog */}
+      <Dialog open={showHCRImport} onOpenChange={setShowHCRImport}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle className="font-sans">Import from HCR Report</DialogTitle></DialogHeader>
+          <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+            {!reportId ? (
+              <p className="text-sm font-sans text-muted-foreground">No HCR report found for this property.</p>
+            ) : hcrReportPages.length === 0 ? (
+              <p className="text-sm font-sans text-muted-foreground">No report pages found.</p>
+            ) : (
+              hcrReportPages.map((page: any) => (
+                <div key={page.id} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
+                  <Checkbox
+                    id={`hcr-page-${page.id}`}
+                    checked={hcrSelectedPages.has(page.id)}
+                    onCheckedChange={(checked) => {
+                      const next = new Set(hcrSelectedPages);
+                      if (checked) next.add(page.id); else next.delete(page.id);
+                      setHcrSelectedPages(next);
+                    }}
+                  />
+                  <label htmlFor={`hcr-page-${page.id}`} className="text-sm font-sans cursor-pointer">
+                    {page.page_name || `Page ${page.page_order + 1}`}
+                  </label>
+                </div>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowHCRImport(false)} className="font-sans">Cancel</Button>
+            <Button
+              className="font-sans"
+              disabled={hcrSelectedPages.size === 0}
+              onClick={async () => {
+                const selected = hcrReportPages.filter((p: any) => hcrSelectedPages.has(p.id));
+                const scopeSections = selected.map((page: any) => ({
+                  title: page.page_name || `Page ${page.page_order + 1}`,
+                  description: page.narrative || '',
+                  line_items: [],
+                }));
+                // Create a new estimate with these scope sections
+                const subtotal = 0;
+                const { data: newEst, error } = await (supabase.from('estimates') as any).insert({
+                  property_id: propertyId,
+                  admin_id: user?.id,
+                  title: 'Imported from HCR',
+                  notes: '',
+                  subtotal,
+                  discount_amount: 0,
+                  discount_type: 'dollar',
+                  tax: 0,
+                  total: 0,
+                  status: 'draft',
+                  proposal_scope_sections: scopeSections,
+                }).select().single();
+                if (error) { toast.error('Failed to create estimate'); return; }
+                await qc.invalidateQueries({ queryKey: ['estimates', propertyId] });
+                setShowHCRImport(false);
+                setSelectedId(newEst?.id || null);
+                toast.success(`Imported ${selected.length} page${selected.length !== 1 ? 's' : ''} as proposal scope`);
+              }}
+            >
+              Import {hcrSelectedPages.size > 0 ? `(${hcrSelectedPages.size})` : ''}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
