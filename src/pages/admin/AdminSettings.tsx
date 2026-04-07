@@ -19,6 +19,7 @@ import ServicesLibrary from "@/components/admin/ServicesLibrary";
 import PushNotificationSettings from "@/components/admin/PushNotificationSettings";
 import ReferralSettings from "@/components/admin/ReferralSettings";
 import RecurringPlanManager from "@/components/admin/RecurringPlanManager";
+import ApiWebhookSettings from "@/components/admin/ApiWebhookSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -149,6 +150,7 @@ const AdminSettings = () => {
             <TabsTrigger value="audit" className="font-sans text-xs">Audit Log</TabsTrigger>
             <TabsTrigger value="referrals" className="font-sans text-xs">Referrals</TabsTrigger>
             <TabsTrigger value="recurring" className="font-sans text-xs">Recurring Plans</TabsTrigger>
+            <TabsTrigger value="api" className="font-sans text-xs">API &amp; Webhooks</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-6">
@@ -381,6 +383,10 @@ const AdminSettings = () => {
 
           <TabsContent value="recurring">
             <RecurringPlanManager />
+          </TabsContent>
+
+          <TabsContent value="api">
+            <ApiWebhookSettings />
           </TabsContent>
         </Tabs>
       </div>

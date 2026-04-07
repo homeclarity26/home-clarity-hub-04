@@ -1,6 +1,6 @@
 import { useEffect, lazy, Suspense, Component, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, FileText, HelpCircle, CheckCircle, BookOpen, AlertTriangle, Plus, Loader2, DollarSign, TrendingUp, CreditCard, MessageSquare, UserPlus, Clock, Command } from "lucide-react";
+import { Users, FileText, HelpCircle, CheckCircle, BookOpen, AlertTriangle, Plus, Loader2, DollarSign, TrendingUp, CreditCard, MessageSquare, UserPlus, Clock, Command, LayoutDashboard } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,8 @@ import ServiceRequestsManager from "@/components/admin/ServiceRequestsManager";
 import DailyBrief from "@/components/admin/DailyBrief";
 import CRMDashboardWidget from "@/components/admin/CRMDashboardWidget";
 import SubscriptionDashboardWidget from "@/components/admin/SubscriptionDashboardWidget";
+import DashboardWidgetEditor, { WidgetState } from "@/components/admin/DashboardWidgetEditor";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAdminClients, useAdminStats, useAdminActivityLog, useClientsNeedingAttention } from "@/hooks/useAdminData";
 import { useWeeklyTimeEntries } from "@/hooks/useTimeTracking";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,6 +59,14 @@ const AdminDashboard = () => {
   const { data: attentionClients } = useClientsNeedingAttention();
   const { data: weeklyTime } = useWeeklyTimeEntries();
   const [referenceOpen, setReferenceOpen] = useState(false);
+  const [widgetConfig, setWidgetConfig] = useState<WidgetState[]>([]);
+  const [widgetSheetOpen, setWidgetSheetOpen] = useState(false);
+
+  const isWidgetVisible = (key: string) => {
+    if (widgetConfig.length === 0) return true; // default all visible
+    const w = widgetConfig.find((w) => w.key === key);
+    return w ? w.visible : true;
+  };
 
   const isLoading = statsLoading || clientsLoading;
 
@@ -84,6 +94,32 @@ const AdminDashboard = () => {
     <div>
       <AdminHeader breadcrumbs={[{ label: "Dashboard" }]} />
       <div className="p-6 space-y-6 max-w-7xl">
+
+        {/* Widget Customization Sheet */}
+        <div className="flex justify-end">
+          <Sheet open={widgetSheetOpen} onOpenChange={setWidgetSheetOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="font-sans gap-2 text-xs">
+                <LayoutDashboard className="w-4 h-4" />
+                Customize Dashboard
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[420px] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle className="font-serif text-base">Customize Dashboard</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4">
+                <DashboardWidgetEditor
+                  currentWidgets={widgetConfig}
+                  onSave={(widgets) => {
+                    setWidgetConfig(widgets);
+                    setWidgetSheetOpen(false);
+                  }}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
 
         {/* ═══ ZONE 1: BRIEFING ═══ */}
         <WidgetErrorBoundary name="DailyBrief">
