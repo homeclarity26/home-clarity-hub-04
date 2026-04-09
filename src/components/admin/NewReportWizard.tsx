@@ -58,11 +58,11 @@ interface PageTemplate {
 }
 
 const groupLabels: Record<string, string> = {
-  information: "📋 Information",
-  exterior: "🏠 Exterior",
-  interior: "🏡 Interior",
-  systems: "⚙️ Systems",
-  strategy: "📈 Strategy",
+  information: "FM — Information",
+  exterior: "EX — Exterior",
+  interior: "IN — Interior",
+  systems: "SY — Systems",
+  strategy: "SP — Strategy",
 };
 
 const subGroupLabels: Record<string, string> = {

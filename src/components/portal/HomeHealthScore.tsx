@@ -16,11 +16,11 @@ const CONDITION_SCORES: Record<string, number> = {
 };
 
 const CHAPTER_MAP: Record<string, { label: string; icon: string }> = {
-  exterior: { label: "Exterior", icon: "🏠" },
-  interior: { label: "Interior", icon: "🪑" },
-  systems: { label: "Systems", icon: "⚙️" },
-  safety: { label: "Safety", icon: "🛡️" },
-  information: { label: "Overview", icon: "📋" },
+  exterior: { label: "Exterior", icon: "EX" },
+  interior: { label: "Interior", icon: "IN" },
+  systems: { label: "Systems", icon: "SY" },
+  safety: { label: "Safety", icon: "SF" },
+  information: { label: "Overview", icon: "FM" },
 };
 
 interface ChapterScore {
