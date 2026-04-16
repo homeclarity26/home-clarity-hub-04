@@ -65,6 +65,10 @@ const TOOLS: ToolDef[] = [
   { name: "mark_invoice_paid", description: "Mark an invoice as paid.", parameters: { type: "object", properties: { invoice_id: { type: "string" }, payment_method: { type: "string" }, notes: { type: "string" } }, required: ["invoice_id"] }, allowedRoles: ["creator"] },
   { name: "send_invoice", description: "Send an invoice to the client.", parameters: { type: "object", properties: { invoice_id: { type: "string" } }, required: ["invoice_id"] }, requiresConfirmation: true, allowedRoles: ["creator"] },
   { name: "void_invoice", description: "Void/cancel an invoice.", parameters: { type: "object", properties: { invoice_id: { type: "string" } }, required: ["invoice_id"] }, requiresConfirmation: true, allowedRoles: ["creator"] },
+  { name: "send_invoice_reminder", description: "Send a payment reminder for a specific invoice. Logs the reminder to the property timeline.", parameters: { type: "object", properties: { invoice_id: { type: "string" }, message: { type: "string", description: "Optional custom reminder message" } }, required: ["invoice_id"] }, requiresConfirmation: true, allowedRoles: ["creator"] },
+  { name: "explain_invoice", description: "Generate a plain-English explanation of what an invoice covers, including line items and project context.", parameters: { type: "object", properties: { invoice_id: { type: "string" } }, required: ["invoice_id"] }, allowedRoles: ["creator", "client"] },
+  { name: "get_overdue_invoices", description: "Get all overdue invoices with days overdue and amounts. Optionally filter by client.", parameters: { type: "object", properties: { client_id: { type: "string" } } }, allowedRoles: ["creator"] },
+  { name: "generate_draw_schedule", description: "Create a set of draw invoices for a project, splitting the total into equal draws with specified interval.", parameters: { type: "object", properties: { project_id: { type: "string" }, client_id: { type: "string" }, total_amount: { type: "number" }, num_draws: { type: "number" }, first_due_date: { type: "string" }, interval_days: { type: "number", description: "Days between draws, default 30" } }, required: ["project_id", "client_id", "total_amount", "num_draws", "first_due_date"] }, requiresConfirmation: true, allowedRoles: ["creator"] },
   { name: "get_financial_summary", description: "Get financial summary: total billed, collected, outstanding, overdue. Optional period filter.", parameters: { type: "object", properties: { client_id: { type: "string" }, period: { type: "string", enum: ["7d","30d","90d","ytd","all"] } } }, allowedRoles: ["creator"] },
 
   // ── GROUP F: VENDORS / TRADE PARTNERS ──
@@ -152,6 +156,7 @@ const TOOLS: ToolDef[] = [
   { name: "client_update_goal", description: "Update or complete a home goal.", parameters: { type: "object", properties: { goal_id: { type: "string" }, fields: { type: "object" } }, required: ["goal_id", "fields"] }, allowedRoles: ["client"] },
   { name: "client_get_maintenance_due", description: "Get equipment and items with maintenance due this month.", parameters: { type: "object", properties: { property_id: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["client"] },
   { name: "client_submit_referral", description: "Submit a friend referral.", parameters: { type: "object", properties: { property_id: { type: "string" }, friend_name: { type: "string" }, friend_email: { type: "string" }, friend_phone: { type: "string" }, notes: { type: "string" } }, required: ["property_id", "friend_name"] }, allowedRoles: ["client"] },
+  { name: "client_explain_invoice", description: "Get a plain-English explanation of a specific invoice.", parameters: { type: "object", properties: { invoice_id: { type: "string" } }, required: ["invoice_id"] }, allowedRoles: ["client"] },
 ];
 
 // ─── TOOL HANDLERS ───
@@ -478,6 +483,65 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
       case "void_invoice": {
         await supabase.from("invoices").update({ status: "cancelled" }).eq("id", params.invoice_id);
         return { success: true, result: { message: "Invoice voided" }, entity_id: params.invoice_id, entity_type: "invoice" };
+      }
+
+      case "send_invoice_reminder": {
+        const { data: inv } = await supabase.from("invoices").select("*").eq("id", params.invoice_id).single();
+        if (!inv) throw new Error("Invoice not found");
+        await (supabase.from("property_timeline" as any) as any).insert({
+          property_id: inv.property_id,
+          event_type: "invoice_reminder",
+          title: `Payment reminder sent for ${inv.title || inv.invoice_number || "invoice"}`,
+          description: params.message || `Reminder: $${inv.balance_due} due ${inv.due_date}`,
+          created_by: userId,
+        });
+        return { success: true, result: { message: `Reminder logged for invoice ${inv.invoice_number || inv.id}: $${inv.balance_due} due ${inv.due_date}` }, entity_id: params.invoice_id, entity_type: "invoice" };
+      }
+
+      case "explain_invoice":
+      case "client_explain_invoice": {
+        const { data: inv } = await supabase.from("invoices").select("*").eq("id", params.invoice_id).single();
+        if (!inv) throw new Error("Invoice not found");
+        const { data: items } = await (supabase.from("invoice_line_items" as any) as any).select("*").eq("invoice_id", params.invoice_id).order("sort_order");
+        const { data: payments } = await (supabase.from("payments_posted" as any) as any).select("*").eq("invoice_id", params.invoice_id);
+        const lineItemsText = (items || []).map((li: any) => `- ${li.description}: ${li.quantity} x $${li.unit_price} = $${li.total}`).join("\n");
+        const paymentsText = (payments || []).map((p: any) => `- $${p.amount} paid on ${p.payment_date} via ${p.method}`).join("\n");
+        return { success: true, result: { invoice: { number: inv.invoice_number, title: inv.title, total: inv.total, balance_due: inv.balance_due, status: inv.status, due_date: inv.due_date, line_items: lineItemsText || "No line items", payments_made: paymentsText || "No payments yet", notes: inv.notes } } };
+      }
+
+      case "get_overdue_invoices": {
+        let query = supabase.from("invoices").select("id, invoice_number, title, total, balance_due, due_date, status, property_id").in("status", ["overdue", "sent"]);
+        if (params.client_id) query = query.eq("property_id", params.client_id);
+        const { data } = await query;
+        const now = Date.now();
+        const overdue = (data || []).filter((inv: any) => inv.due_date && new Date(inv.due_date).getTime() < now).map((inv: any) => ({
+          ...inv,
+          days_overdue: Math.floor((now - new Date(inv.due_date).getTime()) / 86400000),
+        }));
+        return { success: true, result: { overdue_invoices: overdue, count: overdue.length, total_overdue_amount: overdue.reduce((s: number, i: any) => s + Number(i.balance_due || 0), 0) } };
+      }
+
+      case "generate_draw_schedule": {
+        const interval = params.interval_days || 30;
+        const perDraw = Math.round((params.total_amount / params.num_draws) * 100) / 100;
+        const draws: any[] = [];
+        for (let i = 0; i < params.num_draws; i++) {
+          const dueDate = new Date(params.first_due_date);
+          dueDate.setDate(dueDate.getDate() + (i * interval));
+          const { data: inv, error } = await supabase.from("invoices").insert({
+            property_id: params.client_id,
+            title: `Draw ${i + 1} of ${params.num_draws}`,
+            description: `Project draw payment ${i + 1}/${params.num_draws}`,
+            type: "invoice",
+            subtotal: perDraw, tax: 0, total: perDraw, balance_due: perDraw, amount: perDraw,
+            status: "draft",
+            due_date: dueDate.toISOString().split("T")[0],
+            issue_date: new Date().toISOString().split("T")[0],
+          }).select().single();
+          if (error) throw error;
+          draws.push({ draw: i + 1, invoice_id: inv.id, amount: perDraw, due_date: dueDate.toISOString().split("T")[0] });
+        }
+        return { success: true, result: { message: `Created ${params.num_draws} draw invoices totaling $${params.total_amount}`, draws } };
       }
 
       case "get_financial_summary": {
