@@ -98,7 +98,7 @@ const PayNowButton = ({ invoice, fullWidth = false }: { invoice: Invoice; fullWi
     <Button
       onClick={handlePay}
       disabled={loading}
-      className={`gap-2 font-sans bg-[#C4A265] hover:bg-[#C4A265]/90 text-white ${fullWidth ? "w-full" : ""}`}
+      className={`gap-2 font-sans bg-accent hover:bg-accent/90 text-white ${fullWidth ? "w-full" : ""}`}
     >
       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
       {loading ? "Redirecting..." : `Pay ${fmt(Number(invoice.balance_due))} Now`}
@@ -311,7 +311,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
     return (
       <div>
         <section className="text-center py-8 md:py-12 px-6 md:px-20 max-w-4xl mx-auto">
-          <button onClick={() => setSelectedInvoice(null)} className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] hover:text-[#C4A265]/80 transition-colors mb-4 inline-block">
+          <button onClick={() => setSelectedInvoice(null)} className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent hover:text-accent/80 transition-colors mb-4 inline-block">
             ← Back to Payments
           </button>
           <h1 className="font-display text-2xl md:text-3xl text-foreground mb-2">
@@ -324,7 +324,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
         <div className="max-w-[900px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-8">
           {/* AI Summary */}
           {(aiSummary || summaryLoading) && (
-            <div className="bg-[#C4A265]/10 border border-[#C4A265]/30 rounded-lg p-5">
+            <div className="bg-accent/10 border border-accent/30 rounded-lg p-5">
               {summaryLoading ? (
                 <p className="font-sans text-sm text-muted-foreground animate-pulse">Generating summary...</p>
               ) : (
@@ -350,7 +350,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
           {/* Line Items */}
           {lis.length > 0 && (
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Line Items</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Line Items</p>
               <div className={`${cardBase} cursor-default`}>
                 <table className="w-full border-collapse">
                   <thead>
@@ -379,7 +379,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
           {/* Change Orders */}
           {cos.length > 0 && (
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Change Orders</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Change Orders</p>
               <div className="space-y-2">
                 {cos.map(co => (
                   <div key={co.id} className={`${cardBase} cursor-default flex-row items-center justify-between`}>
@@ -397,7 +397,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
           {/* Payments Received */}
           {ps.length > 0 && (
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Payments Received</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Payments Received</p>
               <div className="space-y-2">
                 {ps.map(p => (
                   <div key={p.id} className={`${cardBase} cursor-default flex-row items-center justify-between`}>
@@ -414,7 +414,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
 
           {/* Enhanced Financial Summary */}
           <div className={`${cardBase} cursor-default bg-muted/30`}>
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-3">Summary</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-3">Summary</p>
             <div className="space-y-2 text-sm font-sans">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Original Contract</span>
@@ -462,7 +462,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
     <div>
       {/* Hero — Your Project Balance */}
       <section className="text-center py-12 md:py-16 px-6 md:px-20 max-w-4xl mx-auto">
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-3">Your Project Balance</p>
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-3">Your Project Balance</p>
         <p className={`font-display text-5xl md:text-6xl ${balanceStatus.color} mb-3`}>
           {loading ? "..." : fmt(balance)}
         </p>
@@ -480,8 +480,8 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
 
         {/* Current Milestone Card */}
         {nextPayment && (
-          <Card className="p-6 md:p-8 shadow-[0_4px_12px_rgba(27,43,77,0.08)] border-l-4 border-[#C4A265]">
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Current Milestone</p>
+          <Card className="p-6 md:p-8 shadow-[0_4px_12px_rgba(27,43,77,0.08)] border-l-4 border-accent">
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Current Milestone</p>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               <div className="flex-1">
                 <h2 className="font-display text-2xl text-foreground mb-1">
@@ -534,7 +534,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
         {/* Financial Breakdown */}
         {(originalContractTotal > 0 || totalCOAmount > 0) && (
           <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Financial Breakdown</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Financial Breakdown</p>
             <Card className="p-6 shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
               <div className="space-y-3 text-sm font-sans">
                 <div className="flex justify-between">
@@ -669,7 +669,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
         {paymentsPosted.length > 0 && (
           <div>
             <button
-              className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] hover:text-[#C4A265]/80 transition-colors"
+              className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-accent hover:text-accent/80 transition-colors"
               onClick={() => setHistoryExpanded(!historyExpanded)}
             >
               {historyExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -703,7 +703,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
 
         {/* AI Payment Assistant */}
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Questions about your invoice?</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Questions about your invoice?</p>
           <Card className="p-5 shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
             <div className="flex gap-3">
               <Input
@@ -717,7 +717,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                 size="sm"
                 onClick={handleAiQuestion}
                 disabled={aiLoading || !aiQuestion.trim()}
-                className="bg-[#C4A265] hover:bg-[#C4A265]/90 text-white font-sans flex-shrink-0"
+                className="bg-accent hover:bg-accent/90 text-white font-sans flex-shrink-0"
               >
                 {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ask"}
               </Button>
@@ -732,30 +732,30 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
 
         {/* Quick Actions */}
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-6">Quick Actions</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <button onClick={() => onTabChange?.("contacts")} className={cardBase}>
-              <MessageCircle className="w-5 h-5 text-[#C4A265]" />
+              <MessageCircle className="w-5 h-5 text-accent" />
               <h2 className="font-display text-xl text-foreground mb-1">Contact About Billing</h2>
               <p className="font-sans text-sm text-muted-foreground">Reach your HBC advisor about account questions</p>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-[#C4A265] self-end transition-colors" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
             <button onClick={() => onTabChange?.("report")} className={cardBase}>
-              <FileText className="w-5 h-5 text-[#C4A265]" />
+              <FileText className="w-5 h-5 text-accent" />
               <h2 className="font-display text-xl text-foreground mb-1">View Your Report</h2>
               <p className="font-sans text-sm text-muted-foreground">Review the services included in your membership</p>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-[#C4A265] self-end transition-colors" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors" />
             </button>
             {nextPayment ? (
               <div className={`${cardBase} cursor-default`}>
-                <CreditCard className="w-5 h-5 text-[#C4A265]" />
+                <CreditCard className="w-5 h-5 text-accent" />
                 <h2 className="font-display text-xl text-foreground mb-1">Make a Payment</h2>
                 <p className="font-sans text-sm text-muted-foreground">{fmt(Number(nextPayment.balance_due))} due on {nextPayment.due_date ? format(new Date(nextPayment.due_date), "MMM d") : "—"}</p>
                 <PayNowButton invoice={nextPayment} fullWidth />
               </div>
             ) : (
               <div className={`${cardBase} cursor-default`}>
-                <CreditCard className="w-5 h-5 text-[#C4A265]" />
+                <CreditCard className="w-5 h-5 text-accent" />
                 <h2 className="font-display text-xl text-foreground mb-1">Make a Payment</h2>
                 <p className="font-sans text-sm text-muted-foreground">No outstanding invoices — you're all set!</p>
               </div>

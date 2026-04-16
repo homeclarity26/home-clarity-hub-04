@@ -201,7 +201,7 @@ export default function RecurringPlanManager({ propertyId, clientName }: Recurri
         </div>
         <Button
           size="sm"
-          className="gap-1.5 font-sans bg-[#C4A265] hover:bg-[#C4A265]/90 text-white"
+          className="gap-1.5 font-sans bg-accent hover:bg-accent/90 text-white"
           onClick={() => setCreateOpen(true)}
         >
           <Plus className="w-4 h-4" /> Add Plan
@@ -364,7 +364,7 @@ export default function RecurringPlanManager({ propertyId, clientName }: Recurri
             <Button
               onClick={handleCreate}
               disabled={saving}
-              className="w-full bg-[#C4A265] hover:bg-[#C4A265]/90 text-white font-sans"
+              className="w-full bg-accent hover:bg-accent/90 text-white font-sans"
             >
               Create Plan
             </Button>
@@ -422,7 +422,7 @@ export default function RecurringPlanManager({ propertyId, clientName }: Recurri
             <Button
               onClick={handleAddVendorInvoice}
               disabled={saving || !vendorForm.vendorName || !vendorForm.amount}
-              className="w-full bg-[#C4A265] hover:bg-[#C4A265]/90 text-white font-sans"
+              className="w-full bg-accent hover:bg-accent/90 text-white font-sans"
             >
               Create Vendor Invoice
             </Button>

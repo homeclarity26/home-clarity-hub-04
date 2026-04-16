@@ -61,6 +61,9 @@ interface PortalSidebarProps {
   onTabChange: (tab: string) => void;
   unreadMessages?: number;
   propertyName?: string;
+  // Controlled mobile drawer — driven by MobileBottomNav "More" button
+  mobileOpen?: boolean;
+  onMobileOpenChange?: (open: boolean) => void;
 }
 
 const GOLD = "#C4A265";
@@ -196,9 +199,22 @@ const SidebarContent = ({
   </div>
 );
 
-const PortalSidebar = ({ activeTab, onTabChange, unreadMessages, propertyName }: PortalSidebarProps) => {
+const PortalSidebar = ({
+  activeTab,
+  onTabChange,
+  unreadMessages,
+  propertyName,
+  mobileOpen: mobileOpenProp,
+  onMobileOpenChange,
+}: PortalSidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileOpenInternal, setMobileOpenInternal] = useState(false);
+  const isControlled = mobileOpenProp !== undefined;
+  const mobileOpen = isControlled ? mobileOpenProp : mobileOpenInternal;
+  const setMobileOpen = (v: boolean) => {
+    if (isControlled) onMobileOpenChange?.(v);
+    else setMobileOpenInternal(v);
+  };
 
   const sidebarWidth = collapsed ? 40 : 188;
 
@@ -223,29 +239,9 @@ const PortalSidebar = ({ activeTab, onTabChange, unreadMessages, propertyName }:
         />
       </aside>
 
-      {/* Mobile: hamburger button in top header */}
-      <div
-        className="md:hidden fixed top-0 left-0 right-0 h-14 z-40 flex items-center px-4 gap-3"
-        style={{ background: NAVY }}
-      >
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="p-1.5 rounded text-white/70 hover:text-white bg-transparent border-none cursor-pointer"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-        {propertyName && (
-          <span className="text-white font-sans text-sm font-semibold truncate">{propertyName}</span>
-        )}
-        {unreadMessages != null && unreadMessages > 0 && (
-          <Badge
-            className="ml-auto text-[9px] font-mono shrink-0"
-            style={{ background: GOLD, color: NAVY, border: "none" }}
-          >
-            {unreadMessages}
-          </Badge>
-        )}
-      </div>
+      {/* Mobile top slab removed — the main <Header/> is the single mobile top bar.
+       *  The mobile drawer below still opens on demand via the "More" button in
+       *  MobileBottomNav.tsx. */}
 
       {/* Mobile drawer */}
       {mobileOpen && (

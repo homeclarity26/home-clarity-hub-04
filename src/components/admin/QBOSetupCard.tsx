@@ -105,15 +105,15 @@ const QBOSetupCard = ({ propertyId }: QBOSetupCardProps) => {
               Sync Rules
             </p>
             <div className="flex items-start gap-2">
-              <span className="text-[#C4A265] mt-0.5">→</span>
+              <span className="text-accent mt-0.5">→</span>
               <span>Invoice syncs to QBO when status changes to <strong>Sent</strong></span>
             </div>
             <div className="flex items-start gap-2">
-              <span className="text-[#C4A265] mt-0.5">→</span>
+              <span className="text-accent mt-0.5">→</span>
               <span>Payments sync to QBO when posted in the portal</span>
             </div>
             <div className="flex items-start gap-2">
-              <span className="text-[#C4A265] mt-0.5">→</span>
+              <span className="text-accent mt-0.5">→</span>
               <span>Portal is source of truth — changes flow one way (portal → QBO)</span>
             </div>
           </div>
@@ -156,7 +156,7 @@ const QBOSetupCard = ({ propertyId }: QBOSetupCardProps) => {
                   href="https://developer.intuit.com/app/developer/qbo/docs/get-started"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#C4A265] hover:underline"
+                  className="text-accent hover:underline"
                 >
                   developer.intuit.com
                 </a>
@@ -178,7 +178,7 @@ VITE_QBO_REALM_ID="your-company-id"`}
             href="https://developer.intuit.com/app/developer/qbo/docs/get-started"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full font-sans text-sm font-medium text-white bg-[#1B2B4D] hover:bg-[#1B2B4D]/90 rounded-lg px-4 py-3 transition-colors"
+            className="flex items-center justify-center gap-2 w-full font-sans text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg px-4 py-3 transition-colors"
           >
             <ExternalLink className="w-4 h-4" />
             Connect QuickBooks Online

@@ -25,6 +25,8 @@ export interface PortalProperty {
   hover_pdf_url?: string | null;
   iguide_url?: string | null;
   iguide_pdf_url?: string | null;
+  // Admin-uploaded front-of-house photo — used as the portal hero and report cover
+  hero_image_url?: string | null;
 }
 
 export interface PortalReport {
@@ -138,6 +140,7 @@ export function useClientPortal(propertyId?: string) {
           hover_pdf_url: (prop as Record<string, unknown>).hover_pdf_url as string | null ?? null,
           iguide_url: (prop as Record<string, unknown>).iguide_url as string | null ?? null,
           iguide_pdf_url: (prop as Record<string, unknown>).iguide_pdf_url as string | null ?? null,
+          hero_image_url: (prop as Record<string, unknown>).hero_image_url as string | null ?? null,
         });
 
         // 2. Fetch report for this property

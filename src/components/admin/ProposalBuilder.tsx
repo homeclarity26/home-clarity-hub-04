@@ -260,8 +260,8 @@ const ProposalBuilder = ({ estimate, lineItems, clientName, propertyAddress, onU
               onClick={() => update("pricing_type", pt)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                 form.pricing_type === pt
-                  ? "border-[#C4A265] bg-[#C4A265]/15 text-foreground font-semibold"
-                  : "border-border text-muted-foreground hover:border-[#C4A265]/50"
+                  ? "border-accent bg-accent/15 text-foreground font-semibold"
+                  : "border-border text-muted-foreground hover:border-accent/50"
               }`}
             >
               {PRICING_LABELS[pt]}

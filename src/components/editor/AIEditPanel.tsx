@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Check, X } from "lucide-react";
 import { toast } from "sonner";
+import { SanitizedHtml } from "@/components/ui/SanitizedHtml";
 
 interface AIEditPanelProps {
   currentContent: string;
@@ -79,7 +80,7 @@ const AIEditPanel = ({ currentContent, contentType, onApply, onDiscard }: AIEdit
         <div className="space-y-3">
           <div className="border border-border rounded-md p-3 bg-background max-h-48 overflow-y-auto">
             <p className="text-[10px] font-mono uppercase text-muted-foreground mb-2">Preview</p>
-            <div className="text-sm text-foreground font-sans leading-relaxed" dangerouslySetInnerHTML={{ __html: editedContent }} />
+            <SanitizedHtml html={editedContent} className="text-sm text-foreground font-sans leading-relaxed" />
           </div>
           <div className="flex gap-2">
             <Button size="sm" onClick={() => onApply(editedContent)} className="gap-1.5 text-xs">

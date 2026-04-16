@@ -40,8 +40,8 @@ const conditionStripColor: Record<string, string> = {
 const conditionBadgeMini = (rating: string) => {
   const colorMap: Record<string, string> = {
     Excellent: "bg-emerald-100 text-emerald-800",
-    Good: "bg-[#1B2B4D]/10 text-[#1B2B4D]",
-    Fair: "bg-[#C4A265]/15 text-[#7a612a]",
+    Good: "bg-primary/10 text-primary",
+    Fair: "bg-accent/15 text-[#7a612a]",
     Poor: "bg-orange-100 text-orange-700",
     Critical: "bg-[#B5450B]/10 text-[#B5450B]",
     "N/A": "bg-muted text-muted-foreground",

@@ -221,7 +221,7 @@ const BuildMyReport = ({
 
         {/* Notes / Text */}
         <div
-          className="rounded-lg border border-dashed border-border/60 p-5 flex flex-col gap-2 hover:border-[#C4A265]/60 transition-colors cursor-text"
+          className="rounded-lg border border-dashed border-border/60 p-5 flex flex-col gap-2 hover:border-accent/60 transition-colors cursor-text"
           style={{ background: "rgba(255,255,255,0.6)" }}
         >
           <div className="flex items-center gap-2" style={{ color: "#1B2B4D" }}>

@@ -1,18 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { rateLimit, getClientIP, rateLimitResponse } from "../_shared/rate-limit.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { requireAuth, corsHeaders } from "../_shared/auth.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  // Rate limit: 10 requests per minute per IP
-  const ip = getClientIP(req);
-  if (!rateLimit(ip, 10, 60_000)) {
+  // Require a valid JWT — any role (creator or client) can chat.
+  // Previously this endpoint was unauthenticated: anyone with the anon key
+  // could invoke it and burn Gemini quota or inject `reportContext`.
+  const auth = await requireAuth(req);
+  if ("error" in auth) return auth.error;
+
+  // Rate limit: 20/min per authenticated user (falls back to IP if needed).
+  const rateKey = auth.user.id || getClientIP(req);
+  if (!rateLimit(rateKey, 20, 60_000)) {
     return rateLimitResponse(corsHeaders);
   }
 

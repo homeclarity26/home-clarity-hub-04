@@ -709,8 +709,8 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
                           onClick={() => setCoMode(mode)}
                           className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 text-center transition-all ${
                             coMode === mode
-                              ? "border-[#C4A265] bg-[#C4A265]/10 text-[#C4A265]"
-                              : "border-border hover:border-[#C4A265]/40 text-muted-foreground hover:text-foreground"
+                              ? "border-accent bg-accent/10 text-accent"
+                              : "border-border hover:border-accent/40 text-muted-foreground hover:text-foreground"
                           }`}
                         >
                           {icon}
@@ -733,7 +733,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
                   <div><Label className="font-sans">Title</Label><Input value={changeOrderForm.title} onChange={e => setChangeOrderForm({ ...changeOrderForm, title: e.target.value })} /></div>
                   <div><Label className="font-sans">Description</Label><Textarea value={changeOrderForm.description} onChange={e => setChangeOrderForm({ ...changeOrderForm, description: e.target.value })} /></div>
                   <div><Label className="font-sans">Amount ($)</Label><Input type="number" value={changeOrderForm.amount} onChange={e => setChangeOrderForm({ ...changeOrderForm, amount: e.target.value })} /></div>
-                  <Button onClick={handleAddChangeOrder} className="w-full font-sans bg-[#C4A265] hover:bg-[#C4A265]/90 text-white" disabled={!changeOrderForm.title}>
+                  <Button onClick={handleAddChangeOrder} className="w-full font-sans bg-accent hover:bg-accent/90 text-white" disabled={!changeOrderForm.title}>
                     {coMode === "verbal" ? "Document Change Order" : coMode === "formal" ? "Create & Send for Signature" : "Create & Generate Invoice"}
                   </Button>
                 </div>
