@@ -6,6 +6,7 @@ import type { PDFReportData } from "@/features/pdf/PDFReport";
 import CreatorBar from "./CreatorBar";
 import QACoachPanel from "@/components/admin/QACoachPanel";
 import AdminAIAssistant from "@/components/admin/AdminAIAssistant";
+import { PageAIChat } from "./PageAIChat";
 import BlockRenderer from "./BlockRenderer";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useReportPage } from "@/hooks/useReportPage";
@@ -235,19 +236,40 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
         />
       </div>
 
-      {/* Admin AI Assistant — floating panel for report editing */}
+      {/* Admin AI Assistant + Per-page AI Chat — edit mode only */}
       {canEdit && (
-        <AdminAIAssistant
-          context="report"
-          contextData={{
-            title: page.title,
-            conditionRating: pageData.conditionRating,
-            group: page.group,
-            narrative: pageData.narrative,
-            specs: pageData.specs,
-          }}
-          propertyId={propertyId}
-        />
+        <>
+          <AdminAIAssistant
+            context="report"
+            contextData={{
+              title: page.title,
+              conditionRating: pageData.conditionRating,
+              group: page.group,
+              narrative: pageData.narrative,
+              specs: pageData.specs,
+            }}
+            propertyId={propertyId}
+          />
+
+          {/* Per-page AI chat — inline editing assistant */}
+          <div className="max-w-[800px] mx-auto px-6 md:px-20">
+            <PageAIChat
+              pageTitle={page.title}
+              dbPageId={dbPageId}
+              propertyId={propertyId}
+              currentNarrative={
+                Array.isArray(pageData.narrative)
+                  ? pageData.narrative.join("\n\n")
+                  : typeof pageData.narrative === "string"
+                    ? pageData.narrative
+                    : ""
+              }
+              onNarrativeUpdate={() => {
+                toast.info("Refresh the page to see the updated narrative.");
+              }}
+            />
+          </div>
+        </>
       )}
     </div>
   );
