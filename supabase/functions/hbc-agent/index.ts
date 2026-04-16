@@ -116,6 +116,9 @@ const TOOLS: ToolDef[] = [
   // ── GROUP L: AUTOMATIONS ──
   { name: "list_automations", description: "List all automation rules.", parameters: { type: "object", properties: { active_only: { type: "boolean" } } }, allowedRoles: ["creator"] },
   { name: "toggle_automation", description: "Enable or disable an automation rule.", parameters: { type: "object", properties: { automation_id: { type: "string" }, active: { type: "boolean" } }, required: ["automation_id", "active"] }, allowedRoles: ["creator"] },
+  { name: "create_automation", description: "Create a new automation rule. Trigger types: invoice_overdue, milestone_due, appointment_reminder, report_published, equipment_service_due.", parameters: { type: "object", properties: { name: { type: "string" }, trigger_type: { type: "string" }, trigger_config: { type: "object" }, action_type: { type: "string" }, action_config: { type: "object" }, active: { type: "boolean" } }, required: ["name", "trigger_type", "action_type"] }, allowedRoles: ["creator"] },
+  { name: "update_automation", description: "Update an automation rule's configuration.", parameters: { type: "object", properties: { automation_id: { type: "string" }, fields: { type: "object" } }, required: ["automation_id", "fields"] }, allowedRoles: ["creator"] },
+  { name: "delete_automation", description: "Delete an automation rule.", parameters: { type: "object", properties: { automation_id: { type: "string" } }, required: ["automation_id"] }, requiresConfirmation: true, allowedRoles: ["creator"] },
 
   // ── GROUP M: ANNOUNCEMENTS ──
   { name: "create_announcement", description: "Create a new announcement for clients.", parameters: { type: "object", properties: { title: { type: "string" }, body: { type: "string" }, target_audience: { type: "string" } }, required: ["title", "body"] }, allowedRoles: ["creator"] },
@@ -161,6 +164,29 @@ const TOOLS: ToolDef[] = [
   { name: "client_get_maintenance_due", description: "Get equipment and items with maintenance due this month.", parameters: { type: "object", properties: { property_id: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["client"] },
   { name: "client_submit_referral", description: "Submit a friend referral.", parameters: { type: "object", properties: { property_id: { type: "string" }, friend_name: { type: "string" }, friend_email: { type: "string" }, friend_phone: { type: "string" }, notes: { type: "string" } }, required: ["property_id", "friend_name"] }, allowedRoles: ["client"] },
   { name: "client_explain_invoice", description: "Get a plain-English explanation of a specific invoice.", parameters: { type: "object", properties: { invoice_id: { type: "string" } }, required: ["invoice_id"] }, allowedRoles: ["client"] },
+  { name: "client_ask_about_page", description: "Ask a contextual question about a specific report page. AI will answer using the page data.", parameters: { type: "object", properties: { property_id: { type: "string" }, page_key: { type: "string" }, question: { type: "string" } }, required: ["property_id", "page_key", "question"] }, allowedRoles: ["client"] },
+  { name: "client_get_home_health_breakdown", description: "Get a detailed breakdown of the home health score by chapter and section.", parameters: { type: "object", properties: { property_id: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["client"] },
+  { name: "client_request_service_quote", description: "Request a quote for a specific recommendation from the report.", parameters: { type: "object", properties: { property_id: { type: "string" }, page_key: { type: "string" }, recommendation: { type: "string" }, notes: { type: "string" } }, required: ["property_id", "recommendation"] }, allowedRoles: ["client"] },
+
+  // ── GROUP S: KNOWLEDGE BASE ──
+  { name: "search_knowledge_base", description: "Full-text search across knowledge base articles. Returns matching articles with title and content preview.", parameters: { type: "object", properties: { query: { type: "string" } }, required: ["query"] }, allowedRoles: ["creator"] },
+  { name: "add_kb_article", description: "Create a new knowledge base article.", parameters: { type: "object", properties: { title: { type: "string" }, content: { type: "string" }, category: { type: "string" }, tags: { type: "array", items: { type: "string" } } }, required: ["title", "content"] }, allowedRoles: ["creator"] },
+  { name: "update_kb_article", description: "Update an existing knowledge base article.", parameters: { type: "object", properties: { article_id: { type: "string" }, fields: { type: "object" } }, required: ["article_id", "fields"] }, allowedRoles: ["creator"] },
+  { name: "get_kb_article", description: "Get a specific knowledge base article by ID.", parameters: { type: "object", properties: { article_id: { type: "string" } }, required: ["article_id"] }, allowedRoles: ["creator"] },
+
+  // ── GROUP T: ANNUAL REVIEWS ──
+  { name: "create_annual_review", description: "Create a year-over-year annual review for a property.", parameters: { type: "object", properties: { property_id: { type: "string" }, year: { type: "number" }, summary: { type: "string" }, key_changes: { type: "array", items: { type: "string" } }, recommendations: { type: "array", items: { type: "string" } } }, required: ["property_id", "year"] }, allowedRoles: ["creator"] },
+  { name: "get_annual_reviews", description: "Get all annual reviews for a property.", parameters: { type: "object", properties: { property_id: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["creator", "client"] },
+
+  // ── GROUP U: TEAM MANAGEMENT ──
+  { name: "list_team_members", description: "List all team members.", parameters: { type: "object", properties: {} }, allowedRoles: ["creator"] },
+  { name: "assign_team_member", description: "Assign a team member to a project or client.", parameters: { type: "object", properties: { user_id: { type: "string" }, entity_type: { type: "string", enum: ["project", "client"] }, entity_id: { type: "string" } }, required: ["user_id", "entity_type", "entity_id"] }, allowedRoles: ["creator"] },
+
+  // ── GROUP V: SETTINGS ──
+  { name: "get_branding_settings", description: "Get current branding configuration (colors, logo, company name).", parameters: { type: "object", properties: {} }, allowedRoles: ["creator"] },
+  { name: "update_branding_settings", description: "Update branding settings.", parameters: { type: "object", properties: { fields: { type: "object" } }, required: ["fields"] }, allowedRoles: ["creator"] },
+  { name: "get_notification_settings", description: "Get notification preferences.", parameters: { type: "object", properties: {} }, allowedRoles: ["creator"] },
+  { name: "update_notification_settings", description: "Update notification preferences.", parameters: { type: "object", properties: { fields: { type: "object" } }, required: ["fields"] }, allowedRoles: ["creator"] },
 ];
 
 // ─── TOOL HANDLERS ───
@@ -1018,6 +1044,178 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
           metadata: { friend_name: params.friend_name, friend_email: params.friend_email, friend_phone: params.friend_phone, notes: params.notes },
         });
         return { success: true, result: { message: `Thank you for referring ${params.friend_name}! Your advisor will reach out to them.` } };
+      }
+
+      // ── UPDATE EVENT ──
+      case "update_event": {
+        const { error } = await supabase.from("schedule_events").update(params.fields).eq("id", params.event_id);
+        if (error) throw error;
+        return { success: true, result: { message: "Event updated" }, entity_id: params.event_id, entity_type: "event" };
+      }
+
+      case "set_event_reminder": {
+        await (supabase.from("event_reminders" as any) as any).insert({
+          event_id: params.event_id,
+          remind_minutes_before: params.remind_minutes_before,
+          reminder_message: params.reminder_message || "",
+          created_by: userId,
+        });
+        return { success: true, result: { message: `Reminder set for ${params.remind_minutes_before} minutes before the event` } };
+      }
+
+      // ── AUTOMATION CRUD ──
+      case "create_automation": {
+        const { data, error } = await supabase.from("automation_rules").insert({
+          name: params.name,
+          trigger_type: params.trigger_type,
+          trigger_config: params.trigger_config || {},
+          action_type: params.action_type,
+          action_config: params.action_config || {},
+          is_enabled: params.active !== false,
+          created_by: userId,
+        }).select().single();
+        if (error) throw error;
+        return { success: true, result: { message: `Automation "${params.name}" created`, automation_id: data.id }, entity_id: data.id, entity_type: "automation" };
+      }
+
+      case "update_automation": {
+        const { error } = await supabase.from("automation_rules").update(params.fields).eq("id", params.automation_id);
+        if (error) throw error;
+        return { success: true, result: { message: "Automation updated" }, entity_id: params.automation_id, entity_type: "automation" };
+      }
+
+      case "delete_automation": {
+        await supabase.from("automation_rules").delete().eq("id", params.automation_id);
+        return { success: true, result: { message: "Automation deleted" } };
+      }
+
+      // ── EXPANDED CLIENT TOOLS ──
+      case "client_ask_about_page": {
+        const { data: report } = await supabase.from("reports").select("id").eq("property_id", params.property_id).eq("status", "published").limit(1).single();
+        if (!report) return { success: true, result: { message: "No published report found for this property." } };
+        const { data: page } = await supabase.from("report_pages").select("*").eq("report_id", report.id).eq("page_key", params.page_key).single();
+        if (!page) return { success: true, result: { message: `No report page found with key "${params.page_key}".` } };
+        return { success: true, result: { question: params.question, page_title: page.title, condition_rating: page.condition_rating, narrative: page.narrative, specs: page.specs, tiers: page.tiers, key_observations: page.key_observations, risks: page.risks, maintenance_notes: page.maintenance_notes } };
+      }
+
+      case "client_get_home_health_breakdown": {
+        const { data: report } = await supabase.from("reports").select("id, completion_percent").eq("property_id", params.property_id).eq("status", "published").limit(1).single();
+        if (!report) return { success: true, result: { message: "No published report found." } };
+        const { data: pages } = await supabase.from("report_pages").select("id, title, page_key, group_name, condition_rating, status").eq("report_id", report.id).order("sort_order");
+        const ratingMap: Record<string, number> = { excellent: 100, good: 80, fair: 60, poor: 40, critical: 20 };
+        const groups: Record<string, { pages: any[]; avg_score: number }> = {};
+        for (const p of (pages || [])) {
+          const g = p.group_name || "General";
+          if (!groups[g]) groups[g] = { pages: [], avg_score: 0 };
+          groups[g].pages.push({ title: p.title, condition: p.condition_rating, score: ratingMap[p.condition_rating?.toLowerCase()] || 0 });
+        }
+        for (const g of Object.keys(groups)) {
+          const scores = groups[g].pages.map((p: any) => p.score).filter((s: number) => s > 0);
+          groups[g].avg_score = scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : 0;
+        }
+        const allScores = (pages || []).map((p: any) => ratingMap[p.condition_rating?.toLowerCase()] || 0).filter((s: number) => s > 0);
+        const overallScore = allScores.length > 0 ? Math.round(allScores.reduce((a: number, b: number) => a + b, 0) / allScores.length) : 0;
+        return { success: true, result: { overall_health_score: overallScore, report_completion: report.completion_percent, chapters: groups } };
+      }
+
+      case "client_request_service_quote": {
+        await supabase.from("appointment_requests").insert({
+          client_id: userId,
+          property_id: params.property_id,
+          topic: "service_quote",
+          notes: `Quote request for: ${params.recommendation}. Page: ${params.page_key || "N/A"}. Notes: ${params.notes || "None"}`,
+          preferred_slots_json: [],
+        });
+        return { success: true, result: { message: `Quote request submitted for: "${params.recommendation}". Your advisor will get back to you shortly.` } };
+      }
+
+      // ── KNOWLEDGE BASE ──
+      case "search_knowledge_base": {
+        const q = `%${params.query}%`;
+        const { data } = await (supabase.from("knowledge_base_articles" as any) as any).select("id, title, category, tags, content, created_at").or(`title.ilike.${q},content.ilike.${q},category.ilike.${q}`).limit(10);
+        return { success: true, result: { count: (data || []).length, articles: (data || []).map((a: any) => ({ id: a.id, title: a.title, category: a.category, tags: a.tags, preview: (a.content || "").slice(0, 200) })) } };
+      }
+
+      case "add_kb_article": {
+        const { data, error } = await (supabase.from("knowledge_base_articles" as any) as any).insert({
+          title: params.title, content: params.content, category: params.category || "General",
+          tags: params.tags || [], created_by: userId,
+        }).select().single();
+        if (error) throw error;
+        return { success: true, result: { message: `Article "${params.title}" created`, article_id: data.id }, entity_id: data.id, entity_type: "kb_article" };
+      }
+
+      case "update_kb_article": {
+        const { error } = await (supabase.from("knowledge_base_articles" as any) as any).update(params.fields).eq("id", params.article_id);
+        if (error) throw error;
+        return { success: true, result: { message: "Article updated" }, entity_id: params.article_id, entity_type: "kb_article" };
+      }
+
+      case "get_kb_article": {
+        const { data } = await (supabase.from("knowledge_base_articles" as any) as any).select("*").eq("id", params.article_id).single();
+        return { success: true, result: data || { message: "Article not found" }, entity_id: params.article_id, entity_type: "kb_article" };
+      }
+
+      // ── ANNUAL REVIEWS ──
+      case "create_annual_review": {
+        const { data, error } = await (supabase.from("annual_reviews" as any) as any).insert({
+          property_id: params.property_id, year: params.year, summary: params.summary || "",
+          key_changes: params.key_changes || [], recommendations: params.recommendations || [],
+          created_by: userId,
+        }).select().single();
+        if (error) throw error;
+        return { success: true, result: { message: `Annual review for ${params.year} created`, review_id: data.id }, entity_id: data.id, entity_type: "annual_review" };
+      }
+
+      case "get_annual_reviews": {
+        const { data } = await (supabase.from("annual_reviews" as any) as any).select("*").eq("property_id", params.property_id).order("year", { ascending: false });
+        return { success: true, result: { reviews: data || [] } };
+      }
+
+      // ── TEAM MANAGEMENT ──
+      case "list_team_members": {
+        const { data } = await supabase.from("profiles").select("user_id, full_name, email, phone, avatar_url, role").in("role", ["creator", "admin", "team_member"]);
+        return { success: true, result: { team_members: data || [] } };
+      }
+
+      case "assign_team_member": {
+        if (params.entity_type === "project") {
+          await supabase.from("projects").update({ assigned_to: params.user_id }).eq("id", params.entity_id);
+        } else {
+          await supabase.from("properties").update({ assigned_team_member: params.user_id }).eq("id", params.entity_id);
+        }
+        return { success: true, result: { message: `Team member assigned to ${params.entity_type}` }, entity_id: params.entity_id, entity_type: params.entity_type };
+      }
+
+      // ── SETTINGS: BRANDING & NOTIFICATIONS ──
+      case "get_branding_settings": {
+        const { data } = await (supabase.from("branding_settings" as any) as any).select("*").eq("user_id", userId).single();
+        return { success: true, result: data || { message: "No branding settings found — using defaults" } };
+      }
+
+      case "update_branding_settings": {
+        const { data: existing } = await (supabase.from("branding_settings" as any) as any).select("id").eq("user_id", userId).single();
+        if (existing) {
+          await (supabase.from("branding_settings" as any) as any).update(params.fields).eq("id", existing.id);
+        } else {
+          await (supabase.from("branding_settings" as any) as any).insert({ ...params.fields, user_id: userId });
+        }
+        return { success: true, result: { message: "Branding settings updated" } };
+      }
+
+      case "get_notification_settings": {
+        const { data } = await (supabase.from("notification_settings" as any) as any).select("*").eq("user_id", userId).single();
+        return { success: true, result: data || { message: "No notification settings found — using defaults" } };
+      }
+
+      case "update_notification_settings": {
+        const { data: existing } = await (supabase.from("notification_settings" as any) as any).select("id").eq("user_id", userId).single();
+        if (existing) {
+          await (supabase.from("notification_settings" as any) as any).update(params.fields).eq("id", existing.id);
+        } else {
+          await (supabase.from("notification_settings" as any) as any).insert({ ...params.fields, user_id: userId });
+        }
+        return { success: true, result: { message: "Notification settings updated" } };
       }
 
       default:
