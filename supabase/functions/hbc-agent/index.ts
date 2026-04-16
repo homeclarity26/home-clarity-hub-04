@@ -187,6 +187,12 @@ const TOOLS: ToolDef[] = [
   { name: "update_branding_settings", description: "Update branding settings.", parameters: { type: "object", properties: { fields: { type: "object" } }, required: ["fields"] }, allowedRoles: ["creator"] },
   { name: "get_notification_settings", description: "Get notification preferences.", parameters: { type: "object", properties: {} }, allowedRoles: ["creator"] },
   { name: "update_notification_settings", description: "Update notification preferences.", parameters: { type: "object", properties: { fields: { type: "object" } }, required: ["fields"] }, allowedRoles: ["creator"] },
+
+  // ── GROUP W: PHOTO MANAGEMENT ──
+  { name: "add_photos_to_page", description: "Add photo URLs to a report page's images array.", parameters: { type: "object", properties: { page_id: { type: "string" }, photo_urls: { type: "array", items: { type: "string" } } }, required: ["page_id", "photo_urls"] }, allowedRoles: ["creator"] },
+  { name: "remove_photo_from_page", description: "Remove a specific photo URL from a report page.", parameters: { type: "object", properties: { page_id: { type: "string" }, photo_url: { type: "string" } }, required: ["page_id", "photo_url"] }, allowedRoles: ["creator"] },
+  { name: "reorder_page_photos", description: "Set the photo order for a report page.", parameters: { type: "object", properties: { page_id: { type: "string" }, photo_urls: { type: "array", items: { type: "string" }, description: "Complete ordered array of photo URLs" } }, required: ["page_id", "photo_urls"] }, allowedRoles: ["creator"] },
+  { name: "enhance_photo", description: "Analyze a photo for quality and get improvement suggestions. Can trigger AI enhancement when available.", parameters: { type: "object", properties: { image_url: { type: "string" }, property_id: { type: "string" } }, required: ["image_url"] }, allowedRoles: ["creator"] },
 ];
 
 // ─── TOOL HANDLERS ───
@@ -1216,6 +1222,43 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
           await (supabase.from("notification_settings" as any) as any).insert({ ...params.fields, user_id: userId });
         }
         return { success: true, result: { message: "Notification settings updated" } };
+      }
+
+      // ── PHOTO MANAGEMENT ──
+      case "add_photos_to_page": {
+        const { data: page } = await supabase.from("report_pages").select("images").eq("id", params.page_id).single();
+        const current = Array.isArray((page as any)?.images) ? (page as any).images : [];
+        const updated = [...current, ...params.photo_urls];
+        const { error } = await supabase.from("report_pages").update({ images: updated }).eq("id", params.page_id);
+        if (error) throw error;
+        return { success: true, result: { message: `Added ${params.photo_urls.length} photo(s). Total: ${updated.length}` } };
+      }
+
+      case "remove_photo_from_page": {
+        const { data: page } = await supabase.from("report_pages").select("images").eq("id", params.page_id).single();
+        const current = Array.isArray((page as any)?.images) ? (page as any).images : [];
+        const updated = current.filter((url: string) => url !== params.photo_url);
+        const { error } = await supabase.from("report_pages").update({ images: updated }).eq("id", params.page_id);
+        if (error) throw error;
+        return { success: true, result: { message: "Photo removed" } };
+      }
+
+      case "reorder_page_photos": {
+        const { error } = await supabase.from("report_pages").update({ images: params.photo_urls }).eq("id", params.page_id);
+        if (error) throw error;
+        return { success: true, result: { message: "Photos reordered" } };
+      }
+
+      case "enhance_photo": {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const resp = await fetch(`${supabaseUrl}/functions/v1/enhance-photo`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseServiceKey}` },
+          body: JSON.stringify({ image_url: params.image_url, property_id: params.property_id }),
+        });
+        const result = await resp.json();
+        return { success: true, result };
       }
 
       default:
