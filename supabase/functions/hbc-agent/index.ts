@@ -193,6 +193,14 @@ const TOOLS: ToolDef[] = [
   { name: "remove_photo_from_page", description: "Remove a specific photo URL from a report page.", parameters: { type: "object", properties: { page_id: { type: "string" }, photo_url: { type: "string" } }, required: ["page_id", "photo_url"] }, allowedRoles: ["creator"] },
   { name: "reorder_page_photos", description: "Set the photo order for a report page.", parameters: { type: "object", properties: { page_id: { type: "string" }, photo_urls: { type: "array", items: { type: "string" }, description: "Complete ordered array of photo URLs" } }, required: ["page_id", "photo_urls"] }, allowedRoles: ["creator"] },
   { name: "enhance_photo", description: "Analyze a photo for quality and get improvement suggestions. Can trigger AI enhancement when available.", parameters: { type: "object", properties: { image_url: { type: "string" }, property_id: { type: "string" } }, required: ["image_url"] }, allowedRoles: ["creator"] },
+
+  // ── GROUP X: AI REPORT CREATION ──
+  { name: "seed_report_from_notes", description: "Analyze meeting notes and photos to seed a full report. Returns recommended pages and per-page data (condition, observations, narrative seed, specs). Use at the START of report creation.", parameters: { type: "object", properties: { property_id: { type: "string" }, meeting_notes: { type: "string" }, photo_descriptions: { type: "string" } }, required: ["property_id", "meeting_notes"] }, allowedRoles: ["creator"] },
+  { name: "edit_page_narrative", description: "Use AI to edit a specific report page's narrative based on a natural-language instruction. Saves the result to the DB.", parameters: { type: "object", properties: { page_id: { type: "string" }, instruction: { type: "string" } }, required: ["page_id", "instruction"] }, allowedRoles: ["creator"] },
+  { name: "set_page_condition", description: "Set a report page's condition rating.", parameters: { type: "object", properties: { page_id: { type: "string" }, condition: { type: "string", enum: ["Excellent", "Good", "Fair", "Poor", "Critical"] } }, required: ["page_id", "condition"] }, allowedRoles: ["creator"] },
+  { name: "add_page_observation", description: "Append a key observation to a report page's observations list.", parameters: { type: "object", properties: { page_id: { type: "string" }, observation: { type: "string" } }, required: ["page_id", "observation"] }, allowedRoles: ["creator"] },
+  { name: "add_page_spec", description: "Add a specification key/value pair to a report page.", parameters: { type: "object", properties: { page_id: { type: "string" }, label: { type: "string" }, value: { type: "string" } }, required: ["page_id", "label", "value"] }, allowedRoles: ["creator"] },
+  { name: "draft_page_with_ai", description: "Generate a full AI draft narrative for a single report page using property context.", parameters: { type: "object", properties: { page_id: { type: "string" }, property_id: { type: "string" } }, required: ["page_id"] }, allowedRoles: ["creator"] },
 ];
 
 // ─── TOOL HANDLERS ───
@@ -1259,6 +1267,71 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
         });
         const result = await resp.json();
         return { success: true, result };
+      }
+
+      // ── GROUP X: AI REPORT CREATION ──
+      case "seed_report_from_notes": {
+        const sbUrl = Deno.env.get("SUPABASE_URL")!;
+        const sbKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const resp = await fetch(`${sbUrl}/functions/v1/seed-report-from-notes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${sbKey}` },
+          body: JSON.stringify({ property_id: params.property_id, meeting_notes: params.meeting_notes, photo_descriptions: params.photo_descriptions }),
+        });
+        const result = await resp.json();
+        return { success: true, result };
+      }
+
+      case "edit_page_narrative": {
+        const { data: page } = await supabase.from("report_pages").select("narrative, title").eq("id", params.page_id).single();
+        if (!page) throw new Error("Page not found");
+        const currentNarrative = Array.isArray((page as any).narrative) ? (page as any).narrative.join("\n\n") : ((page as any).narrative || "");
+        const sbUrl = Deno.env.get("SUPABASE_URL")!;
+        const sbKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const resp = await fetch(`${sbUrl}/functions/v1/ai-edit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${sbKey}` },
+          body: JSON.stringify({ currentContent: currentNarrative, instruction: params.instruction, contentType: "narrative" }),
+        });
+        const result = await resp.json();
+        if (result.editedContent) {
+          await supabase.from("report_pages").update({ narrative: [result.editedContent] }).eq("id", params.page_id);
+        }
+        return { success: true, result: { message: `Narrative updated for "${(page as any).title}"`, edited: !!result.editedContent }, entity_id: params.page_id, entity_type: "report_page" };
+      }
+
+      case "set_page_condition": {
+        const { error } = await supabase.from("report_pages").update({ condition_rating: params.condition }).eq("id", params.page_id);
+        if (error) throw error;
+        return { success: true, result: { message: `Condition set to ${params.condition}` }, entity_id: params.page_id, entity_type: "report_page" };
+      }
+
+      case "add_page_observation": {
+        const { data: page } = await supabase.from("report_pages").select("key_observations").eq("id", params.page_id).single();
+        const current = Array.isArray((page as any)?.key_observations) ? (page as any).key_observations : [];
+        current.push(params.observation);
+        await supabase.from("report_pages").update({ key_observations: current }).eq("id", params.page_id);
+        return { success: true, result: { message: "Observation added", total: current.length }, entity_id: params.page_id, entity_type: "report_page" };
+      }
+
+      case "add_page_spec": {
+        const { data: page } = await supabase.from("report_pages").select("specs").eq("id", params.page_id).single();
+        const current = Array.isArray((page as any)?.specs) ? (page as any).specs : [];
+        current.push({ label: params.label, value: params.value });
+        await supabase.from("report_pages").update({ specs: current }).eq("id", params.page_id);
+        return { success: true, result: { message: `Spec added: ${params.label} = ${params.value}` }, entity_id: params.page_id, entity_type: "report_page" };
+      }
+
+      case "draft_page_with_ai": {
+        const sbUrl = Deno.env.get("SUPABASE_URL")!;
+        const sbKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const resp = await fetch(`${sbUrl}/functions/v1/draft-page-narrative`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${sbKey}` },
+          body: JSON.stringify({ page_id: params.page_id, property_id: params.property_id }),
+        });
+        const result = await resp.json();
+        return { success: true, result: { message: "Page narrative drafted by AI", ...result }, entity_id: params.page_id, entity_type: "report_page" };
       }
 
       default:
