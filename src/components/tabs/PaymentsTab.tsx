@@ -574,6 +574,35 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
           </TabsList>
 
           <TabsContent value="invoices" className="mt-6">
+            {/* Draw Schedule Bar */}
+            {visibleInvoices.length >= 2 && (() => {
+              const barTotal = visibleInvoices.reduce((s, inv) => s + Number(inv.total), 0);
+              if (barTotal <= 0) return null;
+              return (
+                <div className="mb-4">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-2">Draw Schedule</p>
+                  <div className="flex w-full h-8 rounded-md overflow-hidden border border-border">
+                    {visibleInvoices.map((inv) => {
+                      const pct = (Number(inv.total) / barTotal) * 100;
+                      const isPaid = inv.status === "paid";
+                      const isOverdue = inv.status === "overdue" || (inv.status === "sent" && inv.due_date && isPast(new Date(inv.due_date)));
+                      const bg = isPaid ? "bg-accent" : isOverdue ? "bg-[hsl(16_86%_39%)]" : "bg-muted";
+                      const textColor = isPaid || isOverdue ? "text-white" : "text-muted-foreground";
+                      return (
+                        <div
+                          key={inv.id}
+                          className={`${bg} ${textColor} flex items-center justify-center text-[10px] font-mono font-medium transition-all`}
+                          style={{ width: `${pct}%` }}
+                          title={`${inv.title || inv.invoice_number || "Invoice"}: ${fmt(Number(inv.total))} — ${inv.status}`}
+                        >
+                          {pct > 15 ? fmt(Number(inv.total)) : ""}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
             <div className={`${cardBase} cursor-default`}>
               {loading ? (
                 <p className="font-sans text-sm text-muted-foreground">Loading...</p>
