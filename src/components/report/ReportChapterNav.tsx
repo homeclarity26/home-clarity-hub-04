@@ -15,10 +15,10 @@ export interface ChapterDef {
  * plus an implicit Safety chapter that lives under Systems in the data model.
  */
 export const CHAPTERS: ChapterDef[] = [
-  { id: "exterior", label: "Exterior", groupIds: ["exterior", "exterior-spaces"] },
-  { id: "interior", label: "Interior", groupIds: ["interior", "interior-spaces", "interior-living", "interior-bedrooms", "interior-bathrooms", "interior-utility", "interior-unfinished"] },
-  { id: "systems", label: "Systems", groupIds: ["systems", "systems-hvac", "systems-mechanical"] },
-  { id: "safety", label: "Safety", groupIds: ["safety"] },
+  { id: "exterior", label: "Exterior", groupIds: ["exterior", "exterior-spaces", "exterior-structures"] },
+  { id: "interior", label: "Interior", groupIds: ["interior", "interior-spaces", "interior-living", "interior-bedrooms", "interior-bathrooms", "interior-utility", "interior-unfinished", "interior-additional", "appliances"] },
+  { id: "systems", label: "Systems", groupIds: ["systems", "systems-hvac", "systems-mechanical", "systems-additional"] },
+  { id: "safety", label: "Safety", groupIds: ["safety", "safety-detection"] },
   { id: "strategy", label: "Strategic Plan", groupIds: ["strategy"] },
 ];
 

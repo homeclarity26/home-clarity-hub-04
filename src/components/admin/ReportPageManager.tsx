@@ -2,10 +2,13 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, CheckCircle, Edit, AlertTriangle, XCircle, Loader2, Sparkles, LayoutGrid, List, FileText, Shield, Brain, DollarSign, Copy, Users, BarChart3, BookOpen, ClipboardList, ClipboardCheck } from "lucide-react";
+import { ExternalLink, CheckCircle, Edit, AlertTriangle, XCircle, Loader2, Sparkles, LayoutGrid, List, FileText, Shield, Brain, DollarSign, Copy, Users, BarChart3, BookOpen, ClipboardList, ClipboardCheck, Plus } from "lucide-react";
 import BatchOperationsBar from "./BatchOperationsBar";
 import ReportCloneDialog from "./ReportCloneDialog";
 import ReportProgressKanban from "./ReportProgressKanban";
@@ -19,6 +22,7 @@ import SmartDefaults from "./SmartDefaults";
 import ConditionRatingWizard from "./ConditionRatingWizard";
 import InspectionChecklist from "./InspectionChecklist";
 import ComparableBenchmark from "./ComparableBenchmark";
+import { reportGroups } from "@/data/reportContent";
 import { useAdminReportPages } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -76,6 +80,8 @@ async function recalculateCompletion(reportId: string) {
   }
 }
 
+const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
 const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPageManagerProps) => {
   const { data: pages, isLoading } = useAdminReportPages(reportId);
   const queryClient = useQueryClient();
@@ -86,6 +92,37 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
   const [activeView, setActiveView] = useState("pages");
   const [cloneOpen, setCloneOpen] = useState(false);
   const [expandedPageId, setExpandedPageId] = useState<string | null>(null);
+  const [customPageOpen, setCustomPageOpen] = useState(false);
+  const [customPageTitle, setCustomPageTitle] = useState("");
+  const [customPageGroup, setCustomPageGroup] = useState("");
+  const [isCreatingPage, setIsCreatingPage] = useState(false);
+
+  const handleCreateCustomPage = async () => {
+    if (!customPageTitle.trim() || !customPageGroup || !reportId) return;
+    setIsCreatingPage(true);
+    try {
+      const pageKey = slugify(customPageTitle);
+      const { error } = await supabase.from("report_pages").insert({
+        report_id: reportId,
+        page_key: pageKey,
+        title: customPageTitle.trim(),
+        group_name: customPageGroup,
+        status: "draft",
+        sort_order: 999,
+      } as any);
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ["admin-report-pages", reportId] });
+      toast.success(`Page "${customPageTitle.trim()}" created`);
+      setCustomPageOpen(false);
+      setCustomPageTitle("");
+      setCustomPageGroup("");
+    } catch (err) {
+      console.error("Failed to create custom page:", err);
+      toast.error("Failed to create custom page");
+    } finally {
+      setIsCreatingPage(false);
+    }
+  };
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
@@ -261,6 +298,10 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
             </Button>
           )}
           <ReportCloneDialog sourceReportId={reportId || ""} sourcePropertyName="Current Report" />
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans" onClick={() => setCustomPageOpen(true)}>
+            <Plus className="w-3.5 h-3.5" />
+            Add Custom Page
+          </Button>
           <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans" onClick={() => window.open(`/portal/${propertyId}?edit=true`, "_blank")}>
             <ExternalLink className="w-3.5 h-3.5" />
             Open in Portal
@@ -444,6 +485,47 @@ const ReportPageManager = ({ propertyId, reportId, propertyContext }: ReportPage
           <TemplateVersioning reportId={reportId || ""} />
         </TabsContent>
       </Tabs>
+
+      {/* Add Custom Page Dialog */}
+      <Dialog open={customPageOpen} onOpenChange={setCustomPageOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-sans">Add Custom Page</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="custom-page-title" className="text-xs font-sans">Page Title</Label>
+              <Input
+                id="custom-page-title"
+                placeholder="e.g. Wine Cellar"
+                value={customPageTitle}
+                onChange={(e) => setCustomPageTitle(e.target.value)}
+                className="text-sm font-sans"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="custom-page-group" className="text-xs font-sans">Group</Label>
+              <Select value={customPageGroup} onValueChange={setCustomPageGroup}>
+                <SelectTrigger id="custom-page-group" className="text-sm font-sans">
+                  <SelectValue placeholder="Select a group" />
+                </SelectTrigger>
+                <SelectContent>
+                  {reportGroups.map((g) => (
+                    <SelectItem key={g.id} value={g.id} className="text-sm font-sans">{g.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setCustomPageOpen(false)} className="text-xs font-sans">Cancel</Button>
+            <Button size="sm" onClick={handleCreateCustomPage} disabled={!customPageTitle.trim() || !customPageGroup || isCreatingPage} className="gap-1.5 text-xs font-sans">
+              {isCreatingPage && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Create Page
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

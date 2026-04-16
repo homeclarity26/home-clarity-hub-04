@@ -87,6 +87,7 @@ export function Monogram({
 export function chapterToMonogram(chapterId: string): MonogramCode {
   switch (chapterId) {
     case "exterior":
+    case "exterior-structures":
       return "EX";
     case "interior":
     case "interior-living":
@@ -94,12 +95,16 @@ export function chapterToMonogram(chapterId: string): MonogramCode {
     case "interior-bathrooms":
     case "interior-utility":
     case "interior-unfinished":
+    case "interior-additional":
+    case "appliances":
       return "IN";
     case "systems":
     case "systems-hvac":
     case "systems-mechanical":
+    case "systems-additional":
       return "SY";
     case "safety":
+    case "safety-detection":
       return "SA";
     case "strategy":
       return "SP";
