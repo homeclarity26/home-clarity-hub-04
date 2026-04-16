@@ -14,6 +14,7 @@ import type { PageContent } from "@/lib/templateUtils";
 import type { PropertyContext } from "@/components/tabs/ReportTab";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 interface ReportPageProps {
   page: ReportPageData;
@@ -238,7 +239,7 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
 
       {/* Admin AI Assistant + Per-page AI Chat — edit mode only */}
       {canEdit && (
-        <>
+        <ErrorBoundary>
           <AdminAIAssistant
             context="report"
             contextData={{
@@ -269,7 +270,7 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
               }}
             />
           </div>
-        </>
+        </ErrorBoundary>
       )}
     </div>
   );

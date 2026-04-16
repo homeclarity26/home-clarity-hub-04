@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useParams, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 interface AgentMessage {
   id: string;
@@ -178,6 +179,7 @@ const ClientAgentPanel = ({ propertyName, propertyAddress, enrichment }: ClientA
             });
           }}
         >
+          <ErrorBoundary>
           <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-secondary/50">
             <Sparkles className="w-5 h-5 text-accent" />
             <div className="flex-1">
@@ -247,6 +249,7 @@ const ClientAgentPanel = ({ propertyName, propertyAddress, enrichment }: ClientA
               </Button>
             </div>
           </div>
+          </ErrorBoundary>
         </SheetContent>
       </Sheet>
     </>
