@@ -203,10 +203,10 @@ const ProjectUpdateFeed = ({ projectId, isMock }: { projectId: string; isMock: b
           </div>
         )}
 
-        {loading && <p className="text-xs text-muted-foreground">Loading updates...</p>}
+        {loading && <p className="text-sm text-muted-foreground">Loading updates...</p>}
 
         {!loading && updates.length === 0 && (
-          <p className="text-xs text-muted-foreground py-2">No updates yet.</p>
+          <p className="text-sm text-muted-foreground py-2">No updates yet.</p>
         )}
 
         {updates.map((u) => (
@@ -478,7 +478,7 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
                               <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-2">Contractor</p>
                               <p className="font-sans text-sm text-foreground">{project.contractor_name}</p>
                               {project.contractor_contact && (
-                                <p className="font-sans text-xs text-muted-foreground mt-0.5">{project.contractor_contact}</p>
+                                <p className="font-sans text-sm text-muted-foreground mt-0.5">{project.contractor_contact}</p>
                               )}
                             </div>
                           )}

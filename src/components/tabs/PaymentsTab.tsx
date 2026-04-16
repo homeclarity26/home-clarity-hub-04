@@ -385,7 +385,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                   <div key={co.id} className={`${cardBase} cursor-default flex-row items-center justify-between`}>
                     <div>
                       <p className="font-sans text-sm font-medium">{co.title}</p>
-                      {co.description && <p className="font-sans text-xs text-muted-foreground">{co.description}</p>}
+                      {co.description && <p className="font-sans text-sm text-muted-foreground">{co.description}</p>}
                     </div>
                     <span className="font-sans text-sm font-medium">{fmt(Number(co.amount))}</span>
                   </div>
@@ -403,7 +403,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                   <div key={p.id} className={`${cardBase} cursor-default flex-row items-center justify-between`}>
                     <div>
                       <p className="font-sans text-sm">{format(new Date(p.payment_date), "MMM d, yyyy")} — {p.method}</p>
-                      {p.notes && <p className="font-sans text-xs text-muted-foreground">{p.notes}</p>}
+                      {p.notes && <p className="font-sans text-sm text-muted-foreground">{p.notes}</p>}
                     </div>
                     <span className="font-sans text-sm font-medium text-green-700">-{fmt(Number(p.amount))}</span>
                   </div>
@@ -510,13 +510,13 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
               <div className="bg-[#F2EFEB] rounded-lg p-4">
                 <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Check Payable To</p>
                 <p className="font-sans text-sm font-medium text-foreground">Hometown Builders Club LLC</p>
-                <p className="font-sans text-xs text-muted-foreground mt-1">or AK Renovations</p>
+                <p className="font-sans text-sm text-muted-foreground mt-1">or AK Renovations</p>
                 <p className="font-mono text-[10px] text-muted-foreground mt-2">(330) 203-1331</p>
               </div>
               <div className="bg-[#F2EFEB] rounded-lg p-4 flex flex-col justify-between">
                 <div>
                   <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">ACH / Bank Transfer</p>
-                  <p className="font-sans text-xs text-muted-foreground">Prefer bank transfer? We'll send you the account details.</p>
+                  <p className="font-sans text-sm text-muted-foreground">Prefer bank transfer? We'll send you the account details.</p>
                 </div>
                 <Button
                   variant="outline"
@@ -718,7 +718,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                         <div key={p.id} className="flex items-center justify-between py-2 border-b border-border/50">
                           <div>
                             <p className="font-sans text-sm">{format(new Date(p.payment_date), "MMMM d, yyyy")}</p>
-                            <p className="font-sans text-xs text-muted-foreground capitalize">{p.method} — {inv?.title || "Invoice"}</p>
+                            <p className="font-sans text-sm text-muted-foreground capitalize">{p.method} — {inv?.title || "Invoice"}</p>
                           </div>
                           <span className="font-sans text-sm font-medium text-green-600">{fmt(Number(p.amount))}</span>
                         </div>

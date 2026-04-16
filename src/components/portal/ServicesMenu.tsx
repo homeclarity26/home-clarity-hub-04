@@ -123,7 +123,7 @@ const ServicesMenu = ({ propertyId }: ServicesMenuProps) => {
                     </div>
                     <span className="text-lg font-mono font-bold text-foreground">{priceLabel(s)}</span>
                   </div>
-                  {s.description && <p className="text-xs font-sans text-muted-foreground mb-4">{s.description}</p>}
+                  {s.description && <p className="text-sm font-sans text-muted-foreground mb-4">{s.description}</p>}
                   {s.duration_hours && <p className="text-[10px] font-mono text-muted-foreground mb-3">Approx. {s.duration_hours} hours</p>}
                   <Button
                     variant={inCart ? "default" : "outline"}

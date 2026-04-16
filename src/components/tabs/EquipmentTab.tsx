@@ -239,7 +239,7 @@ const EquipmentTab = ({ propertyId, onTabChange, onSendMessage }: EquipmentTabPr
                       </div>
 
                       {item.notes && (
-                        <p className="text-xs font-sans text-muted-foreground mt-4 pt-4 border-t border-border italic">
+                        <p className="text-sm font-sans text-muted-foreground mt-4 pt-4 border-t border-border italic">
                           {item.notes}
                         </p>
                       )}

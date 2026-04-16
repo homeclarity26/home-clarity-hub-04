@@ -82,7 +82,7 @@ const GlossaryText = ({ text }: { text: string }) => {
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs">
               <p className="font-display text-sm font-semibold mb-1">{part.term.term}</p>
-              <p className="font-sans text-xs leading-relaxed">{part.term.definition}</p>
+              <p className="font-sans text-sm leading-relaxed">{part.term.definition}</p>
             </TooltipContent>
           </Tooltip>
         );
@@ -132,7 +132,7 @@ const GlossaryList = () => {
             {filtered.filter(t => t.category === cat).map(term => (
               <div key={term.id} className="bg-card rounded-md p-3 border border-border">
                 <p className="font-display text-sm text-foreground mb-1">{term.term}</p>
-                <p className="font-sans text-xs text-muted-foreground leading-relaxed">{term.definition}</p>
+                <p className="font-sans text-sm text-muted-foreground leading-relaxed">{term.definition}</p>
               </div>
             ))}
           </div>

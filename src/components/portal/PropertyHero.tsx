@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { HealthScoreRing } from "@/components/ui/HealthScoreRing";
 import { cn } from "@/lib/utils";
 
@@ -77,24 +78,39 @@ export function PropertyHero({
 
       <div className="relative z-10 h-full flex flex-col justify-end max-w-5xl mx-auto px-6 md:px-20 pb-10 md:pb-14">
         {/* Eyebrow */}
-        <p className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.25em] text-accent mb-3">
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.6 }}
+          className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.25em] text-accent mb-3"
+        >
           {displayGreeting}
           {firstName ? `, ${firstName}` : ""}
           {healthScore != null && ` · Condition ${healthScore}`}
-        </p>
+        </motion.p>
 
         {/* Property name */}
-        <h1 className="font-display text-4xl md:text-6xl text-white leading-[1.05] max-w-2xl">
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          className="font-display text-4xl md:text-6xl text-white leading-[1.05] max-w-2xl"
+        >
           {propertyName}
-        </h1>
+        </motion.h1>
 
         {/* Address + metadata */}
         {(propertyAddress || yearBuilt) && (
-          <p className="font-sans text-sm md:text-base text-white/75 mt-2">
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.6 }}
+            className="font-sans text-sm md:text-base text-white/75 mt-2"
+          >
             {propertyAddress}
             {propertyAddress && yearBuilt ? " · " : ""}
             {yearBuilt ? `Built ${yearBuilt}` : ""}
-          </p>
+          </motion.p>
         )}
       </div>
 

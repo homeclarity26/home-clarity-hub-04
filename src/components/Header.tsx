@@ -125,7 +125,7 @@ const Header = ({ activeTab, onTabChange, propertyId }: HeaderProps) => {
       <div className="md:hidden">
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
-            <button className="p-2 bg-transparent border-none cursor-pointer">
+            <button className="p-2 bg-transparent border-none cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center">
               <Menu className="w-6 h-6 text-foreground" />
             </button>
           </SheetTrigger>
@@ -148,7 +148,7 @@ const Header = ({ activeTab, onTabChange, propertyId }: HeaderProps) => {
                   <button
                     key={tab.id}
                     onClick={() => { onTabChange(tab.id); setMobileMenuOpen(false); }}
-                    className={`w-full text-left px-3 py-3 rounded-md font-sans text-sm transition-colors border-none cursor-pointer ${
+                    className={`w-full text-left px-3 py-3 rounded-md font-sans text-sm transition-colors border-none cursor-pointer min-h-[44px] ${
                       activeTab === tab.id
                         ? "bg-primary text-primary-foreground font-medium"
                         : "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -163,7 +163,7 @@ const Header = ({ activeTab, onTabChange, propertyId }: HeaderProps) => {
                   <button
                     key={tab.id}
                     onClick={() => { onTabChange(tab.id); setMobileMenuOpen(false); }}
-                    className={`w-full text-left px-3 py-3 rounded-md font-sans text-sm transition-colors border-none cursor-pointer ${
+                    className={`w-full text-left px-3 py-3 rounded-md font-sans text-sm transition-colors border-none cursor-pointer min-h-[44px] ${
                       activeTab === tab.id
                         ? "bg-primary text-primary-foreground font-medium"
                         : "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
