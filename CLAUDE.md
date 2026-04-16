@@ -1,18 +1,65 @@
 # Home Clarity Hub — Developer Reference
 
-**Branch:** `claude/nostalgic-archimedes`
-**Stack:** React 18 + TypeScript + Vite (Bun runtime) · Supabase (Postgres, Auth, Storage, Edge Functions) · Gemini 2.0 Flash · shadcn/ui · TanStack React Query · Tiptap WYSIWYG · @react-pdf/renderer · date-fns
+**Branch:** `main` (all feature branches merged through PR #11)
+**Last updated:** 2026-04-16 after PR #11 ("Fix all post-deployment review findings")
+**Stack:** React 18 + TypeScript + Vite (Bun runtime) · Supabase (Postgres, Auth, Storage, Edge Functions) · Gemini 2.0 Flash · shadcn/ui · TanStack React Query · Tiptap WYSIWYG · @react-pdf/renderer · date-fns · framer-motion · DOMPurify · @dnd-kit
+
+---
+
+## ⚠️ Session Start Protocol
+
+**At the start of every new session, read these files first:**
+1. `CLAUDE.md` (this file) — current architecture + conventions
+2. `TODO.md` — open tasks + priorities
+
+**To minimize token cost in a new session:**
+- Trust this file — don't re-read every listed component unless you're modifying it
+- Don't launch parallel review agents unless the user explicitly asks for a review
+- For single-file fixes, edit directly instead of running a full exploration
 
 ---
 
 ## What This App Does
 
-Home Clarity Hub (HBC) is a **home stewardship platform** for professional home consultants. It has two sides:
+Home Clarity Hub (HBC) is a **home stewardship platform** for professional home consultants. Two sides:
 
-1. **Admin Side** (`/admin/*`) — The consultant's workspace. Create clients, run intake, build reports, manage projects/payments/equipment/schedule/vendors.
-2. **Client Portal** (`/portal/:propertyId`) — The homeowner's view. Read-only access to their report, projects, payments, equipment registry, schedule, documents, and a live AI chat assistant.
+1. **Admin Side** (`/admin/*`) — Consultant workspace. Clients, intake, reports, projects, payments, equipment, schedule, vendors.
+2. **Client Portal** (`/portal/:propertyId`) — Homeowner view. Read-only report, projects, payments, equipment registry, schedule, documents, AI chat.
 
-The core product is a structured **Home Report** — a multi-page document covering every system of a home (roof, HVAC, electrical, plumbing, kitchen, etc.) with condition ratings, narrative, spec sheets, tiered pricing recommendations, and a financial roadmap. The report is built in the admin, then published to the client portal.
+Core product: a structured **Home Clarity Report** — multi-page document covering every area/system of a home (roof, HVAC, electrical, plumbing, kitchen, appliances, etc.) with condition ratings, narrative, specs, tiered pricing, financial roadmap, action plan. Built in admin, published to client portal.
+
+---
+
+## ✅ Deployment Status (LIVE)
+
+- **Supabase project:** `vvwojahsianpmwjvkunn` at https://vvwojahsianpmwjvkunn.supabase.co
+- **67 edge functions:** ALL deployed + ACTIVE
+- **All DB migrations:** applied (hero_image_url column, RLS tightening on 10 tables, project_updates table)
+- **Storage buckets:** `property-photos` and `report-images` — public read, creator write
+- **Secrets set:** GEMINI_API_KEY, RENTCAST_API_KEY, RESEND_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, VAPID keys, SUPABASE_* internals
+
+**If edge functions are updated, redeploy with:**
+```bash
+export SUPABASE_ACCESS_TOKEN="<your token from supabase.com/dashboard/account/tokens>"
+npx supabase functions deploy <function-name> --no-verify-jwt
+```
+
+---
+
+## Recently Shipped (PRs #2-11, 2026-04-15 to 2026-04-16)
+
+| PR | Summary |
+|---|---|
+| #2 | Review-redesign pass: lazy routes, QueryClient defaults, Monogram/HealthScoreRing/PropertyHero/PublishBar/MobileBottomNav/SanitizedHtml components, HomeTab collapse, ReportOverview architectural cover, persistent AI command bar, auth on 3 edge functions, RLS tightening, DOMPurify wrapping |
+| #3 | Phase 1: expanded report to 65+ page templates (appliances, exterior structures, additional spaces/systems, safety) + "Add Custom Page" dialog in ReportPageManager |
+| #4 | Phase 4: invoice full lifecycle — send_invoice_reminder, explain_invoice, get_overdue_invoices, generate_draw_schedule tools + draw schedule visualization bar |
+| #5 | Phase 5: project tracker — ProjectPhaseTimeline, ProjectUpdateFeed, project_updates table, 4 new hbc-agent tools |
+| #6 | Phase 6: AI agent completeness — 20 new tools (KB, annual reviews, team, automations, settings, client-side) |
+| #7 | Phase 3: photo system — symmetrical grid layouts, @dnd-kit reorder, enhance-photo edge function, 4 agent tools |
+| #8 | Phase 2: AI-first report creation — seed-report-from-notes edge function + PageAIChat component + 6 agent tools |
+| #9 | Phase 7: motion + polish — Framer Motion animations, typography sweep (text-xs→text-sm), 44px touch targets |
+| #10 | Phase 8: auth sweep on 15 edge functions (18 total), noImplicitAny enabled, nested ErrorBoundaries |
+| #11 | Post-deployment review: fixed API 401 bug (AIEditPanel + useChat now use real JWT), 3 critical + 4 high-severity findings |
 
 ---
 
@@ -22,26 +69,31 @@ The core product is a structured **Home Report** — a multi-page document cover
 |---|---|
 | Frontend runtime | Bun (also works with Node 18+) |
 | Framework | React 18 + TypeScript + Vite |
-| UI components | shadcn/ui (Radix UI primitives + Tailwind CSS) |
-| Data fetching | TanStack React Query v5 |
+| UI components | shadcn/ui (Radix UI + Tailwind CSS) |
+| Data fetching | TanStack React Query v5 (60s staleTime, no focus refetch, 1 retry) |
 | Rich text editor | Tiptap (StarterKit + Image + Placeholder) |
 | PDF generation | @react-pdf/renderer |
+| Animations | framer-motion |
+| HTML sanitization | DOMPurify (wrapped in `<SanitizedHtml>` component) |
+| Drag-and-drop | @dnd-kit (photos, sortable lists) |
 | Backend | Supabase (PostgreSQL + Auth + Storage + Edge Functions) |
-| Edge Functions | Deno runtime |
-| AI model | Google Gemini 2.0 Flash via `generativelanguage.googleapis.com/v1beta` |
-| AI response format | `responseMimeType: "application/json"` for structured output |
-| Date utilities | date-fns (`isPast`, `isAfter`, `addDays`, `format`) |
-| Routing | React Router v6 |
+| Edge Functions | Deno runtime, auth helper at `supabase/functions/_shared/auth.ts` |
+| AI model | Google Gemini 2.5 Flash via `generativelanguage.googleapis.com/v1beta` |
+| AI agent | `hbc-agent` edge function, ~200 tools spanning admin + client roles |
+| Routing | React Router v6, all admin/trade routes lazy-loaded |
 | Notifications | sonner (toast) |
 
 ### Key Patterns
 
-- **All AI calls** go through Supabase Edge Functions (never directly from the browser)
-- **Gemini API format:** `generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`
-- **Structured JSON responses:** always set `responseMimeType: "application/json"` in `generationConfig`
-- **Mock user bypass:** `propertyId.startsWith("mock-")` pattern used throughout client portal tabs to show demo data without Supabase
-- **Edit mode:** `useEditMode()` context — `canEdit` boolean gates all inline editing UI in the report
-- **Image storage:** Supabase Storage bucket `report-images`, path `{reportId}/{pageId}/{filename}`
+- **All AI calls** go through Supabase Edge Functions with `requireAuth` or `requireRole` from `_shared/auth.ts`
+- **AI agent tools:** defined in `hbc-agent/index.ts` TOOLS array, executed in `executeTool` switch. Role-gated via `allowedRoles: ["creator"]` or `["client"]`
+- **Structured JSON responses:** set `responseMimeType: "application/json"` in generationConfig
+- **Frontend auth to edge functions:** use `supabase.functions.invoke()` — it auto-passes the user's JWT. For SSE streaming (like chat), manually pull token via `supabase.auth.getSession()` then `access_token` in Bearer header. **NEVER use `VITE_SUPABASE_PUBLISHABLE_KEY` in Authorization headers** — that's the anon key and auth-protected functions will reject it with 401.
+- **Mock user bypass:** `propertyId.startsWith("mock-")` pattern in all client portal tabs for demo data
+- **Edit mode:** `useEditMode()` context — `canEdit` boolean gates inline editing UI
+- **Image storage:** `report-images` bucket for page photos, `property-photos` bucket for hero photos
+- **Monograms:** chapter/module badges (ES/EX/IN/SY/SP/SA) via `<Monogram>` component. Use `chapterToMonogram(groupId)` to map group IDs
+- **Health scores:** use `<HealthScoreRing>` — color-coded, animated, accessible (role="meter")
 
 ---
 
@@ -49,626 +101,254 @@ The core product is a structured **Home Report** — a multi-page document cover
 
 ### Frontend (`.env`)
 ```
-VITE_SUPABASE_URL=...
-VITE_SUPABASE_ANON_KEY=...
-VITE_GOOGLE_MAPS_API_KEY=...       # ← NOT YET SET — needed for AddressAutocomplete
+VITE_SUPABASE_URL="https://vvwojahsianpmwjvkunn.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY=...        (anon key)
+VITE_SUPABASE_PROJECT_ID="vvwojahsianpmwjvkunn"
+VITE_VAPID_PUBLIC_KEY=...                (push notifications)
+VITE_QBO_*=...                           (QuickBooks — optional)
 ```
 
-### Supabase Edge Function Secrets (set via `supabase secrets set`)
+### Supabase Edge Function Secrets (all set)
 ```
-GEMINI_API_KEY=...                 # ← NOT YET DEPLOYED — required for all AI features
-RENTCAST_API_KEY=...               # ← NOT YET DEPLOYED — required for property auto-lookup
+GEMINI_API_KEY              ✅ (for all AI functions)
+RENTCAST_API_KEY            ✅ (for lookup-property-data)
+RESEND_API_KEY              ✅ (for email)
+STRIPE_SECRET_KEY           ✅ (for create-checkout / subscriptions)
+STRIPE_WEBHOOK_SECRET       ✅
+VAPID_PUBLIC_KEY            ✅
+VAPID_PRIVATE_KEY           ✅
+SUPABASE_URL / ANON / SERVICE_ROLE ✅
 ```
 
 ---
 
 ## Database Schema (Key Tables)
 
-### `profiles`
-- `id` (uuid, FK → auth.users)
-- `role` — `'creator'` | `'client'`
-- `email`, `full_name`, `phone`, `avatar_url`
+### Core
+- `profiles` — user profile (id, email, full_name, phone, avatar_url)
+- `user_roles` — (user_id, role: 'creator' | 'client' | 'trade_partner')
+- `properties` — core property + admin-uploaded `hero_image_url` (PR #2 added this)
+- `reports` — status ('draft' | 'published'), completion_percent
+- `report_pages` — narrative/specs/tiers/condition/images jsonb fields, status ('draft' | 'complete' | 'published')
+- `invoices`, `projects`, `milestones`, `equipment`, `schedule_events`, `vendors`, `files`, `property_messages`
 
-### `properties`
-Core property record. Extended by `20260315000000_add_intake_fields.sql`:
-- `id`, `property_name`, `address`, `client_user_id`, `creator_user_id`
-- `city`, `state`, `zip`, `county`
-- `property_type` — `single_family` | `multi_family` | `condo` | `townhome`
-- `relationship_type` — `owner_occupied` | `recently_purchased` | `pre_purchase` | `investment`
-- `hover_url`, `hover_pdf_url`, `iguide_pdf_url`
-- `client_intelligence_summary` — AI-generated summary from discovery notes
-- `discovery_notes` — raw intake notes
-- `intake_status` — default `'draft'`
-- `digital_assets_status` — `'not_started'` | `'partial'` | `'complete'`
-- `metadata` (jsonb) — year_built, sqft, bedrooms, bathrooms, etc.
+### Added in recent PRs
+- `project_updates` (PR #5) — social-feed-style project updates with optional photos. RLS: creators manage, clients read own
+- `properties.hero_image_url` (PR #2) — admin-uploaded front-of-house photo
 
-### `reports`
-- `id`, `property_id`, `title`, `status` (`draft` | `published`), `completion_percent`
-
-### `report_pages`
-- `id`, `report_id`, `page_key`, `group_name`, `title`, `status`
-- `narrative` (jsonb array), `specs` (jsonb), `tiers` (jsonb), `condition_rating`
-- `key_observations`, `dependencies`, `risks`, `maintenance_notes`, `creator_notes` (all jsonb)
-- `sort_order`, `images` (text array)
-
-### `equipment` ← Added `20260316000000_add_equipment_table.sql`
-- `id`, `property_id` (FK → properties)
-- `name`, `category` — `hvac` | `plumbing` | `electrical` | `appliances` | `exterior` | `structure` | `safety` | `other`
-- `brand`, `model`, `serial_number`
-- `install_date`, `warranty_expiry`, `last_service_date`, `next_service_date` (dates)
-- `estimated_replacement_cost` (numeric), `condition` — `excellent` | `good` | `fair` | `poor` | `unknown`
-- `notes`, `report_page_id` (FK → report_pages, nullable), `sort_order`
-- RLS: creators manage all; clients read their own property equipment
-
-### `invoices`
-- `id`, `property_id`, `title`, `description`, `amount`, `status` (`pending` | `paid` | `overdue`)
-- `due_date`, `paid_date`
-
-### `projects`
-- `id`, `property_id`, `title`, `description`, `status`, `priority`, `estimated_cost`, `actual_cost`
-
-### `property_messages` ← Added `20260317100000_add_property_messages.sql`
-- `id`, `property_id` (FK → properties), `sender_id` (FK → auth.users)
-- `message` text, `is_read` boolean (default false), `created_at`
-- RLS: clients read/write their own property messages; creators read/write all
-
-### Other Tables
-- `schedule_events` — appointments, tasks per property
-- `vendors` — vendor directory per creator; `report_page_key` column added (`20260317000000_add_vendor_page_key.sql`) for vendor-to-page linking
-- `files` — file attachments per property
-- `comments` — threaded comments per property
+### RLS status
+- `properties`, `property_messages`, `report_pages`, `invoices`, `equipment` — scoped by `client_user_id` / `creator` role (verified via live smoke test)
+- 10 formerly-leaky tables fixed in PR #2: `document_extractions`, `home_knowledge_base`, `property_timeline`, `structural_specifications`, `warranty_registry`, `permit_registry`, `service_history`, `photo_analyses`, `project_scopes`, `home_value_snapshots` — now use `public.user_can_access_property(id)` helper
 
 ---
 
-## Pending Database Migrations (NOT YET RUN IN SUPABASE)
-
-These migrations exist in `/supabase/migrations/` but have not been applied to the live Supabase project:
-
-1. **`20260315000000_add_intake_fields.sql`** — Adds city, state, zip, county, property_type, relationship_type, hover_url, hover_pdf_url, iguide_pdf_url, client_intelligence_summary, discovery_notes, intake_status, digital_assets_status to `properties` table
-2. **`20260316000000_add_equipment_table.sql`** — Creates full `equipment` table with RLS policies and indexes
-3. **`20260317000000_add_vendor_page_key.sql`** — Adds `report_page_key` column to `vendors` table for vendor-to-page linking
-4. **`20260317100000_add_property_messages.sql`** — Creates `property_messages` table for client↔advisor direct messaging with full RLS policies
-
-**To apply:** Run in Supabase Dashboard → SQL Editor, or via `supabase db push`
-
----
-
-## File Structure
+## File Structure — Key New/Changed Components
 
 ```
 src/
 ├── components/
-│   ├── admin/
-│   │   ├── AdminHeader.tsx           # Top nav for admin pages
-│   │   ├── AdminSidebar.tsx          # Left nav for admin
-│   │   ├── AdminProjectsSection.tsx  # Projects CRUD per client
-│   │   ├── ActivityFeed.tsx          # Recent activity per client
-│   │   ├── AddressAutocomplete.tsx   # Google Places autocomplete
-│   │   ├── ClientIntelligenceCard.tsx # AI analysis of discovery notes
-│   │   ├── ClientOverview.tsx        # Client summary + inline property editing
-│   │   ├── ClientTable.tsx           # Admin clients list table
-│   │   ├── CommentsManager.tsx       # Threaded comments
-│   │   ├── DigitalAssetsStep.tsx     # Hover.to + iGuide URL/PDF management
-│   │   ├── EquipmentSection.tsx      # Admin equipment CRUD
-│   │   ├── FileManager.tsx           # File uploads per property
-│   │   ├── KnowledgeBase.tsx         # Admin knowledge base
-│   │   ├── NewReportWizard.tsx       # 4-step new client intake wizard
-│   │   ├── ReportPageManager.tsx     # Admin report page list/status
-│   │   ├── StatsCard.tsx             # Dashboard stat cards
-│   │   └── VendorManager.tsx         # Vendor directory
-│   ├── chat/
-│   │   ├── ChatPanel.tsx             # Slide-out chat sheet
-│   │   ├── ChatMessage.tsx           # Individual message bubbles
-│   │   └── useChat.ts                # Chat state + edge function calls
-│   ├── editor/
-│   │   ├── AIEditPanel.tsx           # AI-powered text improvement panel
-│   │   ├── EditableSection.tsx       # Tiptap WYSIWYG editor wrapper
-│   │   ├── EditorToolbar.tsx         # Rich text formatting toolbar
-│   │   ├── ImageGrid.tsx             # Photo grid with upload/delete
-│   │   └── ImageUploader.tsx         # Supabase Storage uploader
+│   ├── ui/                       # Shared design primitives
+│   │   ├── Monogram.tsx          # ✨ NEW — ES/EX/IN/SY/SP/SA chapter badges
+│   │   ├── HealthScoreRing.tsx   # ✨ NEW — animated SVG meter
+│   │   └── SanitizedHtml.tsx     # ✨ NEW — DOMPurify wrapper for AI output
+│   ├── portal/
+│   │   ├── PropertyHero.tsx      # ✨ NEW — full-bleed hero w/ photo
+│   │   ├── MobileBottomNav.tsx   # ✨ NEW — 4 tabs + More (replaces hamburger-only)
+│   │   ├── PortalSidebar.tsx     # Desktop sidebar + controlled mobile drawer
+│   │   └── ... (other widgets: SmartActionTiles, AICommandBar, etc.)
 │   ├── report/
-│   │   ├── BlockRenderer.tsx         # Renders all block types + serial plate scanner
-│   │   ├── CommentsSection.tsx       # Client comments on report pages
-│   │   ├── CreatorBar.tsx            # Edit mode toggle bar for admin
-│   │   ├── CreatorNotes.tsx          # Internal admin notes on pages
-│   │   ├── DependenciesList.tsx      # Page dependency relationships
-│   │   ├── EditableDropdown.tsx      # Inline condition rating selector
-│   │   ├── EditableField.tsx         # Inline text field editor
-│   │   ├── EditableSpecs.tsx         # Editable spec key/value pairs
-│   │   ├── EditableTiers.tsx         # Editable pricing tier table
-│   │   ├── HealthBar.tsx             # Visual health meter
-│   │   ├── KeyObservations.tsx       # Bullet list of key findings
-│   │   ├── MaintenanceNotes.tsx      # Maintenance schedule section
-│   │   ├── PricingTiers.tsx          # Essential/Enhanced/Signature display
-│   │   ├── ReportPage.tsx            # Full single report page renderer
-│   │   ├── RisksConcerns.tsx         # Risk flags list
-│   │   └── SaveIndicator.tsx         # Autosave status indicator
-│   ├── tabs/                         # Client portal tab components
-│   │   ├── ContactsTab.tsx
-│   │   ├── DocumentsTab.tsx
-│   │   ├── EquipmentTab.tsx          # Read-only equipment registry
-│   │   ├── HomeTab.tsx               # Portal landing with stats + nav
-│   │   ├── MessagesTab.tsx           # Direct client↔advisor messaging
-│   │   ├── PaymentsTab.tsx           # Invoice list with due dates + overdue highlighting
-│   │   ├── ProjectsTab.tsx
-│   │   ├── ReportTab.tsx             # Full report viewer + editor
-│   │   └── ScheduleTab.tsx
-│   ├── Footer.tsx
-│   ├── Header.tsx                    # Client portal tab bar
-│   └── NavLink.tsx
-├── contexts/
-│   ├── AuthContext.tsx               # Supabase auth + profile
-│   └── EditModeContext.tsx           # Report edit mode toggle
+│   │   ├── PublishBar.tsx        # ✨ NEW — floating publish CTA in edit mode
+│   │   ├── PageAIChat.tsx        # ✨ NEW — inline AI edit on each report page
+│   │   ├── ReportOverview.tsx    # Architectural cover w/ monogram TOC
+│   │   ├── ReportChapterNav.tsx  # Monogram pills + TOC drawer (keyboard-accessible)
+│   │   └── ... (existing renderers)
+│   ├── editor/
+│   │   ├── ImageGrid.tsx         # Symmetrical CSS Grid layouts + @dnd-kit reorder
+│   │   ├── AIEditPanel.tsx       # ← uses supabase.functions.invoke() now
+│   │   └── ...
+│   ├── agent/
+│   │   └── ClientAgentPanel.tsx  # Persistent command bar + ⌘K + Sheet
+│   ├── chat/
+│   │   └── useChat.ts            # ← uses real JWT from session (NOT anon key)
+│   ├── tabs/
+│   │   ├── HomeTab.tsx           # Collapsed to hero + AI bar + tiles + "Explore more"
+│   │   ├── ProjectsTab.tsx       # Phase timeline + update feed
+│   │   ├── PaymentsTab.tsx       # Draw schedule bar + Promise.allSettled
+│   │   └── ...
+│   └── admin/
+│       ├── ReportPageManager.tsx # "Add Custom Page" dialog
+│       └── ... (existing)
 ├── data/
-│   └── reportContent.ts             # Static template data + ReportPageData types
-├── features/
-│   └── pdf/
-│       ├── PDFDownloadButton.tsx
-│       └── PDFReport.tsx             # @react-pdf/renderer report document
-├── hooks/
-│   ├── useAdminData.ts              # TanStack Query hooks for admin
-│   ├── useClientPortal.ts           # Portal data loader
-│   ├── useReportPage.ts             # Single page data + autosave
-│   └── use-toast.ts
-├── integrations/
-│   └── supabase/
-│       ├── client.ts
-│       └── types.ts                 # Generated DB types
-├── lib/
-│   └── templateUtils.ts             # BlockConfig + PageContent types
-└── pages/
-    ├── Index.tsx                    # Client portal main page
-    ├── Login.tsx / Signup.tsx / ForgotPassword.tsx / ResetPassword.tsx
-    └── admin/
-        ├── AdminClientDetail.tsx    # Per-client tabbed workspace
-        ├── AdminClients.tsx         # Clients list page
-        ├── AdminDashboard.tsx       # Dashboard overview
-        ├── AdminKnowledgeBase.tsx
-        ├── AdminNewReport.tsx       # Entry point → NewReportWizard
-        └── AdminSettings.tsx
+│   └── reportContent.ts          # 65+ page templates (was 39) — appliances, safety, etc.
+├── pages/
+│   ├── Index.tsx                 # MobileBottomNav + memoized footerReportContext
+│   └── ... (all /admin/* and /trade/* routes are lazy-loaded)
+└── App.tsx                       # Lazy routes + QueryClient defaults + TradePartnerRoute
 
 supabase/
 ├── functions/
-│   ├── ai-edit/                     # AI text improvement
-│   ├── analyze-discovery-notes/     # AI analysis of intake notes
-│   ├── chat-assistant/              # AI chat with full report context
-│   ├── create-client-account/       # Creates Supabase auth account for client
-│   ├── draft-page-narrative/        # AI drafts report page narrative
-│   ├── extract-serial-plate/        # Gemini Vision reads equipment labels
-│   ├── lookup-property-data/        # Rentcast API property auto-populate
-│   ├── qa-report/                   # Pre-publish QA check
-│   └── recommend-report-pages/      # AI recommends pages to include
+│   ├── _shared/
+│   │   ├── auth.ts               # ✨ NEW — requireAuth / requireRole / requirePropertyAccess
+│   │   ├── ai-client.ts          # Gemini wrapper (callAI)
+│   │   └── rate-limit.ts
+│   ├── hbc-agent/                # ~200 tools — THE AI operating system
+│   ├── seed-report-from-notes/   # ✨ NEW — meeting notes → full report seed
+│   ├── enhance-photo/            # ✨ NEW — Gemini Vision photo analysis
+│   ├── chat-assistant/           # Auth-protected
+│   ├── ai-edit/                  # Auth-protected (creator-only)
+│   └── ... (67 total)
 └── migrations/
-    └── (14 migration files)
-```
-
----
-
-## What's Been Built
-
-### ✅ Stage 1 — Client Intake & Setup
-
-**New Client Intake Wizard** (`NewReportWizard.tsx`) — 4-step wizard:
-
-- **Step 1 — Client & Property:** Name, email, phone, full address (Google Places autocomplete), city/state/zip/county, property type, relationship type, year built, sqft, bed/bath, discovery notes. Includes a **Client Intelligence Card** that sends discovery notes to the `analyze-discovery-notes` edge function and returns AI-extracted goals, constraints, and priorities.
-- **Step 2 — Digital Assets:** Hover.to scan URL + PDF URL, iGuide URL + PDF URL, with status badge tracking (Not Started / Partial / Ready).
-- **Step 3 — Select Pages:** Template browser grouped by category. AI page recommendation via `recommend-report-pages` edge function (triggered by "AI Suggest" button using the intelligence summary).
-- **Step 4 — Review & Publish:** Summary of selections, **QA Check** panel (runs `qa-report` edge function, returns 0–100 score, error/warning/info issues), publish creates DB records and sends client invitation email.
-
-**Address Autocomplete** (`AddressAutocomplete.tsx`):
-- Google Places Autocomplete API
-- Auto-fills city, state, zip, county, and property fields
-- Requires `VITE_GOOGLE_MAPS_API_KEY` env var
-
-**Property Auto-Populate** (triggered on address selection):
-- Calls `lookup-property-data` edge function → Rentcast API
-- Auto-fills year built, sqft, bedrooms, bathrooms, estimated value, last sale price/date
-- Graceful fallback if `RENTCAST_API_KEY` not set
-
-**Client Intelligence Card** (`ClientIntelligenceCard.tsx`):
-- Manual "Analyze" button trigger (no auto-analyze)
-- Sends discovery notes to `analyze-discovery-notes`
-- Returns: summary (2–3 sentences), goals array, constraints array, priorities array
-- Accept/regenerate flow, saves `client_intelligence_summary` to properties table
-
-**Digital Assets Step** (`DigitalAssetsStep.tsx`):
-- Hover.to and iGuide URL + PDF management
-- Digital assets status badge (Not Started / Partial / Ready)
-- Saves to `hover_url`, `hover_pdf_url`, `iguide_pdf_url`, `digital_assets_status` columns
-
----
-
-### ✅ Stage 2 — Digital Twin (Equipment Registry)
-
-**Equipment DB Table** (`20260316000000_add_equipment_table.sql`):
-- Full schema with 15 fields per item
-- Categories: hvac, plumbing, electrical, appliances, exterior, structure, safety, other
-- Conditions: excellent, good, fair, poor, unknown
-- Links to `report_pages` via `report_page_id` (optional)
-- RLS: creators manage all, clients read their own
-
-**Admin Equipment Manager** (`EquipmentSection.tsx`):
-- Full CRUD with add/edit dialog, delete confirm
-- Groups equipment by category
-- Service status badges: **Overdue** (past next_service_date), **Due Soon** (within 60 days), **Warranty Expired**, **Up to Date**
-- Date logic uses `date-fns`: `isPast()`, `isAfter()`, `addDays(now, 60)`
-- All fields: name, category, condition, brand, model, serial, replacement cost, install date, warranty expiry, last service, next service, linked report page, notes
-- Linked to AdminClientDetail as its own tab
-
-**Client Portal Equipment Tab** (`EquipmentTab.tsx`):
-- Read-only view for homeowners
-- Alert banners at top: overdue count + due-soon count
-- Category ordering with condition color dots
-- Demo data for mock-* propertyIds (5 items: 2 HVAC, water heater, electrical panel, smoke detectors)
-
----
-
-### ✅ Stage 3 — Report Builder
-
-**Report Page Manager** (`ReportPageManager.tsx`):
-- Admin list of all report pages with status (Complete / Published / Draft / Needs Review / Inactive)
-- "Open in Portal" links directly to edit mode
-
-**Report Page Editor** (multiple components in `src/components/report/`):
-- **Block Renderer** renders all page content types: condition rating (dropdown), narrative (WYSIWYG), specs table (editable key/value), pricing tiers (Essential/Enhanced/Signature), health bar, key observations, dependencies, risks, maintenance notes, creator notes, image grid
-- **Tiptap WYSIWYG** editor for narrative sections with toolbar (bold, italic, bullets, etc.)
-- **Autosave** — changes save automatically via `useReportPage.ts` debounced save
-- **Condition Rating** — dropdown with color-coded labels (Excellent/Good/Fair/Poor/Critical)
-- **Image Grid** — upload, reorder, delete photos per page (Supabase Storage)
-- **AI Narrative Draft** — "Draft with AI" button calls `draft-page-narrative` edge function passing property context + existing data
-- **AI Edit Panel** (`AIEditPanel.tsx`) — highlight text → get AI suggestions for improvement via `ai-edit` edge function
-- **Serial Plate Scanner** — camera capture button (edit mode only), calls `extract-serial-plate` edge function (Gemini Vision), merges returned data into specs
-
----
-
-### ✅ Stage 4 — AI Features
-
-**9 Edge Functions** (all built, none yet deployed):
-
-| Function | Purpose | AI Model |
-|---|---|---|
-| `analyze-discovery-notes` | Extracts goals, constraints, priorities from raw intake notes | Gemini 2.0 Flash |
-| `recommend-report-pages` | Suggests which report pages to include based on client intelligence | Gemini 2.0 Flash |
-| `draft-page-narrative` | Writes full narrative for a single report page given property context | Gemini 2.0 Flash |
-| `ai-edit` | Improves/rewrites selected text on command | Gemini 2.0 Flash |
-| `chat-assistant` | AI chat with full report as context — answers questions about the home | Gemini 2.0 Flash |
-| `qa-report` | Reviews all pages before publish, scores 0–100, flags issues | Gemini 2.0 Flash |
-| `extract-serial-plate` | Reads equipment label photos (Gemini Vision multimodal) | Gemini 2.0 Flash |
-| `lookup-property-data` | Fetches property data from Rentcast API | — (external API) |
-| `create-client-account` | Creates Supabase auth user for new client | — (admin SDK) |
-
-**Chat Assistant** (`chat/` components):
-- Floating action button in client portal (bottom-right)
-- Slide-out Sheet panel (`ChatPanel.tsx`)
-- Sends full report context (all pages, conditions, specs, tiers, recommendations) with every request
-- Message history maintained in session
-- `initialQuery` prop allows pre-populating with context (e.g., from HomeTab "Ask a question" button)
-
-**QA Check** (in `NewReportWizard.tsx` Step 4):
-- "Run QA Check" button → calls `qa-report` edge function
-- Score badge: green ≥80, orange ≥60, red <60
-- Issue list with severity icons (error = red X, warning = orange triangle, info = blue circle)
-- Checks for: empty narratives, missing condition ratings, default placeholder text, missing specs, incomplete tiers
-
-**Serial Plate Scanner** (in `BlockRenderer.tsx`):
-- Camera file input with `capture="environment"` (opens phone camera on mobile)
-- Base64 encodes image via `FileReader` + `Uint8Array` + `btoa`
-- Calls `extract-serial-plate` (Gemini Vision)
-- Returns: brand, model, serial, manufactured date, efficiency, capacity, voltage, refrigerant, weight, country, certifications
-- Merges into existing specs array (updates matching keys, appends new ones)
-
----
-
-### ✅ Stage 5 — Client Portal
-
-**Portal Structure** (`src/pages/Index.tsx`):
-- Route: `/portal/:propertyId`
-- `?edit=true` query param enables edit mode
-- `?page=slug` query param jumps to specific report page
-
-**Tab Navigation** (`Header.tsx`):
-- Home · Report · Projects · Payments · Equipment · Documents · Messages · Contacts · Schedule
-
-**Tab Components:**
-- `HomeTab.tsx` — Hero with property name, report progress bar, quick nav cards, "Ask a question" button (opens chat assistant)
-- `ReportTab.tsx` — Full paginated report with sidebar navigation; digital home section has live Hover.to/iGuide links when URLs are set, "Coming Soon" when not
-- `ProjectsTab.tsx` — Project list with status/priority/cost
-- `PaymentsTab.tsx` — Invoice table with description, due date, amount, status; overdue row highlighting (bg-destructive/5); "Paid [date]" for completed invoices
-- `EquipmentTab.tsx` — Equipment registry (see above)
-- `DocumentsTab.tsx` — File downloads
-- `MessagesTab.tsx` — Direct messaging channel between client and HBC advisor; chat-style bubble UI; mock data for dev; send on Enter; `property_messages` table
-- `ScheduleTab.tsx` — Appointment calendar
-- `ContactsTab.tsx` — Contact directory
-
----
-
-### ✅ Stage 6 — Admin Workspace
-
-**Admin Client Detail** (`AdminClientDetail.tsx`):
-Tabs: Overview · Report · Files · Comments · Projects · Payments · Equipment · Schedule · Vendors
-
-**Client Overview** (`ClientOverview.tsx`):
-- Property info display + **inline editing** (Edit/Cancel/Save buttons)
-- Edit mode shows form with all intake fields: phone, city, state, zip, county, property type, relationship type, year built, sqft, bedrooms, bathrooms
-- Saves to `properties` table + `metadata` jsonb column
-- Shows digital assets status badge
-- Embeds `ClientIntelligenceCard` for AI discovery note analysis
-
-**Payments in Admin** (`AdminClientDetail.tsx`):
-- Invoice CRUD (create/edit/delete)
-- **"From Report Tier" pre-fill** — selects a report page → selects a tier → pre-fills invoice with tier title and cost (parses "$4,000–$8,000" range strings, takes low end as amount)
-
-**PDF Download** (`PDFDownloadButton.tsx`):
-- @react-pdf/renderer generates full report PDF
-- Available in both admin and client portal
-
----
-
-### ✅ Stage 7 — Settings & Infrastructure
-
-**Admin Settings** (`AdminSettings.tsx`) — Profile, branding, notification preferences
-
-**Auth Flow:**
-- Login / Signup / Forgot Password / Reset Password
-- `AuthContext.tsx` — Supabase auth + profile loading
-- `create-client-account` edge function creates client auth accounts
-
-**Knowledge Base** (`AdminKnowledgeBase.tsx`, `KnowledgeBase.tsx`) — Admin reference docs
-
----
-
-## What Still Needs to Be Built
-
-### ✅ Recently Completed (this session)
-
-- **Page status controls in ReportPageManager** — inline `Select` dropdown per row changes status directly from the admin Report tab; triggers `completion_percent` recalculation on every change
-- **Report completion % auto-calc** — `recalculateCompletion(reportId)` counts complete+published pages / total, writes to `reports.completion_percent`; called after every status change; progress bar + `X/Y complete` count shown in ReportPageManager header
-- **Financial Roadmap page** (`src/components/report/FinancialRoadmapPage.tsx`) — live aggregation of all report pages' tier costs; groups into Urgent/Near-Term/Planned phases based on condition ratings; Essential/Balanced/Premium tier switcher; total + phase-level cost summaries
-- **Action Plan page** (`src/components/report/ActionPlanPage.tsx`) — auto-generates prioritized to-do list from all pages' recommendations + condition ratings; collapsible groups (Urgent/Near-Term/Planned); expand/collapse per item; count summary strip
-- Both special pages hooked into `ReportTab.tsx` — detected by page slug and rendered instead of standard `ReportPage` when `activePageId` is `"financial-roadmap"` or `"action-plan"`
-- AI page recommendation in wizard (Step 3) was already wired via `handleAiRecommendPages` calling `recommend-report-pages` edge function
-- **Serial plate scanner → Equipment Registry** — after a successful scan in BlockRenderer, a "Save to Equipment Registry?" prompt appears; `handleSaveEquipment()` inserts into `equipment` table with inferred category from page slug
-- **Schedule tab full enhancement** (`ScheduleTab.tsx`) — rewritten with event type config (appointment/milestone/task/inspection/reminder), relative date labels (Today/Tomorrow/In X days), EventCard component, today/this-week/upcoming grouping, History section, seasonal checklist expansion, rich mock data
-- **Bulk AI Draft All Pages** (ReportPageManager.tsx) — "Draft All with AI" button sequentially calls `draft-page-narrative` for all pages with < 30 words of narrative; live progress display `"Drafting 2/7: Roof System"`
-- **Copy Invite Message** (NewReportWizard.tsx Step 4) — after publish, "Copy Invite Message" button generates a formatted message with portal URL, email, and temp password ready to paste into email/text
-- **Recommended Vendors on Report Pages** (`RecommendedVendors.tsx`) — admin assigns property vendors to specific pages; client portal shows vendor cards (name, specialty, phone/email); migration adds `report_page_key` column to `vendors` table
-- **Dependencies editor in DependenciesList** — full rewrite supporting adding new page dependencies (before/after) via search-select UI; BlockRenderer loads all report pages to populate the picker; shows add-prompt when no dependencies exist
-- **Projects from Recommendations** (AdminProjectsSection.tsx) — "From Recommendation" button opens two-step dialog: pick a report page with recommendations → pick a specific recommendation → pre-fills the project creation form with title, description, and linked page
-- **Vendor page assignments visible** (VendorManager.tsx) — vendor cards now show "Assigned to: page-slug" badge when `report_page_key` is set
-- **Digital Asset URL wiring in ReportTab** — `hover_url`, `hover_pdf_url`, `iguide_url`, `iguide_pdf_url` threaded from `useClientPortal` → `Index.tsx` → `ReportTab`; digital home section cards are live `<a>` links when URLs set, "Coming Soon" otherwise
-- **MessagesTab + property_messages** — new `property_messages` DB table with RLS; `MessagesTab.tsx` chat-style UI with bubble layout, mock data, mark-as-read, send on Enter; Messages tab added to Header (between Documents and Contacts) and wired in `Index.tsx`
-- **Bulk AI Draft in wizard** (`NewReportWizard.tsx` Step 3) — "Auto-Draft All Pages" panel above QA check; sequential loop through all created report_pages calling `draft-page-narrative`; real-time progress bar showing current page; results saved back to DB
-
----
-
-### 🔴 Critical — Must Deploy Before App Works
-
-1. **Deploy all 9 Edge Functions to Supabase**
-   ```bash
-   supabase functions deploy analyze-discovery-notes
-   supabase functions deploy recommend-report-pages
-   supabase functions deploy draft-page-narrative
-   supabase functions deploy ai-edit
-   supabase functions deploy chat-assistant
-   supabase functions deploy qa-report
-   supabase functions deploy extract-serial-plate
-   supabase functions deploy lookup-property-data
-   supabase functions deploy create-client-account
-   ```
-
-2. **Set Supabase Secrets**
-   ```bash
-   supabase secrets set GEMINI_API_KEY=your_key_here
-   supabase secrets set RENTCAST_API_KEY=your_key_here
-   ```
-
-3. **Set Frontend Env Var**
-   - Add `VITE_GOOGLE_MAPS_API_KEY=your_key_here` to `.env`
-   - Enable Places API in Google Cloud Console
-
-4. **Run Pending DB Migrations** (all 4 pending, run in order)
-   - Apply `20260315000000_add_intake_fields.sql` in Supabase SQL Editor
-   - Apply `20260316000000_add_equipment_table.sql` in Supabase SQL Editor
-   - Apply `20260317000000_add_vendor_page_key.sql` in Supabase SQL Editor
-   - Apply `20260317100000_add_property_messages.sql` in Supabase SQL Editor
-
----
-
-### 🟠 High Priority — Core Features Not Yet Built
-
-5. ~~AI Page Recommendation Integration (NewReportWizard Step 3)~~ ✅ **Built**
-
-6. ~~Report Page Auto-Draft on Creation~~ ✅ **Built** — wizard Step 3 has "Auto-Draft All Pages" panel that loops all created pages through `draft-page-narrative` with progress bar
-
-7. ~~Financial Roadmap Page~~ ✅ **Built**
-
-8. ~~Action Plan Page~~ ✅ **Built**
-
-9. ~~Report Page Dependencies~~ ✅ **Built**
-
-10. ~~Vendor Connection on Report Pages~~ ✅ **Built**
-
----
-
-### 🟡 Medium Priority — Polish & Enhancement
-
-11. ~~Report Sharing / Client Portal Access Control~~ ✅ **Partially built** — wizard Step 4 success state now shows "Copy Invite Message" button that generates a formatted message with portal URL, email, and temp password; Resend email still placeholder for future
-
-12. ~~Report Completion Tracking~~ ✅ **Built** — `recalculateCompletion()` in ReportPageManager calculates and writes `completion_percent` to `reports` table on every status change
-
-13. ~~Bulk AI Draft All Pages~~ ✅ **Built** — "Draft All with AI" button in ReportPageManager header; sequential loop with live progress display
-
-14. ~~Report Page Status Workflow~~ ✅ **Built** — inline Select dropdown in ReportPageManager table; status changes instantly update DB + trigger completion % recalc
-
-15. ~~Equipment → Report Page Sync~~ ✅ **Built** — "Save to Equipment Registry?" prompt after serial plate scan in BlockRenderer; `handleSaveEquipment()` inserts into `equipment` table with inferred category
-
-16. ~~Client Portal — Report Download Button~~ ✅ **Already built** — PDFDownloadButton is in ReportTab hero; pdfData is fully wired in Index.tsx
-
-17. ~~Schedule Tab Enhancement~~ ✅ **Built** — full rewrite with event types, relative dates, today/this-week/upcoming sections, History section, seasonal checklists, rich mock data
-
-18. ~~Projects ↔ Report Pages~~ ✅ **Built** — `AdminProjectsSection.tsx` has "From Recommendation" two-step dialog (pick page → pick recommendation → pre-fill project form); projects already have `report_page_id` FK
-
-19. ~~Comments Threading / Messages~~ ✅ **Built** — `MessagesTab.tsx` provides chat-style client↔advisor messaging in the portal; `property_messages` DB table with full RLS; Messages tab added to Header and Index.tsx
-
----
-
-### 🟢 Low Priority — Nice to Have
-
-20. **Hover.to + iGuide Full Embed** *(partial — links work, embed not done)*
-    - URLs are stored and wired as live external links in ReportTab digital home section
-    - Full iframe embed of Hover.to 3D model or iGuide tour would be a nicer experience
-    - Consider embedding on HomeTab or Documents tab (iframe with src={hover_url})
-
-21. **Property Value Tracking**
-    - `lookup-property-data` returns `estimatedValue` and `lastSalePrice`
-    - HomeTab could show a value estimate widget
-    - Would need periodic refresh (Rentcast has rate limits — store and cache the value)
-
-22. **Report Template Library**
-    - Current templates are hardcoded in `reportContent.ts`
-    - Admin should be able to create/edit/clone page templates
-    - Templates stored in a `page_templates` table so they persist per creator
-
-23. **Multi-Property Dashboard**
-    - AdminDashboard currently shows client list + stats
-    - A map view of all properties (using stored lat/lng or geocoding the addresses) would be compelling
-    - Portfolio health summary: how many properties have overdue equipment, upcoming service, incomplete reports
-
-24. **Client Notifications**
-    - Supabase realtime or email notifications when:
-      - Report is published/updated
-      - New invoice created
-      - Schedule event added
-      - Equipment service date approaching
-
-25. **Knowledge Base Integration**
-    - `AdminKnowledgeBase.tsx` exists but is disconnected from the report editor
-    - The `draft-page-narrative` edge function could pull relevant KB articles as context
-    - Would improve AI narrative quality for regional/property-type-specific knowledge
-
-26. **Vendor Portal**
-    - Vendors currently in a list per creator account
-    - Future: vendors have their own login, receive job requests, submit quotes
-    - Would integrate with Projects and the report page vendor recommendation feature
-
----
-
-## How to Run Locally
-
-```bash
-# Install dependencies
-bun install
-
-# Start dev server
-bun run dev
-# → http://localhost:8080
-
-# Deploy edge functions (one at a time or all)
-supabase functions deploy <function-name>
-
-# Run database migrations
-supabase db push
-# or paste SQL directly in Supabase Dashboard → SQL Editor
+    ├── 20260415000000_add_hero_image_url.sql
+    ├── 20260415000001_tighten_leaky_rls.sql
+    └── 20260415000002_create_project_updates.sql
 ```
 
 ---
 
 ## Key Conventions
 
-### Gemini API Calls (Edge Functions)
-```typescript
-const response = await fetch(
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-  {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-      generationConfig: {
-        temperature: 0.7,
-        responseMimeType: "application/json",
-      },
-    }),
-  }
-);
-const json = await response.json();
-const result = JSON.parse(json.candidates[0].content.parts[0].text);
-```
+### Calling edge functions from the frontend
 
-### Gemini Vision (multimodal — extract-serial-plate)
 ```typescript
-contents: [{
-  role: "user",
-  parts: [
-    { inlineData: { mimeType: file.mimeType, data: base64String } },
-    { text: prompt }
-  ]
-}]
-```
-
-### Supabase Edge Function Call from Frontend
-```typescript
+// ✅ CORRECT — user's JWT is auto-included
+import { supabase } from "@/integrations/supabase/client";
 const { data, error } = await supabase.functions.invoke("function-name", {
   body: { ...payload }
 });
+
+// ✅ CORRECT for SSE streaming — pull real JWT manually
+const { data: sessionData } = await supabase.auth.getSession();
+const token = sessionData?.session?.access_token;
+if (!token) { toast.error("Please log in again."); return; }
+const resp = await fetch(URL, {
+  headers: { Authorization: `Bearer ${token}` },
+  body: JSON.stringify(payload),
+});
+
+// ❌ WRONG — anon key will be rejected by auth-protected functions
+headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` }
 ```
 
-### Mock Data Bypass Pattern
-```typescript
-// Used in all client portal tabs
-if (propertyId?.startsWith("mock-")) {
-  // Return hardcoded demo data
-  return <MockView />;
-}
-// Otherwise fetch from Supabase
-```
+### Edge function auth template
 
-### TanStack Query Pattern (Admin)
 ```typescript
-const { data, isLoading } = useQuery({
-  queryKey: ["key", id],
-  enabled: !!id,
-  queryFn: async () => {
-    const { data } = await supabase.from("table").select("*").eq("id", id);
-    return data || [];
-  },
+// supabase/functions/your-function/index.ts
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
+import { callAI } from "../_shared/ai-client.ts";
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const auth = await requireRole(req, ["creator"]); // or requireAuth(req) for any role
+  if ("error" in auth) return auth.error;
+
+  try {
+    const body = await req.json();
+    // ... work with auth.user, auth.userSupabase (RLS-respecting), auth.adminSupabase (bypasses RLS)
+    return json({ ok: true, result: ... });
+  } catch (e) {
+    console.error("my-fn error:", e);
+    return json({ error: e instanceof Error ? e.message : "Unknown" }, { status: 500 });
+  }
 });
 ```
 
-### Service Status Logic (Equipment)
-```typescript
-import { isPast, isAfter, addDays } from "date-fns";
-const now = new Date();
-const nextService = item.next_service_date ? new Date(item.next_service_date) : null;
-const warrantyExpiry = item.warranty_expiry ? new Date(item.warranty_expiry) : null;
+### Adding a new hbc-agent tool
 
-if (nextService && isPast(nextService)) → "Overdue"
-if (nextService && isAfter(addDays(now, 60), nextService)) → "Due Soon"
-if (warrantyExpiry && isPast(warrantyExpiry)) → "Warranty Expired"
-else → "Up to Date"
+1. Add tool definition to TOOLS array in `supabase/functions/hbc-agent/index.ts`:
+   ```typescript
+   { name: "my_tool", description: "...", parameters: { type: "object", properties: {...}, required: [...] }, allowedRoles: ["creator"] },
+   ```
+2. Add case handler in `executeTool()` switch — return `{ success: true, result: {...}, entity_id, entity_type }`
+3. Deploy: `npx supabase functions deploy hbc-agent`
+
+### Mock data bypass
+
+```typescript
+if (propertyId?.startsWith("mock-")) { return <MockView />; }
+```
+
+### Gemini call via _shared/ai-client
+
+```typescript
+const text = await callAI({
+  system: "You are a...",
+  prompt: userInput,
+  json: true,             // for structured JSON response
+  temperature: 0.3,
+});
 ```
 
 ---
 
-## Current Branch State
+## Design System Reference
 
-- **Branch:** `claude/nostalgic-archimedes`
-- **Last commit:** `40abd75` — "Add Messages tab, bulk AI draft, digital asset URL wiring, and vendor/dependency improvements"
-- All code changes from these sessions are committed
-- **4 DB migrations pending** (not yet applied to Supabase):
-  - `20260315000000_add_intake_fields.sql`
-  - `20260316000000_add_equipment_table.sql`
-  - `20260317000000_add_vendor_page_key.sql`
-  - `20260317100000_add_property_messages.sql`
-- **9 edge functions pending deployment** (none deployed yet)
-- **API keys needed:**
-  - `GEMINI_API_KEY` — Supabase secret (for all AI features)
-  - `RENTCAST_API_KEY` — Supabase secret (for property auto-lookup)
-  - `VITE_GOOGLE_MAPS_API_KEY` — frontend `.env` (for address autocomplete)
+- **Colors:** all HSL, defined in `src/index.css` under `:root`
+  - Navy `221 47% 20%` (primary)
+  - Cream `40 33% 97%` (background)
+  - Gold `43 41% 59%` (accent) + `--hbc-gold-readable: 34 47% 38%` for text on cream
+  - Rust `16 86% 39%` (destructive/rust accent)
+- **Fonts:** Playfair Display (headings, `font-display`), IBM Plex Mono (labels/badges/timestamps, `font-mono`), Inter (body, `font-sans`)
+- **Monograms:** ES (Executive Summary, gold circle navy text), EX (Exterior, navy circle gold text), IN (Interior, gold circle navy text), SY (Systems, navy circle gold text), SP (Strategy, gold circle navy text), SA (Safety, navy circle gold text)
+- **Touch targets:** all interactive elements `min-h-[44px]`
+- **Motion:** 400-800ms ease-out, respects `prefers-reduced-motion` (zeroed globally in index.css)
 
-## Session Start Protocol
+---
 
-**At the start of every new session, read these files first:**
-1. `CLAUDE.md` — this file (architecture, conventions, current state)
-2. `TODO.md` — full task list with priorities and completion status
+## Runbook
+
+### Local dev
+```bash
+bun install
+bun run dev           # → http://localhost:8080
+bun run build         # production build; chunked via vite.config.ts manualChunks
+```
+
+### Deploy a single edge function
+```bash
+export SUPABASE_ACCESS_TOKEN="..."
+npx supabase functions deploy <name> --no-verify-jwt
+```
+
+### Run a new migration
+```bash
+export SUPABASE_ACCESS_TOKEN="..."
+# Creates migration file:
+# supabase/migrations/<timestamp>_<name>.sql
+npx supabase db push
+```
+
+### Create + merge a PR from a feature branch
+```bash
+# Create branch, commit, push:
+git checkout -b feature/x && git add -A && git commit -m "..." && git push -u origin feature/x
+
+# PR via GitHub API (since gh CLI may not be installed):
+TOKEN=$(git credential fill <<< $'protocol=https\nhost=github.com' | grep password | cut -d= -f2)
+PR=$(curl -s -X POST -H "Authorization: token $TOKEN" \
+  https://api.github.com/repos/homeclarity26/home-clarity-hub-04/pulls \
+  -d '{"title":"...","head":"feature/x","base":"main","body":"..."}')
+PR_NUM=$(echo "$PR" | python3 -c "import sys,json; print(json.load(sys.stdin).get('number',''))")
+curl -s -X PUT -H "Authorization: token $TOKEN" \
+  https://api.github.com/repos/homeclarity26/home-clarity-hub-04/pulls/$PR_NUM/merge \
+  -d '{"merge_method":"squash"}'
+curl -s -X DELETE -H "Authorization: token $TOKEN" \
+  https://api.github.com/repos/homeclarity26/home-clarity-hub-04/git/refs/heads/feature/x
+git checkout main && git pull origin main
+```
+
+---
+
+## Known Small TODOs (non-blocking)
+
+- TypeScript strict mode: `noImplicitAny: true` is on, but `strict: false` still. Flipping to full strict would surface errors in ~20 admin files using `any` casts on untyped Supabase tables. Fix incrementally.
+- `supabase/functions/types.ts` needs regeneration after recent migrations (`npx supabase gen types typescript --project-id vvwojahsianpmwjvkunn > src/integrations/supabase/types.ts`)
+- ~50 remaining edge functions still need `requireAuth` applied (18 of 67 have it so far)
+- `files` and `comments` tables referenced in docs but don't exist in DB — code references may need updating (found in post-deploy smoke test)
+
+These are all documented in TODO.md.
+
+---
+
+*This file is the source of truth. If you ship a PR that changes the architecture, conventions, or schema — update this file in the same PR.*
