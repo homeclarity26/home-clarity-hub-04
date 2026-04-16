@@ -205,13 +205,13 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
     const isActive = ["sent", "viewed", "partially_paid"].includes(inv.status);
     const isPaid = inv.status === "paid";
     if (isPaid) return (
-      <div className="w-8 h-8 rounded-full bg-[#C4A265] flex items-center justify-center flex-shrink-0">
+      <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
         <CheckCircle className="w-4 h-4 text-white" />
       </div>
     );
     if (isActive) return (
-      <div className="w-8 h-8 rounded-full border-2 border-[#C4A265] flex items-center justify-center flex-shrink-0 animate-pulse bg-[#C4A265]/10">
-        <span className="font-mono text-[11px] font-bold text-[#C4A265]">{index + 1}</span>
+      <div className="w-8 h-8 rounded-full border-2 border-accent flex items-center justify-center flex-shrink-0 animate-pulse bg-accent/10">
+        <span className="font-mono text-[11px] font-bold text-accent">{index + 1}</span>
       </div>
     );
     return (
@@ -292,7 +292,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
       {/* 2. Milestone Progress Timeline */}
       {invoices.length > 0 && (
         <Card className="p-6 shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-6">Milestone Progress</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Milestone Progress</p>
           <div className="relative">
             {/* Vertical line */}
             <div className="absolute left-4 top-4 bottom-4 w-px bg-border" />
@@ -325,7 +325,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
 
       {/* 3. Invoice List */}
       <div>
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Invoices</p>
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Invoices</p>
         <div className="space-y-3">
           {invoices.length === 0 ? (
             <Card className="p-8 text-center">
@@ -376,7 +376,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
 
                 {/* Expanded Content */}
                 {isExpanded && (
-                  <div className="border-t border-border p-5 space-y-5 bg-[#F8F6F2]">
+                  <div className="border-t border-border p-5 space-y-5 bg-background">
                     {/* Line Items */}
                     {lis.length > 0 && (
                       <div>
@@ -475,7 +475,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
                     <div className="flex flex-wrap gap-2">
                       <Button
                         size="sm"
-                        className="gap-1.5 text-xs font-sans bg-[#C4A265] hover:bg-[#C4A265]/90 text-white"
+                        className="gap-1.5 text-xs font-sans bg-accent hover:bg-accent/90 text-white"
                         onClick={() => { setPaymentModalInvoice(inv); setPaymentForm(f => ({ ...f, amount: String(inv.balance_due) })); }}
                       >
                         <DollarSign className="w-3.5 h-3.5" /> Mark Payment Received
@@ -497,7 +497,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
       {/* 4. Change Orders Panel */}
       {changeOrders.length > 0 && (
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Change Orders</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Change Orders</p>
           <Card className="overflow-hidden shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
             <table className="w-full border-collapse">
               <thead>
@@ -538,7 +538,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
       {/* 5. Payment History */}
       {payments.length > 0 && (
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Payment History</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Payment History</p>
           <Card className="overflow-hidden shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
             <table className="w-full border-collapse">
               <thead>
@@ -581,7 +581,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
       {/* 6. Recurring Plans */}
       {recurringPlans.length > 0 && (
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C4A265] mb-4">Maintenance Plan</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Maintenance Plan</p>
           <div className="grid gap-4">
             {recurringPlans.map(plan => (
               <Card key={plan.id} className="p-5 shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
@@ -647,7 +647,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
               <Label className="font-sans text-sm">Notes</Label>
               <Textarea value={paymentForm.notes} onChange={e => setPaymentForm(f => ({ ...f, notes: e.target.value }))} className="mt-1" />
             </div>
-            <Button onClick={handlePostPayment} disabled={postingPayment} className="w-full bg-[#C4A265] hover:bg-[#C4A265]/90 text-white font-sans">
+            <Button onClick={handlePostPayment} disabled={postingPayment} className="w-full bg-accent hover:bg-accent/90 text-white font-sans">
               Post Payment
             </Button>
           </div>

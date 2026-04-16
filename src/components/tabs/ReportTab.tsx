@@ -62,6 +62,7 @@ interface ReportTabProps {
   hoverPdfUrl?: string | null;
   iguideUrl?: string | null;
   iguidePdfUrl?: string | null;
+  heroImageUrl?: string | null;
   completionPercent?: number;
   estimatedValue?: number | null;
   blocksJson?: unknown[];
@@ -86,6 +87,7 @@ const ReportTab = ({
   hoverPdfUrl,
   iguideUrl,
   iguidePdfUrl,
+  heroImageUrl,
   completionPercent = 0,
   estimatedValue,
   blocksJson,
@@ -384,6 +386,7 @@ const ReportTab = ({
       hoverPdfUrl={hoverPdfUrl}
       iguideUrl={iguideUrl}
       iguidePdfUrl={iguidePdfUrl}
+      heroImageUrl={heroImageUrl}
       estimatedValue={estimatedValue}
       propertyId={propertyId}
       creatorName="Adam Kilgore"

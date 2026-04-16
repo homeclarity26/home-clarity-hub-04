@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
-import { ChevronDown, List, X, Home, Layers, Settings, Shield, Target } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, List, X, Home } from "lucide-react";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
+import { Monogram, chapterToMonogram } from "@/components/ui/Monogram";
 
 export interface ChapterDef {
   id: string;
@@ -9,21 +10,17 @@ export interface ChapterDef {
   groupIds: string[];
 }
 
+/**
+ * Report chapters — align 1:1 with the five HBC monograms (ES / EX / IN / SY / SP)
+ * plus an implicit Safety chapter that lives under Systems in the data model.
+ */
 export const CHAPTERS: ChapterDef[] = [
   { id: "exterior", label: "Exterior", groupIds: ["exterior", "exterior-spaces"] },
-  { id: "interior", label: "Interior", groupIds: ["interior", "interior-spaces"] },
-  { id: "systems", label: "Systems", groupIds: ["systems"] },
+  { id: "interior", label: "Interior", groupIds: ["interior", "interior-spaces", "interior-living", "interior-bedrooms", "interior-bathrooms", "interior-utility", "interior-unfinished"] },
+  { id: "systems", label: "Systems", groupIds: ["systems", "systems-hvac", "systems-mechanical"] },
   { id: "safety", label: "Safety", groupIds: ["safety"] },
   { id: "strategy", label: "Strategic Plan", groupIds: ["strategy"] },
 ];
-
-const chapterIcons: Record<string, typeof Home> = {
-  exterior: Home,
-  interior: Layers,
-  systems: Settings,
-  safety: Shield,
-  strategy: Target,
-};
 
 interface ReportChapterNavProps {
   groups: PortalGroup[];
@@ -100,23 +97,30 @@ const ReportChapterNav = ({
               </button>
             )}
 
-            {/* Chapter pills — scrollable */}
+            {/* Chapter pills — scrollable, with monogram accent when active */}
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1">
               {CHAPTERS.map((ch) => {
                 const hasPages = groups.some((g) =>
                   ch.groupIds.some((gid) => g.id === gid || g.id.includes(gid))
                 );
                 if (!hasPages) return null;
+                const active = activeChapter === ch.id;
                 return (
                   <button
                     key={ch.id}
                     onClick={() => onChapterChange(ch.id)}
-                    className={`whitespace-nowrap px-4 py-1.5 rounded-full font-sans text-sm transition-all duration-200 ${
-                      activeChapter === ch.id
+                    className={`whitespace-nowrap inline-flex items-center gap-2 pl-1.5 pr-4 py-1 rounded-full font-sans text-sm transition-all duration-200 min-h-[36px] ${
+                      active
                         ? "bg-accent text-accent-foreground font-medium shadow-sm"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     }`}
                   >
+                    <Monogram
+                      code={chapterToMonogram(ch.id)}
+                      size="xs"
+                      // On the active gold pill, use a navy-on-white monogram for contrast
+                      variant={active ? "navy-on-gold" : undefined}
+                    />
                     {ch.label}
                   </button>
                 );
@@ -243,17 +247,14 @@ const ReportChapterNav = ({
             {/* Chapter list — scrollable */}
             <div className="flex-1 overflow-y-auto py-4">
               {tocChapters.map((ch) => {
-                const Icon = chapterIcons[ch.id] || Home;
                 return (
                   <div key={ch.id} className="mb-1">
-                    {/* Chapter heading */}
+                    {/* Chapter heading — now uses HBC monogram badge */}
                     <button
                       onClick={() => { onChapterChange(ch.id); setTocOpen(false); }}
-                      className="flex items-center gap-3 w-full px-6 py-3 hover:bg-muted/60 transition-colors group"
+                      className="flex items-center gap-3 w-full px-6 py-3 hover:bg-muted/60 transition-colors group min-h-[44px]"
                     >
-                      <div className="w-7 h-7 rounded-md bg-accent/10 flex items-center justify-center flex-shrink-0">
-                        <Icon className="w-3.5 h-3.5 text-accent" />
-                      </div>
+                      <Monogram code={chapterToMonogram(ch.id)} size="sm" />
                       <span className="font-sans text-sm font-medium text-foreground group-hover:text-accent transition-colors">
                         {ch.label}
                       </span>

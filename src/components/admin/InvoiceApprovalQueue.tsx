@@ -174,7 +174,7 @@ export default function InvoiceApprovalQueue({
                 <Button
                   onClick={() => handleApproveSend(inv)}
                   disabled={isApproving}
-                  className="flex-1 gap-2 bg-[#C4A265] hover:bg-[#C4A265]/90 text-white font-sans"
+                  className="flex-1 gap-2 bg-accent hover:bg-accent/90 text-white font-sans"
                 >
                   {isApproving ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Approving...</>

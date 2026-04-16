@@ -130,9 +130,9 @@ const AdminAIAssistant = ({ context, contextData, propertyId }: AdminAIAssistant
           style={{ maxHeight: "520px", boxShadow: "0 8px 32px rgba(27,43,77,0.14)" }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-[#1B2B4D]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#C4A265]" />
+              <Sparkles className="w-4 h-4 text-accent" />
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-white">
                 {CONTEXT_LABELS[context]}
               </span>
@@ -153,7 +153,7 @@ const AdminAIAssistant = ({ context, contextData, propertyId }: AdminAIAssistant
                 key={s.label}
                 onClick={() => handleSuggestion(s.prompt)}
                 disabled={loading}
-                className="text-[11px] font-mono text-[#C4A265] border border-[#C4A265]/30 rounded-full px-2.5 py-1 hover:bg-[#C4A265]/10 hover:border-[#C4A265]/60 transition-all bg-transparent disabled:opacity-40"
+                className="text-[11px] font-mono text-accent border border-accent/30 rounded-full px-2.5 py-1 hover:bg-accent/10 hover:border-accent/60 transition-all bg-transparent disabled:opacity-40"
               >
                 {s.label}
               </button>
@@ -195,7 +195,7 @@ const AdminAIAssistant = ({ context, contextData, propertyId }: AdminAIAssistant
             <button
               type="submit"
               disabled={!input.trim() || loading}
-              className="shrink-0 bg-[#C4A265] hover:bg-[#C4A265]/90 disabled:opacity-40 text-white rounded-lg p-2 transition-colors"
+              className="shrink-0 bg-accent hover:bg-accent/90 disabled:opacity-40 text-white rounded-lg p-2 transition-colors"
             >
               <Send className="w-4 h-4" />
             </button>
@@ -206,10 +206,10 @@ const AdminAIAssistant = ({ context, contextData, propertyId }: AdminAIAssistant
       {/* FAB toggle */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 bg-[#1B2B4D] hover:bg-[#1B2B4D]/90 text-white rounded-full px-4 py-3 shadow-lg transition-all hover:scale-105"
+        className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white rounded-full px-4 py-3 shadow-lg transition-all hover:scale-105"
         aria-label="Toggle admin AI assistant"
       >
-        <Sparkles className="w-4 h-4 text-[#C4A265]" />
+        <Sparkles className="w-4 h-4 text-accent" />
         <span className="font-mono text-[11px] uppercase tracking-[0.15em]">AI</span>
         {open ? <ChevronDown className="w-3.5 h-3.5 opacity-60" /> : <ChevronUp className="w-3.5 h-3.5 opacity-60" />}
       </button>

@@ -3,6 +3,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useEffect } from "react";
 import type { TextContent } from "../types";
+import { SanitizedHtml } from "@/components/ui/SanitizedHtml";
 
 interface TextBlockProps {
   content: TextContent;
@@ -37,9 +38,9 @@ const TextBlock = ({ content, editable, onChange }: TextBlockProps) => {
 
   if (!editable) {
     return (
-      <div
+      <SanitizedHtml
+        html={content.html || ""}
         className="prose prose-sm sm:prose-base max-w-none text-foreground"
-        dangerouslySetInnerHTML={{ __html: content.html || "" }}
       />
     );
   }

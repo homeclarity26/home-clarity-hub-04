@@ -218,7 +218,7 @@ export default function ChangeOrderDocument({
                     {changeOrder.amount >= 0 ? "+" : ""}{fmt(changeOrder.amount)}
                   </td>
                 </tr>
-                <tr className="bg-[#1B2B4D] text-white">
+                <tr className="bg-primary text-white">
                   <td className="py-3 px-2 font-display text-base rounded-bl">New Contract Total</td>
                   <td className="py-3 px-2 font-display text-base text-right rounded-br">{fmt(newContractTotal)}</td>
                 </tr>
@@ -228,7 +228,7 @@ export default function ChangeOrderDocument({
 
           {/* Terms */}
           <div
-            className="p-4 rounded border-l-4 bg-[#F8F6F2]"
+            className="p-4 rounded border-l-4 bg-background"
             style={{ borderColor: brandConfig.color }}
           >
             <p className="font-sans text-sm text-muted-foreground italic">
@@ -280,7 +280,7 @@ export default function ChangeOrderDocument({
       {/* Actions */}
       <div className="flex gap-3 mt-6">
         <Button
-          className="flex-1 gap-2 bg-[#C4A265] hover:bg-[#C4A265]/90 text-white font-sans"
+          className="flex-1 gap-2 bg-accent hover:bg-accent/90 text-white font-sans"
           disabled={!clientApprovalChecked || !clientSignatureName.trim()}
           onClick={onApprove}
         >

@@ -34,7 +34,7 @@ const STATUS_CONFIG: Record<string, { icon: React.ReactNode; label: string; colo
   ready_for_review: {
     icon: <AlertCircle className="w-3.5 h-3.5" />,
     label: "Review",
-    color: "text-[#C4A265]",
+    color: "text-accent",
   },
   published: {
     icon: <CheckCircle2 className="w-3.5 h-3.5" />,
@@ -171,7 +171,7 @@ const ReportBuildProgress = ({
             </div>
             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#C4A265] rounded-full transition-all"
+                className="h-full bg-accent rounded-full transition-all"
                 style={{ width: totalPages > 0 ? `${(assessedPages / totalPages) * 100}%` : "0%" }}
               />
             </div>
@@ -200,7 +200,7 @@ const ReportBuildProgress = ({
                 <div
                   key={page.id}
                   className={`flex items-start gap-2 px-4 py-3 border-b border-border/50 transition-colors cursor-pointer hover:bg-muted/40 ${
-                    isCurrent ? "bg-[#C4A265]/10 border-l-2 border-l-[#C4A265]" : ""
+                    isCurrent ? "bg-accent/10 border-l-2 border-l-[#C4A265]" : ""
                   }`}
                   onClick={() => onNavigate?.(page.page_key || page.id)}
                 >
@@ -233,7 +233,7 @@ const ReportBuildProgress = ({
                       handleAIDraft(page);
                     }}
                     disabled={isDrafting}
-                    className="shrink-0 flex items-center gap-1 font-mono text-[9px] text-[#C4A265] hover:text-[#C4A265]/80 border border-[#C4A265]/30 hover:border-[#C4A265]/60 rounded px-1.5 py-1 transition-all disabled:opacity-40 bg-transparent"
+                    className="shrink-0 flex items-center gap-1 font-mono text-[9px] text-accent hover:text-accent/80 border border-accent/30 hover:border-accent/60 rounded px-1.5 py-1 transition-all disabled:opacity-40 bg-transparent"
                     title="AI Draft this page"
                   >
                     {isDrafting ? (

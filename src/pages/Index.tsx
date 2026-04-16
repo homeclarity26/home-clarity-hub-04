@@ -29,6 +29,7 @@ import HelpCenterPanel from "@/components/help/HelpCenterPanel";
 import ClientOnboardingModal from "@/components/help/ClientOnboardingModal";
 import { useClientPortal } from "@/hooks/useClientPortal";
 import PortalSidebar from "@/components/portal/PortalSidebar";
+import { MobileBottomNav } from "@/components/portal/MobileBottomNav";
 import { usePortalTracking } from "@/hooks/usePortalTracking";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,6 +55,7 @@ const Index = () => {
 
   const [reportPageId, setReportPageId] = useState<string | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   // showOnboarding removed — consolidated into tutorial modal
   const [helpOpen, setHelpOpen] = useState(false);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
@@ -162,6 +164,35 @@ const Index = () => {
 
   const propertyName = portal.property?.property_name || "Your Home";
 
+  // Footer consumes a digest of the full report so its AI chat can answer
+  // with real context. Memoized because this was rebuilt every render,
+  // forcing every Footer re-render.
+  const footerReportContext = useMemo(
+    () => ({
+      propertyName,
+      propertyAddress: portal.property?.address || "Unknown address",
+      reportCompletionPercent: portal.completionPercent ?? 0,
+      invoiceBalance: portal.invoiceBalance,
+      pages: Object.values(portal.pages).map((p) => ({
+        title: p.title,
+        group: p.group,
+        conditionRating: p.conditionRating,
+        narrative: p.narrative,
+        specs: p.specs,
+        tiers: p.tiers,
+        timing: p.timing,
+        recommendations: p.recommendations,
+      })),
+    }),
+    [
+      propertyName,
+      portal.property?.address,
+      portal.completionPercent,
+      portal.invoiceBalance,
+      portal.pages,
+    ],
+  );
+
   const pdfData: PDFReportData | undefined = useMemo(() => {
     if (!portal.hasDbData && Object.keys(portal.pages).length === 0) return undefined;
     const now = new Date();
@@ -179,6 +210,24 @@ const Index = () => {
     };
   }, [propertyName, portal]);
 
+  // Redirect creators away from the client portal (except when they use the
+  // admin preview "?edit=true" link). This runs as a side effect instead of
+  // in render, which is the correct React pattern and avoids warnings.
+  useEffect(() => {
+    if (authLoading) return;
+    if (isCreator && !isEditLink) {
+      navigate("/admin", { replace: true });
+    }
+  }, [authLoading, isCreator, isEditLink, navigate]);
+
+  // Same for the "no property found + creator" fallback below.
+  useEffect(() => {
+    if (authLoading || portal.isLoading) return;
+    if (!portal.property && isCreator) {
+      navigate("/admin", { replace: true });
+    }
+  }, [authLoading, portal.isLoading, portal.property, isCreator, navigate]);
+
   // Auth still resolving — show spinner, never flash wrong screen
   if (authLoading) {
     return (
@@ -188,9 +237,8 @@ const Index = () => {
     );
   }
 
-  // Creators should never see the client portal — redirect to admin
+  // Creators get redirected via the effect above; render nothing while that happens.
   if (isCreator && !isEditLink) {
-    navigate("/admin", { replace: true });
     return null;
   }
 
@@ -223,7 +271,7 @@ const Index = () => {
       );
     }
     if (isCreator) {
-      navigate("/admin", { replace: true });
+      // Creator redirect is handled by the useEffect above; render nothing.
       return null;
     }
     return (
@@ -274,9 +322,14 @@ const Index = () => {
       )}
       <PortalSidebar
         activeTab={activeTab}
-        onTabChange={handleTabChange}
+        onTabChange={(t) => {
+          handleTabChange(t);
+          setMobileMoreOpen(false);
+        }}
         unreadMessages={undefined}
         propertyName={propertyName}
+        mobileOpen={mobileMoreOpen}
+        onMobileOpenChange={setMobileMoreOpen}
       />
 
       <Header
@@ -286,7 +339,7 @@ const Index = () => {
         propertyId={portal.property?.id}
       />
 
-      <main className={`${isEditLink && canEdit ? "pt-[calc(2rem+36px)]" : "pt-20"} md:pl-[188px] pb-16`}>
+      <main className={`${isEditLink && canEdit ? "pt-[calc(2rem+36px)]" : "pt-20"} md:pl-[188px] pb-24 md:pb-16`}>
         <div className={`transition-opacity duration-300 ${activeTab === "home" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "home" && (
           <HomeTab
@@ -294,6 +347,8 @@ const Index = () => {
               onTabChange={handleTabChange}
               propertyName={propertyName}
               propertyAddress={portal.property?.address || ""}
+              heroImageUrl={portal.property?.hero_image_url}
+              yearBuilt={portal.property?.year_built}
               completionPercent={portal.completionPercent}
               creatorName={portal.creatorName}
               estimatedValue={portal.property?.estimated_value}
@@ -332,6 +387,7 @@ const Index = () => {
               hoverPdfUrl={portal.property?.hover_pdf_url}
               iguideUrl={portal.property?.iguide_url}
               iguidePdfUrl={portal.property?.iguide_pdf_url}
+              heroImageUrl={portal.property?.hero_image_url}
               estimatedValue={portal.property?.estimated_value}
               blocksJson={portal.blocksJson}
             />
@@ -404,24 +460,16 @@ const Index = () => {
         activeTab={activeTab}
         onNavigate={handleNavigate}
         invoiceBalance={portal.invoiceBalance}
-        reportContext={{
-          propertyName,
-          propertyAddress: portal.property?.address || "Unknown address",
-          reportCompletionPercent: portal.completionPercent ?? 0,
-          invoiceBalance: portal.invoiceBalance,
-          pages: Object.values(portal.pages).map((p) => ({
-            title: p.title,
-            group: p.group,
-            conditionRating: p.conditionRating,
-            narrative: p.narrative,
-            specs: p.specs,
-            tiers: p.tiers,
-            timing: p.timing,
-            recommendations: p.recommendations,
-          })),
-        }}
+        reportContext={footerReportContext}
       />
       <ClientAgentPanel />
+
+      {/* Mobile primary navigation. Replaces the hamburger-round-trip pattern. */}
+      <MobileBottomNav
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        onOpenMore={() => setMobileMoreOpen(true)}
+      />
     </div>
   );
 };

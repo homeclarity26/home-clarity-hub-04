@@ -49,8 +49,8 @@ const conditionOptions = ["Excellent", "Good", "Fair", "Poor", "Critical", "N/A"
 // ── Condition badge pill styles ──────────────────────────────────────────────
 const conditionBadgeStyles: Record<string, string> = {
   Excellent: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  Good: "bg-[#1B2B4D]/10 text-[#1B2B4D] border-[#1B2B4D]/20",
-  Fair: "bg-[#C4A265]/15 text-[#7a612a] border-[#C4A265]/30",
+  Good: "bg-primary/10 text-primary border-primary/20",
+  Fair: "bg-accent/15 text-[#7a612a] border-accent/30",
   Poor: "bg-orange-100 text-orange-700 border-orange-200",
   Critical: "bg-[#B5450B]/10 text-[#B5450B] border-[#B5450B]/25",
   "N/A": "bg-muted text-muted-foreground border-border",
@@ -60,7 +60,7 @@ const conditionBadgeStyles: Record<string, string> = {
 const conditionColors: Record<string, string> = {
   Excellent: "text-emerald-600",
   Good: "text-foreground",
-  Fair: "text-[#C4A265]",
+  Fair: "text-accent",
   Poor: "text-orange-500",
   Critical: "text-[#B5450B]",
   "N/A": "text-muted-foreground",

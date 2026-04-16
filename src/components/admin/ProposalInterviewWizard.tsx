@@ -391,8 +391,8 @@ const ProposalInterviewWizard = ({
                   onClick={() => set("projectType", type)}
                   className={`rounded-xl border-2 p-4 text-left text-sm font-medium transition-all ${
                     answers.projectType === type
-                      ? "border-[#C4A265] bg-[#C4A265]/10 text-foreground"
-                      : "border-border text-muted-foreground hover:border-[#C4A265]/50"
+                      ? "border-accent bg-accent/10 text-foreground"
+                      : "border-border text-muted-foreground hover:border-accent/50"
                   }`}
                 >
                   {type}
@@ -424,8 +424,8 @@ const ProposalInterviewWizard = ({
                 onClick={() => set("brand", "hbc")}
                 className={`rounded-2xl border-2 p-6 text-center transition-all ${
                   answers.brand === "hbc"
-                    ? "border-[#C4A265] bg-[#C4A265]/10 shadow-lg scale-[1.02]"
-                    : "border-border hover:border-[#C4A265]/50"
+                    ? "border-accent bg-accent/10 shadow-lg scale-[1.02]"
+                    : "border-border hover:border-accent/50"
                 }`}
               >
                 <div
@@ -437,7 +437,7 @@ const ProposalInterviewWizard = ({
                 <p className="font-semibold text-foreground text-sm">Hometown Builders Club</p>
                 <p className="text-xs text-muted-foreground mt-1">Gold — #C4A265</p>
                 {answers.brand === "hbc" && (
-                  <span className="mt-2 inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#C4A265] text-white">
+                  <span className="mt-2 inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-accent text-white">
                     Selected
                   </span>
                 )}
@@ -503,7 +503,7 @@ const ProposalInterviewWizard = ({
             {propertyAddress && answers.propertyAddress !== propertyAddress && (
               <button
                 type="button"
-                className="text-xs text-[#C4A265] underline"
+                className="text-xs text-accent underline"
                 onClick={() => set("propertyAddress", propertyAddress)}
               >
                 Use property address: {propertyAddress}
@@ -527,8 +527,8 @@ const ProposalInterviewWizard = ({
                   onClick={() => set("pricingStructure", opt.value)}
                   className={`w-full rounded-xl border-2 p-4 text-left transition-all flex items-center justify-between ${
                     answers.pricingStructure === opt.value
-                      ? "border-[#C4A265] bg-[#C4A265]/10"
-                      : "border-border hover:border-[#C4A265]/50"
+                      ? "border-accent bg-accent/10"
+                      : "border-border hover:border-accent/50"
                   }`}
                 >
                   <div>
@@ -536,7 +536,7 @@ const ProposalInterviewWizard = ({
                     <p className="text-xs text-muted-foreground">{opt.desc}</p>
                   </div>
                   {answers.pricingStructure === opt.value && (
-                    <div className="w-5 h-5 rounded-full bg-[#C4A265] flex items-center justify-center text-white text-xs font-bold">
+                    <div className="w-5 h-5 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold">
                       ✓
                     </div>
                   )}
@@ -607,8 +607,8 @@ const ProposalInterviewWizard = ({
                   onClick={() => set("budgetRange", range)}
                   className={`rounded-xl border-2 p-4 text-sm font-semibold transition-all ${
                     answers.budgetRange === range
-                      ? "border-[#C4A265] bg-[#C4A265]/10 text-foreground"
-                      : "border-border text-muted-foreground hover:border-[#C4A265]/50"
+                      ? "border-accent bg-accent/10 text-foreground"
+                      : "border-border text-muted-foreground hover:border-accent/50"
                   }`}
                 >
                   {range}
@@ -619,8 +619,8 @@ const ProposalInterviewWizard = ({
                 onClick={() => set("budgetRange", "custom")}
                 className={`rounded-xl border-2 p-4 text-sm font-semibold transition-all ${
                   answers.budgetRange === "custom"
-                    ? "border-[#C4A265] bg-[#C4A265]/10 text-foreground"
-                    : "border-border text-muted-foreground hover:border-[#C4A265]/50"
+                    ? "border-accent bg-accent/10 text-foreground"
+                    : "border-border text-muted-foreground hover:border-accent/50"
                 }`}
               >
                 Custom
@@ -653,8 +653,8 @@ const ProposalInterviewWizard = ({
                   onClick={() => set("timeline", opt)}
                   className={`rounded-xl border-2 p-4 text-sm font-semibold transition-all ${
                     answers.timeline === opt
-                      ? "border-[#C4A265] bg-[#C4A265]/10 text-foreground"
-                      : "border-border text-muted-foreground hover:border-[#C4A265]/50"
+                      ? "border-accent bg-accent/10 text-foreground"
+                      : "border-border text-muted-foreground hover:border-accent/50"
                   }`}
                 >
                   {opt}
@@ -665,8 +665,8 @@ const ProposalInterviewWizard = ({
                 onClick={() => set("timeline", "custom")}
                 className={`rounded-xl border-2 p-4 text-sm font-semibold transition-all ${
                   answers.timeline === "custom"
-                    ? "border-[#C4A265] bg-[#C4A265]/10 text-foreground"
-                    : "border-border text-muted-foreground hover:border-[#C4A265]/50"
+                    ? "border-accent bg-accent/10 text-foreground"
+                    : "border-border text-muted-foreground hover:border-accent/50"
                 }`}
               >
                 Custom
@@ -699,8 +699,8 @@ const ProposalInterviewWizard = ({
                   onClick={() => set("hasClientSelections", opt === "Yes")}
                   className={`flex-1 rounded-xl border-2 p-4 text-sm font-semibold transition-all ${
                     (opt === "Yes") === answers.hasClientSelections
-                      ? "border-[#C4A265] bg-[#C4A265]/10 text-foreground"
-                      : "border-border text-muted-foreground hover:border-[#C4A265]/50"
+                      ? "border-accent bg-accent/10 text-foreground"
+                      : "border-border text-muted-foreground hover:border-accent/50"
                   }`}
                 >
                   {opt}
@@ -796,7 +796,7 @@ const ProposalInterviewWizard = ({
         <div className="px-6 pt-6 pb-4 border-b border-border">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-[#C4A265]" />
+              <Sparkles className="w-5 h-5 text-accent" />
               <span className="text-sm font-semibold font-sans text-foreground">
                 AI Proposal Interview
               </span>

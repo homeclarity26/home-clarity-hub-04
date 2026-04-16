@@ -10,6 +10,8 @@
     --hbc-navy: 221 47% 20%;
     --hbc-cream: 40 33% 97%;
     --hbc-gold: 43 41% 59%;
+    /* Darker gold for body text on cream — ~4.9:1 contrast, passes WCAG AA */
+    --hbc-gold-readable: 34 47% 38%;
     --hbc-rust: 16 86% 39%;
     --hbc-white: 0 0% 100%;
     --hbc-grey-100: 30 11% 95%;
@@ -135,9 +137,17 @@
   .text-hbc-navy {
     color: hsl(var(--hbc-navy));
   }
-  
+
   .text-hbc-gold {
     color: hsl(var(--hbc-gold));
+  }
+
+  /* WCAG-AA-readable gold — USE THIS FOR TEXT ON CREAM/LIGHT BACKGROUNDS.
+   * `text-hbc-gold` / `text-accent` fails contrast on cream; keep those for
+   * decorative strokes, icons on navy, or backgrounds. */
+  .text-accent-readable,
+  .text-hbc-gold-readable {
+    color: hsl(var(--hbc-gold-readable));
   }
   
   .text-hbc-grey {
@@ -253,6 +263,19 @@
   [class*="bg-destructive"] {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+}
+
+/* Respect users who have requested reduced motion. Zero out animations &
+ * transitions globally so we never burn battery or cause vestibular discomfort. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

@@ -1,11 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { callAI, parseJSON } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { requireAuth, corsHeaders } from "../_shared/auth.ts";
 
 // ─── TOOL DEFINITIONS ───
 
@@ -1060,17 +1056,29 @@ serve(async (req) => {
 
   const startTime = Date.now();
 
+  // ─── AUTH ───
+  // Require a valid JWT and derive userId + role server-side. Previously
+  // userId and role came from the request body; a malicious client could
+  // claim to be a creator and call admin-only tools. NOW role comes from
+  // user_roles in the DB.
+  const auth = await requireAuth(req);
+  if ("error" in auth) return auth.error;
+
   try {
     const { message, history, context, confirm_action } = await req.json();
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const userId = context?.userId;
-    const role = context?.role || "creator";
+    // Trusted values derived from JWT + user_roles, NOT from the request body.
+    const userId = auth.user.id;
+    const role: "creator" | "client" | "trade_partner" =
+      auth.roles.includes("creator") ? "creator"
+      : auth.roles.includes("trade_partner") ? "trade_partner"
+      : "client";
 
-    // Filter tools by role
-    const allowedTools = TOOLS.filter(t => t.allowedRoles.includes(role));
+    // Filter tools by role — still applied, but now `role` is trustworthy.
+    const allowedTools = TOOLS.filter((t) => t.allowedRoles.includes(role));
 
     // ─── SMART CONTEXT INJECTION (Self-Learning Layer) ───
     let smartContext: any = {};

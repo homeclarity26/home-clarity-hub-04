@@ -6,6 +6,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { AINarrativeContent } from "../types";
+import { SanitizedHtml } from "@/components/ui/SanitizedHtml";
 
 interface AINarrativeBlockProps {
   content: AINarrativeContent;
@@ -69,9 +70,9 @@ const AINarrativeBlock = ({ content, editable, onChange, propertyAddress, pageSl
 
   if (!editable) {
     return (
-      <div
+      <SanitizedHtml
+        html={content.html || "<p class='text-muted-foreground italic'>No narrative yet</p>"}
         className="prose prose-sm sm:prose-base max-w-none text-foreground"
-        dangerouslySetInnerHTML={{ __html: content.html || "<p class='text-muted-foreground italic'>No narrative yet</p>" }}
       />
     );
   }
