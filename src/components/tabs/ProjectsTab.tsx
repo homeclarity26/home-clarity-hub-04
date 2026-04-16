@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight, ChevronDown, CheckCircle, Calendar, DollarSign, User, Loader2, MessageSquare, PlusCircle } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Hammer, Archive, Wrench, FileText, Phone, ChevronRight, ChevronDown, CheckCircle, Calendar, DollarSign, User, Loader2, MessageSquare, PlusCircle, ImageIcon, Send } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import EmptyState from "@/components/EmptyState";
 import HomeGoals from "@/components/HomeGoals";
 import HomeImprovementWishlist from "@/components/portal/HomeImprovementWishlist";
@@ -63,6 +64,176 @@ const getUrgencyBadge = (timing: string) => {
     return { label: "SOON", cls: "bg-accent/20 text-accent-foreground" };
   }
   return { label: "FUTURE", cls: "bg-muted text-muted-foreground" };
+};
+
+// ── Phase Timeline ──
+
+const PHASES = ["scoping", "approved", "scheduled", "in_progress", "complete"] as const;
+const PHASE_LABELS: Record<string, string> = { scoping: "Scoping", approved: "Approved", scheduled: "Scheduled", in_progress: "In Progress", complete: "Complete" };
+
+const ProjectPhaseTimeline = ({ currentPhase }: { currentPhase: string }) => {
+  const idx = PHASES.indexOf(currentPhase as (typeof PHASES)[number]);
+  const activeIdx = idx >= 0 ? idx : 0;
+
+  return (
+    <div className="flex items-center gap-0 w-full overflow-x-auto py-2">
+      {PHASES.map((phase, i) => {
+        const done = i < activeIdx;
+        const active = i === activeIdx;
+        const future = i > activeIdx;
+        return (
+          <div key={phase} className="flex items-center">
+            {i > 0 && (
+              <div className={`w-8 sm:w-12 h-0.5 ${done ? "bg-accent" : "bg-border"}`} />
+            )}
+            <div className="flex flex-col items-center gap-1.5">
+              <div
+                className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-mono shrink-0 ${
+                  done
+                    ? "bg-accent text-white"
+                    : active
+                    ? "ring-2 ring-accent ring-offset-2 ring-offset-background bg-accent/15 text-accent"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {done ? <CheckCircle className="w-4 h-4" /> : i + 1}
+              </div>
+              <span
+                className={`text-[10px] leading-tight text-center whitespace-nowrap ${
+                  active ? "font-bold text-accent" : future ? "text-muted-foreground" : "text-foreground"
+                }`}
+              >
+                {PHASE_LABELS[phase]}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ── Project Update Feed ──
+
+interface ProjectUpdate {
+  id: string;
+  content: string;
+  photos: string[];
+  created_at: string;
+  author_id: string | null;
+}
+
+const ProjectUpdateFeed = ({ projectId, isMock }: { projectId: string; isMock: boolean }) => {
+  const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [feedOpen, setFeedOpen] = useState(false);
+  const [newContent, setNewContent] = useState("");
+  const [posting, setPosting] = useState(false);
+
+  const loadUpdates = useCallback(async () => {
+    if (isMock) {
+      setUpdates([
+        { id: "upd-1", content: "Phase updated to: approved", photos: [], created_at: "2026-03-20T14:00:00Z", author_id: null },
+        { id: "upd-2", content: "Vendor selected: Comfort First HVAC. Contract signed and deposit paid.", photos: [], created_at: "2026-03-25T10:30:00Z", author_id: null },
+        { id: "upd-3", content: "Equipment ordered. Expected delivery April 12.", photos: [], created_at: "2026-04-02T09:15:00Z", author_id: null },
+      ]);
+      setLoading(false);
+      return;
+    }
+    const { data } = await supabase
+      .from("project_updates" as any)
+      .select("*")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false })
+      .limit(50) as any;
+    setUpdates(data || []);
+    setLoading(false);
+  }, [projectId, isMock]);
+
+  useEffect(() => { loadUpdates(); }, [loadUpdates]);
+
+  const handlePost = async () => {
+    if (!newContent.trim() || isMock) return;
+    setPosting(true);
+    try {
+      await (supabase.from("project_updates" as any) as any).insert({
+        project_id: projectId,
+        content: newContent.trim(),
+        photos: [],
+      });
+      setNewContent("");
+      await loadUpdates();
+    } catch {
+      toast.error("Failed to post update");
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const initials = (id: string | null) => {
+    if (!id) return "HC";
+    return "AK";
+  };
+
+  return (
+    <Collapsible open={feedOpen} onOpenChange={setFeedOpen}>
+      <CollapsibleTrigger className="flex items-center gap-2 cursor-pointer">
+        <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">Updates ({updates.length})</p>
+        <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${feedOpen ? "rotate-180" : ""}`} />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="mt-3 space-y-3">
+        {/* Post input */}
+        {!isMock && (
+          <div className="flex gap-2 items-start">
+            <Textarea
+              value={newContent}
+              onChange={(e) => setNewContent(e.target.value)}
+              placeholder="Post a project update..."
+              className="min-h-[60px] text-sm font-sans resize-none flex-1"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!newContent.trim() || posting}
+              onClick={handlePost}
+              className="shrink-0 mt-1"
+            >
+              {posting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+            </Button>
+          </div>
+        )}
+
+        {loading && <p className="text-xs text-muted-foreground">Loading updates...</p>}
+
+        {!loading && updates.length === 0 && (
+          <p className="text-xs text-muted-foreground py-2">No updates yet.</p>
+        )}
+
+        {updates.map((u) => (
+          <div key={u.id} className="flex gap-3 items-start">
+            <div className="w-7 h-7 rounded-full bg-accent/15 text-accent flex items-center justify-center text-[10px] font-mono shrink-0">
+              {initials(u.author_id)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-sans text-foreground">{u.content}</p>
+              {u.photos && u.photos.length > 0 && (
+                <div className="flex gap-2 mt-1.5 flex-wrap">
+                  {u.photos.map((url, pi) => (
+                    <img key={pi} src={url} alt="" className="w-16 h-16 rounded object-cover border border-border" />
+                  ))}
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {new Date(u.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                {" "}
+                {new Date(u.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+              </p>
+            </div>
+          </div>
+        ))}
+      </CollapsibleContent>
+    </Collapsible>
+  );
 };
 
 const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage }: ProjectsTabProps) => {
@@ -251,6 +422,12 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
 
                       <CollapsibleContent>
                         <div className="border-t border-border px-6 py-5 space-y-5">
+                          {/* Phase Timeline */}
+                          <div>
+                            <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-3">Phase</p>
+                            <ProjectPhaseTimeline currentPhase={project.status} />
+                          </div>
+
                           {/* Milestones */}
                           {ms.length > 0 && (
                             <div>
@@ -275,6 +452,9 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
                               </div>
                             </div>
                           )}
+
+                          {/* Update Feed */}
+                          <ProjectUpdateFeed projectId={project.id} isMock={!!propertyId?.startsWith("mock-")} />
 
                           {/* Notes */}
                           {project.notes && (

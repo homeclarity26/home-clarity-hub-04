@@ -50,6 +50,10 @@ const TOOLS: ToolDef[] = [
   { name: "complete_task", description: "Mark a task as completed.", parameters: { type: "object", properties: { task_id: { type: "string" } }, required: ["task_id"] }, allowedRoles: ["creator"] },
   { name: "create_change_order", description: "Create a change order for a project.", parameters: { type: "object", properties: { project_id: { type: "string" }, title: { type: "string" }, description: { type: "string" }, amount: { type: "number" } }, required: ["project_id", "title", "amount"] }, requiresConfirmation: true, allowedRoles: ["creator"] },
   { name: "get_project_budget_summary", description: "Get budget vs actual, change orders, remaining for a project.", parameters: { type: "object", properties: { project_id: { type: "string" } }, required: ["project_id"] }, allowedRoles: ["creator"] },
+  { name: "add_project_update", description: "Post a social-feed-style update to a project with optional photo URLs. These appear in the client portal's project timeline.", parameters: { type: "object", properties: { project_id: { type: "string" }, content: { type: "string" }, photo_urls: { type: "array", items: { type: "string" } } }, required: ["project_id", "content"] }, allowedRoles: ["creator"] },
+  { name: "update_project_phase", description: "Update a project's current phase. Phases: scoping, approved, scheduled, in_progress, complete.", parameters: { type: "object", properties: { project_id: { type: "string" }, phase: { type: "string", enum: ["scoping","approved","scheduled","in_progress","complete"] } }, required: ["project_id", "phase"] }, allowedRoles: ["creator"] },
+  { name: "get_project_timeline", description: "Get the full timeline of a project: updates, milestones, phase changes.", parameters: { type: "object", properties: { project_id: { type: "string" } }, required: ["project_id"] }, allowedRoles: ["creator", "client"] },
+  { name: "suggest_next_steps", description: "AI analyzes the project state and suggests what to do next based on current phase, milestones, and updates.", parameters: { type: "object", properties: { project_id: { type: "string" } }, required: ["project_id"] }, allowedRoles: ["creator"] },
 
   // ── GROUP E: ESTIMATES & INVOICES ──
   { name: "create_estimate", description: "Create an estimate for a client with line items.", parameters: { type: "object", properties: { client_id: { type: "string" }, title: { type: "string" }, line_items: { type: "array", items: { type: "object", properties: { description: { type: "string" }, quantity: { type: "number" }, unit_price: { type: "number" } } } }, notes: { type: "string" }, valid_days: { type: "number" } }, required: ["client_id", "title", "line_items"] }, allowedRoles: ["creator"] },
@@ -384,6 +388,45 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
       case "get_project_budget_summary": {
         const { data: project } = await supabase.from("projects").select("estimated_cost, actual_cost").eq("id", params.project_id).single();
         return { success: true, result: { estimated: project?.estimated_cost || 0, actual: project?.actual_cost || 0, remaining: (project?.estimated_cost || 0) - (project?.actual_cost || 0) } };
+      }
+
+      case "add_project_update": {
+        const { data, error } = await (supabase.from("project_updates" as any) as any).insert({
+          project_id: params.project_id,
+          author_id: userId,
+          content: params.content,
+          photos: params.photo_urls || [],
+        }).select().single();
+        if (error) throw error;
+        return { success: true, result: { message: "Update posted", update_id: data.id }, entity_id: params.project_id, entity_type: "project" };
+      }
+
+      case "update_project_phase": {
+        const { error } = await supabase.from("projects").update({ status: params.phase }).eq("id", params.project_id);
+        if (error) throw error;
+        // Also log a timeline event
+        await (supabase.from("project_updates" as any) as any).insert({
+          project_id: params.project_id,
+          author_id: userId,
+          content: `Phase updated to: ${params.phase.replace(/_/g, " ")}`,
+          photos: [],
+        });
+        return { success: true, result: { message: `Project phase set to ${params.phase}` }, entity_id: params.project_id, entity_type: "project" };
+      }
+
+      case "get_project_timeline": {
+        const { data: updates } = await (supabase.from("project_updates" as any) as any).select("*").eq("project_id", params.project_id).order("created_at", { ascending: false }).limit(50);
+        const { data: milestones } = await (supabase.from("milestones" as any) as any).select("*").eq("project_id", params.project_id).order("sort_order");
+        return { success: true, result: { updates: updates || [], milestones: milestones || [] } };
+      }
+
+      case "suggest_next_steps": {
+        const { data: proj } = await supabase.from("projects").select("*").eq("id", params.project_id).single();
+        if (!proj) throw new Error("Project not found");
+        const { data: milestones } = await (supabase.from("milestones" as any) as any).select("*").eq("project_id", params.project_id).order("sort_order");
+        const completedMs = (milestones || []).filter((m: any) => m.completed).length;
+        const totalMs = (milestones || []).length;
+        return { success: true, result: { project: { title: proj.title, status: proj.status, estimated_cost: proj.estimated_cost }, milestones_progress: `${completedMs}/${totalMs} complete`, milestones: milestones || [] } };
       }
 
       // ── ESTIMATES ──
