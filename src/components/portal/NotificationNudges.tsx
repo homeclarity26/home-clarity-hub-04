@@ -90,7 +90,7 @@ const NotificationNudges = ({ propertyId, onNavigate }: NotificationNudgesProps)
             <Icon className="w-4 h-4 text-foreground shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-sans font-medium text-foreground">{nudge.title}</p>
-              <p className="text-xs font-sans text-muted-foreground mt-0.5">{nudge.message}</p>
+              <p className="text-sm font-sans text-muted-foreground mt-0.5">{nudge.message}</p>
               {nudge.action_url && (
                 <button
                   onClick={() => onNavigate(nudge.action_url!.replace("/", ""))}

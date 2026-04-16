@@ -325,7 +325,7 @@ const ScheduleTab = ({ propertyId, propertyAddress, onTabChange }: ScheduleTabPr
                             </span>
                           </div>
                           {ev.description && (
-                            <p className="font-sans text-xs text-muted-foreground mt-0.5">{ev.description}</p>
+                            <p className="font-sans text-sm text-muted-foreground mt-0.5">{ev.description}</p>
                           )}
                           <p className="font-mono text-[10px] text-muted-foreground mt-1 flex items-center gap-1.5">
                             <Clock className="w-3 h-3" />

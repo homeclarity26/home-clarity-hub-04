@@ -120,7 +120,7 @@ const SeasonalChecklist = ({ propertyId }: SeasonalChecklistProps) => {
                 <p className={`text-sm font-sans ${completed[task.title] ? "text-muted-foreground line-through" : "text-foreground"}`}>
                   {task.title}
                 </p>
-                <p className="text-xs font-sans text-muted-foreground mt-0.5">{task.description}</p>
+                <p className="text-sm font-sans text-muted-foreground mt-0.5">{task.description}</p>
               </div>
               <Badge variant="outline" className="text-[9px] font-mono shrink-0">{task.category}</Badge>
             </label>

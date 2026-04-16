@@ -135,7 +135,7 @@ const ClientReferralPortal = ({ propertyId }: Props) => {
                   <step.icon className="w-5 h-5 text-accent" />
                 </div>
                 <p className="text-sm font-sans font-medium text-foreground">{step.title}</p>
-                <p className="text-xs font-sans text-muted-foreground">{step.desc}</p>
+                <p className="text-sm font-sans text-muted-foreground">{step.desc}</p>
               </div>
             ))}
           </div>

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { motion } from "framer-motion";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
@@ -12,6 +13,16 @@ import {
   BookOpen,
   AlertTriangle,
 } from "lucide-react";
+
+const fadeUp = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+};
+
+const stagger = {
+  animate: { transition: { staggerChildren: 0.08 } },
+};
 
 const CONDITION_SCORE: Record<string, number> = {
   Excellent: 100,
@@ -189,20 +200,29 @@ const ReportOverview = ({
 
         <div className="relative z-10 h-full flex flex-col justify-between max-w-4xl mx-auto px-6 md:px-16 py-12 md:py-16">
           {/* Top — edition + author */}
-          <div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+          >
             <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">
               Home Clarity Report
             </p>
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary-foreground/55 mt-2">
               Prepared {reportDate} by {creatorName}
             </p>
-          </div>
+          </motion.div>
 
           {/* Middle — property identity */}
           <div className="space-y-3">
-            <h1 className="font-display text-5xl md:text-7xl text-primary-foreground leading-[0.95] max-w-3xl">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              className="font-display text-5xl md:text-7xl text-primary-foreground leading-[0.95] max-w-3xl"
+            >
               {propertyName}
-            </h1>
+            </motion.h1>
             {propertyAddress && (
               <p className="font-sans text-base md:text-lg text-primary-foreground/70">
                 {propertyAddress}
@@ -231,7 +251,11 @@ const ReportOverview = ({
           </div>
 
           {/* Bottom — visual monogram TOC */}
-          <div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.6 }}
+          >
             <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-primary-foreground/50 mb-4">
               Chapters
             </p>
@@ -274,7 +298,7 @@ const ReportOverview = ({
                 />
               )}
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -369,12 +393,18 @@ const ReportOverview = ({
               Report Chapters
             </h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+            variants={stagger}
+            initial="initial"
+            animate="animate"
+          >
             {chapterData
               .filter((ch) => ch.sectionCount > 0)
               .map((ch) => (
-                <button
+                <motion.button
                   key={ch.id}
+                  variants={fadeUp}
                   onClick={() => onChapterSelect(ch.id)}
                   className="flex items-center gap-4 bg-card border border-border rounded-xl px-5 py-4 text-left hover:border-accent/40 hover:bg-accent/5 transition-all group min-h-[88px]"
                 >
@@ -420,9 +450,9 @@ const ReportOverview = ({
                   )}
 
                   <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent flex-shrink-0 transition-colors" />
-                </button>
+                </motion.button>
               ))}
-          </div>
+          </motion.div>
         </div>
 
         {/* BEGIN READING FOOTER */}

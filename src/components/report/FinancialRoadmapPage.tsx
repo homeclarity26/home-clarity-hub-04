@@ -275,7 +275,7 @@ const FinancialRoadmapPage = ({ reportId }: FinancialRoadmapPageProps) => {
                       {phase.timeframe}
                     </span>
                   </div>
-                  <p className="font-sans text-xs text-muted-foreground mt-0.5">{phase.description}</p>
+                  <p className="font-sans text-sm text-muted-foreground mt-0.5">{phase.description}</p>
                 </div>
               </div>
               <div className="text-right flex-shrink-0">

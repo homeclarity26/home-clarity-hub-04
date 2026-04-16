@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { motion } from "framer-motion";
 import { CheckCircle2, Circle, ChevronRight, CalendarPlus, ChevronDown } from "lucide-react";
 import { PropertyHero } from "@/components/portal/PropertyHero";
 import { Monogram } from "@/components/ui/Monogram";
@@ -57,6 +58,16 @@ interface HomeTabProps {
   membershipEndDate?: string | null;
   reportPages?: Record<string, ReportPageData>;
 }
+
+const fadeUp = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+};
+
+const stagger = {
+  animate: { transition: { staggerChildren: 0.08 } },
+};
 
 const cardBase = "bg-card rounded-lg shadow-hbc-sm border border-border";
 
@@ -154,53 +165,69 @@ const HomeTab = ({
       />
 
       {/* Consistent max-w container below the hero */}
-      <div className="max-w-5xl mx-auto px-6 md:px-20 w-full space-y-8 mt-8">
+      <motion.div
+        className="max-w-5xl mx-auto px-6 md:px-20 w-full space-y-8 mt-8"
+        variants={stagger}
+        initial="initial"
+        animate="animate"
+      >
         {/* ─── 2. PROACTIVE AI NUDGES — what needs attention now ─── */}
-        <NotificationNudges
-          propertyId={propertyId}
-          onNavigate={(tab) => handleNavigateTracked(tab)}
-        />
+        <motion.div variants={fadeUp}>
+          <NotificationNudges
+            propertyId={propertyId}
+            onNavigate={(tab) => handleNavigateTracked(tab)}
+          />
+        </motion.div>
 
         {/* ─── 3. AI COMMAND BAR — primary entry point to the assistant ─── */}
-        <AICommandBar onSubmit={handleAskQuestion} />
+        <motion.div variants={fadeUp}>
+          <AICommandBar onSubmit={handleAskQuestion} />
+        </motion.div>
 
         {/* ─── 4. SMART ACTION TILES — 1-3 curated tiles ─── */}
-        <SmartActionTiles
-          onNavigate={handleNavigateTracked}
-          propertyId={propertyId}
-          reportPages={reportPages}
-        />
+        <motion.div variants={fadeUp}>
+          <SmartActionTiles
+            onNavigate={handleNavigateTracked}
+            propertyId={propertyId}
+            reportPages={reportPages}
+          />
+        </motion.div>
 
         {/* ─── 5. LIVE STATUS — project + invoice, only when real ─── */}
         {propertyId && (
-          <div className="grid grid-cols-1 gap-4">
+          <motion.div variants={fadeUp} className="grid grid-cols-1 gap-4">
             <ActiveProjectCard propertyId={propertyId} onNavigate={handleNavigateTracked} />
             <LiveInvoiceStrip propertyId={propertyId} onNavigate={handleNavigateTracked} />
-          </div>
+          </motion.div>
         )}
 
         {/* Report progress nudge — only when the report is in-flight */}
         {completionPercent > 0 && completionPercent < 100 && (
-          <div className="flex justify-center">
+          <motion.div variants={fadeUp} className="flex justify-center">
             <ReportCompletionRing completionPercent={completionPercent} totalSections={57} />
-          </div>
+          </motion.div>
         )}
 
         {/* Membership banner (conditional; rarely shown) */}
         {membershipEndDate && (
-          <MembershipBanner
-            membershipEndDate={membershipEndDate}
-            onSendMessage={() => onNavigate("messages")}
-          />
+          <motion.div variants={fadeUp}>
+            <MembershipBanner
+              membershipEndDate={membershipEndDate}
+              onSendMessage={() => onNavigate("messages")}
+            />
+          </motion.div>
         )}
 
         {/* ─── 6. AI SUGGESTIONS (light touch) ─── */}
-        <AISuggestionsStrip
-          onNavigate={handleNavigateTracked}
-          reportPages={reportPages}
-        />
+        <motion.div variants={fadeUp}>
+          <AISuggestionsStrip
+            onNavigate={handleNavigateTracked}
+            reportPages={reportPages}
+          />
+        </motion.div>
 
         {/* ─── 7. EXPLORE MORE — everything else lives here ─── */}
+        <motion.div variants={fadeUp}>
         <Collapsible>
           <CollapsibleTrigger className="group w-full flex items-center justify-between text-left bg-card rounded-lg border border-border px-5 py-4 hover:border-accent/40 transition-colors [&[data-state=open]>svg]:rotate-180">
             <div className="flex items-center gap-3">
@@ -317,7 +344,8 @@ const HomeTab = ({
             )}
           </CollapsibleContent>
         </Collapsible>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };

@@ -94,14 +94,14 @@ const SidebarContent = ({
       {onClose ? (
         <button
           onClick={onClose}
-          className="ml-auto p-1 rounded text-white/50 hover:text-white transition-colors bg-transparent border-none cursor-pointer"
+          className="ml-auto p-1 rounded text-white/50 hover:text-white transition-colors bg-transparent border-none cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <X className="w-4 h-4" />
         </button>
       ) : (
         <button
           onClick={onToggleCollapse}
-          className="ml-auto p-1 rounded text-white/50 hover:text-white transition-colors bg-transparent border-none cursor-pointer"
+          className="ml-auto p-1 rounded text-white/50 hover:text-white transition-colors bg-transparent border-none cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           {collapsed ? (
             <ChevronRight className="w-3.5 h-3.5" />
@@ -135,7 +135,7 @@ const SidebarContent = ({
                   onTabChange(item.key);
                   onClose?.();
                 }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 transition-all bg-transparent border-none cursor-pointer relative group"
+                className="w-full flex items-center gap-3 px-3 py-2.5 transition-all bg-transparent border-none cursor-pointer relative group min-h-[44px]"
                 style={{
                   borderLeft: isActive ? `2px solid ${GOLD}` : "2px solid transparent",
                   color: isActive ? GOLD : "rgba(255,255,255,0.6)",
@@ -186,7 +186,7 @@ const SidebarContent = ({
       >
         <button
           onClick={onToggleCollapse}
-          className="p-1.5 rounded text-white/40 hover:text-white transition-colors bg-transparent border-none cursor-pointer"
+          className="p-1.5 rounded text-white/40 hover:text-white transition-colors bg-transparent border-none cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           {collapsed ? (
             <ChevronRight className="w-3.5 h-3.5" />

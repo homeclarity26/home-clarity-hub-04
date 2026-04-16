@@ -225,7 +225,7 @@ const ActionPlanPage = ({ reportId }: ActionPlanPageProps) => {
                       {group.timeframe}
                     </span>
                   </div>
-                  <p className="font-sans text-xs text-muted-foreground mt-0.5 pr-4">{group.description}</p>
+                  <p className="font-sans text-sm text-muted-foreground mt-0.5 pr-4">{group.description}</p>
                 </div>
               </div>
               <div className="flex-shrink-0 mt-0.5">
