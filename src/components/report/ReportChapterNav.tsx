@@ -212,10 +212,14 @@ const ReportChapterNav = ({
       {/* ── TABLE OF CONTENTS DRAWER ── */}
       {tocOpen && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop — clickable AND keyboard-dismissible */}
           <div
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+            role="button"
+            tabIndex={0}
+            aria-label="Close table of contents"
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm cursor-default"
             onClick={() => setTocOpen(false)}
+            onKeyDown={(e) => { if (e.key === "Escape" || e.key === "Enter") setTocOpen(false); }}
           />
           {/* Drawer */}
           <div className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-sm bg-card shadow-2xl flex flex-col">

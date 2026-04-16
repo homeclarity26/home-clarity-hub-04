@@ -147,17 +147,28 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
       return;
     }
 
-    const [invRes, liRes, coRes, pRes] = await Promise.all([
-      (supabase.from("invoices" as any) as any).select("*").eq("property_id", propertyId).order("created_at", { ascending: false }),
-      (supabase.from("invoice_line_items" as any) as any).select("*"),
-      (supabase.from("change_orders" as any) as any).select("*"),
-      (supabase.from("payments_posted" as any) as any).select("*"),
-    ]);
-    if (invRes.data) setInvoices(invRes.data);
-    if (liRes.data) setLineItems(liRes.data);
-    if (coRes.data) setChangeOrders(coRes.data);
-    if (pRes.data) setPaymentsPosted(pRes.data);
-    setLoading(false);
+    try {
+      // allSettled so one failing query doesn't take the rest down.
+      const [invRes, liRes, coRes, pRes] = await Promise.allSettled([
+        (supabase.from("invoices" as any) as any).select("*").eq("property_id", propertyId).order("created_at", { ascending: false }),
+        (supabase.from("invoice_line_items" as any) as any).select("*"),
+        (supabase.from("change_orders" as any) as any).select("*"),
+        (supabase.from("payments_posted" as any) as any).select("*"),
+      ]);
+      if (invRes.status === "fulfilled" && invRes.value?.data) setInvoices(invRes.value.data);
+      if (liRes.status === "fulfilled" && liRes.value?.data) setLineItems(liRes.value.data);
+      if (coRes.status === "fulfilled" && coRes.value?.data) setChangeOrders(coRes.value.data);
+      if (pRes.status === "fulfilled" && pRes.value?.data) setPaymentsPosted(pRes.value.data);
+      if (invRes.status === "rejected") {
+        console.error("Failed to load invoices:", invRes.reason);
+        toast.error("Couldn't load invoices. Please refresh.");
+      }
+    } catch (err) {
+      console.error("PaymentsTab load error:", err);
+      toast.error("Couldn't load payments data.");
+    } finally {
+      setLoading(false);
+    }
   }, [propertyId]);
 
   useEffect(() => { loadData(); }, [loadData]);

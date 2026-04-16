@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { SanitizedHtml } from "@/components/ui/SanitizedHtml";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AIEditPanelProps {
   currentContent: string;
@@ -10,8 +11,6 @@ interface AIEditPanelProps {
   onApply: (newContent: string) => void;
   onDiscard: () => void;
 }
-
-const AI_EDIT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-edit`;
 
 const AIEditPanel = ({ currentContent, contentType, onApply, onDiscard }: AIEditPanelProps) => {
   const [instruction, setInstruction] = useState("");
@@ -24,26 +23,20 @@ const AIEditPanel = ({ currentContent, contentType, onApply, onDiscard }: AIEdit
     setEditedContent(null);
 
     try {
-      const resp = await fetch(AI_EDIT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ currentContent, instruction: instruction.trim(), contentType }),
+      // Use supabase.functions.invoke so the user's JWT is sent automatically.
+      // Previously this used raw fetch() with the anon key, which broke after
+      // we added requireAuth to the edge function.
+      const { data, error } = await supabase.functions.invoke("ai-edit", {
+        body: { currentContent, instruction: instruction.trim(), contentType },
       });
 
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({ error: "Request failed" }));
-        if (resp.status === 429) toast.error("Rate limited. Try again shortly.");
-        else if (resp.status === 402) toast.error("AI credits exhausted.");
-        else toast.error(err.error || "AI edit failed");
+      if (error) {
+        toast.error("AI edit failed — please try again.");
         setIsLoading(false);
         return;
       }
 
-      const data = await resp.json();
-      setEditedContent(data.editedContent || "");
+      setEditedContent(data?.editedContent || "");
     } catch (e) {
       console.error("AI edit error:", e);
       toast.error("Failed to generate edit");
@@ -59,15 +52,15 @@ const AIEditPanel = ({ currentContent, contentType, onApply, onDiscard }: AIEdit
       <textarea
         value={instruction}
         onChange={(e) => setInstruction(e.target.value)}
-        placeholder="e.g. Make this more concise, add urgency, rewrite for a technical audience..."
-        className="w-full h-20 bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground outline-none focus:border-accent transition-colors font-sans resize-none"
-        disabled={isLoading}
+        placeholder="Describe the edit (e.g., 'make more concise', 'add urgency')"
+        className="w-full p-2 border border-border rounded-md text-sm font-sans bg-background text-foreground resize-none min-h-[44px]"
+        rows={2}
       />
 
       {!editedContent && (
         <div className="flex gap-2">
-          <Button size="sm" onClick={handleGenerate} disabled={!instruction.trim() || isLoading} className="gap-1.5 text-xs">
-            {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+          <Button size="sm" onClick={handleGenerate} disabled={isLoading || !instruction.trim()} className="gap-1.5 text-xs">
+            {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             Generate
           </Button>
           <Button variant="ghost" size="sm" onClick={onDiscard} className="text-xs text-muted-foreground">
@@ -88,9 +81,6 @@ const AIEditPanel = ({ currentContent, contentType, onApply, onDiscard }: AIEdit
             </Button>
             <Button variant="ghost" size="sm" onClick={() => { setEditedContent(null); setInstruction(""); }} className="text-xs text-muted-foreground">
               <X className="h-3.5 w-3.5 mr-1" /> Try Again
-            </Button>
-            <Button variant="ghost" size="sm" onClick={onDiscard} className="text-xs text-muted-foreground">
-              Discard
             </Button>
           </div>
         </div>

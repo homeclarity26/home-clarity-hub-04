@@ -95,6 +95,7 @@ const SortableImage = ({
           {onRemove && (
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(index); }}
+              aria-label="Remove photo"
               className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
             >
               <X className="h-4 w-4" />

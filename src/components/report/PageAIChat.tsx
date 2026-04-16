@@ -19,7 +19,6 @@ import { SanitizedHtml } from "@/components/ui/SanitizedHtml";
 interface PageAIChatProps {
   pageTitle: string;
   dbPageId?: string;
-  propertyId?: string;
   currentNarrative?: string;
   onNarrativeUpdate?: (newNarrative: string) => void;
 }
