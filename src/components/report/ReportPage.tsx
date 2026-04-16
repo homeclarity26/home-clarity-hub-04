@@ -257,7 +257,6 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
             <PageAIChat
               pageTitle={page.title}
               dbPageId={dbPageId}
-              propertyId={propertyId}
               currentNarrative={
                 Array.isArray(pageData.narrative)
                   ? pageData.narrative.join("\n\n")

@@ -103,8 +103,8 @@ const ClientAgentPanel = ({ propertyName, propertyAddress, enrichment }: ClientA
       if (error) throw error;
       setMessages(prev => [...prev, { id: genId(), role: "assistant", content: data.reply || "Done!" }]);
 
-      // ── Log learning event for client interaction ──
-      supabase.from("learning_events" as any).insert({
+      // ── Log learning event for client interaction (fire-and-forget) ──
+      (supabase.from("learning_events" as any) as any).insert({
         event_type: "client_agent_query",
         actor_id: user?.id || undefined,
         actor_role: "client",
@@ -115,8 +115,8 @@ const ClientAgentPanel = ({ propertyName, propertyAddress, enrichment }: ClientA
           tab: activeTab,
           had_actions: (data.actions_taken?.length || 0) > 0,
         },
-      } as any).then(() => {});
-    } catch (err: any) {
+      }).then(() => {}).catch(() => {});
+    } catch (err: unknown) {
       setMessages(prev => [...prev, { id: genId(), role: "assistant", content: `Oops, something went wrong. Please try again! 🙏` }]);
     } finally {
       setIsThinking(false);
@@ -244,7 +244,7 @@ const ClientAgentPanel = ({ propertyName, propertyAddress, enrichment }: ClientA
                 rows={1}
                 className="flex-1 resize-none bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
               />
-              <Button size="sm" onClick={() => sendMessage(input)} disabled={!input.trim() || isThinking} className="h-9 w-9 p-0 shrink-0 bg-accent hover:bg-accent/90">
+              <Button size="sm" onClick={() => sendMessage(input)} disabled={!input.trim() || isThinking} className="h-9 w-9 p-0 shrink-0 bg-accent hover:bg-accent/90" aria-label="Send message">
                 <Send className="w-4 h-4" />
               </Button>
             </div>

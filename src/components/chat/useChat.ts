@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -28,11 +29,22 @@ export function useChat(reportContext: unknown) {
     };
 
     try {
+      // Get the user's real JWT — NOT the anon key. The anon key will be
+      // rejected by requireAuth on the edge function. We need streaming so
+      // we can't use supabase.functions.invoke() (it doesn't support SSE).
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) {
+        toast.error("Please log in again to use the chat.");
+        setIsLoading(false);
+        return;
+      }
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ messages: allMessages, reportContext }),
       });

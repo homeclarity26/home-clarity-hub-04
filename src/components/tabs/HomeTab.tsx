@@ -119,14 +119,20 @@ const HomeTab = ({
 
   useEffect(() => {
     if (!propertyId || propertyId.startsWith("mock-")) return;
+    let cancelled = false;
     const load = async () => {
-      const { data } = await (supabase.from("portal_customizations" as any) as any)
-        .select("*")
-        .eq("property_id", propertyId)
-        .limit(1);
-      if (data && data.length > 0) setCustomization(data[0]);
+      try {
+        const { data } = await (supabase.from("portal_customizations" as any) as any)
+          .select("*")
+          .eq("property_id", propertyId)
+          .limit(1);
+        if (!cancelled && data && data.length > 0) setCustomization(data[0]);
+      } catch {
+        // Table may not exist yet — graceful fallback
+      }
     };
     load();
+    return () => { cancelled = true; };
   }, [propertyId]);
 
   const firstName =

@@ -246,7 +246,7 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
   const [requestSubmitting, setRequestSubmitting] = useState(false);
   const [selectedRecommendation, setSelectedRecommendation] = useState<{ pageTitle: string; recommendation: string } | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!propertyId) { setLoading(false); return; }
 
     // Demo data for dev bypass
@@ -292,9 +292,9 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
       setMilestones(grouped);
     }
     setLoading(false);
-  };
+  }, [propertyId]);
 
-  useEffect(() => { loadData(); }, [propertyId]);
+  useEffect(() => { loadData(); }, [loadData]);
 
   const toggleMilestone = async (milestone: Milestone) => {
     const newVal = !milestone.completed;
