@@ -41,7 +41,22 @@ const ProjectPhotoTimeline = ({ projectId, projectTitle, isAdmin = false }: Proj
       .select("*")
       .eq("project_id", projectId)
       .order("taken_date", { ascending: true });
-    setPhotos((data as ProjectPhoto[]) || []);
+    const rows = (data as ProjectPhoto[]) || [];
+
+    // photo_url is stored as a storage path. Sign on read so URLs don't expire
+    // at rest. Legacy rows may contain a full http(s) URL — leave those alone.
+    const paths = rows.map((r) => r.photo_url).filter((u) => u && !u.startsWith("http"));
+    const signedMap: Record<string, string> = {};
+    if (paths.length > 0) {
+      const { data: signed } = await supabase.storage
+        .from("project-photos")
+        .createSignedUrls(paths, 3600);
+      signed?.forEach((s: { path: string | null; signedUrl: string }) => {
+        if (s.path && s.signedUrl) signedMap[s.path] = s.signedUrl;
+      });
+    }
+
+    setPhotos(rows.map((r) => ({ ...r, photo_url: signedMap[r.photo_url] || r.photo_url })));
     setLoading(false);
   };
 
@@ -57,13 +72,12 @@ const ProjectPhotoTimeline = ({ projectId, projectTitle, isAdmin = false }: Proj
       const { error: uploadErr } = await supabase.storage.from("project-photos").upload(path, file);
       if (uploadErr) { toast.error(`Failed to upload ${file.name}`); continue; }
 
-      const { data: signedPhotoData } = await supabase.storage.from("project-photos").createSignedUrl(path, 3600);
-      const photoUrl = signedPhotoData?.signedUrl || path;
+      // Store the storage path — loadPhotos signs on read so URLs never go stale at rest.
       await (supabase.from("project_photos" as any) as any).insert({
         project_id: projectId,
         uploaded_by: user.id,
         uploader_type: isAdmin ? "admin" : "client",
-        photo_url: photoUrl,
+        photo_url: path,
         caption: form.caption || null,
         taken_date: form.taken_date,
         photo_stage: form.photo_stage,
