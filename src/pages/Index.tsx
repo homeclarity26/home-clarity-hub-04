@@ -48,6 +48,7 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isEditLink = searchParams.get("edit") === "true";
+  const isAdminPreview = searchParams.get("preview") === "admin";
   const { user, isCreator, isLoading: authLoading } = useAuth();
 
   // Derive active tab from URL — fall back to "home"
@@ -133,9 +134,14 @@ const Index = () => {
   const navigateToTab = useCallback((tab: string) => {
     const base = propertyId ? `/portal/${propertyId}` : "/portal";
     const path = tab === "home" ? base : `${base}/${tab}`;
-    navigate(path);
+    // Preserve the current query string (e.g. ?preview=admin or ?edit=true) so
+    // the creator guard below doesn't kick the admin out of preview mode on
+    // every tab click. Without this, any navigation drops ?preview=admin and
+    // the useEffect redirect fires.
+    const qs = searchParams.toString();
+    navigate(qs ? `${path}?${qs}` : path);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [propertyId, navigate]);
+  }, [propertyId, navigate, searchParams]);
 
   const handleTabChange = useCallback((tab: string) => {
     setReportPageId(null);
@@ -210,23 +216,27 @@ const Index = () => {
     };
   }, [propertyName, portal]);
 
-  // Redirect creators away from the client portal (except when they use the
-  // admin preview "?edit=true" link). This runs as a side effect instead of
-  // in render, which is the correct React pattern and avoids warnings.
+  // Creators can be on the client portal in two supported ways:
+  //   1. ?edit=true  — legacy inline-edit link
+  //   2. ?preview=admin — "Preview Portal" button (new, opens in new tab)
+  // In both cases we leave them alone. Any other creator visit gets bounced
+  // back to /admin (a client landing on /portal stays there regardless).
+  const allowCreatorOnPortal = isEditLink || isAdminPreview;
+
   useEffect(() => {
     if (authLoading) return;
-    if (isCreator && !isEditLink) {
+    if (isCreator && !allowCreatorOnPortal) {
       navigate("/admin", { replace: true });
     }
-  }, [authLoading, isCreator, isEditLink, navigate]);
+  }, [authLoading, isCreator, allowCreatorOnPortal, navigate]);
 
   // Same for the "no property found + creator" fallback below.
   useEffect(() => {
     if (authLoading || portal.isLoading) return;
-    if (!portal.property && isCreator) {
+    if (!portal.property && isCreator && !allowCreatorOnPortal) {
       navigate("/admin", { replace: true });
     }
-  }, [authLoading, portal.isLoading, portal.property, isCreator, navigate]);
+  }, [authLoading, portal.isLoading, portal.property, isCreator, allowCreatorOnPortal, navigate]);
 
   // Auth still resolving — show spinner, never flash wrong screen
   if (authLoading) {
@@ -238,7 +248,7 @@ const Index = () => {
   }
 
   // Creators get redirected via the effect above; render nothing while that happens.
-  if (isCreator && !isEditLink) {
+  if (isCreator && !allowCreatorOnPortal) {
     return null;
   }
 
@@ -270,7 +280,7 @@ const Index = () => {
         </div>
       );
     }
-    if (isCreator) {
+    if (isCreator && !allowCreatorOnPortal) {
       // Creator redirect is handled by the useEffect above; render nothing.
       return null;
     }
@@ -291,6 +301,28 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Admin Preview banner — shown whenever a creator views a client portal
+          (either arrived from "Preview Portal" with ?preview=admin, or just
+          any creator that happened to land on /portal/:id). Makes it obvious
+          this is NOT a true client session, and that the admin's own JWT is
+          still in use — nothing was impersonated. */}
+      {isCreator && (isAdminPreview || propertyId) && (
+        <div className="sticky top-0 z-50 bg-accent text-accent-foreground px-4 py-2 text-center font-sans text-xs md:text-sm flex items-center justify-center gap-3 shadow-hbc-sm">
+          <span className="font-mono uppercase tracking-wider text-[10px] md:text-[11px] bg-background/20 px-2 py-0.5 rounded">
+            Admin Preview
+          </span>
+          <span>
+            You're viewing <strong>{propertyName || "this client's portal"}</strong> as yourself — not as the client. Client-only UI may differ.
+          </span>
+          <button
+            type="button"
+            onClick={() => window.close()}
+            className="ml-2 underline underline-offset-2 hover:opacity-80"
+          >
+            Close preview
+          </button>
+        </div>
+      )}
       <PushNotificationBanner />
       {/* Tutorial onboarding modal for first-time clients */}
       {showTutorialModal && !isCreator && (

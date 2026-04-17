@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { HealthScoreRing } from "@/components/ui/HealthScoreRing";
 import { cn } from "@/lib/utils";
 
 /**
@@ -114,33 +113,9 @@ export function PropertyHero({
         )}
       </div>
 
-      {/* Score ring — pinned bottom-right on desktop; inline on mobile below copy */}
-      {healthScore != null && (
-        <>
-          <div className="absolute bottom-8 right-8 hidden md:block z-10">
-            <HealthScoreRing
-              score={healthScore}
-              size={96}
-              strokeWidth={6}
-              animate
-              trackClassName="text-white/20"
-              numberClassName="text-white"
-              label={`Overall home condition score ${healthScore}`}
-            />
-          </div>
-          <div className="absolute bottom-6 right-6 md:hidden z-10">
-            <HealthScoreRing
-              score={healthScore}
-              size={64}
-              strokeWidth={5}
-              animate
-              trackClassName="text-white/20"
-              numberClassName="text-white"
-              label={`Overall home condition score ${healthScore}`}
-            />
-          </div>
-        </>
-      )}
+      {/* Score ring removed — the score still lives in the eyebrow ("Condition NN")
+          above, and the full HomeHealthScore widget is available in "Explore more".
+          Keeping the hero photo uncluttered makes the home feel like the hero. */}
 
       {/* Subtle placeholder nudge when admin hasn't uploaded a hero photo yet */}
       {!heroImageUrl && (
