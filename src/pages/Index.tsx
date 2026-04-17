@@ -49,7 +49,7 @@ const Index = () => {
   const navigate = useNavigate();
   const isEditLink = searchParams.get("edit") === "true";
   const isAdminPreview = searchParams.get("preview") === "admin";
-  const { user, isCreator, isLoading: authLoading } = useAuth();
+  const { user, isCreator, isLoading: authLoading, signOut } = useAuth();
 
   // Derive active tab from URL — fall back to "home"
   const activeTab = urlTab && VALID_TABS.has(urlTab) ? urlTab : "home";
@@ -294,6 +294,26 @@ const Index = () => {
           <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
             Questions? Contact your advisor directly.
           </p>
+          {/* Escape hatch — if a creator or trade partner ends up here because
+              their role row was briefly unresolved (stale localStorage, slow
+              auth, etc.), let them sign out and re-authenticate instead of
+              getting silently trapped on this page. */}
+          {user && (
+            <div className="pt-6">
+              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-2">
+                Signed in as <span className="text-foreground">{user.email}</span>
+              </p>
+              <button
+                onClick={async () => {
+                  await signOut();
+                  navigate("/login", { replace: true });
+                }}
+                className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground underline underline-offset-4"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
