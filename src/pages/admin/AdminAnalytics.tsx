@@ -184,7 +184,12 @@ const AdminAnalytics = () => {
     { label: "Active Clients", value: stats?.totalClients ?? 0, icon: Users },
     { label: "Revenue Collected", value: fmt(stats?.totalCollected ?? 0), icon: DollarSign },
     { label: "Avg Revenue/Client", value: fmt(stats?.avgRevenuePerClient ?? 0), icon: TrendingUp },
-    { label: "Avg Health Score", value: avgHealthScore ?? "—", icon: BarChart3 },
+    // This is the average home condition from published report condition
+    // ratings — not to be confused with the Dashboard's "Portfolio Health"
+    // card, which is a composite operational score (onboarding + engagement
+    // + issue resolution + report completion). Renamed from "Avg Health
+    // Score" to avoid the label collision with the Dashboard widget.
+    { label: "Avg Home Condition", value: avgHealthScore ?? "—", icon: BarChart3 },
     { label: "Published Reports", value: stats?.publishedReports ?? 0, icon: FileText },
     { label: "Projects Completed", value: stats?.completedProjects ?? 0, icon: CheckCircle },
     { label: "Collection Rate", value: `${stats?.collectionRate ?? 0}%`, icon: DollarSign },

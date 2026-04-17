@@ -121,6 +121,11 @@ const ReportOverview = ({
     [groups],
   );
 
+  // Does the report have any chapter with actual content? If not, the
+  // chapter TOC + chapter cards are meaningless empty-state UI — hide them
+  // rather than leaving "Chapters" / "Report Chapters" headings floating.
+  const hasChapters = chapterData.some((c) => c.sectionCount > 0);
+
   // Overall score — the average across all chapters with ratings. Anchors the cover.
   const overallScore = useMemo(() => {
     const scores = chapterData.map((c) => c.score).filter((s): s is number => s != null);
@@ -258,9 +263,11 @@ const ReportOverview = ({
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.6 }}
           >
-            <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-primary-foreground/50 mb-4">
-              Chapters
-            </p>
+            {hasChapters && (
+              <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-primary-foreground/50 mb-4">
+                Chapters
+              </p>
+            )}
             <div className="grid grid-cols-5 gap-3 md:gap-6 max-w-md">
               {chapterData
                 .filter((c) => c.sectionCount > 0)
@@ -391,7 +398,11 @@ const ReportOverview = ({
           </div>
         )}
 
-        {/* CHAPTER CARDS — monograms + animated score rings */}
+        {/* CHAPTER CARDS — monograms + animated score rings.
+            Hide entirely when no chapter has content — otherwise the heading
+            hangs in space above an empty grid, which happens on brand-new
+            reports that aren't built out yet. */}
+        {hasChapters && (
         <div>
           <div className="flex items-center gap-2 mb-4">
             <BookOpen className="w-4 h-4 text-muted-foreground" />
@@ -460,6 +471,7 @@ const ReportOverview = ({
               ))}
           </motion.div>
         </div>
+        )}
 
         {/* BEGIN READING FOOTER */}
         {firstPageId && (

@@ -43,14 +43,29 @@ const computeRiskFactors = (client: AdminClient, invoices?: any[], lastActivity?
     detail: client.unreadMessages > 0 ? `${client.unreadMessages} unread messages` : "Active engagement",
   });
 
-  // Report progress risk
+  // Report progress risk — only penalize when we actually have pages to judge
+  // against. A freshly-seeded client with 0/0 pages shouldn't show up as 60%
+  // risk on "Report Progress" before anyone has even started building the
+  // report; that flagged too many new clients as at-risk.
   const completionPct = client.totalPages > 0 ? (client.completePages / client.totalPages) * 100 : 0;
-  const progressRisk = completionPct < 25 ? 60 : completionPct < 50 ? 35 : completionPct < 75 ? 15 : 0;
+  const progressRisk =
+    client.totalPages === 0
+      ? 0
+      : completionPct < 25
+        ? 60
+        : completionPct < 50
+          ? 35
+          : completionPct < 75
+            ? 15
+            : 0;
   factors.push({
     label: "Report Progress",
     score: progressRisk,
     icon: Clock,
-    detail: `${Math.round(completionPct)}% complete (${client.completePages}/${client.totalPages} pages)`,
+    detail:
+      client.totalPages === 0
+        ? "Report not started yet"
+        : `${Math.round(completionPct)}% complete (${client.completePages}/${client.totalPages} pages)`,
   });
 
   // Flagged pages risk
