@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callAI, parseJSON } from "../_shared/ai-client.ts";
+import { callAIAgent, type AIMessage } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireAuth, corsHeaders } from "../_shared/auth.ts";
 
@@ -1502,11 +1502,20 @@ serve(async (req) => {
     const allowedTools = TOOLS.filter((t) => t.allowedRoles.includes(role));
 
     // ─── SMART CONTEXT INJECTION (Self-Learning Layer) ───
+    // Previously we sent the service-role key in the Authorization header
+    // when calling get-smart-context. That bypassed RLS inside the callee —
+    // if get-smart-context ever queried a user-scoped table, it would see
+    // every user's rows. Now we forward the caller's own JWT so get-smart-
+    // context runs under the user's RLS context.
+    const userAuthHeader = req.headers.get("authorization") ?? "";
     let smartContext: any = {};
     try {
       const scResp = await fetch(`${supabaseUrl}/functions/v1/get-smart-context`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseServiceKey}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: userAuthHeader,
+        },
         body: JSON.stringify({
           role,
           userId,
@@ -1588,20 +1597,41 @@ serve(async (req) => {
       systemPrompt += ` Use this context — don't ask for this entity's ID.`;
     }
 
-    // Build messages array
-    const messages: any[] = [
-      { role: "system", content: systemPrompt },
-      ...(history || []).slice(-12),
-      { role: "user", content: message },
-    ];
+    // ─── Build Gemini-native `contents` array ───
+    // `history` from the client is { role: "user"|"assistant", content: string }.
+    // Map it to Gemini's shape (role: "user"|"model", parts: [{text}]). The
+    // system prompt goes into `systemInstruction` via callAIAgent, NOT into
+    // the contents list.
+    const contents: AIMessage[] = [];
+    for (const h of (history || []).slice(-12) as Array<{ role?: string; content?: string }>) {
+      if (!h?.content) continue;
+      contents.push({
+        role: h.role === "assistant" ? "model" : "user",
+        parts: [{ text: h.content }],
+      });
+    }
+    contents.push({ role: "user", parts: [{ text: message }] });
 
-    // Build OpenAI-compatible tools array
-    const toolDefs = allowedTools.map(t => ({
-      type: "function" as const,
-      function: { name: t.name, description: t.description, parameters: t.parameters },
+    // Gemini requires the first content to be role: "user". History may have
+    // started with an assistant greeting; prepend a placeholder if so.
+    if (contents.length > 0 && contents[0].role !== "user") {
+      contents.unshift({ role: "user", parts: [{ text: " " }] });
+    }
+
+    // Tool declarations — Gemini-native shape, filtered by caller's role.
+    const geminiTools = allowedTools.map((t) => ({
+      name: t.name,
+      description: t.description,
+      parameters: t.parameters,
     }));
 
-    // ReAct loop
+    // ─── ReAct loop (Gemini-native) ───
+    // Each iteration:
+    //   1. Call model with current `contents` + tools.
+    //   2. If it returned functionCalls: append the model turn, execute each
+    //      tool (respecting confirmation gate), append a user turn with the
+    //      functionResponse(s), and loop.
+    //   3. If it returned only text: that's the final reply. Break.
     const toolsCalled: any[] = [];
     let iterations = 0;
     const MAX_ITERATIONS = 10;
@@ -1612,65 +1642,111 @@ serve(async (req) => {
     while (iterations < MAX_ITERATIONS) {
       iterations++;
 
-      const _aiText = await callAI({ messages: messages, model: "google/gemini-2.5-flash" });
-    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
-
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error("AI gateway error:", response.status, errText);
-        if (response.status === 429) { finalReply = "I'm a bit busy right now — please try again in a moment."; break; }
-        if (response.status === 402) { finalReply = "AI credits have been exhausted. Please add credits in your Lovable workspace settings."; break; }
-        throw new Error(`AI gateway error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const choice = data.choices?.[0];
-
-      if (!choice) { finalReply = "I encountered an issue processing your request. Please try again."; break; }
-
-      if (choice.finish_reason === "tool_calls" || choice.message?.tool_calls) {
-        const assistantMsg = choice.message;
-        messages.push(assistantMsg);
-
-        for (const tc of assistantMsg.tool_calls || []) {
-          const toolName = tc.function.name;
-          let toolParams: any;
-          try { toolParams = JSON.parse(tc.function.arguments || "{}"); } catch { toolParams = {}; }
-
-          const toolDef = TOOLS.find(t => t.name === toolName);
-          if (toolDef?.requiresConfirmation && !confirm_action) {
-            needsConfirmation = true;
-            confirmationPayload = {
-              summary: `I need your confirmation to: ${toolDef.description}`,
-              items: [{ tool: toolName, params: toolParams }],
-              reversible: !["delete_client", "delete_project", "void_invoice"].includes(toolName),
-              pending_tool_call: { tool_name: toolName, params: toolParams },
-            };
-            messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify({ status: "awaiting_confirmation", message: "User must confirm this action before I can proceed." }) });
-            continue;
-          }
-
-          const result = await executeTool(supabase, toolName, toolParams, userId);
-          toolsCalled.push({
-            tool_name: toolName, params: toolParams,
-            result_summary: result.result?.message || JSON.stringify(result.result).slice(0, 200),
-            success: result.success, entity_id: result.entity_id, entity_type: result.entity_type, nav_link: result.nav_link,
-          });
-          messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(result.result) });
-        }
-
-        if (needsConfirmation) {
-          const _confirmText = await callAI({ messages, model: "google/gemini-2.5-flash" });
-          const confirmResp = { ok: true, json: async () => ({ choices: [{ message: { content: _confirmText } }] }) };
-          const confirmData = await confirmResp.json();
-          finalReply = confirmData.choices?.[0]?.message?.content || "I need your confirmation before proceeding.";
+      let resp: Awaited<ReturnType<typeof callAIAgent>>;
+      try {
+        resp = await callAIAgent({
+          system: systemPrompt,
+          contents,
+          tools: geminiTools,
+          toolChoice: "auto",
+          model: "google/gemini-2.5-flash",
+        });
+      } catch (aiErr) {
+        console.error("Gemini call failed:", aiErr);
+        const msg = aiErr instanceof Error ? aiErr.message : String(aiErr);
+        if (msg.includes("429")) {
+          finalReply = "I'm a bit busy right now — please try again in a moment.";
           break;
         }
-        continue;
+        throw aiErr;
       }
 
-      finalReply = choice.message?.content || "";
-      break;
+      // No tool calls → model is done thinking, emit its reply.
+      if (resp.functionCalls.length === 0) {
+        finalReply = resp.text || "I encountered an issue processing your request. Please try again.";
+        break;
+      }
+
+      // ── Tool-calling turn. ──
+      // Append the model's turn (text + functionCall parts) to contents so
+      // subsequent iterations see the model's reasoning.
+      const modelParts: any[] = [];
+      if (resp.text) modelParts.push({ text: resp.text });
+      for (const fc of resp.functionCalls) {
+        modelParts.push({ functionCall: { name: fc.name, args: fc.args } });
+      }
+      contents.push({ role: "model", parts: modelParts });
+
+      // Execute each tool and append a functionResponse user turn.
+      // Gemini accepts multiple functionResponse parts in a single user turn.
+      const responseParts: any[] = [];
+      for (const fc of resp.functionCalls) {
+        const toolDef = TOOLS.find((t) => t.name === fc.name);
+
+        // Confirmation gate for destructive / high-stakes tools.
+        if (toolDef?.requiresConfirmation && !confirm_action) {
+          needsConfirmation = true;
+          confirmationPayload = {
+            summary: `I need your confirmation to: ${toolDef.description}`,
+            items: [{ tool: fc.name, params: fc.args }],
+            reversible: !["delete_client", "delete_project", "void_invoice"].includes(fc.name),
+            pending_tool_call: { tool_name: fc.name, params: fc.args },
+          };
+          responseParts.push({
+            functionResponse: {
+              name: fc.name,
+              response: {
+                status: "awaiting_confirmation",
+                message: "User must confirm this action before I can proceed.",
+              },
+            },
+          });
+          continue;
+        }
+
+        const result = await executeTool(supabase, fc.name, fc.args, userId);
+        toolsCalled.push({
+          tool_name: fc.name,
+          params: fc.args,
+          result_summary: result.result?.message || JSON.stringify(result.result).slice(0, 200),
+          success: result.success,
+          entity_id: result.entity_id,
+          entity_type: result.entity_type,
+          nav_link: result.nav_link,
+        });
+        responseParts.push({
+          functionResponse: {
+            name: fc.name,
+            response: (result.result ?? {}) as Record<string, unknown>,
+          },
+        });
+      }
+
+      contents.push({ role: "user", parts: responseParts });
+
+      // If any tool required confirmation, make one final model call so the
+      // user sees a human-facing confirmation prompt alongside the payload,
+      // then exit early. The client will re-invoke with confirm_action=true
+      // once the user OKs it.
+      if (needsConfirmation) {
+        try {
+          const confirmResp = await callAIAgent({
+            system: systemPrompt,
+            contents,
+            model: "google/gemini-2.5-flash",
+          });
+          finalReply = confirmResp.text || "I need your confirmation before proceeding.";
+        } catch {
+          finalReply = "I need your confirmation before proceeding.";
+        }
+        break;
+      }
+
+      // Otherwise loop — the model may want to chain tools or summarize.
+    }
+
+    if (!finalReply) {
+      finalReply = "I ran out of steps trying to answer that. Try rephrasing?";
     }
 
     const duration = Date.now() - startTime;
