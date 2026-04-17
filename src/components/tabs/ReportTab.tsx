@@ -357,7 +357,7 @@ const ReportTab = ({
   }
 
   // --- Build My Report (creator only, when no pages are populated yet) ---
-  const hasRealPages = pages && Object.keys(pages).length > 0;
+  const hasRealPages = !!(pages && Object.keys(pages).length > 0);
   if (canEdit && !hasRealPages && reportId && propertyId && !activePageId) {
     return (
       <div className="max-w-3xl mx-auto px-6 md:px-20 py-16">
@@ -390,6 +390,7 @@ const ReportTab = ({
       estimatedValue={estimatedValue}
       propertyId={propertyId}
       creatorName="Adam Kilgore"
+      isReportEmpty={!hasRealPages}
     />
   );
 };
