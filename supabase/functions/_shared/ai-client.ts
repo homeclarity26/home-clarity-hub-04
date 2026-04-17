@@ -53,14 +53,22 @@ export interface AIOptions {
   maxOutputTokens?: number;
 }
 
+// Gemini model IDs as of Gemini 2.5 stable (2025+). The previous values
+// pointed at April-2024 PREVIEW models (gemini-2.5-flash-preview-04-17,
+// gemini-2.5-pro-preview-03-25) which Google has since retired — hitting
+// them returns 404 NOT_FOUND. This was the actual "Sorry, I ran into an
+// error" symptom in prod AFTER the shape fix landed.
 const MODEL_MAP: Record<string, string> = {
-  // Lovable gateway names → real Gemini model IDs
-  "google/gemini-2.5-flash": "gemini-2.5-flash-preview-04-17",
-  "google/gemini-2.5-flash-lite": "gemini-2.0-flash-lite",
-  "google/gemini-3-flash-preview": "gemini-2.5-flash-preview-04-17",
+  // Lovable-style gateway names (legacy aliases still used by callers)
+  "google/gemini-2.5-flash": "gemini-2.5-flash",
+  "google/gemini-2.5-flash-lite": "gemini-2.5-flash-lite",
+  "google/gemini-2.5-pro": "gemini-2.5-pro",
+  "google/gemini-3-flash-preview": "gemini-2.5-flash",
   // Direct names (pass-through)
-  "gemini-2.5-flash": "gemini-2.5-flash-preview-04-17",
-  "gemini-2.5-pro": "gemini-2.5-pro-preview-03-25",
+  "gemini-2.5-flash": "gemini-2.5-flash",
+  "gemini-2.5-flash-lite": "gemini-2.5-flash-lite",
+  "gemini-2.5-pro": "gemini-2.5-pro",
+  "gemini-2.0-flash": "gemini-2.0-flash",
   "gemini-2.0-flash-lite": "gemini-2.0-flash-lite",
 };
 
@@ -69,7 +77,7 @@ export async function callAI(opts: AIOptions): Promise<string> {
   if (!apiKey) throw new Error("GEMINI_API_KEY not configured in Supabase Vault");
 
   const rawModel = opts.model ?? "google/gemini-2.5-flash";
-  const model = MODEL_MAP[rawModel] ?? "gemini-2.5-flash-preview-04-17";
+  const model = MODEL_MAP[rawModel] ?? "gemini-2.5-flash";
 
   // Build contents array.
   //
@@ -235,7 +243,7 @@ export async function callAIAgent(opts: AgentOptions): Promise<AgentCall> {
   if (!apiKey) throw new Error("GEMINI_API_KEY not configured in Supabase Vault");
 
   const rawModel = opts.model ?? "google/gemini-2.5-flash";
-  const model = MODEL_MAP[rawModel] ?? "gemini-2.5-flash-preview-04-17";
+  const model = MODEL_MAP[rawModel] ?? "gemini-2.5-flash";
 
   const body: Record<string, unknown> = {
     contents: opts.contents,
