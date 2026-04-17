@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 
 interface PropertyValueWidgetProps {
   propertyId?: string;
@@ -108,8 +109,9 @@ const PropertyValueWidget = ({ propertyId, estimatedValue: initialValue }: Prope
         },
       });
       if (result?.explanation) setAiSummary(result.explanation);
-    } catch {
-      // silent fail — no summary shown
+    } catch (err) {
+      console.error("PropertyValueWidget: AI summary failed", err);
+      toast.error("Couldn't generate AI valuation insight.");
     } finally {
       setAiLoading(false);
     }
@@ -148,8 +150,9 @@ const PropertyValueWidget = ({ propertyId, estimatedValue: initialValue }: Prope
           loadAiSummary(result.estimated_value, result.low_estimate, result.high_estimate, result.neighborhood_avg, parts[0] || address);
         }
       }
-    } catch {
-      // silent fail
+    } catch (err) {
+      console.error("PropertyValueWidget: refresh failed", err);
+      toast.error("Couldn't load home value — try again later.");
     } finally {
       setLoading(false);
     }
