@@ -158,7 +158,17 @@ const HomeTab = ({
   };
 
   const hasReportData = !!reportPages && Object.keys(reportPages).length > 0;
-  const healthScore = useMemo(() => computeHealthScore(reportPages), [reportPages]);
+  // Only surface a health score when there's an actual in-progress/published
+  // report. A brand-new client with no completed pages (or a stale stub with a
+  // leftover conditionRating) should not show "Condition NN" in the greeting —
+  // that misleads clients into thinking a full assessment has been done.
+  const healthScore = useMemo(
+    () =>
+      hasReportData && completionPercent > 0
+        ? computeHealthScore(reportPages)
+        : null,
+    [reportPages, hasReportData, completionPercent],
+  );
 
   // Custom hero override from portal_customizations (optional); otherwise use
   // the admin-uploaded hero from properties.hero_image_url.
