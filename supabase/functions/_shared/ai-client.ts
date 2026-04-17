@@ -13,9 +13,20 @@
  *   const json = await callAI({ system, prompt, json: true });
  */
 
+/**
+ * A single Gemini content part. Gemini messages can contain text, function
+ * calls (from the model), or function responses (from the tool runner). All
+ * three shapes live side-by-side in a `parts[]` array.
+ */
+export interface GeminiPart {
+  text?: string;
+  functionCall?: { name: string; args: Record<string, unknown> };
+  functionResponse?: { name: string; response: Record<string, unknown> };
+}
+
 export interface AIMessage {
   role: "user" | "model";
-  parts: Array<{ text: string }>;
+  parts: GeminiPart[];
 }
 
 /**
@@ -177,4 +188,114 @@ export async function callAI(opts: AIOptions): Promise<string> {
 export function parseJSON<T = unknown>(text: string): T {
   const cleaned = text.replace(/^```json?\n?/i, "").replace(/\n?```$/i, "").trim();
   return JSON.parse(cleaned) as T;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Agent-native call: Gemini function calling done properly.
+//
+// `callAI` above returns a plain string and flattens function calls into an
+// opaque JSON string. That was never usable by a ReAct loop — hbc-agent's
+// tool-calling loop had been dead since day one. `callAIAgent` returns the
+// structured response (text + functionCalls[]) so a loop can actually drive
+// tool execution and feed results back to the model.
+//
+// Callers build Gemini-shape `contents` directly and manage the loop.
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface AgentToolDef {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+}
+
+export interface AgentCall {
+  /** Concatenated text parts from the model turn (may be empty on a pure tool call). */
+  text: string;
+  /** Function calls the model wants the runner to execute. */
+  functionCalls: Array<{ name: string; args: Record<string, unknown> }>;
+  /** `STOP`, `MAX_TOKENS`, `SAFETY`, etc. Mirrors Gemini's finishReason. */
+  finish: string;
+}
+
+export interface AgentOptions {
+  system?: string;
+  /** Full conversation in Gemini-native shape. Caller owns the list. */
+  contents: AIMessage[];
+  /** Function declarations exposed to the model this turn. */
+  tools?: AgentToolDef[];
+  /** "auto" (default) lets the model decide; "none" forces text-only. */
+  toolChoice?: "auto" | "none";
+  model?: string;
+  temperature?: number;
+  maxOutputTokens?: number;
+}
+
+export async function callAIAgent(opts: AgentOptions): Promise<AgentCall> {
+  const apiKey = Deno.env.get("GEMINI_API_KEY");
+  if (!apiKey) throw new Error("GEMINI_API_KEY not configured in Supabase Vault");
+
+  const rawModel = opts.model ?? "google/gemini-2.5-flash";
+  const model = MODEL_MAP[rawModel] ?? "gemini-2.5-flash-preview-04-17";
+
+  const body: Record<string, unknown> = {
+    contents: opts.contents,
+    generationConfig: {
+      temperature: opts.temperature ?? 0.3,
+      maxOutputTokens: opts.maxOutputTokens ?? 8192,
+    },
+  };
+
+  if (opts.system) {
+    body.systemInstruction = { parts: [{ text: opts.system }] };
+  }
+
+  if (opts.tools && opts.tools.length > 0) {
+    body.tools = [{
+      functionDeclarations: opts.tools.map((t) => ({
+        name: t.name,
+        description: t.description,
+        parameters: t.parameters,
+      })),
+    }];
+    body.toolConfig = {
+      functionCallingConfig: { mode: opts.toolChoice === "none" ? "NONE" : "AUTO" },
+    };
+  }
+
+  const url =
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Gemini API error ${res.status}: ${err}`);
+  }
+
+  const data = await res.json();
+  const candidate = data.candidates?.[0];
+  if (!candidate) return { text: "", functionCalls: [], finish: "EMPTY" };
+
+  const parts: GeminiPart[] = candidate.content?.parts ?? [];
+  const textChunks: string[] = [];
+  const functionCalls: Array<{ name: string; args: Record<string, unknown> }> = [];
+  for (const p of parts) {
+    if (typeof p.text === "string" && p.text.length > 0) textChunks.push(p.text);
+    if (p.functionCall) {
+      functionCalls.push({
+        name: p.functionCall.name,
+        args: (p.functionCall.args ?? {}) as Record<string, unknown>,
+      });
+    }
+  }
+
+  return {
+    text: textChunks.join(""),
+    functionCalls,
+    finish: candidate.finishReason ?? "STOP",
+  };
 }
