@@ -172,6 +172,19 @@ export async function callAI(opts: AIOptions): Promise<string> {
 
   if (!res.ok) {
     const err = await res.text();
+    // Map Gemini's own error statuses to crisper end-user messages. Previously
+    // the raw error JSON (stringified Gemini response) was bubbling straight
+    // into the chat UI — users saw "Gemini API error 503: { ... }" when the
+    // model was temporarily unavailable. Translate the common ones.
+    if (res.status === 503) {
+      throw new Error("AI is temporarily busy — please try again in a minute.");
+    }
+    if (res.status === 429) {
+      throw new Error("AI is rate-limited right now — please wait a moment and retry.");
+    }
+    if (res.status === 401 || res.status === 403) {
+      throw new Error("AI authentication failed — check GEMINI_API_KEY configuration.");
+    }
     throw new Error(`Gemini API error ${res.status}: ${err}`);
   }
 
@@ -281,6 +294,17 @@ export async function callAIAgent(opts: AgentOptions): Promise<AgentCall> {
 
   if (!res.ok) {
     const err = await res.text();
+    // Same mapping as callAI above — surface the common transient Gemini
+    // states as friendly messages instead of pasting raw JSON into the chat.
+    if (res.status === 503) {
+      throw new Error("AI is temporarily busy — please try again in a minute.");
+    }
+    if (res.status === 429) {
+      throw new Error("AI is rate-limited right now — please wait a moment and retry.");
+    }
+    if (res.status === 401 || res.status === 403) {
+      throw new Error("AI authentication failed — check GEMINI_API_KEY configuration.");
+    }
     throw new Error(`Gemini API error ${res.status}: ${err}`);
   }
 
