@@ -247,7 +247,7 @@ export function useCRMClientsEnriched() {
       // Get projects for count
       const { data: projects } = await supabase.from("projects").select("property_id, status");
 
-      return (contacts || []).map((c: CRMContact) => {
+      const enrichContact = (c: CRMContact) => {
         const prop = c.property_id ? propMap.get(c.property_id) : null;
         const profile = prop?.client_user_id ? profileMap.get(prop.client_user_id) : null;
         const propInvoices = (invoices || []).filter((i: any) => i.property_id === c.property_id);
@@ -265,7 +265,59 @@ export function useCRMClientsEnriched() {
           balanceDue,
           activeProjects,
         };
+      };
+
+      const enrichedFromContacts = (contacts || []).map(enrichContact);
+
+      // Fallback: any property that has NO matching crm_contacts row still
+      // belongs in the CRM list — otherwise /admin/clients and /admin/crm
+      // disagree (the New Client wizard creates a property but doesn't
+      // create a crm_contacts row). Synthesize a virtual contact so the
+      // client shows up in CRM until a proper crm_contacts row is created.
+      const contactPropertyIds = new Set(
+        (contacts || []).map((c: CRMContact) => c.property_id).filter(Boolean),
+      );
+      const orphanProperties = (properties || []).filter(
+        (p: any) => !contactPropertyIds.has(p.id),
+      );
+      const synthesized = orphanProperties.map((prop: any) => {
+        const profile = prop.client_user_id ? profileMap.get(prop.client_user_id) : null;
+        const propInvoices = (invoices || []).filter((i: any) => i.property_id === prop.id);
+        const balanceDue = propInvoices
+          .filter((i: any) => i.status !== "paid")
+          .reduce((sum: number, i: any) => sum + (i.amount || 0), 0);
+        const activeProjects = (projects || []).filter(
+          (p: any) => p.property_id === prop.id && p.status !== "completed" && p.status !== "cancelled",
+        ).length;
+        return {
+          id: `synthetic:${prop.id}`,
+          contact_type: "client" as const,
+          property_id: prop.id,
+          vendor_id: null,
+          client_stage: "lead",
+          partner_stage: null,
+          tags: [],
+          last_contact_date: null,
+          lifetime_value: 0,
+          referral_source: null,
+          since_date: prop.created_at || null,
+          notes: null,
+          created_by: null,
+          created_at: prop.created_at || new Date().toISOString(),
+          updated_at: prop.updated_at || prop.created_at || new Date().toISOString(),
+          name: profile?.full_name || prop.property_name || "Unknown",
+          email: profile?.email || "",
+          phone: profile?.phone || "",
+          property: prop.property_name || prop.address || "",
+          address: prop.address || "",
+          healthScore: 0,
+          balanceDue,
+          activeProjects,
+          _synthetic: true as const,
+        };
       });
+
+      return [...enrichedFromContacts, ...synthesized];
     },
   });
 }

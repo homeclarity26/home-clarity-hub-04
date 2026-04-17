@@ -23,6 +23,17 @@ const PARTNER_STAGES = ["prospecting", "vetting", "approved", "active", "preferr
 
 const stageLabel = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
+// Synthetic CRM rows (orphan properties with no crm_contacts row yet) use an
+// id like "synthetic:<propertyId>". Those can't be routed to the CRM contact
+// detail page; send them to /admin/clients/<propertyId> instead until a real
+// crm_contacts row is created for them.
+const clientDetailHref = (id: string, rows: Array<{ id: string; property_id?: string | null }>): string => {
+  if (id.startsWith("synthetic:")) return `/admin/clients/${id.slice("synthetic:".length)}`;
+  const row = rows.find(r => r.id === id);
+  if (row && row.property_id && String(id).startsWith("synthetic:")) return `/admin/clients/${row.property_id}`;
+  return `/admin/crm/clients/${id}`;
+};
+
 const stageColor = (s: string) => {
   const colors: Record<string, string> = {
     lead: "bg-blue-100 text-blue-800", onboarding: "bg-indigo-100 text-indigo-800",
@@ -143,11 +154,11 @@ const AdminCRM = () => {
             {clientsLoading ? <TableSkeleton /> : filteredClients.length === 0 ? (
               <EmptyState type="client" onAdd={() => navigate("/admin/clients/new")} />
             ) : viewMode === "table" ? (
-              <ClientsTable data={filteredClients} selected={selected} onToggle={toggleSelect} onToggleAll={() => toggleAll(filteredClients.map(c => c.id))} onRowClick={id => navigate(`/admin/crm/clients/${id}`)} />
+              <ClientsTable data={filteredClients} selected={selected} onToggle={toggleSelect} onToggleAll={() => toggleAll(filteredClients.map(c => c.id))} onRowClick={id => navigate(clientDetailHref(id, filteredClients))} />
             ) : viewMode === "kanban" ? (
-              <KanbanView data={filteredClients} stages={CLIENT_STAGES} stageKey="client_stage" onCardClick={id => navigate(`/admin/crm/clients/${id}`)} />
+              <KanbanView data={filteredClients} stages={CLIENT_STAGES} stageKey="client_stage" onCardClick={id => navigate(clientDetailHref(id, filteredClients))} />
             ) : viewMode === "grid" ? (
-              <CardGrid data={filteredClients} type="client" onCardClick={id => navigate(`/admin/crm/clients/${id}`)} />
+              <CardGrid data={filteredClients} type="client" onCardClick={id => navigate(clientDetailHref(id, filteredClients))} />
             ) : (
               <div className="bg-muted/50 rounded-xl p-12 text-center text-muted-foreground font-sans text-sm">Map view coming soon</div>
             )}
