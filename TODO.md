@@ -15,7 +15,7 @@ Actionable items from the 2026-04-17 role walkthroughs. Work top-to-bottom. Sche
 - [x] **Client name in admin-preview portal greeting** — Admin preview currently shows "Good morning, {admin.firstName}" because the logged-in user is the admin. Should show the client's first name (or a neutral "Welcome") when viewing in `?preview=admin` mode. Relevant: `src/components/tabs/HomeTab.tsx:138` (firstName derivation) + `src/components/portal/PropertyHero.tsx:34`.
 - [x] **Real `avgHealthScore` in Analytics** — `src/pages/admin/AdminAnalytics.tsx:51` still has `avgHealthScore: 72` hardcoded. Reuse the bucket query from the health distribution pie and compute the average.
 - [x] **Surface PaymentsTab AI-summary errors** — `src/components/tabs/PaymentsTab.tsx:222` has `catch { /* Silent fail */ }`. Add `console.error` + graceful empty state so "ai summary didn't load" isn't invisible.
-- [ ] **Document `VITE_GOOGLE_MAPS_API_KEY`** — CLAUDE.md's "Environment Variables" section should list this as a documented optional, with the enable path for the New Client wizard's address autocomplete. `src/pages/admin/AdminNewReport.tsx` (or wherever the wizard's Step 1 lives) has the "Add VITE_GOOGLE_MAPS_API_KEY to .env..." fallback inline.
+- [x] **Document `VITE_GOOGLE_MAPS_API_KEY`** — CLAUDE.md's "Environment Variables" section should list this as a documented optional, with the enable path for the New Client wizard's address autocomplete. `src/pages/admin/AdminNewReport.tsx` (or wherever the wizard's Step 1 lives) has the "Add VITE_GOOGLE_MAPS_API_KEY to .env..." fallback inline.
 - [ ] **Check SeasonalChecklist undocumented silent catch** — `src/components/portal/SeasonalChecklist.tsx:71` has a bare `} catch {}`. Investigate what's being silenced; add `console.error` at minimum.
 - [ ] **Check DigitalTwinTab silent catch** — `src/components/admin/DigitalTwinTab.tsx:589` has `catch { /* ignore */ }`. Verify intent and document or fix.
 
@@ -138,6 +138,7 @@ See `CLAUDE.md` → "Pre-Launch Verification Checklist" for the full process. St
 | 2026-04-17 (manual pickup) | Fix client name in admin-preview portal greeting | — | `useClientPortal` fetches client profile; `Index.tsx` passes `isAdminPreview` + `clientFirstName` to `HomeTab`; admin previews greet the client or fall back to neutral. |
 | 2026-04-17 (manual pickup) | Real avgHealthScore in Analytics | — | Health distribution query now also returns a cross-property average; stat card uses it (or `—` when no data) instead of hardcoded 72. |
 | 2026-04-17 (manual pickup) | Surface PaymentsTab AI-summary errors | — | Invoice summary catch now logs via `console.error` and sets a `summaryError` state; UI falls back to a readable "AI summary didn't load" message. |
+| 2026-04-17 (manual pickup) | Document VITE_GOOGLE_MAPS_API_KEY | — | Added to CLAUDE.md Environment Variables with fallback behavior + enable steps. |
 
 ---
 
