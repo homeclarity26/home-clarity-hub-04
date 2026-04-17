@@ -386,6 +386,8 @@ const Index = () => {
               estimatedValue={portal.property?.estimated_value}
               propertyId={propertyId || ""}
               reportPages={portal.pages}
+              isAdminPreview={isAdminPreview || isCreator}
+              clientFirstName={portal.clientFirstName}
             />
           )}
         </div>
