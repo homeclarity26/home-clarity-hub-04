@@ -340,6 +340,33 @@ git checkout main && git pull origin main
 
 ---
 
+## Pre-Launch Verification Checklist
+
+Run this before letting any real client touch the app. Paper review misses runtime bugs — this catches them. Layered cheap → expensive:
+
+| Layer | What | Automated? | Who runs it |
+|---|---|---|---|
+| **Static** | `bun run build` + typecheck | Yes (CI + every PR) | Claude, default |
+| **Smoke tests** | `bun --env-file=.env.local scripts/smoke-test-ai.ts` — hits every AI edge function, asserts 200 + non-empty + not a catch-block fallback | Yes, but requires `SUPABASE_TEST_USER_JWT` in `.env.local` | Claude after every backend change |
+| **Role walk-through** | Log in as admin → create a client → log in as that client → click every primary tab → send a message → ask the Home Assistant something → verify a reply comes back. ~30 min. | No | **Adam, before every release** |
+| **Error paths** | Force offline Gemini (wrong API key) and confirm the UI shows a readable error, not a silent blank | No, spot-check | Adam or Claude |
+| **RLS spot audit** | Create a second test user; confirm they cannot read the first user's properties/messages/invoices | No, spot-check | Claude whenever RLS changes |
+| **Mobile real-device** | Open on an actual phone (not devtools emulator) — tap through the portal, check touch targets + keyboard | No | **Adam, before every release** |
+| **Observability** | Sentry on front-end + Supabase log drains wired to something Adam checks | Set up once | Adam (one-time) |
+
+**The single highest-leverage item is the role walk-through.** Most bugs that slip past reviews are caught in 5 minutes of clicking around as a client. Treat it as a ship gate.
+
+**Getting a test JWT for the smoke script:** log in as a creator in the browser → open devtools Network tab → find any edge-function call → copy the `Authorization: Bearer ...` value → put the token into `.env.local` as `SUPABASE_TEST_USER_JWT=eyJ...`. Rotate when it expires.
+
+### Session Start Protocol reminder
+
+When a new session inherits this file, it should:
+1. Not assume any checklist items are done. Read `TODO.md`'s "Pre-launch status for current build" section.
+2. After any backend change, re-run the smoke test before marking a task done.
+3. After any UI change, flag to Adam that a role walk-through is needed — don't pretend to have done it.
+
+---
+
 ## Known Small TODOs (non-blocking)
 
 - TypeScript strict mode: `noImplicitAny: true` is on, but `strict: false` still. Flipping to full strict would surface errors in ~20 admin files using `any` casts on untyped Supabase tables. Fix incrementally.

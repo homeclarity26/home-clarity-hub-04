@@ -1,8 +1,25 @@
 # Home Clarity Hub — Master TODO
 
-**Branch:** `main` (up through PR #11)
+**Branch:** `main` (up through PR #17)
 **Last updated:** 2026-04-16
 **Read this file at the start of every session along with `CLAUDE.md`.**
+
+---
+
+## 🔴 Pre-Launch Verification Status — CURRENT BUILD
+
+See `CLAUDE.md` → "Pre-Launch Verification Checklist" for the full process. Status as of latest session:
+
+- [x] **Static build passes** — `bun run build` green after each PR in this session
+- [x] **AI edge functions deployed** — hbc-agent + 15 others (messaging-shape fix + ReAct rebuild)
+- [ ] **Smoke test run** — script exists at `scripts/smoke-test-ai.ts` but has never been executed. Needs `SUPABASE_TEST_USER_JWT` in `.env.local` first.
+- [ ] **Role walk-through** — NOT DONE. Adam has not clicked through portal as admin + client since the PR #13, #15, #16, #17 fixes landed. **This is the guard before the Johnsons see it.**
+- [ ] **Error paths verified** — NOT DONE. What happens if Gemini is down, if photos fail to upload, if a tool call errors mid-chain?
+- [ ] **RLS spot audit** — NOT DONE since PR #16's `get-smart-context` auth change (which removed a service-role-key leak). Should verify no cross-client data leakage.
+- [ ] **Mobile real-device test** — NOT DONE. The FAB / bottom-nav changes from PR #13 should be verified on an actual iPhone, not devtools emulation.
+- [ ] **Observability (Sentry + log drains)** — NOT WIRED. When a production bug happens, we'll only know if a client reports it.
+
+**Current recommendation: do NOT show the Johnsons until the role walk-through and mobile test are done.** Those two catch 80% of what everything else would.
 
 ---
 
