@@ -18,10 +18,22 @@ export interface AIMessage {
   parts: Array<{ text: string }>;
 }
 
+/**
+ * OpenAI-shape message, accepted by callAI for backward compatibility.
+ * At request time it's translated to Gemini-shape (role: "user"|"model",
+ * parts: [{text}]) with any "system" messages hoisted to systemInstruction.
+ */
+export interface OpenAIMessage {
+  role: "system" | "user" | "assistant" | "tool" | "model";
+  content?: string | Array<{ text: string }>;
+  parts?: Array<{ text: string }>;
+}
+
 export interface AIOptions {
   system?: string;
   prompt?: string;
-  messages?: AIMessage[];   // for multi-turn (hbc-agent)
+  /** Multi-turn messages. Accepts either Gemini-shape or OpenAI-shape. */
+  messages?: Array<AIMessage | OpenAIMessage>;
   model?: string;
   json?: boolean;           // wrap prompt in JSON instruction + parse response
   tools?: object[];         // Gemini function calling tools
@@ -48,10 +60,61 @@ export async function callAI(opts: AIOptions): Promise<string> {
   const rawModel = opts.model ?? "google/gemini-2.5-flash";
   const model = MODEL_MAP[rawModel] ?? "gemini-2.5-flash-preview-04-17";
 
-  // Build contents array
+  // Build contents array.
+  //
+  // We accept two message shapes here:
+  //   A) Gemini native:  { role: "user" | "model", parts: [{ text }] }
+  //   B) OpenAI-style:   { role: "system" | "user" | "assistant" | "tool",
+  //                        content: string | [{text}] }
+  //
+  // Every edge function in this repo (hbc-agent, ai-invoice-assistant,
+  // generate-exec-summary, and ~15 others) passes shape B. Gemini rejects B
+  // (unknown fields, role "system"/"assistant"/"tool" not supported), which
+  // used to surface as "Oops, something went wrong" in the Home Assistant.
+  // We adapt shape B → A here so callers don't have to change.
   let contents: AIMessage[];
+  let systemFromMessages: string | undefined;
   if (opts.messages) {
-    contents = opts.messages;
+    const systemChunks: string[] = [];
+    contents = [];
+    for (const m of opts.messages as Array<Record<string, unknown>>) {
+      // Already Gemini-shape — pass through.
+      if (Array.isArray((m as { parts?: unknown }).parts)) {
+        contents.push(m as unknown as AIMessage);
+        continue;
+      }
+      const rawContent = (m as { content?: unknown }).content;
+      const text =
+        typeof rawContent === "string"
+          ? rawContent
+          : Array.isArray(rawContent)
+            ? (rawContent as Array<{ text?: string }>).map((c) => c.text ?? "").join("\n")
+            : "";
+      const role = m.role as string | undefined;
+      if (role === "system") {
+        // Gemini uses a separate systemInstruction field; collect and hoist.
+        if (text) systemChunks.push(text);
+        continue;
+      }
+      if (role === "tool") {
+        // Gemini's proper tool-result shape requires pairing with the
+        // originating functionCall id. hbc-agent doesn't track that today,
+        // so inline the tool output as a user-visible note — best-effort
+        // until the ReAct loop is rebuilt around Gemini's functionCall API.
+        contents.push({ role: "user", parts: [{ text: `[tool result] ${text}` }] });
+        continue;
+      }
+      const mappedRole: "user" | "model" = role === "assistant" || role === "model" ? "model" : "user";
+      contents.push({ role: mappedRole, parts: [{ text }] });
+    }
+    if (systemChunks.length > 0) systemFromMessages = systemChunks.join("\n\n");
+
+    // Gemini requires contents[0].role === "user". If the first message ended
+    // up as "model" (shouldn't happen with normal flows, but guard anyway),
+    // prepend an empty user turn to keep the API happy.
+    if (contents.length > 0 && contents[0].role !== "user") {
+      contents.unshift({ role: "user", parts: [{ text: " " }] });
+    }
   } else {
     const userText = opts.json
       ? `${opts.prompt ?? ""}\n\nRespond with valid JSON only. No markdown, no explanation.`
@@ -68,8 +131,11 @@ export async function callAI(opts: AIOptions): Promise<string> {
     },
   };
 
-  if (opts.system) {
-    body.systemInstruction = { parts: [{ text: opts.system }] };
+  // Prefer an explicit opts.system; fall back to any system messages we
+  // extracted from OpenAI-shape input above.
+  const systemText = opts.system ?? systemFromMessages;
+  if (systemText) {
+    body.systemInstruction = { parts: [{ text: systemText }] };
   }
 
   if (opts.tools && opts.tools.length > 0) {
