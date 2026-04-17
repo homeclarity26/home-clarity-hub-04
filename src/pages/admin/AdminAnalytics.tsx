@@ -48,7 +48,6 @@ const AdminAnalytics = () => {
         totalClients: totalClients || 0,
         totalCollected,
         avgRevenuePerClient,
-        avgHealthScore: 72, // placeholder
         publishedReports,
         completedProjects,
         collectionRate,
@@ -135,7 +134,7 @@ const AdminAnalytics = () => {
     { label: "Active Clients", value: stats?.totalClients ?? 0, icon: Users },
     { label: "Revenue Collected", value: fmt(stats?.totalCollected ?? 0), icon: DollarSign },
     { label: "Avg Revenue/Client", value: fmt(stats?.avgRevenuePerClient ?? 0), icon: TrendingUp },
-    { label: "Avg Health Score", value: stats?.avgHealthScore ?? 0, icon: BarChart3 },
+    { label: "Avg Health Score", value: avgHealthScore ?? "—", icon: BarChart3 },
     { label: "Published Reports", value: stats?.publishedReports ?? 0, icon: FileText },
     { label: "Projects Completed", value: stats?.completedProjects ?? 0, icon: CheckCircle },
     { label: "Collection Rate", value: `${stats?.collectionRate ?? 0}%`, icon: DollarSign },
@@ -145,8 +144,10 @@ const AdminAnalytics = () => {
   // Health distribution — computed from real `reports` + `report_pages` by
   // the healthDistQuery below. Until that finishes loading (or if the user
   // has no published reports with condition ratings yet) the chart shows
-  // an empty state instead of hardcoded demo numbers.
-  const { data: healthDistributionData } = useQuery({
+  // an empty state instead of hardcoded demo numbers. We also surface the
+  // overall average across all properties for the "Avg Health Score" stat
+  // card so it reflects real data instead of a hardcoded 72.
+  const { data: healthData } = useQuery({
     queryKey: ["analytics-health-distribution"],
     queryFn: async () => {
       const { data: pages } = await supabase
@@ -165,23 +166,30 @@ const AdminAnalytics = () => {
         byProperty.get(r.property_id)!.push(score);
       }
       const buckets = { excellent: 0, good: 0, fair: 0, belowAvg: 0, poor: 0 };
+      const propertyAverages: number[] = [];
       for (const scores of byProperty.values()) {
         const avg = scores.reduce((s, n) => s + n, 0) / scores.length;
+        propertyAverages.push(avg);
         if (avg >= 80) buckets.excellent++;
         else if (avg >= 60) buckets.fair++;
         else if (avg >= 40) buckets.belowAvg++;
         else buckets.poor++;
       }
-      return [
+      const distribution = [
         { name: "Excellent (80-100)", value: buckets.excellent, color: COLORS[0] },
         { name: "Fair (60-79)", value: buckets.fair, color: COLORS[1] },
         { name: "Below Avg (40-59)", value: buckets.belowAvg, color: COLORS[2] },
         { name: "Poor (<40)", value: buckets.poor, color: COLORS[3] },
       ];
+      const avgHealthScore = propertyAverages.length > 0
+        ? Math.round(propertyAverages.reduce((s, n) => s + n, 0) / propertyAverages.length)
+        : null;
+      return { distribution, avgHealthScore };
     },
   });
-  const healthDistribution = healthDistributionData ?? [];
+  const healthDistribution = healthData?.distribution ?? [];
   const hasHealthData = healthDistribution.some((d) => d.value > 0);
+  const avgHealthScore = healthData?.avgHealthScore ?? null;
 
   return (
     <div>
