@@ -218,8 +218,14 @@ export function useClientPortal(propertyId?: string) {
     load();
   }, [user, propertyId, isCreator]);
 
+  // Only the dev/demo mock user gets the rich static demo content as a
+  // fallback. Real authenticated clients with no DB report data should see
+  // an empty report — NOT fake "Primary Furnace rated poor" suggestions
+  // that bleed into the Home tab quick actions and mislead the client.
+  const isDemoMock = property?.id === "mock-property-demo";
+
   const groups: PortalGroup[] = useMemo(() => {
-    if (!hasDbData) return staticGroups;
+    if (!hasDbData) return isDemoMock ? staticGroups : [];
     const groupMap = new Map<string, { pages: { key: string; order: number }[] }>();
     for (const p of dbPages) {
       if (!groupMap.has(p.group_name)) {
@@ -232,10 +238,10 @@ export function useClientPortal(propertyId?: string) {
       title: name,
       pages: data.pages.sort((a, b) => a.order - b.order).map((p) => p.key),
     }));
-  }, [hasDbData, dbPages]);
+  }, [hasDbData, dbPages, isDemoMock]);
 
   const pages: Record<string, ReportPageData> = useMemo(() => {
-    if (!hasDbData) return staticPages;
+    if (!hasDbData) return isDemoMock ? staticPages : {};
     const map: Record<string, ReportPageData> = {};
     for (const p of dbPages) {
       map[p.page_key] = {
@@ -264,7 +270,7 @@ export function useClientPortal(propertyId?: string) {
       } as ReportPageData;
     }
     return map;
-  }, [hasDbData, dbPages]);
+  }, [hasDbData, dbPages, isDemoMock]);
 
   const pageKeyToDbId: Record<string, string> = useMemo(() => {
     const map: Record<string, string> = {};

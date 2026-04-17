@@ -249,7 +249,11 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
       }
 
       case "list_clients": {
-        let query = supabase.from("properties").select("id, property_name, address, city, state, status, created_at").order("created_at", { ascending: false });
+        // Schema column is `intake_status`, not `status` — the latter does
+        // not exist on `properties`. This was the actual cause of
+        // "Error executing list_clients: column properties.status does not exist"
+        // that Adam saw when asking "how many clients do I have?".
+        let query = supabase.from("properties").select("id, property_name, address, city, state, intake_status, created_at").order("created_at", { ascending: false });
         if (params.limit) query = query.limit(params.limit);
         const { data, error } = await query;
         if (error) throw error;

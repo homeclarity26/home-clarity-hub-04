@@ -213,10 +213,31 @@ const AgentChat = ({ contextOverride, quickChips, onNavigate, onboardingMessage,
         } as any).then(() => {});
       }
     } catch (err: any) {
+      // supabase.functions.invoke throws a FunctionsHttpError with a
+      // .context.response that carries the actual Edge Function response.
+      // The default err.message is the useless "Edge Function returned a
+      // non-2xx status code" — try to pull the real error body so Adam can
+      // actually see what went wrong (missing column, rate limit, etc.).
+      let detail = err?.message || "Unknown error";
+      try {
+        const resp = err?.context?.response;
+        if (resp && typeof resp.text === "function") {
+          const bodyText = await resp.text();
+          if (bodyText) {
+            try {
+              const parsed = JSON.parse(bodyText);
+              detail = parsed.error || parsed.reply || parsed.message || bodyText.slice(0, 300);
+            } catch {
+              detail = bodyText.slice(0, 300);
+            }
+          }
+        }
+      } catch { /* fall back to err.message */ }
+      console.error("[HBC Agent] invoke failed:", err, "detail:", detail);
       setMessages(prev => [...prev, {
         id: genId(),
         role: "assistant",
-        content: `Sorry, something went wrong: ${err.message || "Unknown error"}. Please try again.`,
+        content: `Sorry, something went wrong: ${detail}. Please try again.`,
       }]);
     } finally {
       setIsThinking(false);
