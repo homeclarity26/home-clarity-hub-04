@@ -14,7 +14,7 @@ const notificationEvents = [
   { key: "service_due", label: "Equipment service due in 7 days" },
 ];
 
-const SMSNotificationSettings = () => {
+const EmailNotificationSettings = () => {
   const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [isVerified, setIsVerified] = useState(false);
@@ -56,7 +56,7 @@ const SMSNotificationSettings = () => {
     }
     setVerifying(true);
     try {
-      const { error } = await supabase.functions.invoke("send-sms-verification", {
+      const { error } = await supabase.functions.invoke("send-email-verification", {
         body: { email, userId: user?.id },
       });
       if (error) throw error;
@@ -76,7 +76,7 @@ const SMSNotificationSettings = () => {
     }
     setVerifying(true);
     try {
-      const { data, error } = await supabase.functions.invoke("verify-sms-code", {
+      const { data, error } = await supabase.functions.invoke("verify-email-code", {
         body: { phone: email, code: verificationCode, userId: user?.id },
       });
       if (error) throw error;
@@ -219,4 +219,4 @@ const SMSNotificationSettings = () => {
   );
 };
 
-export default SMSNotificationSettings;
+export default EmailNotificationSettings;

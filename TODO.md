@@ -40,6 +40,7 @@
 - [ ] `files` and `comments` tables are referenced in old docs but don't exist. Either:
   - Create them (if we still want threaded comments + file attachments), OR
   - Remove references from code (the app uses `property_messages` and Supabase Storage instead)
+- [ ] Table `sms_subscriptions` (and column `phone_number`) is misnamed — the flow has been email-only since the Twilio removal. Consider migration to rename `sms_subscriptions` → `notification_subscriptions` and `phone_number` → `recipient` (or just `email`). Component + edge functions already renamed (PR after #17).
 
 ---
 

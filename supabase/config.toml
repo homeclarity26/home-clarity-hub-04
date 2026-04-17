@@ -186,7 +186,7 @@ verify_jwt = false
 [functions.send-push-notification]
 verify_jwt = false
 
-[functions.send-sms-verification]
+[functions.send-email-verification]
 verify_jwt = false
 
 [functions.send-weekly-digest]
@@ -195,5 +195,5 @@ verify_jwt = false
 [functions.track-referral]
 verify_jwt = false
 
-[functions.verify-sms-code]
+[functions.verify-email-code]
 verify_jwt = false
