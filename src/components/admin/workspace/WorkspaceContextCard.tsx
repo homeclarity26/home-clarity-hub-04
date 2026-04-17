@@ -80,9 +80,17 @@ const WorkspaceContextCard = ({ client, invoiceCount = 0, overdueCount = 0, proj
           variant="outline"
           size="sm"
           className="w-full justify-start gap-2 text-xs font-sans h-8"
-          onClick={() => navigate(`/portal/${client.propertyId}?edit=true`)}
+          onClick={() => {
+            // Preview the client portal in a new tab so the admin keeps their
+            // admin session and doesn't lose context. `preview=admin` flags
+            // the portal to render the "Admin Preview" banner — it's a clear
+            // signal that this is NOT a true client session.
+            const url = `/portal/${client.propertyId}?preview=admin`;
+            window.open(url, "_blank", "noopener,noreferrer");
+          }}
+          title="Preview the client portal in a new tab. You stay logged in as admin."
         >
-          <ExternalLink className="w-3.5 h-3.5" /> Open Portal
+          <ExternalLink className="w-3.5 h-3.5" /> Preview Portal
         </Button>
         <Button
           variant="outline"

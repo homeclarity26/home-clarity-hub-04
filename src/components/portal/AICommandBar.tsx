@@ -1,8 +1,9 @@
 import { useState, useRef } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Send } from "lucide-react";
 
 interface AICommandBarProps {
   onSubmit: (query: string) => void;
+  autoSubmitChip?: boolean;
 }
 
 const SUGGESTED_PROMPTS = [
@@ -14,7 +15,7 @@ const SUGGESTED_PROMPTS = [
   "Review my spending",
 ];
 
-const AICommandBar = ({ onSubmit }: AICommandBarProps) => {
+const AICommandBar = ({ onSubmit, autoSubmitChip = true }: AICommandBarProps) => {
   const [value, setValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -27,24 +28,39 @@ const AICommandBar = ({ onSubmit }: AICommandBarProps) => {
   };
 
   const handleChipClick = (prompt: string) => {
+    if (autoSubmitChip) {
+      onSubmit(prompt);
+      return;
+    }
     setValue(prompt);
     setTimeout(() => inputRef.current?.focus(), 0);
   };
 
+  const canSend = value.trim().length > 0;
+
   return (
     <div className="w-full">
       <div className="bg-card rounded-lg border border-border shadow-hbc-sm">
-        <form onSubmit={handleSubmit} className="relative">
-          <Sparkles className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-accent" />
+        <form onSubmit={handleSubmit} className="relative flex items-center">
+          <Sparkles className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-accent pointer-events-none" />
           <input
             ref={inputRef}
             type="text"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder="Ask your home concierge anything…"
-            className="w-full h-14 pl-13 pr-5 bg-transparent rounded-lg text-foreground font-sans text-[15px] placeholder:text-muted-foreground focus:outline-none focus:ring-0 border-none"
+            className="flex-1 h-14 pr-2 bg-transparent rounded-l-lg text-foreground font-sans text-[15px] placeholder:text-muted-foreground focus:outline-none focus:ring-0 border-none"
             style={{ paddingLeft: "3rem" }}
+            aria-label="Ask the Home Assistant"
           />
+          <button
+            type="submit"
+            disabled={!canSend}
+            aria-label="Send question"
+            className="shrink-0 mr-2 h-10 w-10 rounded-full bg-accent text-accent-foreground flex items-center justify-center hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all min-h-[44px] min-w-[44px] md:min-h-[40px] md:min-w-[40px]"
+          >
+            <Send className="w-4 h-4" />
+          </button>
         </form>
       </div>
       {/* Prompt chips — uniform grid */}

@@ -140,9 +140,16 @@ const HomeTab = ({
     customization?.welcome_message?.split(" ")[0] ||
     (propertyName && propertyName !== "Your Home" ? propertyName.split(" ")[0] : undefined);
 
-  const handleAskQuestion = () => {
-    const fab = document.querySelector<HTMLButtonElement>('[aria-label^="Open"]');
-    if (fab) fab.click();
+  const handleAskQuestion = (query?: string) => {
+    const q = (query || "").trim();
+    if (q) {
+      // Forward the typed question to the Home Assistant panel so it actually
+      // answers instead of just opening a blank sheet.
+      window.dispatchEvent(new CustomEvent("hbc:ask", { detail: { query: q } }));
+    } else {
+      // No text — just open the assistant.
+      window.dispatchEvent(new CustomEvent("hbc:ask", { detail: { query: "" } }));
+    }
   };
 
   const handleNavigateTracked = (tab: string, pageId?: string) => {
