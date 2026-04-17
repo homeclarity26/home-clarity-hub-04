@@ -190,7 +190,29 @@ const ClientAgentPanel = ({ propertyName, propertyAddress, enrichment }: ClientA
         },
       }).then(() => {}).catch(() => {});
     } catch (err: unknown) {
-      setMessages(prev => [...prev, { id: genId(), role: "assistant", content: `Oops, something went wrong. Please try again! 🙏` }]);
+      // Try to pull the actual Edge Function response body out of the
+      // FunctionsHttpError so we can see what really broke. See the twin
+      // handler in AgentChat.tsx for rationale.
+      let detail = "Please try again! 🙏";
+      try {
+        const anyErr = err as { context?: { response?: Response }; message?: string };
+        const resp = anyErr?.context?.response;
+        if (resp && typeof resp.text === "function") {
+          const bodyText = await resp.text();
+          if (bodyText) {
+            try {
+              const parsed = JSON.parse(bodyText);
+              detail = parsed.error || parsed.reply || parsed.message || bodyText.slice(0, 200);
+            } catch {
+              detail = bodyText.slice(0, 200);
+            }
+          }
+        } else if (anyErr?.message) {
+          detail = anyErr.message;
+        }
+      } catch { /* keep default */ }
+      console.error("[Home Assistant] invoke failed:", err, "detail:", detail);
+      setMessages(prev => [...prev, { id: genId(), role: "assistant", content: `Oops, something went wrong: ${detail}` }]);
     } finally {
       setIsThinking(false);
     }
