@@ -129,6 +129,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [aiQuestion, setAiQuestion] = useState("");
   const [aiResponse, setAiResponse] = useState("");
@@ -190,6 +191,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
   const handleViewInvoice = async (inv: Invoice) => {
     setSelectedInvoice(inv);
     setAiSummary(inv.ai_summary);
+    setSummaryError(null);
 
     if (inv.status === "sent" && !propertyId?.startsWith("mock-")) {
       await (supabase.from("invoices" as any) as any).update({ status: "viewed" }).eq("id", inv.id);
@@ -215,12 +217,18 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
             },
           },
         });
-        if (!error && data?.summary) {
+        if (error) {
+          console.error("ai-invoice-assistant summary error:", error);
+          setSummaryError("AI summary didn't load. You can still read the line items below.");
+        } else if (data?.summary) {
           setAiSummary(data.summary);
           await (supabase.from("invoices" as any) as any).update({ ai_summary: data.summary }).eq("id", inv.id);
+        } else {
+          setSummaryError("AI summary didn't load. You can still read the line items below.");
         }
-      } catch {
-        // Silent fail
+      } catch (err) {
+        console.error("ai-invoice-assistant summary failed:", err);
+        setSummaryError("AI summary didn't load. You can still read the line items below.");
       } finally {
         setSummaryLoading(false);
       }
@@ -334,12 +342,14 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
 
         <div className="max-w-[900px] mx-auto px-6 md:px-20 pb-16 flex flex-col gap-8">
           {/* AI Summary */}
-          {(aiSummary || summaryLoading) && (
+          {(aiSummary || summaryLoading || summaryError) && (
             <div className="bg-accent/10 border border-accent/30 rounded-lg p-5">
               {summaryLoading ? (
                 <p className="font-sans text-sm text-muted-foreground animate-pulse">Generating summary...</p>
-              ) : (
+              ) : aiSummary ? (
                 <p className="font-sans text-sm text-foreground leading-relaxed">{aiSummary}</p>
+              ) : (
+                <p className="font-sans text-sm text-muted-foreground">{summaryError}</p>
               )}
             </div>
           )}
