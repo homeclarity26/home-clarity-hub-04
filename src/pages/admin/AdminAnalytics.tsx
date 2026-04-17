@@ -130,17 +130,6 @@ const AdminAnalytics = () => {
 
   const fmt = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n}`;
 
-  const statCards = [
-    { label: "Active Clients", value: stats?.totalClients ?? 0, icon: Users },
-    { label: "Revenue Collected", value: fmt(stats?.totalCollected ?? 0), icon: DollarSign },
-    { label: "Avg Revenue/Client", value: fmt(stats?.avgRevenuePerClient ?? 0), icon: TrendingUp },
-    { label: "Avg Health Score", value: avgHealthScore ?? "—", icon: BarChart3 },
-    { label: "Published Reports", value: stats?.publishedReports ?? 0, icon: FileText },
-    { label: "Projects Completed", value: stats?.completedProjects ?? 0, icon: CheckCircle },
-    { label: "Collection Rate", value: `${stats?.collectionRate ?? 0}%`, icon: DollarSign },
-    { label: "Avg Days to Pay", value: stats?.avgDaysToPay ?? 0, icon: Clock },
-  ];
-
   // Health distribution — computed from real `reports` + `report_pages` by
   // the healthDistQuery below. Until that finishes loading (or if the user
   // has no published reports with condition ratings yet) the chart shows
@@ -190,6 +179,17 @@ const AdminAnalytics = () => {
   const healthDistribution = healthData?.distribution ?? [];
   const hasHealthData = healthDistribution.some((d) => d.value > 0);
   const avgHealthScore = healthData?.avgHealthScore ?? null;
+
+  const statCards = [
+    { label: "Active Clients", value: stats?.totalClients ?? 0, icon: Users },
+    { label: "Revenue Collected", value: fmt(stats?.totalCollected ?? 0), icon: DollarSign },
+    { label: "Avg Revenue/Client", value: fmt(stats?.avgRevenuePerClient ?? 0), icon: TrendingUp },
+    { label: "Avg Health Score", value: avgHealthScore ?? "—", icon: BarChart3 },
+    { label: "Published Reports", value: stats?.publishedReports ?? 0, icon: FileText },
+    { label: "Projects Completed", value: stats?.completedProjects ?? 0, icon: CheckCircle },
+    { label: "Collection Rate", value: `${stats?.collectionRate ?? 0}%`, icon: DollarSign },
+    { label: "Avg Days to Pay", value: stats?.avgDaysToPay ?? 0, icon: Clock },
+  ];
 
   return (
     <div>
