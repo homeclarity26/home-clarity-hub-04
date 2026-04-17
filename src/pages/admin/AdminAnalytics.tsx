@@ -142,12 +142,46 @@ const AdminAnalytics = () => {
     { label: "Avg Days to Pay", value: stats?.avgDaysToPay ?? 0, icon: Clock },
   ];
 
-  const healthDistribution = [
-    { name: "Excellent (80-100)", value: 12, color: COLORS[0] },
-    { name: "Fair (60-79)", value: 8, color: COLORS[1] },
-    { name: "Below Avg (40-59)", value: 3, color: COLORS[2] },
-    { name: "Poor (<40)", value: 1, color: COLORS[3] },
-  ];
+  // Health distribution — computed from real `reports` + `report_pages` by
+  // the healthDistQuery below. Until that finishes loading (or if the user
+  // has no published reports with condition ratings yet) the chart shows
+  // an empty state instead of hardcoded demo numbers.
+  const { data: healthDistributionData } = useQuery({
+    queryKey: ["analytics-health-distribution"],
+    queryFn: async () => {
+      const { data: pages } = await supabase
+        .from("report_pages")
+        .select("condition_rating, report_id, reports!inner(property_id, status)");
+      const CONDITION_SCORE: Record<string, number> = {
+        Excellent: 100, Good: 75, Fair: 50, Poor: 25, Critical: 10,
+      };
+      const byProperty = new Map<string, number[]>();
+      for (const p of (pages ?? []) as Array<{ condition_rating: string | null; reports: { property_id: string; status: string } | null }>) {
+        const r = p.reports;
+        if (!r || r.status !== "published" || !p.condition_rating) continue;
+        const score = CONDITION_SCORE[p.condition_rating];
+        if (score == null) continue;
+        if (!byProperty.has(r.property_id)) byProperty.set(r.property_id, []);
+        byProperty.get(r.property_id)!.push(score);
+      }
+      const buckets = { excellent: 0, good: 0, fair: 0, belowAvg: 0, poor: 0 };
+      for (const scores of byProperty.values()) {
+        const avg = scores.reduce((s, n) => s + n, 0) / scores.length;
+        if (avg >= 80) buckets.excellent++;
+        else if (avg >= 60) buckets.fair++;
+        else if (avg >= 40) buckets.belowAvg++;
+        else buckets.poor++;
+      }
+      return [
+        { name: "Excellent (80-100)", value: buckets.excellent, color: COLORS[0] },
+        { name: "Fair (60-79)", value: buckets.fair, color: COLORS[1] },
+        { name: "Below Avg (40-59)", value: buckets.belowAvg, color: COLORS[2] },
+        { name: "Poor (<40)", value: buckets.poor, color: COLORS[3] },
+      ];
+    },
+  });
+  const healthDistribution = healthDistributionData ?? [];
+  const hasHealthData = healthDistribution.some((d) => d.value > 0);
 
   return (
     <div>
@@ -224,22 +258,33 @@ const AdminAnalytics = () => {
           {/* Health Distribution */}
           <Card className="p-5">
             <h3 className="text-sm font-sans font-semibold text-foreground mb-4">Client Health Distribution</h3>
-            <ResponsiveContainer width="100%" height={220}>
-              <RechartsPie>
-                <Pie data={healthDistribution} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value">
-                  {healthDistribution.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                </Pie>
-                <Tooltip />
-              </RechartsPie>
-            </ResponsiveContainer>
-            <div className="flex flex-wrap gap-3 mt-2 justify-center">
-              {healthDistribution.map(d => (
-                <div key={d.name} className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                  <span className="text-[11px] font-sans text-muted-foreground">{d.name}: {d.value}</span>
+            {hasHealthData ? (
+              <>
+                <ResponsiveContainer width="100%" height={220}>
+                  <RechartsPie>
+                    <Pie data={healthDistribution} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value">
+                      {healthDistribution.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                    </Pie>
+                    <Tooltip />
+                  </RechartsPie>
+                </ResponsiveContainer>
+                <div className="flex flex-wrap gap-3 mt-2 justify-center">
+                  {healthDistribution.map(d => (
+                    <div key={d.name} className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                      <span className="text-[11px] font-sans text-muted-foreground">{d.name}: {d.value}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[220px] text-center">
+                <p className="font-sans text-sm text-muted-foreground mb-1">No health data yet</p>
+                <p className="font-sans text-xs text-muted-foreground/70">
+                  Publish a report with condition-rated pages and this chart will populate.
+                </p>
+              </div>
+            )}
           </Card>
 
           {/* Project Pipeline */}
