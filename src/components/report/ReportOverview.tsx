@@ -59,6 +59,7 @@ interface ReportOverviewProps {
   propertyId?: string;
   creatorName?: string;
   advisorNote?: string | null;
+  isReportEmpty?: boolean;
 }
 
 const ReportOverview = ({
@@ -73,6 +74,7 @@ const ReportOverview = ({
   heroImageUrl,
   creatorName = "Adam Kilgore",
   advisorNote,
+  isReportEmpty = false,
 }: ReportOverviewProps) => {
   const allPagesList = useMemo(() => Object.values(pages), [pages]);
 
@@ -303,28 +305,32 @@ const ReportOverview = ({
       </section>
 
       <div className="max-w-4xl mx-auto px-6 md:px-16 py-12 space-y-12">
-        {/* A NOTE FROM YOUR ADVISOR */}
-        <div className="bg-card rounded-xl border border-border p-6 md:p-8">
-          <div className="flex items-start gap-4">
-            <div className="w-11 h-11 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="font-mono text-[11px] uppercase tracking-wider text-accent-readable font-semibold">
-                {creatorName
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .slice(0, 2)}
-              </span>
-            </div>
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
-                A note from {creatorName}
-              </p>
-              <p className="font-sans text-base text-foreground leading-relaxed">
-                {displayNote}
-              </p>
+        {/* A NOTE FROM YOUR ADVISOR — hidden on empty reports so clients don't
+            see a canned "I've completed a thorough review" message before a
+            report has actually been written. */}
+        {!isReportEmpty && (
+          <div className="bg-card rounded-xl border border-border p-6 md:p-8">
+            <div className="flex items-start gap-4">
+              <div className="w-11 h-11 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="font-mono text-[11px] uppercase tracking-wider text-accent-readable font-semibold">
+                  {creatorName
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2)}
+                </span>
+              </div>
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
+                  A note from {creatorName}
+                </p>
+                <p className="font-sans text-base text-foreground leading-relaxed">
+                  {displayNote}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* PRIORITY ITEMS */}
         {priorityItems.length > 0 && (

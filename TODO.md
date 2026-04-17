@@ -10,7 +10,7 @@
 
 Actionable items from the 2026-04-17 role walkthroughs. Work top-to-bottom. Scheduled task `hbc-walkthrough-polish-autoresume` auto-resumes this punch list at 10:30 and 15:30 local daily.
 
-- [ ] **Hide Report tab canned intro on empty reports** — `src/components/tabs/ReportTab.tsx` / `ReportOverview.tsx` — hide the "AK · a note from Adam Kilgore / I've completed a thorough review..." intro when the client has zero report pages. Currently shows that text as if a report were done.
+- [x] **Hide Report tab canned intro on empty reports** — `src/components/tabs/ReportTab.tsx` / `ReportOverview.tsx` — hide the "AK · a note from Adam Kilgore / I've completed a thorough review..." intro when the client has zero report pages. Currently shows that text as if a report were done.
 - [ ] **Hide "Condition NN" eyebrow on empty-report portals** — `src/components/portal/PropertyHero.tsx` — the greeting eyebrow shows `Good morning · Condition 64` even when the client has no real health score. Source is `computeHealthScore` in `HomeTab.tsx` falling back to a value from unrelated data. Only show the score when a real report exists.
 - [ ] **Client name in admin-preview portal greeting** — Admin preview currently shows "Good morning, {admin.firstName}" because the logged-in user is the admin. Should show the client's first name (or a neutral "Welcome") when viewing in `?preview=admin` mode. Relevant: `src/components/tabs/HomeTab.tsx:138` (firstName derivation) + `src/components/portal/PropertyHero.tsx:34`.
 - [ ] **Real `avgHealthScore` in Analytics** — `src/pages/admin/AdminAnalytics.tsx:51` still has `avgHealthScore: 72` hardcoded. Reuse the bucket query from the health distribution pie and compute the average.
@@ -125,6 +125,15 @@ See `CLAUDE.md` → "Pre-Launch Verification Checklist" for the full process. St
 | #4 | Invoice full lifecycle (reminders, draw schedule, AI explain) |
 | #3 | Expanded report to 65+ templates + custom page creation |
 | #2 | Review-redesign pass (lazy routes, Monogram, PropertyHero, auth on 3 fns, RLS tightening) |
+
+---
+
+## 🤖 Autoresume Log
+
+| Timestamp | Items shipped | Items skipped | Notes |
+|---|---|---|---|
+| 2026-04-17 (PM run) | — | — | "Walkthrough polish punch list" section not found in TODO.md — punch list already empty. Disabled scheduled task `hbc-walkthrough-polish-autoresume`. |
+| 2026-04-17 (manual pickup) | Hide Report tab canned intro on empty reports | — | `isReportEmpty` prop added to `ReportOverview`, wired from `ReportTab` using `hasRealPages`. |
 
 ---
 
