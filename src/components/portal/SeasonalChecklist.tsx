@@ -62,13 +62,17 @@ const SeasonalChecklist = ({ propertyId }: SeasonalChecklistProps) => {
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
   const [expanded, setExpanded] = useState(true);
 
-  // Load from localStorage
+  // Load from localStorage. If the saved value is malformed (corrupted by a
+  // prior bug or hand-edited by the user), JSON.parse will throw — we log it
+  // and fall back to an empty checklist rather than crashing the portal.
   useEffect(() => {
     const key = `hbc_seasonal_${propertyId || "default"}_${currentSeason}_${new Date().getFullYear()}`;
     try {
       const saved = JSON.parse(localStorage.getItem(key) || "{}");
       setCompleted(saved);
-    } catch {}
+    } catch (err) {
+      console.error("SeasonalChecklist: failed to parse saved checklist from localStorage:", err);
+    }
   }, [propertyId, currentSeason]);
 
   const toggleTask = (title: string) => {

@@ -583,10 +583,16 @@ const DigitalTwinTab = ({ clientId, propertyId }: Props) => {
     setLoadingScore(true);
     try {
       const { data, error } = await supabase.functions.invoke("analyze-knowledge-gaps", { body: { client_id: propertyId } });
-      if (!error && data) {
+      if (error) {
+        console.error("analyze-knowledge-gaps returned error:", error);
+      } else if (data) {
         setCompleteness({ score: data.completeness_score || 0, breakdown: data.completeness_breakdown || {} });
       }
-    } catch { /* ignore */ }
+    } catch (err) {
+      // Keep this catch: network drop / edge function missing shouldn't crash
+      // the Digital Twin tab. But no longer silent — log so we can diagnose.
+      console.error("analyze-knowledge-gaps invoke failed:", err);
+    }
     setLoadingScore(false);
   };
 
