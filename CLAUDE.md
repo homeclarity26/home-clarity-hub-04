@@ -106,7 +106,18 @@ VITE_SUPABASE_PUBLISHABLE_KEY=...        (anon key)
 VITE_SUPABASE_PROJECT_ID="vvwojahsianpmwjvkunn"
 VITE_VAPID_PUBLIC_KEY=...                (push notifications)
 VITE_QBO_*=...                           (QuickBooks — optional)
+VITE_GOOGLE_MAPS_API_KEY=...             (optional — Places Autocomplete in the New Client wizard)
 ```
+
+Without `VITE_GOOGLE_MAPS_API_KEY`, the New Client wizard's address field
+(`src/components/admin/AddressAutocomplete.tsx`) falls back to a plain
+text input with an inline "Add VITE_GOOGLE_MAPS_API_KEY to .env to enable
+autocomplete and property images" hint — the wizard still works, just
+without Places suggestions or the Street-View-backed property image.
+
+To enable: create a Google Cloud project with **Maps JavaScript API** and
+**Places API** enabled, create a browser API key, restrict it to your
+portal domains, then drop it into `.env.local` as `VITE_GOOGLE_MAPS_API_KEY=...`.
 
 ### Supabase Edge Function Secrets (all set)
 ```
