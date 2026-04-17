@@ -57,6 +57,11 @@ interface HomeTabProps {
   propertyId?: string;
   membershipEndDate?: string | null;
   reportPages?: Record<string, ReportPageData>;
+  // True when the logged-in user is an admin viewing a client's portal
+  // (either via ?preview=admin or just because creators can view any portal).
+  // In that case we should greet the client, not the admin.
+  isAdminPreview?: boolean;
+  clientFirstName?: string | null;
 }
 
 const fadeUp = {
@@ -106,6 +111,8 @@ const HomeTab = ({
   propertyId,
   membershipEndDate,
   reportPages,
+  isAdminPreview = false,
+  clientFirstName,
 }: HomeTabProps) => {
   const { user } = useAuth();
   const [showAppointment, setShowAppointment] = useState(false);
@@ -135,10 +142,14 @@ const HomeTab = ({
     return () => { cancelled = true; };
   }, [propertyId]);
 
-  const firstName =
-    user?.user_metadata?.full_name?.split(" ")[0] ||
-    customization?.welcome_message?.split(" ")[0] ||
-    (propertyName && propertyName !== "Your Home" ? propertyName.split(" ")[0] : undefined);
+  // When an admin is previewing a client's portal, greet the client — not the
+  // admin. Prefer the client's first name if we have it; otherwise fall back
+  // to a neutral greeting so we don't flash "Good morning, Adam" to the admin.
+  const firstName = isAdminPreview
+    ? clientFirstName || undefined
+    : user?.user_metadata?.full_name?.split(" ")[0] ||
+      customization?.welcome_message?.split(" ")[0] ||
+      (propertyName && propertyName !== "Your Home" ? propertyName.split(" ")[0] : undefined);
 
   const handleAskQuestion = (query?: string) => {
     const q = (query || "").trim();
