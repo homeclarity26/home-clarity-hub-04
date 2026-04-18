@@ -45,6 +45,11 @@ serve(async (req) => {
       report_pages: reportPages.slice(0, 20),
     };
 
+    // Previously had a duplicate `const aiJson` declaration + a dead
+    // tool-call parse that made this module fail to compile (Supabase
+    // reported BOOT_ERROR on every invocation, so the voice command
+    // feature was completely dead). callAI returns plain text JSON; parse
+    // it directly.
     const _vcText = await callAI({
       system: `You are an intelligent home portal voice assistant for Hometown Builders Club. The client is speaking to navigate their home portal, ask questions about their home, or take actions.
 
@@ -67,26 +72,7 @@ Parse the user's voice command and return JSON: {
       model: "google/gemini-2.5-flash",
       json: true,
     });
-    const aiResp = { ok: true };
-    const aiJson = { choices: [{ message: { content: _vcText, tool_calls: null } }] };
-
-    if (!aiResp.ok) {
-      if (aiResp.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limited, please try again" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      if (aiResp.status === 402) {
-        return new Response(JSON.stringify({ error: "Credits required" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      const t = await aiResp.text();
-      console.error("AI error:", aiResp.status, t);
-      throw new Error("AI processing failed");
-    }
-
-    const aiJson = await aiResp.json();
-    const toolCall = aiJson.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) throw new Error("No response from AI");
-
-    const result = JSON.parse(toolCall.function.arguments);
+    const result = parseJSON<any>(_vcText);
 
     // Log interaction
     await supabase.from("voice_interactions").insert({
