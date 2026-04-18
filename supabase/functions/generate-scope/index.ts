@@ -1,15 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { callClaude, parseJSON } from "../_shared/ai-client.ts";
 import { retrieveContext } from "../_shared/rag.ts";
+import { requireRole, corsHeaders } from "../_shared/auth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // generate-scope was never authenticated + referenced a nonexistent `auth`
+  // variable inside retrieveContext(). Fixed 2026-04-18 during the AI-writing
+  // Golden Path run: now requires a creator JWT (needed anyway to scope
+  // agent_memory retrieval) and reuses the service-role `sb` client for the
+  // cross-table reads that happen later in the function.
+  const auth = await requireRole(req, ["creator"]);
+  if ("error" in auth) return auth.error;
 
   try {
     const { project_id, client_id, scope_detail_level = "standard", sections_to_include, special_instructions } = await req.json();
@@ -139,7 +143,7 @@ Generate a complete, professional scope of work document. Return a JSON object w
     const userContent = contextParts.join("\n");
     const ragContext = await retrieveContext({
       query: userContent.slice(0, 3000),
-      adminSupabase: auth.adminSupabase as unknown as { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown[] | null; error: unknown }> },
+      adminSupabase: sb as unknown as { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown[] | null; error: unknown }> },
       creatorUserId: auth.user.id,
       sources: ["report_pages", "knowledge_templates", "agent_memory"],
       perSource: 3,
