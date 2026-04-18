@@ -1,16 +1,17 @@
 # Home Clarity Hub — Developer Reference
 
-**Branch:** `main` (all feature branches merged through PR #42)
-**Last updated:** 2026-04-17 evening after the walkthrough fixes (#35–#42)
+**Branch:** `main` (all feature branches merged through PR #43)
+**Last updated:** 2026-04-18 after the E2E verification run
 
-## ⚠️ Pending migration to apply
+## ✅ All migrations applied
 
-`supabase/migrations/20260417120000_handle_new_user_role_metadata.sql` is
-committed but **not yet applied to prod**. It rewrites the
-`handle_new_user()` trigger so admin-created users with
-`raw_user_meta_data.role = 'creator' | 'trade_partner'` get the right role
-instead of always getting `client`. Apply it with `npx supabase db push`
-from a checkout, or paste the SQL into the Supabase SQL editor.
+`supabase/migrations/20260417120000_handle_new_user_role_metadata.sql` was
+applied to prod on 2026-04-18 via `npx supabase db push --linked` (along
+with the earlier `20260417000000_restore_creators_view_all_profiles.sql`).
+The `handle_new_user()` trigger now honors `raw_user_meta_data.role` when
+an admin creates a user via `auth.admin.createUser` — so
+`user_metadata: { role: 'creator' }` yields one `creator` row instead of
+creator+client.
 **Stack:** React 18 + TypeScript + Vite (Bun runtime) · Supabase (Postgres, Auth, Storage, Edge Functions) · Gemini 2.0 Flash · shadcn/ui · TanStack React Query · Tiptap WYSIWYG · @react-pdf/renderer · date-fns · framer-motion · DOMPurify · @dnd-kit
 
 ---
