@@ -14,6 +14,7 @@ import AdminHeader from "@/components/admin/AdminHeader";
 import { useCRMClientsEnriched, useCRMTradePartnersEnriched } from "@/hooks/useCRMData";
 import { exportClientsToCSV } from "@/lib/csvExport";
 import CRMAIAssistant from "@/components/admin/CRMAIAssistant";
+import PropertyMap from "@/components/admin/PropertyMap";
 import { format } from "date-fns";
 
 type ViewMode = "table" | "kanban" | "grid" | "map";
@@ -160,7 +161,7 @@ const AdminCRM = () => {
             ) : viewMode === "grid" ? (
               <CardGrid data={filteredClients} type="client" onCardClick={id => navigate(clientDetailHref(id, filteredClients))} />
             ) : (
-              <div className="bg-muted/50 rounded-xl p-12 text-center text-muted-foreground font-sans text-sm">Map view coming soon</div>
+              <PropertyMap />
             )}
           </TabsContent>
 
@@ -174,7 +175,7 @@ const AdminCRM = () => {
             ) : viewMode === "grid" ? (
               <CardGrid data={filteredPartners} type="trade_partner" onCardClick={id => navigate(`/admin/crm/trade-partners/${id}`)} />
             ) : (
-              <div className="bg-muted/50 rounded-xl p-12 text-center text-muted-foreground font-sans text-sm">Map view coming soon</div>
+              <PropertyMap />
             )}
           </TabsContent>
         </Tabs>

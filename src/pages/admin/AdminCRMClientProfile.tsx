@@ -19,6 +19,7 @@ import CRMCommunicationTab from "@/components/crm/CRMCommunicationTab";
 import CRMDocumentsTab from "@/components/crm/CRMDocumentsTab";
 import CRMSettingsTab from "@/components/crm/CRMSettingsTab";
 import AdminProjectsSection from "@/components/admin/AdminProjectsSection";
+import ClientReferralsTab from "@/components/admin/ClientReferralsTab";
 import { format } from "date-fns";
 
 type ProfileTab = "overview" | "pipeline" | "timeline" | "contacts" | "projects" | "financial" | "communication" | "documents" | "referrals" | "settings";
@@ -149,7 +150,11 @@ const AdminCRMClientProfile = () => {
             <CRMDocumentsTab propertyId={propertyId} />
           </TabsContent>
           <TabsContent value="referrals">
-            <EmptySection label="Referral tracking coming soon" />
+            {propertyId && client?.client_user_id ? (
+              <ClientReferralsTab propertyId={propertyId} clientId={client.client_user_id} />
+            ) : (
+              <EmptySection label="No property / client linked yet" />
+            )}
           </TabsContent>
           <TabsContent value="settings">
             <CRMSettingsTab contact={crmContact} />

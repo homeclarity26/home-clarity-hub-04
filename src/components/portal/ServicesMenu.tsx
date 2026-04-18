@@ -87,8 +87,8 @@ const ServicesMenu = ({ propertyId }: ServicesMenuProps) => {
     return (
       <div className="max-w-[1200px] mx-auto px-6 md:px-20 py-10 text-center">
         <Package className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
-        <h2 className="font-display text-xl text-foreground mb-2">Services Coming Soon</h2>
-        <p className="font-sans text-sm text-muted-foreground">Your advisor hasn't published any services yet. Check back later!</p>
+        <h2 className="font-display text-xl text-foreground mb-2">No services available yet</h2>
+        <p className="font-sans text-sm text-muted-foreground">Your advisor hasn't published any services for this property. Reach out to them directly if you'd like to request one.</p>
       </div>
     );
   }
