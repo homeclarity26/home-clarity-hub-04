@@ -11,6 +11,12 @@ serve(async (req) => {
 
   try {
     const { page } = await req.json();
+    if (!page || typeof page !== "object") {
+      return new Response(JSON.stringify({ error: "page object required", missing: ["page"] }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const narrativeText = Array.isArray(page.narrative) ? page.narrative.join("\n") : String(page.narrative || "");
     const specsText = Array.isArray(page.specs)
       ? page.specs.map((s: { label: string; value: string }) => `${s.label}: ${s.value}`).join(", ")

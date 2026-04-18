@@ -13,7 +13,12 @@ serve(async (req) => {
 
   try {
     const { client_id, review_year, property_id } = await req.json();
-    if (!client_id || !review_year) throw new Error("client_id and review_year required");
+    if (!client_id || !review_year) {
+      return new Response(JSON.stringify({ error: "client_id and review_year required", missing: [!client_id && "client_id", !review_year && "review_year"].filter(Boolean) }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

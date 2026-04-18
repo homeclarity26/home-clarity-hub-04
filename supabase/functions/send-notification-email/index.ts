@@ -46,14 +46,28 @@ serve(async (req) => {
 
   try {
     const { type, property_id, data } = await req.json();
-    
+    if (!type || !property_id) {
+      return new Response(JSON.stringify({
+        error: "type and property_id required",
+        missing: [!type && "type", !property_id && "property_id"].filter(Boolean),
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
     // Get property and client info
     const { data: prop } = await supabase.from("properties").select("*, profiles!properties_client_user_id_fkey(email, full_name)").eq("id", property_id).single();
-    if (!prop) throw new Error("Property not found");
+    if (!prop) {
+      return new Response(JSON.stringify({ error: "Property not found", property_id }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const clientEmail = (prop as any).profiles?.email;
     const clientName = (prop as any).profiles?.full_name || "Homeowner";

@@ -18,7 +18,12 @@ serve(async (req) => {
     const { phone: emailOrPhone, userId, email } = await req.json();
     // Accept either field name — frontend may pass phone or email
     const recipient = email || emailOrPhone;
-    if (!recipient || !userId) throw new Error("Missing recipient or userId");
+    if (!recipient || !userId) {
+      return new Response(JSON.stringify({ error: "Missing recipient or userId", missing: [!recipient && "email", !userId && "userId"].filter(Boolean) }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const sb = createClient(
       Deno.env.get("SUPABASE_URL")!,

@@ -13,13 +13,24 @@ serve(async (req) => {
 
   try {
     const { propertyId } = await req.json();
+    if (!propertyId) {
+      return new Response(JSON.stringify({ error: "propertyId required", missing: ["propertyId"] }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const sb = createClient(supabaseUrl, supabaseKey);
 
     // Load property data
     const { data: prop } = await sb.from("properties").select("*").eq("id", propertyId).single();
-    if (!prop) throw new Error("Property not found");
+    if (!prop) {
+      return new Response(JSON.stringify({ error: "Property not found", propertyId }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Load report pages
     const { data: reports } = await sb.from("reports").select("id").eq("property_id", propertyId).limit(1);
