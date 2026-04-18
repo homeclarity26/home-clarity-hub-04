@@ -107,7 +107,7 @@ const DigitalHomePanel = ({
             ) : (
               <div className="flex items-center gap-2 px-4 py-3 rounded-md bg-muted/50 border border-border/50">
                 <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                  Coming soon — your advisor is setting this up
+                  Not yet uploaded
                 </span>
               </div>
             )}
@@ -189,7 +189,7 @@ const DigitalHomePanel = ({
             ) : (
               <div className="flex items-center gap-2 px-4 py-3 rounded-md bg-muted/50 border border-border/50">
                 <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                  Coming soon — your advisor is setting this up
+                  Not yet uploaded
                 </span>
               </div>
             )}

@@ -45,6 +45,8 @@ const AdminSettings = () => {
   const [businessName, setBusinessName] = useState("Hometown Builders Club");
   const [tagline, setTagline] = useState("Home Clarity, Delivered.");
   const [brandColor, setBrandColor] = useState("#C9A84C");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [savingBranding, setSavingBranding] = useState(false);
 
   // Stripe
@@ -71,7 +73,36 @@ const AdminSettings = () => {
     // Check if Stripe was previously connected
     const stored = localStorage.getItem("hbc_stripe_connected");
     if (stored === "true") setStripeConnected(true);
+    // Load persisted branding
+    const bn = localStorage.getItem("hbc_business_name"); if (bn) setBusinessName(bn);
+    const tg = localStorage.getItem("hbc_tagline"); if (tg) setTagline(tg);
+    const bc = localStorage.getItem("hbc_brand_color"); if (bc) setBrandColor(bc);
+    const lg = localStorage.getItem("hbc_logo_url"); if (lg) setLogoUrl(lg);
   }, [profile, user]);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploadingLogo(true);
+    try {
+      const ext = file.name.split(".").pop() || "png";
+      const path = `branding/${user.id}/logo-${Date.now()}.${ext}`;
+      // `report-images` is the general-purpose public bucket on this project.
+      const { error: upErr } = await supabase.storage.from("report-images").upload(path, file, {
+        contentType: file.type || "image/png",
+        upsert: true,
+      });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from("report-images").getPublicUrl(path);
+      setLogoUrl(urlData.publicUrl);
+      localStorage.setItem("hbc_logo_url", urlData.publicUrl);
+      toast.success("Logo uploaded");
+    } catch (err: any) {
+      toast.error(err?.message || "Upload failed");
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const handleRegionSave = async () => {
     if (!user) return;
@@ -180,8 +211,31 @@ const AdminSettings = () => {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs font-sans">Logo Upload</Label>
-                  <Input type="file" accept="image/*" className="font-sans text-sm" disabled />
-                  <p className="text-[10px] font-sans text-muted-foreground">Coming soon — logo will appear in the sidebar and client portal header.</p>
+                  <div className="flex items-center gap-3">
+                    {logoUrl && (
+                      <img src={logoUrl} alt="Logo preview" className="w-12 h-12 rounded-md object-contain border border-border bg-white" />
+                    )}
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      className="font-sans text-sm"
+                      disabled={uploadingLogo}
+                      onChange={handleLogoUpload}
+                    />
+                    {logoUrl && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => { setLogoUrl(null); localStorage.removeItem("hbc_logo_url"); }}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-[10px] font-sans text-muted-foreground">
+                    {uploadingLogo ? "Uploading…" : "Appears in the sidebar and client portal header. PNG or SVG, max 2 MB recommended."}
+                  </p>
                 </div>
               </div>
               <Button size="sm" className="font-sans" disabled={savingBranding} onClick={() => {
