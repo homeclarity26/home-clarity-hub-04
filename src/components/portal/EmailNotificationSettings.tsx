@@ -41,7 +41,7 @@ const EmailNotificationSettings = () => {
         const sub = data[0];
         setEmail(sub.phone_number || user.email || "");
         setIsVerified(sub.is_verified);
-        setEvents(sub.opted_in_events_json || []);
+        setEvents(((sub.opted_in_events_json as unknown) as string[]) || []);
         setSubId(sub.id);
       }
       setLoading(false);

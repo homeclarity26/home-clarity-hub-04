@@ -188,7 +188,7 @@ const ClientAgentPanel = ({ propertyName, propertyAddress, enrichment }: ClientA
           tab: activeTab,
           had_actions: (data.actions_taken?.length || 0) > 0,
         },
-      }).then(() => {}).catch(() => {});
+      }).then(() => {}, () => {});
     } catch (err: unknown) {
       // Try to pull the actual Edge Function response body out of the
       // FunctionsHttpError so we can see what really broke. See the twin

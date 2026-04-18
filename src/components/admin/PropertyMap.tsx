@@ -56,7 +56,7 @@ const CONDITION_COLORS: Record<string, string> = {
 };
 
 // Auto-fit map bounds to markers
-function FitBounds({ markers }: { markers: PropertyMarker[] }) {
+function FitBounds({ markers }: { markers: PropertyMarker[] }): null {
   const map = useMap();
   useEffect(() => {
     if (markers.length === 0) return;

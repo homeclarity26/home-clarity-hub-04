@@ -187,7 +187,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
       if (data?.notes) setNotes(data.notes);
       if (data?.lineItems && Array.isArray(data.lineItems)) {
         setLineItems(data.lineItems.map((li: any) => ({
-          service_id: null,
+          service_id: null as string | null,
           description: li.description || "",
           quantity: String(li.quantity || 1),
           unit_price: String(li.unit_price || 0),
@@ -335,7 +335,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
 
       // Calculate totals from AI line items
       const aiLineItems = data.lineItems.map((li: any) => ({
-        service_id: null,
+        service_id: null as string | null,
         description: li.description || "",
         quantity: String(li.quantity || 1),
         unit_price: String(li.unit_price || 0),
@@ -824,7 +824,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
                 const scopeSections = selected.map((page: any) => ({
                   title: page.page_name || `Page ${page.page_order + 1}`,
                   description: page.narrative || '',
-                  line_items: [],
+                  line_items: [] as Array<{ description: string; quantity: number; unit_price: number }>,
                 }));
                 // Create a new estimate with these scope sections
                 const subtotal = 0;

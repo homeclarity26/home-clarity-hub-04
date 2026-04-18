@@ -5566,6 +5566,7 @@ export type Database = {
           block_config: Json | null
           condition_rating: string | null
           created_at: string
+          creator_notes: string | null
           current_age_years: number | null
           dependencies: Json | null
           embedding: string | null
@@ -5599,6 +5600,7 @@ export type Database = {
           block_config?: Json | null
           condition_rating?: string | null
           created_at?: string
+          creator_notes?: string | null
           current_age_years?: number | null
           dependencies?: Json | null
           embedding?: string | null
@@ -5632,6 +5634,7 @@ export type Database = {
           block_config?: Json | null
           condition_rating?: string | null
           created_at?: string
+          creator_notes?: string | null
           current_age_years?: number | null
           dependencies?: Json | null
           embedding?: string | null

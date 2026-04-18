@@ -68,10 +68,11 @@ export default function AddressAutocomplete({
     const place = autocompleteRef.current?.getPlace();
     if (!place?.address_components) return;
 
+    type AddrComp = { types: string[]; long_name: string; short_name: string };
     const get = (type: string) =>
-      place.address_components?.find((c) => c.types.includes(type))?.long_name ?? "";
+      place.address_components?.find((c: AddrComp) => c.types.includes(type))?.long_name ?? "";
     const getShort = (type: string) =>
-      place.address_components?.find((c) => c.types.includes(type))?.short_name ?? "";
+      place.address_components?.find((c: AddrComp) => c.types.includes(type))?.short_name ?? "";
 
     const streetNumber = get("street_number");
     const route = get("route");

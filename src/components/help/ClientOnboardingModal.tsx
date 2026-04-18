@@ -9,7 +9,16 @@ interface ClientOnboardingModalProps {
   creatorName?: string;
 }
 
-const steps = [
+type Step = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  body: string;
+  icon: React.ComponentType<{ className?: string }> | null;
+  button: string;
+};
+
+const steps: Step[] = [
   {
     id: "welcome",
     title: "Welcome to Your Home Clarity Hub",

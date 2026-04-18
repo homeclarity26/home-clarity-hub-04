@@ -48,7 +48,9 @@ const AIClientInsightsCard = ({ propertyId, clientData }: AIClientInsightsCardPr
     setIsGenerating(false);
   };
 
-  const insights = existing?.insights_json || [];
+  // insights_json is a jsonb column; generated types surface it as `Json`
+  // which is a union, so we narrow to the actual shape we write into it.
+  const insights = (existing?.insights_json as Array<{ type: string; title: string; description: string }> | undefined) ?? [];
 
   return (
     <Card className="p-5 border-l-[3px] border-l-accent">

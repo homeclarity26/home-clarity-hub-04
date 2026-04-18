@@ -64,8 +64,8 @@ const ReportCloneDialog = ({ sourceReportId, sourcePropertyName }: ReportCloneDi
           maintenance: p.maintenance,
           health_bar: p.health_bar,
           status: "draft" as const,
-          condition_rating: null,
-          creator_notes: null,
+          condition_rating: null as string | null,
+          creator_notes: null as string | null,
           findings: p.findings,
         }));
         const { error: insertErr } = await supabase.from("report_pages").insert(clonedPages);

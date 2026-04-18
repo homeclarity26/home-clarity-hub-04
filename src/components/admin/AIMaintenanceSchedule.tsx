@@ -50,27 +50,30 @@ const AIMaintenanceSchedule = ({ propertyId, equipment, propertyAge, location }:
     setIsGenerating(false);
   };
 
+  type ScheduleItem = { month?: number; task_name?: string; task_description?: string };
+
   const applyToSchedule = async () => {
-    if (!existing?.schedule_json) return;
+    const items = (existing?.schedule_json as ScheduleItem[] | null) ?? null;
+    if (!items || !Array.isArray(items)) return;
     const currentYear = new Date().getFullYear();
-    for (const item of existing.schedule_json) {
+    for (const item of items) {
       const month = (item.month || 1) - 1;
       const eventDate = new Date(currentYear, month, 15);
       await supabase.from("schedule_events").insert({
         property_id: propertyId,
-        title: item.task_name,
-        description: item.task_description,
+        title: item.task_name ?? "Maintenance",
+        description: item.task_description ?? null,
         event_date: eventDate.toISOString(),
         event_type: "reminder",
       });
     }
-    await supabase.from("ai_maintenance_schedules").update({ applied_at: new Date().toISOString() }).eq("id", existing.id);
+    await supabase.from("ai_maintenance_schedules").update({ applied_at: new Date().toISOString() }).eq("id", existing!.id);
     queryClient.invalidateQueries({ queryKey: ["ai-maintenance-schedule", propertyId] });
     toast.success("Schedule applied to client timeline");
   };
 
-  const schedule = existing?.schedule_json || [];
-  const byMonth = schedule.reduce((acc: Record<number, any[]>, item: any) => {
+  const schedule = (existing?.schedule_json as ScheduleItem[] | undefined) ?? [];
+  const byMonth = schedule.reduce((acc: Record<number, ScheduleItem[]>, item) => {
     const m = item.month || 1;
     if (!acc[m]) acc[m] = [];
     acc[m].push(item);

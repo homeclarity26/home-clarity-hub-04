@@ -156,9 +156,11 @@ export function useUpdateCRMStage() {
       const { data: contact } = await supabase.from("crm_contacts").select("client_stage, partner_stage").eq("id", contactId).single();
       const fromStage = contactType === "client" ? contact?.client_stage : contact?.partner_stage;
 
-      // Update stage
+      // Update stage. The generated types narrow client_stage / partner_stage
+      // to an enum union, but `newStage` is a free-form string from the UI.
+      // Cast through `any` at the single mutation call site.
       const updateCol = contactType === "client" ? { client_stage: newStage } : { partner_stage: newStage };
-      const { error: updateErr } = await supabase.from("crm_contacts").update(updateCol).eq("id", contactId);
+      const { error: updateErr } = await supabase.from("crm_contacts").update(updateCol as any).eq("id", contactId);
       if (updateErr) throw updateErr;
 
       // Log history
@@ -194,7 +196,7 @@ export function useCreateCRMContact() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (contact: Partial<CRMContact>) => {
-      const { data, error } = await supabase.from("crm_contacts").insert(contact).select().single();
+      const { data, error } = await supabase.from("crm_contacts").insert(contact as any).select().single();
       if (error) throw error;
       return data;
     },
@@ -209,7 +211,7 @@ export function useUpdateCRMContact() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<CRMContact> & { id: string }) => {
-      const { error } = await supabase.from("crm_contacts").update(updates).eq("id", id);
+      const { error } = await supabase.from("crm_contacts").update(updates as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -292,17 +294,17 @@ export function useCRMClientsEnriched() {
         return {
           id: `synthetic:${prop.id}`,
           contact_type: "client" as const,
-          property_id: prop.id,
-          vendor_id: null,
-          client_stage: "lead",
-          partner_stage: null,
-          tags: [],
-          last_contact_date: null,
+          property_id: prop.id as string,
+          vendor_id: null as string | null,
+          client_stage: "lead" as const,
+          partner_stage: null as string | null,
+          tags: [] as string[],
+          last_contact_date: null as string | null,
           lifetime_value: 0,
-          referral_source: null,
+          referral_source: null as string | null,
           since_date: prop.created_at || null,
-          notes: null,
-          created_by: null,
+          notes: null as string | null,
+          created_by: null as string | null,
           created_at: prop.created_at || new Date().toISOString(),
           updated_at: prop.updated_at || prop.created_at || new Date().toISOString(),
           name: profile?.full_name || prop.property_name || "Unknown",

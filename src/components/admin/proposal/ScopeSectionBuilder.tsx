@@ -133,7 +133,7 @@ const ScopeSectionBuilder = ({ sections, onChange, lineItems, projectType }: Sco
     const framework = PROJECT_TYPE_FRAMEWORKS[type];
     if (!framework) return;
     setSelectedFramework(type);
-    onChange(framework.map(f => ({ ...f, bullets: [{ label: "", desc: null }] })));
+    onChange(framework.map(f => ({ ...f, bullets: [{ label: "", desc: null as string | null }] })));
     toast.success(`Loaded ${type} framework`);
   };
 

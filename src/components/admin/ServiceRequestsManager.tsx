@@ -39,7 +39,7 @@ const ServiceRequestsManager = () => {
         .order("created_at", { ascending: false });
       if (filter !== "all") query = query.eq("status", filter);
       const { data } = await query.limit(50);
-      if (data) setRequests(data);
+      if (data) setRequests(data as any);
     };
     load();
   }, [filter]);

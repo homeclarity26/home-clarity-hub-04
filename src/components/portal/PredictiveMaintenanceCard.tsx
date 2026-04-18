@@ -91,7 +91,7 @@ export default function PredictiveMaintenanceCard({ propertyId, clientId }: { pr
       .eq("client_id", clientId)
       .eq("status", "active")
       .order("probability_score", { ascending: false });
-    setPredictions(data || []);
+    setPredictions((data as any) || []);
     setLoading(false);
   };
 

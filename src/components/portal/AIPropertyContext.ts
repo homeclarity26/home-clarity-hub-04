@@ -149,9 +149,9 @@ export async function buildPropertyAIContext(propertyId: string): Promise<AICont
     title: p.title,
     status: p.status,
     phase: p.phase ?? null,
-    progress_percent: p.percent_complete ?? null,
-    total_cost: p.estimated_cost ?? null,
-    next_milestone: null,
+    progress_percent: (p.percent_complete ?? null) as number | null,
+    total_cost: (p.estimated_cost ?? null) as number | null,
+    next_milestone: null as string | null,
   }));
   const rawInvoice = invoiceResult.data?.[0] || null;
   const rawEquipment = equipmentResult.data || [];
@@ -237,7 +237,7 @@ export async function buildPropertyAIContext(propertyId: string): Promise<AICont
       title: g.title,
       status: g.status,
       target_year: g.target_date ? new Date(g.target_date).getFullYear() : null,
-      estimated_budget: null,
+      estimated_budget: null as number | null,
     })),
   };
 }
