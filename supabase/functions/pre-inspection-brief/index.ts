@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { callAI, parseJSON } from "../_shared/ai-client.ts";
+import { requireRole } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,7 +10,10 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  try {
+  
+  const auth = await requireRole(req, ["creator"]);
+  if ("error" in auth) return auth.error;
+try {
     const { propertyAddress, yearBuilt, sqft, propertyType, relationshipType, discoveryNotes, clientIntelligenceSummary } = await req.json();
     const systemPrompt = `You are an expert home inspector preparing for a property visit. Generate a comprehensive pre-inspection briefing document that helps the inspector know what to look for based on the property details.
 

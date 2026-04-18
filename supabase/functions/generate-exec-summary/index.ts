@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { callClaude, parseJSON } from "../_shared/ai-client.ts";
+import { requireRole } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,7 +10,10 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  try {
+  
+  const auth = await requireRole(req, ["creator"]);
+  if ("error" in auth) return auth.error;
+try {
     const { pages, propertyName, propertyAddress } = await req.json();
     if (!pages || !Array.isArray(pages)) {
       return new Response(JSON.stringify({ error: "pages array required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });

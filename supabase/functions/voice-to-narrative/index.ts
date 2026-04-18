@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { callAI, parseJSON } from "../_shared/ai-client.ts";
+import { requireRole } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,7 +10,10 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  try {
+  
+  const auth = await requireRole(req, ["creator"]);
+  if ("error" in auth) return auth.error;
+try {
     const { audioBase64, mimeType, pageSlug, pageName, propertyContext } = await req.json();
     if (!audioBase64) return new Response(JSON.stringify({ error: "audioBase64 required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     // Step 1: Transcribe audio using Gemini multimodal
