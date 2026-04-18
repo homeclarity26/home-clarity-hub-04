@@ -116,11 +116,11 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
   const loadData = useCallback(async () => {
     setLoading(true);
     const [invRes, liRes, coRes, pRes, rRes] = await Promise.all([
-      (supabase.from("invoices" as any) as any).select("*").eq("property_id", propertyId).order("created_at", { ascending: true }),
-      (supabase.from("invoice_line_items" as any) as any).select("*"),
-      (supabase.from("change_orders" as any) as any).select("*"),
-      (supabase.from("payments_posted" as any) as any).select("*"),
-      (supabase.from("recurring_invoice_schedules" as any) as any).select("*").eq("property_id", propertyId),
+      supabase.from("invoices").select("*").eq("property_id", propertyId).order("created_at", { ascending: true }),
+      supabase.from("invoice_line_items").select("*"),
+      supabase.from("change_orders").select("*"),
+      supabase.from("payments_posted").select("*"),
+      supabase.from("recurring_invoice_schedules").select("*").eq("property_id", propertyId),
     ]);
     if (invRes.data) setInvoices(invRes.data);
     if (liRes.data) setLineItems(liRes.data);
@@ -166,7 +166,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
   };
 
   const handleMarkSent = async (inv: Invoice) => {
-    await (supabase.from("invoices" as any) as any).update({ status: "sent" }).eq("id", inv.id);
+    await supabase.from("invoices").update({ status: "sent" }).eq("id", inv.id);
     toast.success("Invoice marked as sent");
     loadData();
   };
@@ -177,7 +177,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
     if (!amount || amount <= 0) { toast.error("Enter a valid amount"); return; }
     setPostingPayment(true);
     try {
-      await (supabase.from("payments_posted" as any) as any).insert({
+      await supabase.from("payments_posted").insert({
         invoice_id: paymentModalInvoice.id,
         amount,
         payment_date: paymentForm.payment_date,
@@ -189,7 +189,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
       const newTotalPaid = invPayments.reduce((s, p) => s + Number(p.amount), 0) + amount;
       const newBalance = Math.max(0, Number(paymentModalInvoice.total) - newTotalPaid);
       const newStatus = newBalance === 0 ? "paid" : newTotalPaid > 0 ? "partially_paid" : paymentModalInvoice.status;
-      await (supabase.from("invoices" as any) as any).update({ balance_due: newBalance, status: newStatus }).eq("id", paymentModalInvoice.id);
+      await supabase.from("invoices").update({ balance_due: newBalance, status: newStatus }).eq("id", paymentModalInvoice.id);
       toast.success("Payment posted");
       setPaymentModalInvoice(null);
       setPaymentForm({ amount: "", payment_date: new Date().toISOString().split("T")[0], method: "check", notes: "" });

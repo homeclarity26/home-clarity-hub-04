@@ -78,7 +78,7 @@ const DashboardWidgetEditor = ({ onSave, currentWidgets }: DashboardWidgetEditor
     setIsSaving(true);
     try {
       // Delete existing configs
-      await (supabase.from("dashboard_widget_configs" as any) as any).delete().eq("admin_id", user.id);
+      await supabase.from("dashboard_widget_configs").delete().eq("admin_id", user.id);
       // Insert new configs
       const rows = widgets.map((w) => ({
         admin_id: user.id,
@@ -86,7 +86,7 @@ const DashboardWidgetEditor = ({ onSave, currentWidgets }: DashboardWidgetEditor
         sort_order: w.order,
         is_visible: w.visible,
       }));
-      await (supabase.from("dashboard_widget_configs" as any) as any).insert(rows);
+      await supabase.from("dashboard_widget_configs").insert(rows);
       onSave(widgets);
       toast.success("Dashboard layout saved");
     } catch {

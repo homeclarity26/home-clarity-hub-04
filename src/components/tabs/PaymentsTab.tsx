@@ -151,10 +151,10 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
     try {
       // allSettled so one failing query doesn't take the rest down.
       const [invRes, liRes, coRes, pRes] = await Promise.allSettled([
-        (supabase.from("invoices" as any) as any).select("*").eq("property_id", propertyId).order("created_at", { ascending: false }),
-        (supabase.from("invoice_line_items" as any) as any).select("*"),
-        (supabase.from("change_orders" as any) as any).select("*"),
-        (supabase.from("payments_posted" as any) as any).select("*"),
+        supabase.from("invoices").select("*").eq("property_id", propertyId).order("created_at", { ascending: false }),
+        supabase.from("invoice_line_items").select("*"),
+        supabase.from("change_orders").select("*"),
+        supabase.from("payments_posted").select("*"),
       ]);
       if (invRes.status === "fulfilled" && invRes.value?.data) setInvoices(invRes.value.data);
       if (liRes.status === "fulfilled" && liRes.value?.data) setLineItems(liRes.value.data);
@@ -194,7 +194,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
     setSummaryError(null);
 
     if (inv.status === "sent" && !propertyId?.startsWith("mock-")) {
-      await (supabase.from("invoices" as any) as any).update({ status: "viewed" }).eq("id", inv.id);
+      await supabase.from("invoices").update({ status: "viewed" }).eq("id", inv.id);
       loadData();
     }
 
@@ -222,7 +222,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
           setSummaryError("AI summary didn't load. You can still read the line items below.");
         } else if (data?.summary) {
           setAiSummary(data.summary);
-          await (supabase.from("invoices" as any) as any).update({ ai_summary: data.summary }).eq("id", inv.id);
+          await supabase.from("invoices").update({ ai_summary: data.summary }).eq("id", inv.id);
         } else {
           setSummaryError("AI summary didn't load. You can still read the line items below.");
         }

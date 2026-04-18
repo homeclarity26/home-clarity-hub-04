@@ -32,7 +32,7 @@ const AdminVendorDirectory = () => {
   const { data: vendors, isLoading } = useQuery({
     queryKey: ["central-vendors"],
     queryFn: async () => {
-      const { data, error } = await (supabase.from("central_vendors") as any).select("*").order("company_name");
+      const { data, error } = await supabase.from("central_vendors").select("*").order("company_name");
       if (error) throw error;
       return data || [];
     },
@@ -50,9 +50,9 @@ const AdminVendorDirectory = () => {
     if (!form.company_name?.trim()) return;
     const payload = { company_name: form.company_name, contact_name: form.contact_name || null, phone: form.phone || null, email: form.email || null, specialties: form.specialties || [], service_area: form.service_area || null, lead_time: form.lead_time || "1-3 Days", cost_tier: form.cost_tier || "Mid-Range", rating: form.rating || 0, notes: form.notes || null, status: form.status || "active", admin_id: user?.id };
     if (form.id) {
-      await (supabase.from("central_vendors") as any).update(payload).eq("id", form.id);
+      await supabase.from("central_vendors").update(payload).eq("id", form.id);
     } else {
-      await (supabase.from("central_vendors") as any).insert(payload);
+      await supabase.from("central_vendors").insert(payload);
     }
     setEditOpen(false); setForm({});
     queryClient.invalidateQueries({ queryKey: ["central-vendors"] });

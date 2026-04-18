@@ -50,7 +50,7 @@ const ContractorBidsSection = ({ projectId, projectTitle, isAdmin = false }: Con
   const [form, setForm] = useState(defaultForm);
 
   const loadBids = async () => {
-    const { data } = await (supabase.from("contractor_bids" as any) as any)
+    const { data } = await supabase.from("contractor_bids")
       .select("*")
       .eq("project_id", projectId)
       .order("bid_amount", { ascending: true });
@@ -62,7 +62,7 @@ const ContractorBidsSection = ({ projectId, projectTitle, isAdmin = false }: Con
 
   const createBid = async () => {
     if (!form.contractor_name || !form.bid_amount) return;
-    const { error } = await (supabase.from("contractor_bids" as any) as any).insert({
+    const { error } = await supabase.from("contractor_bids").insert({
       project_id: projectId,
       contractor_name: form.contractor_name,
       contact_name: form.contact_name || null,
@@ -84,10 +84,10 @@ const ContractorBidsSection = ({ projectId, projectTitle, isAdmin = false }: Con
 
   const selectBid = async (bidId: string) => {
     // Reset all bids to pending, then set selected
-    await (supabase.from("contractor_bids" as any) as any)
+    await supabase.from("contractor_bids")
       .update({ status: "pending" })
       .eq("project_id", projectId);
-    await (supabase.from("contractor_bids" as any) as any)
+    await supabase.from("contractor_bids")
       .update({ status: "selected" })
       .eq("id", bidId);
     toast.success("Bid selected as recommended");
@@ -95,7 +95,7 @@ const ContractorBidsSection = ({ projectId, projectTitle, isAdmin = false }: Con
   };
 
   const rejectBid = async (bidId: string) => {
-    await (supabase.from("contractor_bids" as any) as any)
+    await supabase.from("contractor_bids")
       .update({ status: "rejected" })
       .eq("id", bidId);
     toast.success("Bid rejected");
@@ -103,7 +103,7 @@ const ContractorBidsSection = ({ projectId, projectTitle, isAdmin = false }: Con
   };
 
   const deleteBid = async (bidId: string) => {
-    await (supabase.from("contractor_bids" as any) as any).delete().eq("id", bidId);
+    await supabase.from("contractor_bids").delete().eq("id", bidId);
     toast.success("Bid removed");
     loadBids();
   };

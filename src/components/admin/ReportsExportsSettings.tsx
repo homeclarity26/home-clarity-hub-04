@@ -37,12 +37,12 @@ const ReportsExportsSettings = () => {
   }, []);
 
   const loadScheduledReports = async () => {
-    const { data } = await (supabase.from("scheduled_reports") as any).select("*").order("created_at", { ascending: false });
+    const { data } = await supabase.from("scheduled_reports").select("*").order("created_at", { ascending: false });
     if (data) setScheduledReports(data);
   };
 
   const loadRecentExports = async () => {
-    const { data } = await (supabase.from("export_jobs") as any).select("*").order("created_at", { ascending: false }).limit(10);
+    const { data } = await supabase.from("export_jobs").select("*").order("created_at", { ascending: false }).limit(10);
     if (data) setRecentExports(data);
   };
 
@@ -64,7 +64,7 @@ const ReportsExportsSettings = () => {
     try {
       const { data: user } = await supabase.auth.getUser();
       const recipients = newReport.recipients.split(",").map(e => e.trim()).filter(Boolean);
-      const { error } = await (supabase.from("scheduled_reports") as any).insert({
+      const { error } = await supabase.from("scheduled_reports").insert({
         name: newReport.name,
         report_type: newReport.report_type,
         frequency: newReport.frequency,
@@ -85,13 +85,13 @@ const ReportsExportsSettings = () => {
   };
 
   const handleDeleteScheduled = async (id: string) => {
-    await (supabase.from("scheduled_reports") as any).delete().eq("id", id);
+    await supabase.from("scheduled_reports").delete().eq("id", id);
     toast.success("Scheduled report deleted");
     loadScheduledReports();
   };
 
   const handleToggleScheduled = async (id: string, active: boolean) => {
-    await (supabase.from("scheduled_reports") as any).update({ active }).eq("id", id);
+    await supabase.from("scheduled_reports").update({ active }).eq("id", id);
     loadScheduledReports();
   };
 

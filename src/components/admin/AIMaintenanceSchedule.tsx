@@ -25,7 +25,7 @@ const AIMaintenanceSchedule = ({ propertyId, equipment, propertyAge, location }:
   const { data: existing } = useQuery({
     queryKey: ["ai-maintenance-schedule", propertyId],
     queryFn: async () => {
-      const { data } = await (supabase.from("ai_maintenance_schedules") as any).select("*").eq("client_id", propertyId).order("generated_at", { ascending: false }).limit(1);
+      const { data } = await supabase.from("ai_maintenance_schedules").select("*").eq("client_id", propertyId).order("generated_at", { ascending: false }).limit(1);
       return data?.[0] || null;
     },
   });
@@ -38,7 +38,7 @@ const AIMaintenanceSchedule = ({ propertyId, equipment, propertyAge, location }:
       });
       if (error) throw error;
 
-      await (supabase.from("ai_maintenance_schedules") as any).insert({
+      await supabase.from("ai_maintenance_schedules").insert({
         client_id: propertyId,
         schedule_json: data.schedule || [],
       });
@@ -64,7 +64,7 @@ const AIMaintenanceSchedule = ({ propertyId, equipment, propertyAge, location }:
         event_type: "reminder",
       });
     }
-    await (supabase.from("ai_maintenance_schedules") as any).update({ applied_at: new Date().toISOString() }).eq("id", existing.id);
+    await supabase.from("ai_maintenance_schedules").update({ applied_at: new Date().toISOString() }).eq("id", existing.id);
     queryClient.invalidateQueries({ queryKey: ["ai-maintenance-schedule", propertyId] });
     toast.success("Schedule applied to client timeline");
   };

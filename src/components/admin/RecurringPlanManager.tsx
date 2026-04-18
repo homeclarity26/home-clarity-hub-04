@@ -13,10 +13,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pause, Play, Trash2, RefreshCw } from "lucide-react";
 
 interface RecurringPlanManagerProps {
-  propertyId: string;
+  propertyId?: string;
   clientName?: string;
 }
 
+// RecurringPlan is a UI view-model. The Supabase row uses
+// title/amount/next_run_date/is_active; these are mapped below.
 interface RecurringPlan {
   id: string;
   property_id: string;
@@ -29,6 +31,7 @@ interface RecurringPlan {
   payment_method: string | null;
   start_date: string | null;
   created_at: string;
+  is_active?: boolean;
 }
 
 interface VendorInvoiceEntry {
@@ -68,16 +71,29 @@ export default function RecurringPlanManager({ propertyId, clientName }: Recurri
   const [vendorForm, setVendorForm] = useState<VendorInvoiceEntry>({ vendorName: "", amount: "" });
 
   const loadPlans = useCallback(async () => {
+    if (!propertyId) { setLoading(false); return; }
     setLoading(true);
-    const { data, error } = await (supabase.from("recurring_invoice_schedules" as any) as any)
+    const { data } = await supabase.from("recurring_invoice_schedules")
       .select("*")
       .eq("property_id", propertyId)
       .order("created_at", { ascending: false });
-    if (data) setPlans(data);
+    if (data) setPlans(data as any);
     setLoading(false);
   }, [propertyId]);
 
   useEffect(() => { loadPlans(); }, [loadPlans]);
+
+  // When rendered at the admin-settings level with no propertyId, the
+  // component is a settings-placeholder: it explains that plans live on
+  // the per-client page and exits without rendering its CRUD UI.
+  if (!propertyId) {
+    return (
+      <Card className="p-6 text-sm text-muted-foreground">
+        Recurring billing plans are per-property. Open a client's profile to
+        manage their recurring schedule.
+      </Card>
+    );
+  }
 
   const handleCreate = async () => {
     if (!form.plan_name || !form.monthly_amount) { toast.error("Plan name and amount required"); return; }
@@ -85,16 +101,28 @@ export default function RecurringPlanManager({ propertyId, clientName }: Recurri
     try {
       const billingDay = parseInt(form.billing_day) || 1;
       const nextBillingDate = computeNextBillingDate(billingDay, form.start_date);
-      const { error } = await (supabase.from("recurring_invoice_schedules" as any) as any).insert({
+      // Get current admin id (recurring_invoice_schedules.admin_id is NOT NULL).
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) { toast.error("Not signed in"); setSaving(false); return; }
+      // Schema uses: title, amount, next_run_date, is_active, frequency,
+      // line_items_json — not plan_name/monthly_amount/billing_day/
+      // next_billing_date/start_date/payment_method/status. The fields the
+      // form collects that don't have DB columns (billing_day / start_date
+      // / payment_method) ride inside line_items_json as metadata.
+      const { error } = await supabase.from("recurring_invoice_schedules").insert({
         property_id: propertyId,
-        plan_name: form.plan_name,
-        monthly_amount: parseFloat(form.monthly_amount),
-        billing_day: billingDay,
-        next_billing_date: nextBillingDate,
-        start_date: form.start_date || null,
+        admin_id: currentUser.id,
+        title: form.plan_name,
+        amount: parseFloat(form.monthly_amount),
+        frequency: "monthly",
+        next_run_date: nextBillingDate,
         description: form.description || null,
-        payment_method: form.payment_method,
-        status: "active",
+        is_active: true,
+        line_items_json: [{
+          billing_day: billingDay,
+          start_date: form.start_date || null,
+          payment_method: form.payment_method,
+        }],
       });
       if (error) throw error;
       toast.success("Recurring plan created");
@@ -109,14 +137,15 @@ export default function RecurringPlanManager({ propertyId, clientName }: Recurri
   };
 
   const handleStatusToggle = async (plan: RecurringPlan) => {
-    const newStatus = plan.status === "active" ? "paused" : "active";
-    await (supabase.from("recurring_invoice_schedules" as any) as any).update({ status: newStatus }).eq("id", plan.id);
-    toast.success(`Plan ${newStatus}`);
+    // Schema uses is_active bool, not a status string.
+    const nextActive = !(plan as any).is_active;
+    await supabase.from("recurring_invoice_schedules").update({ is_active: nextActive }).eq("id", plan.id);
+    toast.success(nextActive ? "Plan resumed" : "Plan paused");
     loadPlans();
   };
 
   const handleDelete = async (planId: string) => {
-    await (supabase.from("recurring_invoice_schedules" as any) as any).delete().eq("id", planId);
+    await supabase.from("recurring_invoice_schedules").delete().eq("id", planId);
     toast.success("Plan deleted");
     loadPlans();
   };
@@ -136,7 +165,7 @@ export default function RecurringPlanManager({ propertyId, clientName }: Recurri
 
     setSaving(true);
     try {
-      const { data: inv, error: invErr } = await (supabase.from("invoices" as any) as any).insert({
+      const { data: inv, error: invErr } = await supabase.from("invoices").insert({
         property_id: propertyId,
         title: `Vendor Invoice — ${vendorForm.vendorName}`,
         description: `Vendor pass-through: ${vendorForm.vendorName}`,
@@ -154,7 +183,7 @@ export default function RecurringPlanManager({ propertyId, clientName }: Recurri
       if (invErr || !inv) throw invErr || new Error("Failed to create invoice");
 
       // Add line items
-      await (supabase.from("invoice_line_items" as any) as any).insert([
+      await supabase.from("invoice_line_items").insert([
         {
           invoice_id: inv.id,
           description: `${vendorForm.vendorName} — Materials & Services`,

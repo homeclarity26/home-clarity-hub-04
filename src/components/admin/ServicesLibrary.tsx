@@ -58,7 +58,7 @@ const ServicesLibrary = () => {
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["services-library"],
     queryFn: async () => {
-      const { data } = await (supabase.from("services") as any).select("*").order("sort_order").order("name");
+      const { data } = await supabase.from("services").select("*").order("sort_order").order("name");
       return data || [];
     },
   });
@@ -79,10 +79,10 @@ const ServicesLibrary = () => {
     };
 
     if (editId) {
-      await (supabase.from("services") as any).update(payload).eq("id", editId);
+      await supabase.from("services").update(payload).eq("id", editId);
       toast.success("Service updated");
     } else {
-      await (supabase.from("services") as any).insert(payload);
+      await supabase.from("services").insert(payload);
       toast.success("Service created");
     }
 
@@ -103,7 +103,7 @@ const ServicesLibrary = () => {
 
   const duplicate = async (s: any) => {
     if (!user) return;
-    await (supabase.from("services") as any).insert({
+    await supabase.from("services").insert({
       admin_id: user.id, name: `${s.name} (Copy)`, description: s.description, category: s.category,
       price: s.price, price_type: s.price_type, duration_hours: s.duration_hours, is_active: true,
     });
@@ -112,13 +112,13 @@ const ServicesLibrary = () => {
   };
 
   const remove = async (id: string) => {
-    await (supabase.from("services") as any).delete().eq("id", id);
+    await supabase.from("services").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["services-library"] });
     toast.success("Service deleted");
   };
 
   const toggleActive = async (id: string, current: boolean) => {
-    await (supabase.from("services") as any).update({ is_active: !current }).eq("id", id);
+    await supabase.from("services").update({ is_active: !current }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["services-library"] });
   };
 

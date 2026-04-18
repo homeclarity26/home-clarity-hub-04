@@ -27,7 +27,7 @@ const AITranscriptSummarizer = ({ propertyId, onPreFill }: AITranscriptSummarize
       if (error) throw error;
       setSummary(data.summary || {});
 
-      await (supabase.from("ai_transcript_summaries") as any).insert({
+      await supabase.from("ai_transcript_summaries").insert({
         client_id: propertyId,
         transcript_text: transcript,
         summary_json: data.summary || {},

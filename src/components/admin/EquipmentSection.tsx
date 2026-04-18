@@ -93,7 +93,7 @@ const EquipmentSection = ({ propertyId, reportPages }: EquipmentSectionProps) =>
   const load = async () => {
     if (!propertyId) { setLoading(false); return; }
     const { data, error } = await (supabase
-      .from("equipment" as any) as any)
+      .from("equipment"))
       .select("*")
       .eq("property_id", propertyId)
       .order("category")
@@ -126,7 +126,7 @@ const EquipmentSection = ({ propertyId, reportPages }: EquipmentSectionProps) =>
 
   const create = async () => {
     if (!form.name) return;
-    const { error } = await (supabase.from("equipment" as any) as any).insert(buildInsert());
+    const { error } = await supabase.from("equipment").insert(buildInsert());
     if (error) { toast.error("Failed to add equipment"); return; }
     toast.success("Equipment added");
     setCreateOpen(false);
@@ -136,7 +136,7 @@ const EquipmentSection = ({ propertyId, reportPages }: EquipmentSectionProps) =>
 
   const update = async () => {
     if (!editId || !form.name) return;
-    const { error } = await (supabase.from("equipment" as any) as any).update({
+    const { error } = await supabase.from("equipment").update({
       name: form.name, category: form.category, brand: form.brand || null, model: form.model || null,
       serial_number: form.serial_number || null, install_date: form.install_date || null,
       warranty_expiry: form.warranty_expiry || null, last_service_date: form.last_service_date || null,
@@ -155,7 +155,7 @@ const EquipmentSection = ({ propertyId, reportPages }: EquipmentSectionProps) =>
   };
 
   const remove = async (id: string) => {
-    const { error } = await (supabase.from("equipment" as any) as any).delete().eq("id", id);
+    const { error } = await supabase.from("equipment").delete().eq("id", id);
     if (error) { toast.error("Failed to delete"); return; }
     toast.success("Removed");
     load();

@@ -35,7 +35,7 @@ const ConciergeRequestModal = ({ open, onOpenChange, propertyId }: ConciergeRequ
     if (!title.trim() || !user) return;
     setSubmitting(true);
     try {
-      const { error } = await (supabase.from("service_requests" as any) as any).insert({
+      const { error } = await supabase.from("service_requests").insert({
         property_id: propertyId,
         client_id: user.id,
         request_type: type,

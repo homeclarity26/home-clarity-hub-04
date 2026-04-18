@@ -60,7 +60,7 @@ const HomeValueTracker = ({
       return;
     }
 
-    (supabase.from("home_value_snapshots") as any)
+    supabase.from("home_value_snapshots")
       .select("*")
       .eq("property_id", propertyId)
       .order("snapshot_date", { ascending: true })
@@ -79,7 +79,7 @@ const HomeValueTracker = ({
       if (error) throw error;
       if (data && !data.error) {
         // Reload snapshots
-        const { data: fresh } = await (supabase.from("home_value_snapshots") as any)
+        const { data: fresh } = await supabase.from("home_value_snapshots")
           .select("*")
           .eq("property_id", propertyId)
           .order("snapshot_date", { ascending: true });

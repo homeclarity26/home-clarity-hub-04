@@ -19,7 +19,7 @@ const PortalBlockViewer = ({ blocks, propertyAddress, propertyId }: PortalBlockV
   useEffect(() => {
     if (!propertyId) return;
     supabase
-      .from("photo_analyses" as any)
+      .from("photo_analyses")
       .select("photo_url")
       .eq("property_id", propertyId)
       .then(({ data }) => {

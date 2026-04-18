@@ -50,7 +50,7 @@ const AppointmentRequestModal = ({ open, onOpenChange, propertyId, clientName }:
     setSubmitting(true);
     try {
       // Create appointment request
-      const { error } = await (supabase.from("appointment_requests" as any) as any).insert({
+      const { error } = await supabase.from("appointment_requests").insert({
         client_id: user.id,
         property_id: propertyId,
         topic,

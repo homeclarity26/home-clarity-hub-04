@@ -28,7 +28,7 @@ const EstimatesPortal = ({ propertyId }: EstimatesPortalProps) => {
     queryKey: ["portal-estimates", propertyId],
     enabled: !!propertyId,
     queryFn: async () => {
-      const { data } = await (supabase.from("estimates") as any).select("*").eq("property_id", propertyId).in("status", ["sent", "accepted", "declined", "converted"]).order("created_at", { ascending: false });
+      const { data } = await supabase.from("estimates").select("*").eq("property_id", propertyId).in("status", ["sent", "accepted", "declined", "converted"]).order("created_at", { ascending: false });
       return data || [];
     },
   });
@@ -38,13 +38,13 @@ const EstimatesPortal = ({ propertyId }: EstimatesPortalProps) => {
     enabled: estimates.length > 0,
     queryFn: async () => {
       const ids = estimates.map((e: any) => e.id);
-      const { data } = await (supabase.from("estimate_line_items") as any).select("*").in("estimate_id", ids).order("sort_order");
+      const { data } = await supabase.from("estimate_line_items").select("*").in("estimate_id", ids).order("sort_order");
       return data || [];
     },
   });
 
   const respond = async (id: string, status: "accepted" | "declined") => {
-    await (supabase.from("estimates") as any).update({ status, responded_at: new Date().toISOString() }).eq("id", id);
+    await supabase.from("estimates").update({ status, responded_at: new Date().toISOString() }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["portal-estimates", propertyId] });
     toast.success(status === "accepted" ? "Estimate accepted! Your advisor will follow up shortly." : "Estimate declined.");
   };

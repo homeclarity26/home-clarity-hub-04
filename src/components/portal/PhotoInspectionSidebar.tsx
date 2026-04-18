@@ -51,7 +51,7 @@ const PhotoInspectionSidebar = ({ photoUrl, onClose }: PhotoInspectionSidebarPro
 
     setLoading(true);
     supabase
-      .from("photo_analyses" as any)
+      .from("photo_analyses")
       .select("*")
       .eq("photo_url", photoUrl)
       .order("analyzed_at", { ascending: false })

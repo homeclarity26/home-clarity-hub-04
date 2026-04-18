@@ -18,7 +18,7 @@ const CRMDashboardWidget = () => {
   const { data: recentActivity } = useQuery({
     queryKey: ["crm-recent-activity-widget"],
     queryFn: async () => {
-      const { data } = await (supabase.from("crm_activity_log") as any)
+      const { data } = await supabase.from("crm_activity_log")
         .select("*")
         .order("logged_at", { ascending: false })
         .limit(5);

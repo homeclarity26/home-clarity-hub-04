@@ -42,13 +42,13 @@ const AdminAnnouncements = () => {
   const [dismissalCounts, setDismissalCounts] = useState<Record<string, number>>({});
 
   const load = async () => {
-    const { data } = await (supabase.from("announcements" as any) as any)
+    const { data } = await supabase.from("announcements")
       .select("*")
       .order("created_at", { ascending: false });
     if (data) setAnnouncements(data as Announcement[]);
 
     // Get dismissal counts
-    const { data: dismissals } = await (supabase.from("announcement_dismissals" as any) as any)
+    const { data: dismissals } = await supabase.from("announcement_dismissals")
       .select("announcement_id");
     if (dismissals) {
       const counts: Record<string, number> = {};
@@ -65,7 +65,7 @@ const AdminAnnouncements = () => {
   const handleCreate = async () => {
     if (!form.title.trim() || !form.body.trim() || !user) return;
     setSaving(true);
-    const { error } = await (supabase.from("announcements" as any) as any).insert({
+    const { error } = await supabase.from("announcements").insert({
       title: form.title,
       body: form.body,
       target_audience: form.target_audience,
@@ -83,7 +83,7 @@ const AdminAnnouncements = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await (supabase.from("announcements" as any) as any).delete().eq("id", id);
+    await supabase.from("announcements").delete().eq("id", id);
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
     toast.success("Announcement deleted");
   };

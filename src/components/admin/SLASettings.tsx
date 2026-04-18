@@ -21,7 +21,7 @@ const SLASettings = () => {
   const { data: config } = useQuery({
     queryKey: ["sla-config"],
     queryFn: async () => {
-      const { data } = await (supabase.from("sla_configs") as any).select("*").limit(1).maybeSingle();
+      const { data } = await supabase.from("sla_configs").select("*").limit(1).maybeSingle();
       return data;
     },
   });
@@ -29,7 +29,7 @@ const SLASettings = () => {
   const { data: tracking = [] } = useQuery({
     queryKey: ["sla-tracking"],
     queryFn: async () => {
-      const { data } = await (supabase.from("sla_tracking") as any).select("*").order("created_at", { ascending: false }).limit(20);
+      const { data } = await supabase.from("sla_tracking").select("*").order("created_at", { ascending: false }).limit(20);
       return data || [];
     },
   });
@@ -46,11 +46,11 @@ const SLASettings = () => {
     if (!user) return;
     setSaving(true);
     if (config?.id) {
-      await (supabase.from("sla_configs") as any).update({
+      await supabase.from("sla_configs").update({
         message_response_hours: msgHours, report_delivery_days: reportDays, first_contact_hours: firstContactHours,
       }).eq("id", config.id);
     } else {
-      await (supabase.from("sla_configs") as any).insert({
+      await supabase.from("sla_configs").insert({
         admin_id: user.id, message_response_hours: msgHours, report_delivery_days: reportDays, first_contact_hours: firstContactHours,
       });
     }

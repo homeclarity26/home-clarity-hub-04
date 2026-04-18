@@ -63,7 +63,7 @@ const LiveInvoiceStrip = ({ propertyId, onNavigate }: LiveInvoiceStripProps) => 
   const [loading, setLoading] = useState(true);
 
   const fetchInvoice = async () => {
-    const { data, error } = await (supabase.from("invoices" as any) as any)
+    const { data, error } = await supabase.from("invoices")
       .select("id, title, invoice_number, status, balance_due, total, due_date, issue_date")
       .eq("property_id", propertyId)
       .not("status", "eq", "paid")

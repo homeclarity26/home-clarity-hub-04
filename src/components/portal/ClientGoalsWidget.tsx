@@ -31,7 +31,7 @@ const ClientGoalsWidget = ({ propertyId }: ClientGoalsWidgetProps) => {
   useEffect(() => {
     if (!propertyId || !user) return;
     const load = async () => {
-      const { data } = await (supabase.from("client_goals" as any) as any)
+      const { data } = await supabase.from("client_goals")
         .select("*")
         .eq("property_id", propertyId)
         .eq("client_id", user.id)
@@ -43,7 +43,7 @@ const ClientGoalsWidget = ({ propertyId }: ClientGoalsWidgetProps) => {
 
   const addGoal = async () => {
     if (!newTitle.trim() || !user || !propertyId) return;
-    const { data, error } = await (supabase.from("client_goals" as any) as any).insert({
+    const { data, error } = await supabase.from("client_goals").insert({
       property_id: propertyId,
       client_id: user.id,
       title: newTitle.trim(),
@@ -64,7 +64,7 @@ const ClientGoalsWidget = ({ propertyId }: ClientGoalsWidgetProps) => {
   const toggleComplete = async (goal: Goal) => {
     const newStatus = goal.status === "completed" ? "active" : "completed";
     const newProgress = newStatus === "completed" ? 100 : goal.progress;
-    await (supabase.from("client_goals" as any) as any)
+    await supabase.from("client_goals")
       .update({ status: newStatus, progress: newProgress })
       .eq("id", goal.id);
     setGoals((prev) => prev.map((g) => g.id === goal.id ? { ...g, status: newStatus, progress: newProgress } : g));

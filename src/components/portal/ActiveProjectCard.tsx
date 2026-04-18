@@ -44,7 +44,7 @@ const ActiveProjectCard = ({ propertyId, onNavigate }: ActiveProjectCardProps) =
   const [loading, setLoading] = useState(true);
 
   const fetchProject = async () => {
-    const { data, error } = await (supabase.from("projects" as any) as any)
+    const { data, error } = await supabase.from("projects")
       .select("*")
       .eq("property_id", propertyId)
       .in("status", ["active", "in_progress", "planning"])

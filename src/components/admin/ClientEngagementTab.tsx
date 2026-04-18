@@ -22,7 +22,7 @@ const ClientEngagementTab = ({ clientUserId, propertyId }: ClientEngagementTabPr
       const { data: views } = await supabase.from("page_views").select("*").eq("client_id", clientUserId);
       
       // Messages sent by client
-      const { data: msgs } = await (supabase.from("property_messages" as any) as any).select("id, sender_id").eq("property_id", propertyId);
+      const { data: msgs } = await supabase.from("property_messages").select("id, sender_id").eq("property_id", propertyId);
       
       const totalLogins = (sessions || []).length;
       const lastLogin = sessions?.[0]?.login_at;

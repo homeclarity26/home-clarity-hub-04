@@ -33,7 +33,7 @@ const BidRequestFlow = ({ open, onOpenChange, projectId, projectTitle }: BidRequ
     queryKey: ["central-vendors-for-bids"],
     enabled: open,
     queryFn: async () => {
-      const { data } = await (supabase.from("central_vendors" as any) as any)
+      const { data } = await supabase.from("central_vendors")
         .select("*")
         .eq("status", "active")
         .order("company_name");
@@ -45,7 +45,7 @@ const BidRequestFlow = ({ open, onOpenChange, projectId, projectTitle }: BidRequ
     queryKey: ["project-scope-current", projectId],
     enabled: open,
     queryFn: async () => {
-      const { data } = await (supabase.from("project_scopes" as any) as any)
+      const { data } = await supabase.from("project_scopes")
         .select("*")
         .eq("project_id", projectId)
         .eq("is_current", true)
@@ -80,7 +80,7 @@ const BidRequestFlow = ({ open, onOpenChange, projectId, projectTitle }: BidRequ
         notes: `Bid request sent with SOW v${currentScope.version_number}`,
       }));
 
-      const { error } = await (supabase.from("contractor_bids" as any) as any).insert(bidInserts);
+      const { error } = await supabase.from("contractor_bids").insert(bidInserts);
       if (error) throw error;
 
       toast.success(`Bid requests created for ${selectedVendorData.length} contractor(s)`);

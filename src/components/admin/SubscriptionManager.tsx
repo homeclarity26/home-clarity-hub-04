@@ -42,7 +42,7 @@ const SubscriptionManager = ({ propertyId, clientUserId, clientEmail, clientName
   const { data: profile } = useQuery({
     queryKey: ["client-subscription", clientUserId],
     queryFn: async () => {
-      const { data } = await (supabase.from("profiles") as any)
+      const { data } = await supabase.from("profiles")
         .select("stripe_customer_id, stripe_subscription_id, subscription_status, subscription_current_period_end, subscription_plan_id, trial_ends_at")
         .eq("user_id", clientUserId)
         .single();
@@ -53,7 +53,7 @@ const SubscriptionManager = ({ propertyId, clientUserId, clientEmail, clientName
   const { data: tiers = [] } = useQuery({
     queryKey: ["membership-tiers"],
     queryFn: async () => {
-      const { data } = await (supabase.from("membership_tiers") as any).select("*").eq("is_active", true).order("sort_order");
+      const { data } = await supabase.from("membership_tiers").select("*").eq("is_active", true).order("sort_order");
       return data || [];
     },
   });
@@ -75,7 +75,7 @@ const SubscriptionManager = ({ propertyId, clientUserId, clientEmail, clientName
   const { data: events = [] }: { data: any[] } = useQuery({
     queryKey: ["subscription-events", clientUserId],
     queryFn: async () => {
-      const { data } = await (supabase.from("subscription_events") as any)
+      const { data } = await supabase.from("subscription_events")
         .select("*")
         .eq("client_id", clientUserId)
         .order("created_at", { ascending: false })

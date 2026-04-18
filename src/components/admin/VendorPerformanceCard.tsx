@@ -50,7 +50,7 @@ const VendorPerformanceCard = ({ vendorId, vendorName }: VendorPerformanceCardPr
   const { data: reviews, isLoading } = useQuery({
     queryKey: ["vendor-reviews", vendorId],
     queryFn: async () => {
-      const { data, error } = await (supabase.from("vendor_performance_reviews" as any) as any)
+      const { data, error } = await supabase.from("vendor_performance_reviews")
         .select("*")
         .eq("vendor_id", vendorId)
         .order("review_date", { ascending: false });
@@ -61,7 +61,7 @@ const VendorPerformanceCard = ({ vendorId, vendorName }: VendorPerformanceCardPr
 
   const handleAdd = async () => {
     if (!user) return;
-    const { error } = await (supabase.from("vendor_performance_reviews" as any) as any).insert({
+    const { error } = await supabase.from("vendor_performance_reviews").insert({
       vendor_id: vendorId,
       admin_id: user.id,
       ...form,

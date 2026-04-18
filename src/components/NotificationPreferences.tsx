@@ -50,7 +50,7 @@ const NotificationPreferences = () => {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await (supabase.from("client_notification_preferences" as any) as any)
+      const { data } = await supabase.from("client_notification_preferences")
         .select("*")
         .eq("client_id", user.id)
         .maybeSingle();
@@ -75,7 +75,7 @@ const NotificationPreferences = () => {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await (supabase.from("client_notification_preferences" as any) as any)
+    const { error } = await supabase.from("client_notification_preferences")
       .upsert({
         client_id: user.id,
         ...prefs,

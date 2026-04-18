@@ -129,7 +129,7 @@ const HomeTab = ({
     let cancelled = false;
     const load = async () => {
       try {
-        const { data } = await (supabase.from("portal_customizations" as any) as any)
+        const { data } = await supabase.from("portal_customizations")
           .select("*")
           .eq("property_id", propertyId)
           .limit(1);

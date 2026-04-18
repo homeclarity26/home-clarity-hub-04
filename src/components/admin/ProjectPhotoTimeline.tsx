@@ -37,7 +37,7 @@ const ProjectPhotoTimeline = ({ projectId, projectTitle, isAdmin = false }: Proj
   const [form, setForm] = useState({ taken_date: new Date().toISOString().split("T")[0], caption: "", photo_stage: "progress" });
 
   const loadPhotos = async () => {
-    const { data } = await (supabase.from("project_photos" as any) as any)
+    const { data } = await supabase.from("project_photos")
       .select("*")
       .eq("project_id", projectId)
       .order("taken_date", { ascending: true });
@@ -73,7 +73,7 @@ const ProjectPhotoTimeline = ({ projectId, projectTitle, isAdmin = false }: Proj
       if (uploadErr) { toast.error(`Failed to upload ${file.name}`); continue; }
 
       // Store the storage path — loadPhotos signs on read so URLs never go stale at rest.
-      await (supabase.from("project_photos" as any) as any).insert({
+      await supabase.from("project_photos").insert({
         project_id: projectId,
         uploaded_by: user.id,
         uploader_type: isAdmin ? "admin" : "client",

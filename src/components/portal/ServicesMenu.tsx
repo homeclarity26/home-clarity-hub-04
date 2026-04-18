@@ -36,7 +36,7 @@ const ServicesMenu = ({ propertyId }: ServicesMenuProps) => {
   const { data: services = [] } = useQuery({
     queryKey: ["services-library-active"],
     queryFn: async () => {
-      const { data } = await (supabase.from("services") as any).select("*").eq("is_active", true).order("category").order("name");
+      const { data } = await supabase.from("services").select("*").eq("is_active", true).order("category").order("name");
       return data || [];
     },
   });
@@ -58,12 +58,12 @@ const ServicesMenu = ({ propertyId }: ServicesMenuProps) => {
     if (!user || !propertyId || cart.length === 0) return;
     setSubmitting(true);
     try {
-      const { data: req, error } = await (supabase.from("service_requests") as any).insert({
+      const { data: req, error } = await supabase.from("service_requests").insert({
         client_id: user.id, property_id: propertyId, notes, status: "pending",
       }).select("id").single();
       if (error || !req) throw error;
 
-      await (supabase.from("service_request_items") as any).insert(
+      await supabase.from("service_request_items").insert(
         cart.map(serviceId => ({ request_id: req.id, service_id: serviceId }))
       );
 

@@ -40,7 +40,7 @@ const AIPriorityCard = ({ propertyId, reportPages }: AIPriorityCardProps) => {
     }
 
     const { data } = await supabase
-      .from("ai_priority_cards" as any)
+      .from("ai_priority_cards")
       .select("*")
       .eq("property_id", propertyId)
       .order("generated_at", { ascending: false })

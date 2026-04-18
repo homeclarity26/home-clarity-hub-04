@@ -16,7 +16,7 @@ const PhotoSubmissionReview = ({ propertyId }: PhotoSubmissionReviewProps) => {
   const { data: submissions = [] } = useQuery({
     queryKey: ["photo-submissions", propertyId],
     queryFn: async () => {
-      const { data } = await (supabase.from("photo_submissions") as any)
+      const { data } = await supabase.from("photo_submissions")
         .select("*")
         .eq("property_id", propertyId)
         .order("created_at", { ascending: false });
@@ -25,7 +25,7 @@ const PhotoSubmissionReview = ({ propertyId }: PhotoSubmissionReviewProps) => {
   });
 
   const markReviewed = async (id: string) => {
-    await (supabase.from("photo_submissions") as any).update({ review_status: "reviewed", reviewed_at: new Date().toISOString() }).eq("id", id);
+    await supabase.from("photo_submissions").update({ review_status: "reviewed", reviewed_at: new Date().toISOString() }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["photo-submissions", propertyId] });
     toast.success("Marked as reviewed");
   };

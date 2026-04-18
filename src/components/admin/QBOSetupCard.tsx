@@ -20,7 +20,7 @@ const QBOSetupCard = ({ propertyId }: QBOSetupCardProps) => {
 
       if (configured && propertyId) {
         // Count invoices that are 'sent' but not yet synced to QBO
-        const { data } = await (supabase.from("invoices" as any) as any)
+        const { data } = await supabase.from("invoices")
           .select("id, status, updated_at")
           .eq("property_id", propertyId)
           .eq("status", "sent");

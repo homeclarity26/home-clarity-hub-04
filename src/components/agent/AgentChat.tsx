@@ -199,7 +199,7 @@ const AgentChat = ({ contextOverride, quickChips, onNavigate, onboardingMessage,
 
       // ── Log learning event for agent interaction ──
       if (data.actions_taken?.length > 0) {
-        supabase.from("learning_events" as any).insert({
+        supabase.from("learning_events").insert({
           event_type: "agent_action_completed",
           actor_id: buildContext().userId || undefined,
           actor_role: buildContext().role || "creator",

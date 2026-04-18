@@ -241,7 +241,7 @@ const WYSIWYGReportEditor = ({ reportId, propertyAddress, initialBlocks, propert
       if (now - lastAutoSaveRef.current > 5 * 60 * 1000) {
         lastAutoSaveRef.current = now;
         try {
-          const { data: lastVer } = await (supabase.from('report_versions') as any)
+          const { data: lastVer } = await supabase.from("report_versions")
             .select('version_number').eq('client_id', propertyId).order('version_number', { ascending: false }).limit(1).maybeSingle();
           const nextVersion = (lastVer?.version_number || 0) + 1;
           // report_versions schema is (client_id, version_number, report_snapshot_json,
@@ -250,7 +250,7 @@ const WYSIWYGReportEditor = ({ reportId, propertyAddress, initialBlocks, propert
           // current user's id.
           const { data: { user: currentUser } } = await supabase.auth.getUser();
           if (currentUser?.id) {
-            await (supabase.from('report_versions') as any).insert({
+            await supabase.from("report_versions").insert({
               client_id: propertyId,
               version_number: nextVersion,
               report_snapshot_json: blocksToSave,

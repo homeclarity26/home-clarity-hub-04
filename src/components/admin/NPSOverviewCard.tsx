@@ -19,7 +19,7 @@ const NPSOverviewCard = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await (supabase.from("satisfaction_surveys" as any) as any)
+      const { data } = await supabase.from("satisfaction_surveys")
         .select("*")
         .is("snoozed_until", null)
         .order("created_at", { ascending: false })

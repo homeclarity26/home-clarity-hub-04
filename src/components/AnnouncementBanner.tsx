@@ -24,14 +24,14 @@ const AnnouncementBanner = () => {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await (supabase.from("announcements" as any) as any)
+      const { data } = await supabase.from("announcements")
         .select("*")
         .lte("start_date", new Date().toISOString())
         .order("created_at", { ascending: false });
 
       if (data) setAnnouncements(data as Announcement[]);
 
-      const { data: dismissals } = await (supabase.from("announcement_dismissals" as any) as any)
+      const { data: dismissals } = await supabase.from("announcement_dismissals")
         .select("announcement_id")
         .eq("user_id", user.id);
 
@@ -45,7 +45,7 @@ const AnnouncementBanner = () => {
   const handleDismiss = async (announcementId: string) => {
     if (!user) return;
     setDismissed((prev) => new Set([...prev, announcementId]));
-    await (supabase.from("announcement_dismissals" as any) as any).insert({
+    await supabase.from("announcement_dismissals").insert({
       announcement_id: announcementId,
       user_id: user.id,
     });

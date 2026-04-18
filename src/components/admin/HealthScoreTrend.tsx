@@ -14,7 +14,7 @@ const HealthScoreTrend = ({ clientId, compact }: HealthScoreTrendProps) => {
   const { data: history = [] } = useQuery({
     queryKey: ["health-score-history", clientId],
     queryFn: async () => {
-      const { data } = await (supabase.from("health_score_history") as any)
+      const { data } = await supabase.from("health_score_history")
         .select("*")
         .eq("client_id", clientId)
         .order("recorded_at", { ascending: true });

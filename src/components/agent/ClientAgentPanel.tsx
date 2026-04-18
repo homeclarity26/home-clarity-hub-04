@@ -177,7 +177,7 @@ const ClientAgentPanel = ({ propertyName, propertyAddress, enrichment }: ClientA
       setMessages(prev => [...prev, { id: genId(), role: "assistant", content: data.reply || "Done!" }]);
 
       // ── Log learning event for client interaction (fire-and-forget) ──
-      (supabase.from("learning_events" as any) as any).insert({
+      supabase.from("learning_events").insert({
         event_type: "client_agent_query",
         actor_id: user?.id || undefined,
         actor_role: "client",

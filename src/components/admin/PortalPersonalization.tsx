@@ -20,7 +20,7 @@ const PortalPersonalization = ({ propertyId }: PortalPersonalizationProps) => {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await (supabase.from("portal_customizations" as any) as any)
+      const { data } = await supabase.from("portal_customizations")
         .select("*")
         .eq("property_id", propertyId)
         .limit(1);
@@ -49,10 +49,10 @@ const PortalPersonalization = ({ propertyId }: PortalPersonalizationProps) => {
       advisor_signature: form.advisor_signature || null,
     };
     if (existingId) {
-      const { error } = await (supabase.from("portal_customizations" as any) as any).update(payload).eq("id", existingId);
+      const { error } = await supabase.from("portal_customizations").update(payload).eq("id", existingId);
       if (error) { toast.error("Failed to save"); setSaving(false); return; }
     } else {
-      const { data, error } = await (supabase.from("portal_customizations" as any) as any).insert(payload).select().single();
+      const { data, error } = await supabase.from("portal_customizations").insert(payload).select().single();
       if (error) { toast.error("Failed to save"); setSaving(false); return; }
       if (data) setExistingId(data.id);
     }

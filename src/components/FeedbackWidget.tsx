@@ -26,7 +26,7 @@ const FeedbackWidget = ({ propertyId, entityType = "report", entityId, title = "
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
-      let query = (supabase.from("feedback" as any) as any)
+      let query = supabase.from("feedback")
         .select("*")
         .eq("property_id", propertyId)
         .eq("entity_type", entityType)
@@ -46,7 +46,7 @@ const FeedbackWidget = ({ propertyId, entityType = "report", entityId, title = "
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await (supabase.from("feedback" as any) as any).insert({
+      const { error } = await supabase.from("feedback").insert({
         property_id: propertyId,
         user_id: user.id,
         entity_type: entityType,

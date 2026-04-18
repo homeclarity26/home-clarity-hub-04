@@ -44,7 +44,7 @@ const AdminAutomations = () => {
   const { data: rules, isLoading } = useQuery({
     queryKey: ["automation-rules"],
     queryFn: async () => {
-      const { data, error } = await (supabase.from("automation_rules") as any).select("*").order("created_at");
+      const { data, error } = await supabase.from("automation_rules").select("*").order("created_at");
       if (error) throw error;
       return data || [];
     },
@@ -53,7 +53,7 @@ const AdminAutomations = () => {
   const { data: logs } = useQuery({
     queryKey: ["automation-logs"],
     queryFn: async () => {
-      const { data } = await (supabase.from("automation_logs") as any).select("*").order("triggered_at", { ascending: false }).limit(20);
+      const { data } = await supabase.from("automation_logs").select("*").order("triggered_at", { ascending: false }).limit(20);
       return data || [];
     },
   });
@@ -63,7 +63,7 @@ const AdminAutomations = () => {
     if (rules && rules.length === 0 && user) {
       const initRules = async () => {
         for (const r of DEFAULT_RULES) {
-          await (supabase.from("automation_rules") as any).insert({
+          await supabase.from("automation_rules").insert({
             rule_type: r.rule_type,
             rule_name: r.rule_name,
             rule_description: r.rule_description,
@@ -79,13 +79,13 @@ const AdminAutomations = () => {
   }, [rules, user]);
 
   const toggleRule = async (id: string, enabled: boolean) => {
-    await (supabase.from("automation_rules") as any).update({ is_enabled: enabled }).eq("id", id);
+    await supabase.from("automation_rules").update({ is_enabled: enabled }).eq("id", id);
     queryClient.invalidateQueries({ queryKey: ["automation-rules"] });
     toast.success(enabled ? "Automation enabled" : "Automation disabled");
   };
 
   const updateConfig = async (id: string, config: any) => {
-    await (supabase.from("automation_rules") as any).update({ config_json: config }).eq("id", id);
+    await supabase.from("automation_rules").update({ config_json: config }).eq("id", id);
     queryClient.invalidateQueries({ queryKey: ["automation-rules"] });
   };
 

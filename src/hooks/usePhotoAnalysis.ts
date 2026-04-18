@@ -37,7 +37,7 @@ export function usePhotoAnalysis(options: UsePhotoAnalysisOptions = {}) {
       const analysis: PhotoAnalysis = { ...data, photo_url: photoUrl };
 
       // Save to photo_analyses table
-      await supabase.from("photo_analyses" as any).insert({
+      await supabase.from("photo_analyses").insert({
         photo_url: photoUrl,
         report_id: options.reportId || null,
         report_page_id: options.reportPageId || null,

@@ -40,7 +40,7 @@ const RecurringInvoiceScheduler = ({ propertyId }: RecurringInvoiceSchedulerProp
   const { data: schedules, isLoading } = useQuery({
     queryKey: ["recurring-schedules", propertyId],
     queryFn: async () => {
-      const { data, error } = await (supabase.from("recurring_invoice_schedules" as any) as any)
+      const { data, error } = await supabase.from("recurring_invoice_schedules")
         .select("*")
         .eq("property_id", propertyId)
         .order("next_run_date", { ascending: true });
@@ -53,7 +53,7 @@ const RecurringInvoiceScheduler = ({ propertyId }: RecurringInvoiceSchedulerProp
 
   const createSchedule = async () => {
     if (!form.title || !form.amount || !user) return;
-    const { error } = await (supabase.from("recurring_invoice_schedules" as any) as any).insert({
+    const { error } = await supabase.from("recurring_invoice_schedules").insert({
       property_id: propertyId,
       admin_id: user.id,
       title: form.title,
@@ -70,12 +70,12 @@ const RecurringInvoiceScheduler = ({ propertyId }: RecurringInvoiceSchedulerProp
   };
 
   const toggleActive = async (id: string, isActive: boolean) => {
-    await (supabase.from("recurring_invoice_schedules" as any) as any).update({ is_active: !isActive }).eq("id", id);
+    await supabase.from("recurring_invoice_schedules").update({ is_active: !isActive }).eq("id", id);
     queryClient.invalidateQueries({ queryKey: ["recurring-schedules", propertyId] });
   };
 
   const deleteSchedule = async (id: string) => {
-    await (supabase.from("recurring_invoice_schedules" as any) as any).delete().eq("id", id);
+    await supabase.from("recurring_invoice_schedules").delete().eq("id", id);
     toast.success("Schedule deleted");
     queryClient.invalidateQueries({ queryKey: ["recurring-schedules", propertyId] });
   };
@@ -104,7 +104,7 @@ const RecurringInvoiceScheduler = ({ propertyId }: RecurringInvoiceSchedulerProp
       case "annually": next = addYears(current, 1); break;
       default: next = addMonths(current, 1);
     }
-    await (supabase.from("recurring_invoice_schedules" as any) as any)
+    await supabase.from("recurring_invoice_schedules")
       .update({ last_run_date: schedule.next_run_date, next_run_date: next.toISOString().split("T")[0] })
       .eq("id", schedule.id);
 

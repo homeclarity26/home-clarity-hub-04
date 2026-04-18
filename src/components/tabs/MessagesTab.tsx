@@ -67,7 +67,7 @@ const MessagesTab = ({ propertyId, creatorName = "Your HBC Advisor", creatorInit
     if (!propertyId) { setIsLoading(false); return; }
 
     try {
-      const { data: msgs, error } = await (supabase.from("property_messages" as any) as any)
+      const { data: msgs, error } = await supabase.from("property_messages")
         .select("*").eq("property_id", propertyId).order("created_at", { ascending: true });
       if (error) throw error;
       const rawMsgs = (msgs as unknown as Message[]) || [];
@@ -121,7 +121,7 @@ const MessagesTab = ({ propertyId, creatorName = "Your HBC Advisor", creatorInit
     if (!propertyId || !user) return;
     setIsSending(true);
     try {
-      const { error } = await (supabase.from("property_messages" as any) as any).insert({ property_id: propertyId, sender_id: user.id, message: newMessage.trim() });
+      const { error } = await supabase.from("property_messages").insert({ property_id: propertyId, sender_id: user.id, message: newMessage.trim() });
       if (error) throw error;
       
       // Notify the admin/creator about the new client message.
@@ -129,7 +129,7 @@ const MessagesTab = ({ propertyId, creatorName = "Your HBC Advisor", creatorInit
       // the property's report row (`reports.created_by`). Fall back to
       // whichever admin most recently created/published a report for this
       // property; if there's none, skip the push rather than crash.
-      const { data: creatorReport } = await (supabase.from("reports") as any)
+      const { data: creatorReport } = await supabase.from("reports")
         .select("created_by")
         .eq("property_id", propertyId)
         .order("created_at", { ascending: false })

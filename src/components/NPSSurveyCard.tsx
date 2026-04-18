@@ -27,7 +27,7 @@ const NPSSurveyCard = ({ propertyId }: NPSSurveyCardProps) => {
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - 90);
 
-      const { data: recent } = await (supabase.from("satisfaction_surveys" as any) as any)
+      const { data: recent } = await supabase.from("satisfaction_surveys")
         .select("id, snoozed_until")
         .eq("property_id", propertyId)
         .eq("user_id", user.id)
@@ -53,7 +53,7 @@ const NPSSurveyCard = ({ propertyId }: NPSSurveyCardProps) => {
     if (score === null || !user) return;
     setSubmitting(true);
 
-    await (supabase.from("satisfaction_surveys" as any) as any).insert({
+    await supabase.from("satisfaction_surveys").insert({
       property_id: propertyId,
       user_id: user.id,
       trigger_event: "portal_visit",
@@ -63,7 +63,7 @@ const NPSSurveyCard = ({ propertyId }: NPSSurveyCardProps) => {
 
     // If low score, create alert task for admin
     if (score <= 6) {
-      await (supabase.from("activity_log" as any) as any).insert({
+      await supabase.from("activity_log").insert({
         property_id: propertyId,
         user_id: user.id,
         action_type: "low_nps",
@@ -82,7 +82,7 @@ const NPSSurveyCard = ({ propertyId }: NPSSurveyCardProps) => {
     const snoozedUntil = new Date();
     snoozedUntil.setDate(snoozedUntil.getDate() + 7);
 
-    await (supabase.from("satisfaction_surveys" as any) as any).insert({
+    await supabase.from("satisfaction_surveys").insert({
       property_id: propertyId,
       user_id: user.id,
       trigger_event: "portal_visit",

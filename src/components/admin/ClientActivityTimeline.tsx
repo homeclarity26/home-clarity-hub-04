@@ -49,7 +49,7 @@ const ClientActivityTimeline = ({ propertyId }: ClientActivityTimelineProps) => 
 
       // Fetch messages
       const { data: msgs } = await (supabase
-        .from("property_messages" as any) as any)
+        .from("property_messages"))
         .select("id, message, sender_id, created_at")
         .eq("property_id", propertyId)
         .order("created_at", { ascending: false })

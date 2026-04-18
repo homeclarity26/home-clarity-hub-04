@@ -16,7 +16,7 @@ const SubscriptionDashboardWidget = () => {
         .select("*, membership_tiers(price_monthly, price_annually)")
         .eq("status", "active");
 
-      const { data: pastDue } = await (supabase.from("profiles") as any)
+      const { data: pastDue } = await supabase.from("profiles")
         .select("user_id")
         .eq("subscription_status", "past_due");
 
@@ -37,7 +37,7 @@ const SubscriptionDashboardWidget = () => {
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
-      const { data: churned } = await (supabase.from("subscription_events") as any)
+      const { data: churned } = await supabase.from("subscription_events")
         .select("id")
         .in("event_type", ["subscription_deleted", "canceled_immediately"])
         .gte("created_at", startOfMonth.toISOString());

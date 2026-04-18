@@ -72,7 +72,7 @@ export function usePushNotifications() {
       const json = subscription.toJSON();
 
       // Save to database
-      await (supabase.from("push_subscriptions") as any).upsert(
+      await supabase.from("push_subscriptions").upsert(
         {
           user_id: user.id,
           endpoint: json.endpoint,
@@ -103,7 +103,7 @@ export function usePushNotifications() {
       if (subscription) {
         await subscription.unsubscribe();
         // Remove from DB
-        await (supabase.from("push_subscriptions") as any)
+        await supabase.from("push_subscriptions")
           .delete()
           .eq("endpoint", subscription.endpoint);
       }

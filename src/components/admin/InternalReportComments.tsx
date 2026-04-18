@@ -40,7 +40,7 @@ const InternalReportComments = ({ reportId }: InternalReportCommentsProps) => {
         const { data: pgs } = await supabase.from("report_pages").select("id, title").eq("report_id", reportId!);
         if (!pgs || pgs.length === 0) return [];
         const pageIds = pgs.map((p) => p.id);
-        const { data, error } = await (supabase.from("internal_report_comments" as any) as any)
+        const { data, error } = await supabase.from("internal_report_comments")
           .select("*")
           .in("report_page_id", pageIds)
           .order("created_at", { ascending: false });
@@ -51,7 +51,7 @@ const InternalReportComments = ({ reportId }: InternalReportCommentsProps) => {
         }));
       }
       const pageIds = pages.map((p) => p.id);
-      const { data, error } = await (supabase.from("internal_report_comments" as any) as any)
+      const { data, error } = await supabase.from("internal_report_comments")
         .select("*")
         .in("report_page_id", pageIds)
         .order("created_at", { ascending: false });
@@ -65,7 +65,7 @@ const InternalReportComments = ({ reportId }: InternalReportCommentsProps) => {
 
   const handleAdd = async () => {
     if (!newComment.trim() || !selectedPageId || !user) return;
-    const { error } = await (supabase.from("internal_report_comments" as any) as any).insert({
+    const { error } = await supabase.from("internal_report_comments").insert({
       report_page_id: selectedPageId,
       author_id: user.id,
       comment_text: newComment.trim(),
@@ -76,7 +76,7 @@ const InternalReportComments = ({ reportId }: InternalReportCommentsProps) => {
   };
 
   const handleResolve = async (id: string) => {
-    await (supabase.from("internal_report_comments" as any) as any)
+    await supabase.from("internal_report_comments")
       .update({ is_resolved: true, resolved_by: user?.id })
       .eq("id", id);
     queryClient.invalidateQueries({ queryKey: ["internal-report-comments", reportId] });

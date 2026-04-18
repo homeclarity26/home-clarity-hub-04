@@ -84,7 +84,7 @@ const EquipmentTab = ({ propertyId, onTabChange, onSendMessage }: EquipmentTabPr
       return;
     }
     (supabase
-      .from("equipment" as any) as any)
+      .from("equipment"))
       .select("*")
       .eq("property_id", propertyId)
       .order("category")

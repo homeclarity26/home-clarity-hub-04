@@ -40,7 +40,7 @@ const NotificationNudges = ({ propertyId, onNavigate }: NotificationNudgesProps)
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await (supabase.from("ai_notification_nudges" as any) as any)
+      const { data } = await supabase.from("ai_notification_nudges")
         .select("*")
         .eq("client_id", user.id)
         .eq("is_dismissed", false)
@@ -67,7 +67,7 @@ const NotificationNudges = ({ propertyId, onNavigate }: NotificationNudgesProps)
   }, [user]);
 
   const dismiss = async (id: string) => {
-    await (supabase.from("ai_notification_nudges" as any) as any)
+    await supabase.from("ai_notification_nudges")
       .update({ is_dismissed: true })
       .eq("id", id);
     setNudges((prev) => prev.filter((n) => n.id !== id));

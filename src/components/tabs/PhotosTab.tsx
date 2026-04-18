@@ -55,7 +55,7 @@ const PhotosTab = ({ propertyId }: PhotosTabProps) => {
     queryKey: ["portal-photos", propertyId],
     enabled: !!propertyId && !isMock,
     queryFn: async () => {
-      const { data } = await (supabase.from("property_photos") as any)
+      const { data } = await supabase.from("property_photos")
         .select("*")
         .eq("property_id", propertyId)
         .eq("is_client_visible", true)
@@ -93,7 +93,7 @@ const PhotosTab = ({ propertyId }: PhotosTabProps) => {
         if (error) continue;
         const { data: signedPData } = await supabase.storage.from("property-photos").createSignedUrl(path, 3600);
         const photoFileUrl = signedPData?.signedUrl || path;
-        await (supabase.from("property_photos") as any).insert({
+        await supabase.from("property_photos").insert({
           property_id: propertyId,
           file_url: photoFileUrl,
           title: file.name.replace(/\.[^/.]+$/, ""),
@@ -112,7 +112,7 @@ const PhotosTab = ({ propertyId }: PhotosTabProps) => {
         setAiOrganizing(true);
         try {
           // Fetch newly uploaded uncategorized photos
-          const { data: newPhotos } = await (supabase.from("property_photos") as any)
+          const { data: newPhotos } = await supabase.from("property_photos")
             .select("*")
             .eq("property_id", propertyId)
             .eq("category", "other")
@@ -125,7 +125,7 @@ const PhotosTab = ({ propertyId }: PhotosTabProps) => {
                 body: { imageUrl: photo.file_url, availablePages: [] },
               });
               if (data) {
-                await (supabase.from("property_photos") as any)
+                await supabase.from("property_photos")
                   .update({
                     category: data.category || "other",
                     room_or_area: data.room_or_area || data.pageSlug || null,
