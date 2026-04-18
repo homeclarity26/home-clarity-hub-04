@@ -69,10 +69,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flow:
-          - golden-path        # core: auth → seed → publish → invoice → portal
-          - ai-writing
-          - learning
+        include:
+          - flow: core          # the canonical auth→seed→publish→invoice→portal
+            script: scripts/golden-path.ts
+          - flow: ai-writing
+            script: scripts/golden-path-ai-writing.ts
+          - flow: learning
+            script: scripts/golden-path-learning.ts
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
@@ -87,7 +90,7 @@ jobs:
         run: |
           for attempt in 1 2 3; do
             echo "::group::Attempt $attempt"
-            if bun scripts/${{ matrix.flow }}.ts; then
+            if bun ${{ matrix.script }}; then
               echo "::endgroup::"
               exit 0
             fi
