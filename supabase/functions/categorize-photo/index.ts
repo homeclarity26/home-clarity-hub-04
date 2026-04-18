@@ -1,7 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callAI, parseJSON } from "../_shared/ai-client.ts";
 import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
 
+/**
+ * categorize-photo — auto-classify an uploaded photo by area/category/
+ * tags so the admin doesn't have to tag every upload manually.
+ *
+ * Previous implementation: downloaded the image but never passed it to
+ * the AI, then parsed OpenAI-shape tool_calls on a Gemini response that
+ * never produced them. Silent fallback to `{category:"other"}` on
+ * every call. Rewritten 2026-04-18 to pass the image bytes to Gemini
+ * Pro vision (same pattern as enhance-photo / analyze-photo).
+ */
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -9,46 +18,102 @@ serve(async (req) => {
   if ("error" in auth) return auth.error;
 
   try {
-    const { imageBase64, mimeType, imageUrl, availablePages } = await req.json();
+    const { imageBase64, mimeType: incomingMimeType, imageUrl, availablePages } = await req.json();
     if (!imageBase64 && !imageUrl) {
-      return new Response(JSON.stringify({ error: "imageBase64 or imageUrl required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ error: "imageBase64 or imageUrl required" }, { status: 400 });
     }
+
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) return json({ error: "GEMINI_API_KEY not configured" }, { status: 500 });
+
+    // Resolve image bytes + mimeType. Prefer the inline base64 if provided
+    // (saves a network round-trip), otherwise fetch from the URL.
+    let base64 = "";
+    let mimeType = incomingMimeType || "image/jpeg";
+    if (imageBase64) {
+      base64 = imageBase64;
+    } else {
+      const imgResp = await fetch(imageUrl);
+      if (!imgResp.ok) throw new Error(`Failed to download image: ${imgResp.status}`);
+      const bytes = new Uint8Array(await imgResp.arrayBuffer());
+      let binary = "";
+      const CHUNK = 0x8000;
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+      }
+      base64 = btoa(binary);
+      mimeType = imgResp.headers.get("content-type") || mimeType;
+    }
+
     const categories = ["exterior", "interior", "system", "damage", "progress", "before", "after", "other"];
+    const pagesHint = (availablePages || []).map((p: { slug: string; name: string }) => `${p.slug} (${p.name})`).join(", ");
 
-    const systemPrompt = `You are an expert home inspector analyzing photos. Given a home inspection photo, determine:
-1. Which category it belongs to: ${categories.join(", ")}
-2. What room or area of the home it shows
-3. Relevant tags for the photo
+    const systemInstruction = `You are an expert home inspector categorizing home-inspection photos.
 
-Available report pages: ${(availablePages || []).map((p: any) => `${p.slug} (${p.name})`).join(", ")}`;
+Given the photo, return JSON:
+{
+  "category": one of [${categories.join(", ")}],
+  "room_or_area": string (the visible space, e.g. "kitchen", "basement", "roof", "front elevation"),
+  "pageSlug": string | null (best match from: ${pagesHint || "<none supplied>"}),
+  "tags": [string] (3-7 short descriptors),
+  "description": string (1-sentence summary),
+  "confidence": "high" | "medium" | "low"
+}
 
-    const imageContent = imageBase64
-      ? { type: "image_url", image_url: { url: `data:${mimeType || "image/jpeg"};base64,${imageBase64}` } }
-      : { type: "image_url", image_url: { url: imageUrl } };
+If the image is blank, corrupted, or not a home/property photo, use category "other", confidence "low", and say so in the description.`;
 
-    const _aiText = await callAI({
-      system: systemPrompt,
-      prompt: "Categorize this photo. Return the category, room/area, pageSlug (if applicable), and tags as JSON.",
-      model: "google/gemini-2.5-pro",
-      json: true,
-    });
-    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
+    const geminiResp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          contents: [{
+            role: "user",
+            parts: [
+              { inlineData: { mimeType, data: base64 } },
+              { text: "Categorize this photo and return the JSON." },
+            ],
+          }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            temperature: 0.2,
+            maxOutputTokens: 1024,
+          },
+        }),
+      },
+    );
 
-    if (!response.ok) {
-      if (response.status === 429) return new Response(JSON.stringify({ error: "Rate limited" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (response.status === 402) return new Response(JSON.stringify({ error: "Credits exhausted" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      throw new Error(`AI error: ${response.status}`);
+    if (!geminiResp.ok) {
+      const errText = await geminiResp.text();
+      console.error(`categorize-photo Gemini error ${geminiResp.status}:`, errText.slice(0, 500));
+      if (geminiResp.status === 429) return json({ error: "Rate limited, please try again" }, { status: 429 });
+      throw new Error(`Gemini error ${geminiResp.status}: ${errText.slice(0, 200)}`);
     }
 
-    const result = await response.json();
-    const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
-    const parsed = toolCall
-      ? JSON.parse(toolCall.function.arguments)
-      : { category: "other", room_or_area: null, description: "Could not categorize", confidence: "low", tags: [] };
+    const data = await geminiResp.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    let categorization: Record<string, unknown>;
+    try {
+      categorization = JSON.parse(text);
+    } catch (parseErr) {
+      console.error("categorize-photo: Gemini returned non-JSON:", text.slice(0, 400));
+      throw new Error("AI returned unparseable JSON");
+    }
 
-    return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return json({ ok: true, ...categorization });
   } catch (err) {
     console.error("categorize-photo error:", err);
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return json({
+      ok: false,
+      error: err instanceof Error ? err.message : "Unknown error",
+      category: "other",
+      room_or_area: null,
+      pageSlug: null,
+      tags: [],
+      description: "Categorization failed — please tag manually.",
+      confidence: "low",
+    }, { status: 200 });
   }
 });

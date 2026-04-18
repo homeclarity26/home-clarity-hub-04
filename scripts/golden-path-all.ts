@@ -23,6 +23,8 @@ const scripts = [
   { name: "core",       path: resolve(SCRIPTS_DIR, "golden-path.ts") },
   { name: "messaging",  path: resolve(SCRIPTS_DIR, "golden-path-messaging.ts") },
   { name: "proposal",   path: resolve(SCRIPTS_DIR, "golden-path-proposal.ts") },
+  { name: "equipment",  path: resolve(SCRIPTS_DIR, "golden-path-equipment-schedule.ts") },
+  { name: "photos",     path: resolve(SCRIPTS_DIR, "golden-path-photos.ts") },
   { name: "rls",        path: resolve(SCRIPTS_DIR, "golden-path-rls.ts") },
 ];
 

@@ -1,7 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callAI, parseJSON } from "../_shared/ai-client.ts";
 import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
 
+/**
+ * analyze-photo — professional home-inspector condition assessment of
+ * a single photo. Returns a JSON structure with condition rating,
+ * identified defects, and recommended actions.
+ *
+ * Previous implementation downloaded the image bytes but never included
+ * them in the AI call, then parsed response in OpenAI-shape that callAI
+ * never produced. Result: silent fallback to a generic "Fair" condition
+ * every time. Rewritten 2026-04-18 to actually send the image to Gemini
+ * 2.5 Pro's vision API (same pattern as enhance-photo).
+ */
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -10,19 +20,25 @@ serve(async (req) => {
 
   try {
     const { photo_url, section_type, property_context } = await req.json();
-    if (!photo_url) {
-      return new Response(JSON.stringify({ error: "photo_url required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    // Download image and convert to base64
+    if (!photo_url) return json({ error: "photo_url required" }, { status: 400 });
+
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) return json({ error: "GEMINI_API_KEY not configured" }, { status: 500 });
+
+    // Fetch + base64-encode the image. btoa chokes on large binary strings,
+    // so we chunk via reduce.
     const imgResp = await fetch(photo_url);
     if (!imgResp.ok) throw new Error(`Failed to download image: ${imgResp.status}`);
-    const imgBuffer = await imgResp.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(imgBuffer)));
-    const contentType = imgResp.headers.get("content-type") || "image/jpeg";
+    const bytes = new Uint8Array(await imgResp.arrayBuffer());
+    let binary = "";
+    const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+    }
+    const base64 = btoa(binary);
+    const mimeType = imgResp.headers.get("content-type") || "image/jpeg";
 
+    // Build the context string safely.
     const ctx = property_context || {};
     const contextStr = [
       ctx.age ? `Home age: ~${ctx.age} years` : "",
@@ -31,72 +47,83 @@ serve(async (req) => {
       ctx.property_type ? `Property type: ${ctx.property_type}` : "",
     ].filter(Boolean).join(". ");
 
-    const systemPrompt = `You are a licensed professional home inspector with 20+ years of experience. You are analyzing a photo of a home's ${section_type || "component"}.
+    const systemInstruction = `You are a licensed professional home inspector with 20+ years of experience analyzing residential property. You are looking at a photo of a home's ${section_type || "component"}.
 
-Property context: ${contextStr || "No additional context provided."}
+${contextStr ? `Property context: ${contextStr}.` : "No additional property context provided."}
 
-Analyze the image thoroughly. Identify every visible defect, wear pattern, age indicator, and condition signal. Be specific about locations within the image. Provide actionable recommendations with realistic cost estimates.
+Analyze the image thoroughly. Identify every visible defect, wear pattern, age indicator, and condition signal. Be specific about locations within the image. Provide actionable recommendations with realistic cost estimates when possible. If the image is blank, corrupted, or clearly not a property photo, say so explicitly in the narrative and set confidence_score low.
 
 Your condition ratings:
-- Excellent: Like new, no defects, recently installed/maintained
+- Excellent: Like new, no defects, recently installed / maintained
 - Good: Minor wear consistent with age, fully functional, no action needed
 - Fair: Moderate wear, some items need attention within 1-2 years
-- Poor: Significant deterioration, safety concerns possible, action needed soon`;
+- Poor: Significant deterioration, safety concerns possible, action needed soon
+- Critical: Immediate repair or replacement required
 
-    const _photoText = await callAI({
-      system: "You are a professional home inspector. Analyze photos and provide detailed condition assessments.",
-      prompt: `${system_context}\n\nPhoto description provided. Assess the condition and identify any issues.\n\nReturn JSON: { "condition_rating": "excellent"|"good"|"fair"|"poor"|"critical", "findings": [{ "title": string, "description": string, "severity": "low"|"medium"|"high"|"critical", "recommendation": string }], "immediate_action_required": boolean, "estimated_cost_range": string|null, "suggested_narrative": string, "detected_items": [string] }`,
-      model: "google/gemini-2.5-pro",
-      json: true,
-    });
-    const response = { ok: true };
-    const _photoData = parseJSON<any>(_photoText);
+Respond in JSON exactly matching:
+{
+  "condition_rating": "Excellent"|"Good"|"Fair"|"Poor"|"Critical",
+  "confidence_score": 0-1,
+  "identified_defects": [{ "name": string, "severity": "low"|"medium"|"high"|"critical", "location_in_image": string, "description": string, "recommended_action": string }],
+  "estimated_age_years": number | null,
+  "recommended_actions": [string],
+  "narrative_paragraph": string,
+  "raw_observations": [string]
+}`;
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limited, please try again" }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const errText = await response.text();
-      console.error("AI gateway error:", response.status, errText);
-      throw new Error(`AI gateway error: ${response.status}`);
+    const geminiResp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          contents: [{
+            role: "user",
+            parts: [
+              { inlineData: { mimeType, data: base64 } },
+              { text: `Analyze this ${section_type || "home component"} photo and return the structured JSON.` },
+            ],
+          }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            temperature: 0.3,
+            maxOutputTokens: 2048,
+          },
+        }),
+      },
+    );
+
+    if (!geminiResp.ok) {
+      const errText = await geminiResp.text();
+      console.error(`analyze-photo Gemini error ${geminiResp.status}:`, errText.slice(0, 500));
+      if (geminiResp.status === 429) return json({ error: "Rate limited, please try again" }, { status: 429 });
+      throw new Error(`Gemini error ${geminiResp.status}: ${errText.slice(0, 200)}`);
     }
 
-    const result = await response.json();
-    const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
-
-    if (!toolCall) {
-      throw new Error("No tool call in AI response");
+    const data = await geminiResp.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    let analysis: Record<string, unknown>;
+    try {
+      analysis = JSON.parse(text);
+    } catch (parseErr) {
+      console.error("analyze-photo: Gemini returned non-JSON:", text.slice(0, 400));
+      throw new Error("AI returned unparseable JSON");
     }
 
-    const analysis = JSON.parse(toolCall.function.arguments);
-
-    return new Response(JSON.stringify(analysis), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ ok: true, analysis });
   } catch (err) {
     console.error("analyze-photo error:", err);
-    // Return fallback response
-    return new Response(
-      JSON.stringify({
-        condition_rating: "Fair",
+    return json({
+      ok: false,
+      error: err instanceof Error ? err.message : "Unknown error",
+      // Keep the shape so old callers that destructure don't crash, but
+      // this is an explicit failure — no more silent fallback to "Fair".
+      analysis: {
+        condition_rating: "Unknown",
         confidence_score: 0,
-        identified_defects: [],
-        estimated_age_years: null,
-        recommended_actions: [],
-        narrative_paragraph: "Photo analysis could not be completed. Manual inspection recommended.",
-        raw_observations: ["Analysis failed — please review manually"],
-        error: err instanceof Error ? err.message : "Unknown error",
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+        narrative_paragraph: "Photo analysis failed; manual inspection required.",
+      },
+    }, { status: 200 });
   }
 });
