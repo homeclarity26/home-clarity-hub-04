@@ -113,11 +113,16 @@ const TradePartnerRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Public route wrapper (redirects to home if logged in)
+// Public route wrapper (redirects to home if logged in).
+// Belt-and-suspenders: if a user is signed in but the roles fetch resolved
+// to an empty array (race with the 8s safety timeout, deleted DB row, or
+// stale localStorage), don't bounce them to '/' — that would just cycle
+// them through RootRedirect → /portal → "Your Portal is Being Prepared"
+// with no escape. Letting the login form render here lets them re-auth.
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading } = useAuth();
+  const { user, roles, isLoading } = useAuth();
   if (isLoading) return <LoadingScreen />;
-  if (user) return <Navigate to="/" replace />;
+  if (user && roles.length > 0) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
