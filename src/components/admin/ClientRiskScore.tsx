@@ -102,12 +102,15 @@ const ClientRiskScore = ({ client, invoices, lastActivity }: ClientRiskScoreProp
       </div>
 
       <div className="flex items-center gap-3 mb-5">
-        <span className="text-3xl font-mono font-bold text-foreground">{overallScore}</span>
+        <div className="flex items-baseline gap-1">
+          <span className="text-3xl font-mono font-bold text-foreground">{overallScore}</span>
+          <span className="text-sm font-mono text-muted-foreground">/100</span>
+        </div>
         <div className="flex-1">
           <Progress value={overallScore} className="h-2" />
           <div className="flex justify-between mt-1">
-            <span className="text-[10px] font-sans text-muted-foreground">Low</span>
-            <span className="text-[10px] font-sans text-muted-foreground">High</span>
+            <span className="text-[10px] font-sans text-muted-foreground">Low risk</span>
+            <span className="text-[10px] font-sans text-muted-foreground">High risk</span>
           </div>
         </div>
       </div>

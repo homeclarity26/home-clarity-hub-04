@@ -60,26 +60,45 @@ export function usePortalTracking(activeTab: string) {
 
 export function usePortalEngagement(propertyId?: string) {
   const getEngagement = useCallback(async (clientUserId: string) => {
-    const [sessionsRes, viewsRes] = await Promise.all([
-      (supabase.from("client_sessions" as any) as any).select("*").eq("client_id", clientUserId).order("login_at", { ascending: false }).limit(50),
-      (supabase.from("page_views" as any) as any).select("*").eq("client_id", clientUserId).order("viewed_at", { ascending: false }).limit(200),
+    // Get real counts (not limited) AND the most recent rows for display.
+    // Previously this used `.limit(50)` + `sessions.length`, which meant
+    // "Total Logins" capped at 50 forever — so a client with 63 real
+    // sessions showed "Total Logins 50" while page views (not similarly
+    // capped beyond 200) could appear larger or smaller in confusing ways.
+    const [sessionsCountRes, viewsCountRes, sessionsRes, viewsRes] = await Promise.all([
+      (supabase.from("client_sessions" as any) as any)
+        .select("id", { count: "exact", head: true })
+        .eq("client_id", clientUserId),
+      (supabase.from("page_views" as any) as any)
+        .select("id", { count: "exact", head: true })
+        .eq("client_id", clientUserId),
+      (supabase.from("client_sessions" as any) as any)
+        .select("login_at")
+        .eq("client_id", clientUserId)
+        .order("login_at", { ascending: false })
+        .limit(1),
+      (supabase.from("page_views" as any) as any)
+        .select("page_name")
+        .eq("client_id", clientUserId)
+        .order("viewed_at", { ascending: false })
+        .limit(200),
     ]);
 
-    const sessions = sessionsRes.data || [];
-    const views = viewsRes.data || [];
+    const totalLogins = sessionsCountRes.count ?? 0;
+    const totalViews = viewsCountRes.count ?? 0;
+    const lastLogin = sessionsRes.data?.[0]?.login_at ?? null;
 
-    const totalLogins = sessions.length;
-    const lastLogin = sessions.length > 0 ? sessions[0].login_at : null;
-
-    // Views by page
+    // "Pages This Month" / "Most Visited" — computed from the capped
+    // recent-views sample, which is fine for a top-5 ranking. If we ever
+    // need historical exact counts-by-page, switch to a server-side group-by.
     const viewsByPage: Record<string, number> = {};
-    views.forEach((v: any) => {
+    (viewsRes.data || []).forEach((v: any) => {
       viewsByPage[v.page_name] = (viewsByPage[v.page_name] || 0) + 1;
     });
 
     const mostVisited = Object.entries(viewsByPage).sort(([, a], [, b]) => b - a)[0]?.[0] || "None";
 
-    return { totalLogins, lastLogin, viewsByPage, mostVisited, totalViews: views.length };
+    return { totalLogins, lastLogin, viewsByPage, mostVisited, totalViews };
   }, []);
 
   return { getEngagement };

@@ -24,9 +24,12 @@ const PushNotificationBanner = () => {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100] bg-primary text-primary-foreground px-4 py-3 flex items-center justify-center gap-3 shadow-lg animate-in slide-in-from-top duration-300">
+    // Slim, bottom-right chip (was a full-width navy banner that dominated
+    // every admin page). Still dismissible, still prominent enough to act
+    // on, but no longer covering the header on every page load.
+    <div className="fixed bottom-4 right-4 z-[100] max-w-sm bg-primary text-primary-foreground rounded-lg px-4 py-3 flex items-center gap-3 shadow-lg animate-in slide-in-from-bottom-2 duration-300">
       <Bell className="w-4 h-4 shrink-0" />
-      <span className="text-sm font-sans">
+      <span className="text-xs font-sans flex-1">
         Get notified about new messages, invoices, and updates
       </span>
       <Button
@@ -36,14 +39,14 @@ const PushNotificationBanner = () => {
         onClick={handleEnable}
         disabled={loading}
       >
-        {loading ? "Enabling..." : "Turn on notifications"}
+        {loading ? "Enabling..." : "Turn on"}
       </Button>
       <button
         onClick={handleDismiss}
         className="ml-1 p-1 rounded hover:bg-primary-foreground/10 transition-colors"
         aria-label="Dismiss"
       >
-        <X className="w-4 h-4" />
+        <X className="w-3.5 h-3.5" />
       </button>
     </div>
   );

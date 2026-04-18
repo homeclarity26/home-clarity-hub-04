@@ -96,7 +96,7 @@ const AdminAutomations = () => {
 
   return (
     <div>
-      <AdminHeader breadcrumbs={[{ label: "Settings", path: "/admin/settings" }, { label: "Automations" }]} />
+      <AdminHeader breadcrumbs={[{ label: "Tools" }, { label: "Automations" }]} />
       <div className="p-6 max-w-4xl space-y-6">
         <Tabs defaultValue="rules" className="w-full">
           <TabsList className="mb-4">
