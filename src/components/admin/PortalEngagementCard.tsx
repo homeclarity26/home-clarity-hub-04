@@ -36,7 +36,7 @@ const PortalEngagementCard = ({ clientUserId }: PortalEngagementCardProps) => {
           </p>
         </div>
         <div>
-          <p className="text-[11px] font-mono text-muted-foreground uppercase">Total Logins</p>
+          <p className="text-[11px] font-mono text-muted-foreground uppercase">Portal Opens</p>
           <p className="text-sm font-sans font-medium text-foreground">{data.totalLogins}</p>
         </div>
         <div>
