@@ -301,3 +301,86 @@ All of `/portal/b9d0db18-.../{"", report, projects, payments, equipment, message
 
 **Bottom line:** migration is live; all 14 walkthrough fixes verified in prod;
 no new bugs, one label-clarity question filed in `QUESTIONS.md`.
+
+---
+
+## Overnight build — 2026-04-18 (AI memory + Claude Sonnet hybrid)
+
+Per Adam's request: "C is good, build it all, I am going back to bed."
+
+### Shipped
+
+**1. pgvector memory foundation** (`20260418000000_pgvector_memory_foundation.sql`)
+- Enabled `vector` extension
+- Added `embedding vector(768)` to `report_pages`, `knowledge_templates`, `home_knowledge_base`
+- Created `agent_memory` table (per-creator, optionally per-property)
+- Four `match_*()` RPCs for cosine-similarity search
+- RLS: creators see only their own memories
+
+**2. `-latest` aliases for Gemini (Adam's "always on current model" ask)**
+- `MODEL_MAP` in `ai-client.ts` now resolves every pinned Gemini ID to
+  `gemini-flash-latest` / `gemini-pro-latest` / `gemini-flash-lite-latest`
+- Verified these aliases are live in Google's `ListModels` response
+- Embedding model: `gemini-embedding-001` (via `:embedContent`, `outputDimensionality: 768`)
+
+**3. `callClaude()` in `_shared/ai-client.ts`**
+- `claude-sonnet-4-6` by default
+- Prompt caching on `cacheableContext` via `cache_control: ephemeral`
+- Falls back to Gemini Flash if `ANTHROPIC_API_KEY` is missing (never hard-fails)
+- Logs usage (in / out / cache_create / cache_read) for cost observability
+
+**4. RAG infrastructure**
+- `_shared/rag.ts` — `retrieveContext()` helper: embed query, pull top-K per source, format for Claude
+- `embed-content` edge function — backfills embeddings for any row with NULL embedding
+- `retrieve-similar` edge function — HTTP-facing version of retrieveContext
+
+**5. 7 heavy functions switched to Claude Sonnet 4.6 with RAG**
+- `seed-report-from-notes` — RAG over report_pages + knowledge_templates + home_knowledge_base + agent_memory
+- `generate-scope` — RAG over report_pages + knowledge_templates + agent_memory
+- `generate-annual-review` — RAG scoped to THIS client's past pages + memories
+- `draft-page-narrative` — RAG over past pages on the same system + style preferences
+- `generate-exec-summary` — Claude only (input is already the full report)
+- `ai-proposal-kickoff` — RAG for consistent scope styling + pricing
+- `ai-invoice-assistant` — Claude only
+
+**6. hbc-agent memory tools**
+- New tools: `remember`, `recall`, `retrieve_context`
+- `search_knowledge_base` upgraded from ILIKE keyword → full semantic search across all 4 sources
+- `add_kb_article` / `update_kb_article` now rewritten to hit the real `knowledge_templates` table (were pointing at a non-existent `knowledge_base_articles` table — pre-existing bug)
+- All embedding happens inline inside the tool handler (Supabase edge functions kill fire-and-forget work on exit)
+
+**7. Agent tool-loop fix: `thought_signature`**
+- Gemini 2.5+ requires `thought_signature` to be round-tripped through multi-turn tool calls. The hbc-agent loop was dropping it, causing `Function call is missing a thought_signature` 400 errors the moment any tool was invoked.
+- `callAIAgent` now returns `thoughtSignature` on each functionCall; the loop preserves it on the reconstructed model turn.
+
+**8. `match_agent_memory` RPC bug fix**
+- Original SQL had an ambiguous `id` reference in the UPDATE clause. Patched inline in prod + in the migration file so fresh installs get the fixed version.
+
+### Verified live
+
+- `seed-report-from-notes` (Claude Sonnet 4.6) — generates a complete 25-page report seed from a realistic walkthrough note ("1985 colonial, 18yo architectural shingles, some granule loss...") with a coherent summary in Adam's professional voice.
+- hbc-agent `remember` then `recall` across two separate sessions — agent stored "I charge $14/sq ft bathroom tile, $22/sq ft heated floors" in session 1, retrieved the exact numbers semantically in a fresh session 2. This is the "memory that persists across sessions" capability that didn't exist before this build.
+- Anthropic key verified by a test call to `claude-sonnet-4-6` — responded `READY` as instructed, cache headers present in usage metadata.
+- Gemini `-latest` aliases verified live via `ListModels` on 2026-04-18.
+- Embedding model `gemini-embedding-001` verified (the earlier `text-embedding-004` reference was stale — Google renamed the embedding family).
+
+### Known state at handoff
+
+- **Corpus is empty at rest** — `report_pages`, `knowledge_templates`, and `home_knowledge_base` all have 0 rows in prod because the app is pre-launch. First real report creates the first embeddable content. RAG retrieval returns empty context until then, which is correct behavior (prompts handle empty context cleanly — no hallucination).
+- **Adam's Anthropic API key is in Supabase secrets.** It was pasted in chat so it's in conversation backups; Adam was told to rotate it (create a new key, replace in Supabase dashboard, revoke the old one).
+- **Auto-embed on write is NOT wired for every table** — `remember`, `add_kb_article`, `update_kb_article` embed synchronously. But if a future function writes to `report_pages` or `home_knowledge_base` directly without calling `embed-content` after, those rows will have NULL embeddings until the backfill job picks them up. Something to watch when adding new write paths.
+
+### Next logical builds (not done tonight)
+
+- **Auto-embed trigger** on `report_pages` publish → call `embed-content` for the newly-published pages so RAG picks them up immediately.
+- **Seed `knowledge_templates` from `src/data/reportContent.ts`** — the 65 hardcoded page templates in the frontend could be loaded as a starting KB corpus so RAG has something to work with from day one. Would take ~30min.
+- **Template auto-promotion** — when N similar scopes are written, suggest a template. Optional; RAG already delivers most of the value.
+- **Agent memory surfacing in the UI** — a "Bobby remembers about this client" panel on the client detail page. Nice-to-have.
+
+### Cost expectation
+
+At 2 admins + 20 clients with the hybrid (Gemini for chat/vision/photos, Claude Sonnet for 7 writing functions, all with caching): **~$25-50/mo** AI total. Prompt caching on long report templates cuts repeated-input cost to ~10%, which is why the number isn't higher. A heavy report-generation month without caching would be double that.
+
+### Rotation reminder for Adam
+
+You pasted your Anthropic API key in chat. That transcript is persisted. **Create a new key in https://console.anthropic.com/settings/keys, update the Supabase secret via https://supabase.com/dashboard/project/vvwojahsianpmwjvkunn/settings/functions, then revoke the old one.** Ideally before you touch the app today.

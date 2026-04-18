@@ -53,23 +53,31 @@ export interface AIOptions {
   maxOutputTokens?: number;
 }
 
-// Gemini model IDs as of Gemini 2.5 stable (2025+). The previous values
-// pointed at April-2024 PREVIEW models (gemini-2.5-flash-preview-04-17,
-// gemini-2.5-pro-preview-03-25) which Google has since retired — hitting
-// them returns 404 NOT_FOUND. This was the actual "Sorry, I ran into an
-// error" symptom in prod AFTER the shape fix landed.
+// Gemini model IDs. We default to Google's *-latest aliases which auto-track
+// the newest stable release in each tier — so code doesn't need to be edited
+// every time Google ships a new version. Verified via ListModels on
+// 2026-04-18: gemini-flash-latest / gemini-pro-latest / gemini-flash-lite-latest
+// are live.
+//
+// Downside of auto-latest: a silent Google version bump can subtly change
+// output tone or JSON behavior. If that ever matters for a specific function,
+// pin to an explicit version string by bypassing this map.
 const MODEL_MAP: Record<string, string> = {
-  // Lovable-style gateway names (legacy aliases still used by callers)
-  "google/gemini-2.5-flash": "gemini-2.5-flash",
-  "google/gemini-2.5-flash-lite": "gemini-2.5-flash-lite",
-  "google/gemini-2.5-pro": "gemini-2.5-pro",
-  "google/gemini-3-flash-preview": "gemini-2.5-flash",
-  // Direct names (pass-through)
-  "gemini-2.5-flash": "gemini-2.5-flash",
-  "gemini-2.5-flash-lite": "gemini-2.5-flash-lite",
-  "gemini-2.5-pro": "gemini-2.5-pro",
-  "gemini-2.0-flash": "gemini-2.0-flash",
-  "gemini-2.0-flash-lite": "gemini-2.0-flash-lite",
+  // Lovable-style gateway names + pinned 2.5 names (legacy; still used by
+  // some callers) → resolve to the current *-latest alias.
+  "google/gemini-2.5-flash": "gemini-flash-latest",
+  "google/gemini-2.5-flash-lite": "gemini-flash-lite-latest",
+  "google/gemini-2.5-pro": "gemini-pro-latest",
+  "google/gemini-3-flash-preview": "gemini-flash-latest",
+  "gemini-2.5-flash": "gemini-flash-latest",
+  "gemini-2.5-flash-lite": "gemini-flash-lite-latest",
+  "gemini-2.5-pro": "gemini-pro-latest",
+  "gemini-2.0-flash": "gemini-flash-latest",
+  "gemini-2.0-flash-lite": "gemini-flash-lite-latest",
+  // Direct *-latest aliases (pass-through).
+  "gemini-flash-latest": "gemini-flash-latest",
+  "gemini-pro-latest": "gemini-pro-latest",
+  "gemini-flash-lite-latest": "gemini-flash-lite-latest",
 };
 
 export async function callAI(opts: AIOptions): Promise<string> {
@@ -212,6 +220,202 @@ export function parseJSON<T = unknown>(text: string): T {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// Gemini embeddings. 768-dim text-embedding-004 matches the pgvector columns
+// we added in 20260418000000_pgvector_memory_foundation.sql.
+// ─────────────────────────────────────────────────────────────────────────
+
+export async function callGeminiEmbedding(input: string | string[]): Promise<number[][]> {
+  const apiKey = Deno.env.get("GEMINI_API_KEY");
+  if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
+
+  const texts = Array.isArray(input) ? input : [input];
+
+  // Model: gemini-embedding-001 (verified live via ListModels on 2026-04-18).
+  // Output dim forced to 768 to match the pgvector columns in
+  // 20260418000000_pgvector_memory_foundation.sql. gemini-embedding-001's
+  // native dim is 3072 but the model is trained to degrade gracefully when
+  // truncated — 768 keeps index size + query cost reasonable.
+  //
+  // Endpoint: :embedContent (single input per call). batchEmbedContents
+  // was removed from this model family; we loop with modest concurrency.
+  const model = "gemini-embedding-001";
+  const OUTPUT_DIM = 768;
+  const TASK_TYPE = "RETRIEVAL_DOCUMENT";
+  const CONCURRENCY = 5;
+
+  async function embedOne(text: string): Promise<number[]> {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`;
+    const body = {
+      content: { parts: [{ text: text.slice(0, 20000) }] },
+      taskType: TASK_TYPE,
+      outputDimensionality: OUTPUT_DIM,
+    };
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Gemini embedding error ${res.status}: ${err}`);
+    }
+    const data = await res.json();
+    const values = data.embedding?.values;
+    if (!Array.isArray(values)) throw new Error("embedding response missing values");
+    return values;
+  }
+
+  // Bounded parallelism — run up to CONCURRENCY embeddings at once to keep
+  // wall clock low without hammering the API.
+  const out: number[][] = new Array(texts.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(CONCURRENCY, texts.length) }, async () => {
+    while (true) {
+      const i = next++;
+      if (i >= texts.length) return;
+      out[i] = await embedOne(texts[i]);
+    }
+  });
+  await Promise.all(workers);
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Claude client (Anthropic API). Used for the long-form writing jobs where
+// consistency + voice matter more than cost — report generation, scope
+// writing, proposals, annual reviews, invoices. Falls back to Gemini Flash
+// if ANTHROPIC_API_KEY isn't set, so the app never breaks when the key is
+// missing.
+//
+// Prompt caching is wired by default via `cache: true` on system blocks.
+// Anthropic caches any message block ≥1024 tokens for ~5 minutes, so reusing
+// long system prompts (report templates, style guides, retrieved context)
+// across multiple calls drops repeated-input cost to ~10%.
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface ClaudeOptions {
+  /** Always required. Short, cheap task-scoped instruction. */
+  system: string;
+  /** Optional long-form context that should be cached (style guide, retrieved past writings). */
+  cacheableContext?: string;
+  /** The user's prompt — the actual task for this call. */
+  prompt?: string;
+  /** Multi-turn conversation (alternative to prompt). */
+  messages?: Array<{ role: "user" | "assistant"; content: string }>;
+  model?: string;
+  json?: boolean;
+  temperature?: number;
+  maxOutputTokens?: number;
+  /** If true and ANTHROPIC_API_KEY is missing, silently fall back to Gemini flash. */
+  geminiFallback?: boolean;
+}
+
+const DEFAULT_CLAUDE_MODEL = "claude-sonnet-4-6";
+
+export async function callClaude(opts: ClaudeOptions): Promise<string> {
+  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+
+  if (!apiKey) {
+    if (opts.geminiFallback !== false) {
+      console.warn("callClaude: ANTHROPIC_API_KEY missing — falling back to Gemini flash");
+      const fallbackSystem = [opts.system, opts.cacheableContext].filter(Boolean).join("\n\n");
+      return callAI({
+        system: fallbackSystem,
+        prompt: opts.prompt,
+        messages: opts.messages?.map((m) => ({
+          role: m.role === "assistant" ? "model" : m.role,
+          content: m.content,
+        })),
+        model: "google/gemini-2.5-flash",
+        json: opts.json,
+        temperature: opts.temperature,
+        maxOutputTokens: opts.maxOutputTokens,
+      });
+    }
+    throw new Error("ANTHROPIC_API_KEY not configured");
+  }
+
+  const model = opts.model ?? DEFAULT_CLAUDE_MODEL;
+
+  // Build the system array. Short system goes first (ephemeral, not cached);
+  // cacheableContext goes in a second block with cache_control set — that's
+  // where the bulk of long templates and retrieved context should live so
+  // Anthropic caches it across the ~5-minute TTL. A single request costs
+  // extra on the first use (the "cache_creation_input_tokens" counter),
+  // then subsequent calls read at ~10% cost.
+  const systemBlocks: Array<Record<string, unknown>> = [
+    { type: "text", text: opts.system },
+  ];
+  if (opts.cacheableContext && opts.cacheableContext.length > 0) {
+    systemBlocks.push({
+      type: "text",
+      text: opts.cacheableContext,
+      cache_control: { type: "ephemeral" },
+    });
+  }
+
+  // Build messages. Either a single user prompt or a multi-turn thread.
+  let msgs: Array<{ role: "user" | "assistant"; content: string }>;
+  if (opts.messages && opts.messages.length > 0) {
+    msgs = opts.messages;
+  } else {
+    const userText = opts.json
+      ? `${opts.prompt ?? ""}\n\nRespond with valid JSON only. No markdown, no explanation.`
+      : (opts.prompt ?? "");
+    msgs = [{ role: "user", content: userText }];
+  }
+
+  const body: Record<string, unknown> = {
+    model,
+    max_tokens: opts.maxOutputTokens ?? 8192,
+    system: systemBlocks,
+    messages: msgs,
+    temperature: opts.temperature ?? 0.3,
+  };
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    if (res.status === 529 || res.status === 503) {
+      throw new Error("Claude is temporarily busy — please try again in a minute.");
+    }
+    if (res.status === 429) {
+      throw new Error("Claude is rate-limited right now — please wait a moment and retry.");
+    }
+    if (res.status === 401 || res.status === 403) {
+      throw new Error("Claude authentication failed — check ANTHROPIC_API_KEY configuration.");
+    }
+    throw new Error(`Anthropic API error ${res.status}: ${err}`);
+  }
+
+  const data = await res.json();
+  // Log cache usage at debug level so we can see it in edge-function logs.
+  if (data.usage) {
+    console.log(
+      `claude usage: in=${data.usage.input_tokens} out=${data.usage.output_tokens} ` +
+      `cache_create=${data.usage.cache_creation_input_tokens ?? 0} ` +
+      `cache_read=${data.usage.cache_read_input_tokens ?? 0}`,
+    );
+  }
+
+  const text = (data.content || [])
+    .filter((c: { type: string }) => c.type === "text")
+    .map((c: { text: string }) => c.text)
+    .join("");
+
+  return text;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // Agent-native call: Gemini function calling done properly.
 //
 // `callAI` above returns a plain string and flattens function calls into an
@@ -233,7 +437,7 @@ export interface AgentCall {
   /** Concatenated text parts from the model turn (may be empty on a pure tool call). */
   text: string;
   /** Function calls the model wants the runner to execute. */
-  functionCalls: Array<{ name: string; args: Record<string, unknown> }>;
+  functionCalls: Array<{ name: string; args: Record<string, unknown>; thoughtSignature?: string }>;
   /** `STOP`, `MAX_TOKENS`, `SAFETY`, etc. Mirrors Gemini's finishReason. */
   finish: string;
 }
@@ -314,13 +518,19 @@ export async function callAIAgent(opts: AgentOptions): Promise<AgentCall> {
 
   const parts: GeminiPart[] = candidate.content?.parts ?? [];
   const textChunks: string[] = [];
-  const functionCalls: Array<{ name: string; args: Record<string, unknown> }> = [];
+  const functionCalls: Array<{ name: string; args: Record<string, unknown>; thoughtSignature?: string }> = [];
   for (const p of parts) {
     if (typeof p.text === "string" && p.text.length > 0) textChunks.push(p.text);
     if (p.functionCall) {
+      // Gemini 2.5+ requires thought_signature to be round-tripped on
+      // subsequent turns when function calling is active. Capture it here
+      // so the runner can put it back on the reconstructed model turn.
+      const thoughtSignature = (p as unknown as { thoughtSignature?: string }).thoughtSignature
+        ?? (p as unknown as { thought_signature?: string }).thought_signature;
       functionCalls.push({
         name: p.functionCall.name,
         args: (p.functionCall.args ?? {}) as Record<string, unknown>,
+        thoughtSignature,
       });
     }
   }

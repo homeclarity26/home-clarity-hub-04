@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callAI, parseJSON } from "../_shared/ai-client.ts";
+import { callClaude, parseJSON } from "../_shared/ai-client.ts";
 import { requireAuth, corsHeaders, json } from "../_shared/auth.ts";
 
 serve(async (req) => {
@@ -62,47 +62,22 @@ Return JSON with:
         });
     }
 
-    const _aiText = await callAI({ messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ], model: "google/gemini-2.5-flash" });
-    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
+    const _aiText = await callClaude({
+      system: systemPrompt,
+      prompt: userPrompt,
+      json: true,
+      temperature: 0.3,
+      maxOutputTokens: 4096,
+    });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("AI gateway error:", response.status, errText);
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limited, please try again shortly." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw new Error(`AI gateway error: ${response.status}`);
+    let result: Record<string, unknown>;
+    try {
+      result = parseJSON<Record<string, unknown>>(_aiText);
+    } catch (e) {
+      console.error("ai-invoice-assistant: JSON parse failed:", e, "raw:", _aiText.slice(0, 500));
+      throw new Error("AI returned non-JSON — please retry");
     }
 
-    const aiData = await response.json();
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
-      // Fallback: try to parse content directly
-      const content = aiData.choices?.[0]?.message?.content;
-      if (content) {
-        try {
-          const parsed = JSON.parse(content);
-          return new Response(JSON.stringify(parsed), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        } catch {
-          // ignore
-        }
-      }
-      throw new Error("No tool call response from AI");
-    }
-
-    const result = JSON.parse(toolCall.function.arguments);
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

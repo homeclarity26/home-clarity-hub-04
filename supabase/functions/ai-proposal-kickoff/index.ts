@@ -1,17 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callAI, parseJSON } from "../_shared/ai-client.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { callClaude, parseJSON } from "../_shared/ai-client.ts";
+import { requireRole, corsHeaders, json as jsonRes } from "../_shared/auth.ts";
+import { retrieveContext } from "../_shared/rag.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  const auth = await requireRole(req, ["creator"]);
+  if ("error" in auth) return auth.error;
+
   try {
     const { userMessage, clientName, propertyAddress, sqft, propertyType } = await req.json();
-    const systemPrompt = `You are an expert home renovation proposal assistant for a home consulting company. 
+    const systemPrompt = `You are an expert home renovation proposal assistant for a home consulting company.
 The admin is describing a project in plain language. Extract ALL relevant details and generate a structured estimate.
 
 Return a JSON object with these fields:
@@ -33,32 +33,32 @@ Context about the client:
 
 Be thorough and professional. Generate realistic pricing based on the scope described. If the user is vague, make reasonable assumptions and note them.`;
 
-    const _aiText = await callAI({ messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userMessage },
-        ], model: "google/gemini-2.5-flash" });
-    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
+    // Pull Adam's past similar scopes and any saved scope-style memories
+    // so pricing + structure stays consistent across proposals.
+    const ragContext = await retrieveContext({
+      query: `${propertyType || ""} ${userMessage}`.slice(0, 3000),
+      adminSupabase: auth.adminSupabase as unknown as { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown[] | null; error: unknown }> },
+      creatorUserId: auth.user.id,
+      sources: ["report_pages", "knowledge_templates", "agent_memory"],
+      perSource: 3,
+    });
 
-    if (!response.ok) {
-      const status = response.status;
-      if (status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limited — try again in a moment" }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted" }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw new Error(`AI gateway error: ${status}`);
+    const _aiText = await callClaude({
+      system: systemPrompt,
+      cacheableContext: ragContext || undefined,
+      prompt: userMessage,
+      json: true,
+      temperature: 0.3,
+      maxOutputTokens: 8192,
+    });
+
+    let result: Record<string, unknown>;
+    try {
+      result = parseJSON<Record<string, unknown>>(_aiText);
+    } catch (e) {
+      console.error("ai-proposal-kickoff: JSON parse failed:", e, "raw:", _aiText.slice(0, 500));
+      return jsonRes({ error: "AI returned non-JSON — please retry" }, { status: 500 });
     }
-
-    const json = await response.json();
-    const toolCall = json.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) throw new Error("No structured response from AI");
-
-    const result = JSON.parse(toolCall.function.arguments);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

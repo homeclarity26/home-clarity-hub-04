@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callAIAgent, type AIMessage } from "../_shared/ai-client.ts";
+import { callAIAgent, callGeminiEmbedding, type AIMessage } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireAuth, corsHeaders } from "../_shared/auth.ts";
 
@@ -168,11 +168,21 @@ const TOOLS: ToolDef[] = [
   { name: "client_get_home_health_breakdown", description: "Get a detailed breakdown of the home health score by chapter and section.", parameters: { type: "object", properties: { property_id: { type: "string" } }, required: ["property_id"] }, allowedRoles: ["client"] },
   { name: "client_request_service_quote", description: "Request a quote for a specific recommendation from the report.", parameters: { type: "object", properties: { property_id: { type: "string" }, page_key: { type: "string" }, recommendation: { type: "string" }, notes: { type: "string" } }, required: ["property_id", "recommendation"] }, allowedRoles: ["client"] },
 
-  // ── GROUP S: KNOWLEDGE BASE ──
-  { name: "search_knowledge_base", description: "Full-text search across knowledge base articles. Returns matching articles with title and content preview.", parameters: { type: "object", properties: { query: { type: "string" } }, required: ["query"] }, allowedRoles: ["creator"] },
-  { name: "add_kb_article", description: "Create a new knowledge base article.", parameters: { type: "object", properties: { title: { type: "string" }, content: { type: "string" }, category: { type: "string" }, tags: { type: "array", items: { type: "string" } } }, required: ["title", "content"] }, allowedRoles: ["creator"] },
-  { name: "update_kb_article", description: "Update an existing knowledge base article.", parameters: { type: "object", properties: { article_id: { type: "string" }, fields: { type: "object" } }, required: ["article_id", "fields"] }, allowedRoles: ["creator"] },
+  // ── GROUP S: KNOWLEDGE BASE (semantic + legacy keyword) ──
+  { name: "search_knowledge_base", description: "Semantic search across Adam's saved writing/pricing/scope templates, his own past published report pages, and the client's recorded facts. Returns the top matches with similarity scores. Use this FIRST whenever you need reference material before drafting.", parameters: { type: "object", properties: { query: { type: "string", description: "Natural-language description of what you're looking for — the search is semantic, not keyword." }, property_id: { type: "string", description: "Optional: scope home-knowledge matches to this client's property." } }, required: ["query"] }, allowedRoles: ["creator"] },
+  { name: "add_kb_article", description: "Create a new knowledge base article (template/reference note). Embeds it immediately so it becomes retrievable via search_knowledge_base.", parameters: { type: "object", properties: { title: { type: "string" }, content: { type: "string" }, category: { type: "string" }, tags: { type: "array", items: { type: "string" } } }, required: ["title", "content"] }, allowedRoles: ["creator"] },
+  { name: "update_kb_article", description: "Update an existing knowledge base article. Triggers re-embedding.", parameters: { type: "object", properties: { article_id: { type: "string" }, fields: { type: "object" } }, required: ["article_id", "fields"] }, allowedRoles: ["creator"] },
   { name: "get_kb_article", description: "Get a specific knowledge base article by ID.", parameters: { type: "object", properties: { article_id: { type: "string" } }, required: ["article_id"] }, allowedRoles: ["creator"] },
+
+  // ── GROUP S2: AGENT MEMORY (persistent across sessions) ──
+  // These tools back the "get smarter over time" behavior. `remember` stores
+  // a fact/preference/decision with an embedding; `recall` retrieves the
+  // most semantically-relevant memories for a task. Use them liberally —
+  // the goal is for the agent to accumulate a working model of Adam's style
+  // and each client's situation.
+  { name: "remember", description: "Store a persistent memory about a client, a preference, a decision, or Adam's style. Use whenever you learn something that would be valuable to recall in a later session (e.g. 'Sarah wants basement moisture addressed', 'I charge $12/sq ft for basic tile', 'Skip radon test on unfinished basements'). The memory is embedded + retrievable via `recall`.", parameters: { type: "object", properties: { content: { type: "string", description: "The memory itself, in natural language." }, memory_type: { type: "string", description: "One of: scope_style, client_context, past_decision, system_fact, style_preference, template_seed, general." }, property_id: { type: "string", description: "Optional. If this memory is client-specific, scope it to that property." } }, required: ["content", "memory_type"] }, allowedRoles: ["creator"] },
+  { name: "recall", description: "Search stored memories for ones relevant to the current task. Returns content + memory_type for each match. Call this at the start of any writing/planning task so you can honor past decisions and style preferences.", parameters: { type: "object", properties: { query: { type: "string" }, property_id: { type: "string", description: "Optional: limit to memories about this specific client." }, memory_type: { type: "string", description: "Optional filter." } }, required: ["query"] }, allowedRoles: ["creator"] },
+  { name: "retrieve_context", description: "Retrieve semantically-similar content across multiple sources (past report pages, templates, client facts, agent memories) for a given task. Returns a pre-formatted context block ready to reason over. Use when starting a new writing task so your output matches how Adam has written the same thing before.", parameters: { type: "object", properties: { query: { type: "string" }, property_id: { type: "string" }, sources: { type: "array", items: { type: "string", enum: ["report_pages", "knowledge_templates", "home_knowledge_base", "agent_memory"] } } }, required: ["query"] }, allowedRoles: ["creator"] },
 
   // ── GROUP T: ANNUAL REVIEWS ──
   { name: "create_annual_review", description: "Create a year-over-year annual review for a property.", parameters: { type: "object", properties: { property_id: { type: "string" }, year: { type: "number" }, summary: { type: "string" }, key_changes: { type: "array", items: { type: "string" } }, recommendations: { type: "array", items: { type: "string" } } }, required: ["property_id", "year"] }, allowedRoles: ["creator"] },
@@ -1147,31 +1157,190 @@ async function executeTool(supabase: any, toolName: string, params: any, userId:
         return { success: true, result: { message: `Quote request submitted for: "${params.recommendation}". Your advisor will get back to you shortly.` } };
       }
 
-      // ── KNOWLEDGE BASE ──
+      // ── KNOWLEDGE BASE (semantic) ──
+      // We embed the query + hit the match_*() RPCs directly. Calling the
+      // retrieve-similar edge function via supabase.functions.invoke() from
+      // inside another edge function doesn't forward the user JWT cleanly,
+      // so we keep retrieval logic in-process here.
       case "search_knowledge_base": {
-        const q = `%${params.query}%`;
-        const { data } = await (supabase.from("knowledge_base_articles" as any) as any).select("id, title, category, tags, content, created_at").or(`title.ilike.${q},content.ilike.${q},category.ilike.${q}`).limit(10);
-        return { success: true, result: { count: (data || []).length, articles: (data || []).map((a: any) => ({ id: a.id, title: a.title, category: a.category, tags: a.tags, preview: (a.content || "").slice(0, 200) })) } };
+        try {
+          const [queryVec] = await callGeminiEmbedding(params.query);
+          const vecLit = `[${queryVec.join(",")}]`;
+          const [kt, rp, hkb, am] = await Promise.all([
+            supabase.rpc("match_knowledge_templates", { query_embedding: vecLit, match_count: 5, filter_category: null, min_similarity: 0.6 }),
+            supabase.rpc("match_report_pages", { query_embedding: vecLit, match_count: 5, filter_property_id: params.property_id ?? null, filter_client_user_id: null, published_only: true, min_similarity: 0.7 }),
+            supabase.rpc("match_home_knowledge", { query_embedding: vecLit, match_count: 5, filter_client_id: params.client_user_id ?? null, filter_current_only: true, min_similarity: 0.65 }),
+            supabase.rpc("match_agent_memory", { query_embedding: vecLit, match_count: 5, filter_creator_user_id: userId, filter_property_id: params.property_id ?? null, filter_memory_type: null, min_similarity: 0.65 }),
+          ]);
+          const matches = {
+            knowledge_templates: (kt.data as unknown[]) || [],
+            report_pages: (rp.data as unknown[]) || [],
+            home_knowledge_base: (hkb.data as unknown[]) || [],
+            agent_memory: (am.data as unknown[]) || [],
+          };
+          return {
+            success: true,
+            result: {
+              query: params.query,
+              total_matches: Object.values(matches).reduce((n, arr) => n + arr.length, 0),
+              matches,
+            },
+          };
+        } catch (e) {
+          console.error("search_knowledge_base error:", e);
+          return { success: false, result: { message: "Search failed", error: e instanceof Error ? e.message : String(e) } };
+        }
       }
 
       case "add_kb_article": {
-        const { data, error } = await (supabase.from("knowledge_base_articles" as any) as any).insert({
-          title: params.title, content: params.content, category: params.category || "General",
-          tags: params.tags || [], created_by: userId,
-        }).select().single();
+        // Embed inline so the article is retrievable immediately. Fire-and-
+        // forget was getting killed on edge function exit.
+        let embeddingLiteral: string | null = null;
+        try {
+          const textToEmbed = [params.title, params.category, params.content].filter(Boolean).join("\n\n");
+          const [vec] = await callGeminiEmbedding(textToEmbed);
+          embeddingLiteral = `[${vec.join(",")}]`;
+        } catch (e) {
+          console.error("add_kb_article: embedding failed:", e);
+        }
+        const insertRow: Record<string, unknown> = {
+          title: params.title, content: { body: params.content }, category: params.category || "General",
+        };
+        if (embeddingLiteral) insertRow.embedding = embeddingLiteral;
+        const { data, error } = await (supabase.from("knowledge_templates") as any).insert(insertRow).select().single();
         if (error) throw error;
-        return { success: true, result: { message: `Article "${params.title}" created`, article_id: data.id }, entity_id: data.id, entity_type: "kb_article" };
+        return {
+          success: true,
+          result: { message: embeddingLiteral ? `Article "${params.title}" created + embedded` : `Article "${params.title}" created (embedding pending)`, article_id: data.id },
+          entity_id: data.id,
+          entity_type: "kb_article",
+        };
       }
 
       case "update_kb_article": {
-        const { error } = await (supabase.from("knowledge_base_articles" as any) as any).update(params.fields).eq("id", params.article_id);
+        // Re-embed inline if any text fields changed.
+        const updateRow: Record<string, unknown> = { ...params.fields };
+        try {
+          // Fetch current row so we can build the concatenated text for embedding.
+          const { data: existing } = await (supabase.from("knowledge_templates") as any)
+            .select("title, category, content")
+            .eq("id", params.article_id)
+            .single();
+          const merged = { ...(existing || {}), ...params.fields };
+          const contentBody = typeof merged.content === "object"
+            ? JSON.stringify(merged.content)
+            : String(merged.content ?? "");
+          const textToEmbed = [merged.title, merged.category, contentBody].filter(Boolean).join("\n\n");
+          const [vec] = await callGeminiEmbedding(textToEmbed);
+          updateRow.embedding = `[${vec.join(",")}]`;
+        } catch (e) {
+          console.error("update_kb_article: embedding failed (clearing to retry later):", e);
+          updateRow.embedding = null;
+        }
+        const { error } = await (supabase.from("knowledge_templates") as any).update(updateRow).eq("id", params.article_id);
         if (error) throw error;
-        return { success: true, result: { message: "Article updated" }, entity_id: params.article_id, entity_type: "kb_article" };
+        return { success: true, result: { message: updateRow.embedding ? "Article updated + re-embedded" : "Article updated (re-embedding pending)" }, entity_id: params.article_id, entity_type: "kb_article" };
       }
 
       case "get_kb_article": {
-        const { data } = await (supabase.from("knowledge_base_articles" as any) as any).select("*").eq("id", params.article_id).single();
+        const { data } = await (supabase.from("knowledge_templates") as any).select("id, title, category, content, region, created_at").eq("id", params.article_id).single();
         return { success: true, result: data || { message: "Article not found" }, entity_id: params.article_id, entity_type: "kb_article" };
+      }
+
+      // ── AGENT MEMORY (persistent, semantic) ──
+      case "remember": {
+        // Embed inline (synchronously). Fire-and-forget via functions.invoke
+        // was getting killed when the edge function exited, so the memory
+        // row was inserted with embedding NULL and never became retrievable.
+        // Synchronous embedding adds ~400ms but guarantees recall works.
+        let embeddingLiteral: string | null = null;
+        try {
+          const textToEmbed = `${params.memory_type || "general"}\n\n${params.content}`;
+          const [vec] = await callGeminiEmbedding(textToEmbed);
+          embeddingLiteral = `[${vec.join(",")}]`;
+        } catch (e) {
+          console.error("remember: embedding failed (storing without vector):", e);
+        }
+
+        const insertRow: Record<string, unknown> = {
+          creator_user_id: userId,
+          property_id: params.property_id ?? null,
+          memory_type: params.memory_type || "general",
+          content: params.content,
+          metadata: {},
+        };
+        if (embeddingLiteral) insertRow.embedding = embeddingLiteral;
+
+        const { data, error } = await (supabase.from("agent_memory") as any).insert(insertRow).select().single();
+        if (error) {
+          console.error("remember insert error:", error);
+          return { success: false, result: { message: "Failed to store memory", error: String(error) } };
+        }
+        return {
+          success: true,
+          result: {
+            message: embeddingLiteral ? "Stored + embedded for semantic recall" : "Stored (embedding pending retry)",
+            memory_id: data.id,
+            memory_type: data.memory_type,
+            embedded: !!embeddingLiteral,
+          },
+          entity_id: data.id,
+          entity_type: "agent_memory",
+        };
+      }
+
+      case "recall": {
+        try {
+          const [vec] = await callGeminiEmbedding(params.query);
+          const vecLit = `[${vec.join(",")}]`;
+          const { data, error } = await supabase.rpc("match_agent_memory", {
+            query_embedding: vecLit,
+            match_count: 8,
+            filter_creator_user_id: userId,
+            filter_property_id: params.property_id ?? null,
+            filter_memory_type: params.memory_type ?? null,
+            min_similarity: 0.5, // more permissive — better UX than "no match found"
+          });
+          if (error) throw error;
+          const memories = (data as Array<Record<string, unknown>>) || [];
+          return { success: true, result: { count: memories.length, memories } };
+        } catch (e) {
+          console.error("recall error:", e);
+          return { success: false, result: { message: "Recall failed", error: e instanceof Error ? e.message : String(e) } };
+        }
+      }
+
+      case "retrieve_context": {
+        try {
+          const [vec] = await callGeminiEmbedding(params.query);
+          const vecLit = `[${vec.join(",")}]`;
+          const sources = params.sources || ["report_pages", "knowledge_templates", "home_knowledge_base", "agent_memory"];
+          const results: Record<string, unknown[]> = {};
+          await Promise.all((sources as string[]).map(async (src) => {
+            try {
+              if (src === "report_pages") {
+                const { data } = await supabase.rpc("match_report_pages", { query_embedding: vecLit, match_count: 5, filter_property_id: params.property_id ?? null, filter_client_user_id: null, published_only: true, min_similarity: 0.7 });
+                results.report_pages = (data as unknown[]) || [];
+              } else if (src === "knowledge_templates") {
+                const { data } = await supabase.rpc("match_knowledge_templates", { query_embedding: vecLit, match_count: 5, filter_category: null, min_similarity: 0.6 });
+                results.knowledge_templates = (data as unknown[]) || [];
+              } else if (src === "home_knowledge_base") {
+                const { data } = await supabase.rpc("match_home_knowledge", { query_embedding: vecLit, match_count: 5, filter_client_id: params.client_user_id ?? null, filter_current_only: true, min_similarity: 0.65 });
+                results.home_knowledge_base = (data as unknown[]) || [];
+              } else if (src === "agent_memory") {
+                const { data } = await supabase.rpc("match_agent_memory", { query_embedding: vecLit, match_count: 5, filter_creator_user_id: userId, filter_property_id: params.property_id ?? null, filter_memory_type: null, min_similarity: 0.5 });
+                results.agent_memory = (data as unknown[]) || [];
+              }
+            } catch (e) {
+              console.error(`retrieve_context: ${src} failed:`, e);
+              results[src] = [];
+            }
+          }));
+          return { success: true, result: { query: params.query, results } };
+        } catch (e) {
+          console.error("retrieve_context error:", e);
+          return { success: false, result: { message: "Retrieve failed", error: e instanceof Error ? e.message : String(e) } };
+        }
       }
 
       // ── ANNUAL REVIEWS ──
@@ -1674,10 +1843,24 @@ serve(async (req) => {
       // ── Tool-calling turn. ──
       // Append the model's turn (text + functionCall parts) to contents so
       // subsequent iterations see the model's reasoning.
+      //
+      // Gemini 2.5+ requires `thought_signature` on every functionCall part
+      // to be round-tripped back on subsequent turns. Dropping it causes a
+      // 400 "Function call is missing a thought_signature" error on the
+      // next :generateContent call. We preserve it as both the new snake_case
+      // (thought_signature) and camelCase (thoughtSignature) keys so that
+      // however the current Gemini SDK introspects parts, it finds it.
       const modelParts: any[] = [];
       if (resp.text) modelParts.push({ text: resp.text });
       for (const fc of resp.functionCalls) {
-        modelParts.push({ functionCall: { name: fc.name, args: fc.args } });
+        const part: Record<string, unknown> = {
+          functionCall: { name: fc.name, args: fc.args },
+        };
+        if (fc.thoughtSignature) {
+          part.thoughtSignature = fc.thoughtSignature;
+          part.thought_signature = fc.thoughtSignature;
+        }
+        modelParts.push(part);
       }
       contents.push({ role: "model", parts: modelParts });
 
