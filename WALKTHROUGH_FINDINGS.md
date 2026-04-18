@@ -217,3 +217,87 @@ Both cleanups run at the end of this session — see cleanup log below.
 
 No other prod rows were modified during this walkthrough.
 
+---
+
+## E2E run — 2026-04-18
+
+**Walker:** Claude Code (autonomous resume) on behalf of Adam
+**Environment:** `https://home-clarity-hub.vercel.app`
+**Auth approach:** Minted two throwaway users — creator `e2e-d3a55556@clarityhub.test`
+(`ce5f17ab-...`) and client `e2e-client-139a0064@clarityhub.test`
+(`0a9a6ef4-...`) — via `auth.admin.createUser` with the new
+`user_metadata.role` pattern. Session tokens injected into localStorage as
+`sb-vvwojahsianpmwjvkunn-auth-token`. Both users cleaned up at end.
+
+### Step 1 — migration
+
+- `supabase db push --linked` applied both pending migrations:
+  `20260417000000_restore_creators_view_all_profiles.sql` and
+  `20260417120000_handle_new_user_role_metadata.sql`.
+- Adam's existing roles intact: `select role from user_roles where user_id =
+  '1a9f82dc-...'` returns `[{"role":"client"},{"role":"creator"}]`. Migration
+  only touches future inserts — confirmed.
+- New creator-metadata throwaway got **exactly one** `creator` row (not
+  creator + client). Trigger honors `raw_user_meta_data.role` as intended.
+
+### Step 2 — edge-function smoke
+
+`bun scripts/smoke-test-ai.ts` with auto-mint auth:
+
+- `hbc-agent` 200 in 5.8s ✅
+- `ai-maintenance-schedule` 200 in 34.9s ✅
+- `ai-vendor-match` 200 in 2.0s ✅
+- `ai-transcript-summarizer` 200 in 9.0s ✅
+- `estimate-costs` 200 in 3.0s ✅
+- `ai-client-insights` skipped (needs real published client) ✅
+
+### Step 3 — PR #35–#42 live verification
+
+| PR | Check | Status |
+|---|---|---|
+| #35 | `/admin/analytics` renders, no TDZ crash, `AVG HOME CONDITION` shows `—` | ✅ |
+| #37 | `/portal` with non-creator + no property shows placeholder + "Sign Out" button | ✅ verified as client `e2e-client-139a0064`, full text: "Your Portal is Being Prepared … SIGN OUT" |
+| #38 | `/admin/crm` shows Sarah Johnson (1 client); `/admin/crm/pipeline` has her in Lead | ✅ |
+| #39a | `/admin/clients/b9d0db18-...` Report Progress reads "Report not started yet", not "600%" | ✅ |
+| #39b | `/portal/<id>/report?preview=admin` has no dangling "Chapters / Report Chapters" heading on empty report | ✅ |
+| #39c | Analytics card renamed to "AVG HOME CONDITION" | ✅ |
+| #40a | `/admin/analytics` Active (last 30 days) = 1 (Sarah only, no creators) | ✅ |
+| #40b | Total Logins on client detail uses real count (`count: 'exact'`) | ✅ code + live — 63 real sessions vs 18 page views (see new finding below) |
+| #40c | Churn risk shows "Low Risk 0 /100" with "Low risk / High risk" bar labels | ✅ |
+| #40d | `/admin/team` uses "On the roadmap" badges, no "Coming Soon" | ✅ |
+| #40e | Notification banner is fixed bottom-right chip (`fixed bottom-4 right-4 max-w-sm`, 384px wide), not a full top bar | ✅ |
+| #40f | Automations breadcrumb reads "Tools / Automations" | ✅ |
+| #41 | Chunk-drift auto-reload — code confirmed in `src/main.tsx` + `ErrorBoundary.tsx`; no way to force a stale chunk in prod without a mid-deploy race | ✅ by inspection |
+| #42a | `PublicRoute` gates on `roles.length > 0`, not just `user` — empty-roles sessions fall through to render login form | ✅ confirmed in `src/App.tsx:125` |
+| #42b | `handle_new_user` migration applied | ✅ (Step 1) |
+
+### Admin route sweep
+
+All of `/admin/{dashboard, inbox, clients, crm, crm/pipeline, projects, tasks, calendar, analytics, team, settings, knowledge-base, goals, referrals, announcements, annual-reviews, automations, help, clients/new, clients/b9d0db18-...}` loaded without ErrorBoundary trips and with zero console errors or warnings.
+
+### Portal route sweep (as Sarah via `?preview=admin`)
+
+All of `/portal/b9d0db18-.../{"", report, projects, payments, equipment, messages, documents, schedule, photos, estimates, billing}` rendered sensible empty states. Greeting correctly shows "GOOD EVENING, SARAH" (not the admin's name — PR #30 confirmed). No "Condition NN" eyebrow. No canned "I've completed a thorough review…" copy.
+
+### New finding (non-blocking)
+
+- 🟡 **Portal Engagement label clarity.** With real counts now flowing,
+  Sarah's card shows `TOTAL LOGINS 63` > `TOTAL PAGE VIEWS 18`. The data is
+  correct — `usePortalTracking` inserts a `client_sessions` row on every
+  load but only a `page_views` row when `activeTab` changes, so refreshes
+  on the same tab inflate logins relative to views. Not a regression
+  (pre-PR-#40 the caps hid this), but counter-intuitive on the admin
+  surface. Logged to `QUESTIONS.md` — needs a product call from Adam
+  (relabel vs. change measurement vs. drop the tab-dedup guard) before
+  any code change.
+
+### Cleanup
+
+- `delete from user_roles where user_id = 'ce5f17ab-...'` — removed 1 row (creator).
+- `delete from user_roles where user_id = '0a9a6ef4-...'` — removed 1 row (client).
+- `DELETE /auth/v1/admin/users/ce5f17ab-...` → HTTP 200.
+- `DELETE /auth/v1/admin/users/0a9a6ef4-...` → HTTP 200.
+- Verified both absent from `auth.users`.
+
+**Bottom line:** migration is live; all 14 walkthrough fixes verified in prod;
+no new bugs, one label-clarity question filed in `QUESTIONS.md`.
