@@ -26,11 +26,11 @@ serve(async (req) => {
       return json({ error: "meeting_notes (string) is required" }, { status: 400 });
     }
 
-    const systemPrompt = `You are an expert home consultant assistant for Hometown Builders Club. Based on the consultant's raw meeting notes (and optional photo descriptions), generate a comprehensive report seed for a Home Clarity Report.
+    const systemPrompt = `You are an expert home consultant assistant for Hometown Builders Club. Based on the consultant's raw meeting notes (and optional photo descriptions), generate a focused report seed for a Home Clarity Report.
 
-The report covers the entire home: exterior (roof, siding, windows, doors, gutters, deck/patio, driveway, landscaping, fences, outbuildings), interior (every room: living, dining, family, bedrooms, bathrooms, kitchen, laundry, mudroom, basement, attic, garage, bonus rooms), appliances (fridge, range/oven, microwave, dishwasher, garbage disposal, washer/dryer, range hood), systems (furnace, AC, insulation, electrical panel, plumbing, water heater, fireplace, foundation, ductwork, thermostat, water softener, sump pump), and safety (smoke/CO detectors, security, fire extinguishers, radon).
+**Scope:** only generate page seeds for areas that are DIRECTLY MENTIONED or clearly implied in the notes. Do not speculate about untouched areas of the home — the consultant will add those pages manually. Typical output is 5-20 page seeds, not 65.
 
-For each area mentioned or implied in the notes, create a page seed. Even if the notes only briefly mention an area, include it — the consultant will flesh it out later.
+Possible page categories (pick only those relevant): exterior (roof, siding, windows, doors, gutters, deck/patio, driveway, landscaping), interior (rooms explicitly discussed: living, dining, bedrooms, bathrooms, kitchen, basement, attic, garage), appliances (discussed items only), systems (furnace, AC, water heater, electrical, plumbing if mentioned), safety (only if brought up).
 
 Respond in JSON:
 {
@@ -50,7 +50,7 @@ Respond in JSON:
   ]
 }
 
-Be thorough — include every area you can reasonably infer from the notes. When in doubt, include the page with "Good" condition and a placeholder narrative. The consultant will edit.`;
+Be focused — only include pages directly supported by the notes. When in doubt, omit; the consultant will add more later. Aim for 5-20 pages, not more. Keep each narrative_seed concise (2-3 sentences) to stay under token budget.`;
 
     const contextStr = property_context
       ? `\nProperty context: ${JSON.stringify(property_context)}`
@@ -71,23 +71,33 @@ Be thorough — include every area you can reasonably infer from the notes. When
       perSource: 3,
     });
 
+    // maxOutputTokens: 16k — the system prompt tells Claude to seed 65+
+    // pages across the entire home, which generates a JSON response that
+    // comfortably exceeds the 8k default and truncates mid-object. A
+    // truncated JSON can't be recovered by any parser. Sonnet 4.6 supports
+    // up to 64k output; 16k is a comfortable cap for this task.
     const aiText = await callClaude({
       system: systemPrompt,
       cacheableContext: ragContext || undefined,
       prompt: userMessage,
       json: true,
       temperature: 0.4,
-      maxOutputTokens: 8192,
+      maxOutputTokens: 16384,
     });
 
-    // Use parseJSON (strips markdown fences). Claude occasionally wraps JSON
-    // output in ```json ... ``` despite the "no markdown" instruction; raw
-    // JSON.parse on that throws and the whole response falls into the
-    // fallback branch which dumps the raw text into `summary`.
+    // Use parseJSON (strips markdown fences + handles leading/trailing
+    // narration). Claude occasionally wraps JSON output in ```json ... ```
+    // or prepends "Here's the JSON:" despite the "no markdown" instruction.
     let result: { summary?: string; recommended_pages?: string[]; page_seeds?: unknown[] };
     try {
       result = parseJSON<typeof result>(aiText);
-    } catch {
+    } catch (parseErr) {
+      // If parseJSON truly can't extract an object/array from the text,
+      // log the first chunk so we can see what Claude returned. Fall back
+      // to treating the whole text as a summary so the caller sees *some*
+      // output instead of a silent 0-page response.
+      console.error("seed-report-from-notes: parseJSON failed; Claude raw output (first 800 chars):", aiText.slice(0, 800));
+      console.error("parseJSON error was:", parseErr);
       result = { summary: aiText, recommended_pages: [], page_seeds: [] };
     }
 

@@ -359,6 +359,32 @@ const text = await callAI({
 
 ## Runbook
 
+### Run the Golden Path (deploy gate)
+
+**This is the single most-important check before shipping.** 8-step
+business-critical flow against live prod, end-to-end, with real Claude
+calls + real DB writes. PASS means creator can onboard a client, seed a
+report with Claude + RAG, use persistent memory, publish, send an
+invoice, and the client can view the published report without crashes.
+
+```bash
+bun --env-file=.env.local scripts/golden-path.ts
+```
+
+Required env (already in `.env.local` on Adam's machine):
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+
+Exits 0 on PASS, 1 on FAIL. Takes ~45s when healthy. Self-cleans — the
+throwaway creator + its report/pages/invoice/memory are deleted at the
+end regardless of pass/fail. See the script's top comment for the full
+rationale and the `WALKTHROUGH_FINDINGS.md` "Golden Path run" section
+for what the 8 steps mean in business terms.
+
+Run this after any schema change, edge-function change, or Vercel deploy
+that touches the report/invoice/memory flows. A red Golden Path means
+nothing else is true — not passing unit tests, not "the AI said it's
+done" — until the script turns green again.
+
 ### Local dev
 ```bash
 bun install
