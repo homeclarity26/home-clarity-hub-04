@@ -152,24 +152,51 @@
 
 ## Summary — prioritized punch list
 
+**ALL 14 ITEMS SHIPPED.** Status as of 2026-04-17 evening:
+
 ### Must-fix before Johnsons see the product
-1. ✅ **Analytics TDZ crash** (PR #35, shipped + verified live).
-2. 🚨 **Adam's own login loop** — advise him to clear `home-clarity-hub.vercel.app` site data. The real code fix is `PublicRoute` should not trust a session with no resolvable role (see P0 section above).
-3. 🔴 **CRM vs Clients data mismatch** — any admin glancing at CRM will think their clients vanished.
-4. 🟠 **`/admin/clients/:id` "Report Progress 600%"** — obvious division bug, looks unprofessional.
-5. 🟠 **Empty-report "Chapters" heading** — PR #28 left a floating heading with no content. Small visual polish.
+1. ✅ **Analytics TDZ crash** — PR #35, shipped + verified live.
+2. ✅ **Adam's login loop / sign-out escape hatch** — PR #37 (sign-out button on "Portal is Being Prepared") + PR #42 (PublicRoute hardening — defense in depth).
+3. ✅ **CRM vs Clients data mismatch** — PR #38 (orphan-property synthesis in `useCRMClientsEnriched`).
+4. ✅ **`/admin/clients/:id` Report Progress risk over-flagging** — PR #39 (gate progressRisk on totalPages > 0; detail reads "Report not started yet" for 0-page clients).
+5. ✅ **Empty-report "Chapters" heading** — PR #39 (hide "Chapters" + "Report Chapters" blocks when no chapter has content).
 
 ### Worth doing soon
-6. Unify the Dashboard "Portfolio Health 43" source with the Analytics avg (P1 above).
-7. "8 Active Clients (last 30 days)" in Analytics when there's only 1 client — fix the engagement computation.
-8. "Total Logins 50, Total Page Views 18" inversion on client detail.
-9. Clarify "Churn Risk 15" label on client detail.
-10. "Invite Employee — Coming Soon" / "Field Employee Portal — Coming Soon" — ship or hide.
+6. ✅ **Analytics Portfolio Health vs Avg Health Score label collision** — PR #39 (renamed Analytics card to "Avg Home Condition").
+7. ✅ **"8 Active Clients (last 30 days)" with 1 client** — PR #40 (engagement now scoped to users who are `client_user_id` of a real property).
+8. ✅ **"Total Logins 50, Total Page Views 18" inversion** — PR #40 (totals use `count: 'exact', head: true` instead of `.length` of a `.limit(50)` sample).
+9. ✅ **Churn Risk label clarity** — PR #40 (added `/100` to the score, labeled bar as "Low risk / High risk").
+10. ✅ **Team "Coming Soon" hide** — PR #40 (replaced disabled button with "On the roadmap" badge + honest copy).
 
 ### Nice to have
-11. "Get notified about new messages" banner aggressiveness.
-12. Automations breadcrumb says "Settings / Automations" but sidebar puts it under Tools — pick one.
-13. Vercel chunk-drift during deploy sometimes strands the user — consider a soft reload banner.
+11. ✅ **"Get notified about new messages" banner aggressiveness** — PR #40 (slim bottom-right chip instead of full-width navy bar).
+12. ✅ **Automations breadcrumb IA** — PR #40 (now reads "Tools / Automations").
+13. ✅ **Vercel chunk-drift during deploy** — PR #41 (`vite:preloadError` listener auto-reloads once; ErrorBoundary recognizes the error pattern).
+
+### Cleanup-log finding
+14. ✅ **handle_new_user trigger inserting `client` for everyone** — PR #42 includes `supabase/migrations/20260417120000_handle_new_user_role_metadata.sql`. **NOTE: migration file is committed to the repo but not applied to prod yet** — the management API blocks SECURITY DEFINER changes via `/database/query`. Apply with `npx supabase db push` from a checkout, or paste the SQL into the Supabase SQL editor.
+
+---
+
+## PRs shipped today (in order)
+
+| PR | Items | What |
+|---|---|---|
+| #28 | — | (PR #28 was the canned-intro empty-report fix from earlier in the day) |
+| #29 | — | (Condition NN eyebrow fix) |
+| #30 | — | (Admin-preview greeting) |
+| #31 | — | (Avg Health Score real data — original) |
+| #32 | — | (PaymentsTab AI-summary errors) |
+| #33 | — | (VITE_GOOGLE_MAPS_API_KEY docs) |
+| #34 | — | (Silent catches in SeasonalChecklist + DigitalTwinTab) |
+| #35 | TDZ | Hotfix for Analytics crash from PR #31 |
+| #36 | — | This findings doc |
+| #37 | #1 | Sign-out escape hatch on "Portal is Being Prepared" |
+| #38 | #2 | CRM orphan-property synthesis |
+| #39 | #3 #4 #5 | Progress risk + chapters empty state + label collision |
+| #40 | #6 #7 #8 #9 #10 #11 | UX polish bundle |
+| #41 | #12 | Chunk-drift auto-reload |
+| #42 | #13 #14 | Auth hardening (trigger migration + PublicRoute) |
 
 ---
 

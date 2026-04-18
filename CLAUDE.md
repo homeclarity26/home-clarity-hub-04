@@ -1,7 +1,16 @@
 # Home Clarity Hub — Developer Reference
 
-**Branch:** `main` (all feature branches merged through PR #11)
-**Last updated:** 2026-04-16 after PR #11 ("Fix all post-deployment review findings")
+**Branch:** `main` (all feature branches merged through PR #42)
+**Last updated:** 2026-04-17 evening after the walkthrough fixes (#35–#42)
+
+## ⚠️ Pending migration to apply
+
+`supabase/migrations/20260417120000_handle_new_user_role_metadata.sql` is
+committed but **not yet applied to prod**. It rewrites the
+`handle_new_user()` trigger so admin-created users with
+`raw_user_meta_data.role = 'creator' | 'trade_partner'` get the right role
+instead of always getting `client`. Apply it with `npx supabase db push`
+from a checkout, or paste the SQL into the Supabase SQL editor.
 **Stack:** React 18 + TypeScript + Vite (Bun runtime) · Supabase (Postgres, Auth, Storage, Edge Functions) · Gemini 2.0 Flash · shadcn/ui · TanStack React Query · Tiptap WYSIWYG · @react-pdf/renderer · date-fns · framer-motion · DOMPurify · @dnd-kit
 
 ---
