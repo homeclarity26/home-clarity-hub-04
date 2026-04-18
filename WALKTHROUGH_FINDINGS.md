@@ -384,3 +384,83 @@ At 2 admins + 20 clients with the hybrid (Gemini for chat/vision/photos, Claude 
 ### Rotation reminder for Adam
 
 You pasted your Anthropic API key in chat. That transcript is persisted. **Create a new key in https://console.anthropic.com/settings/keys, update the Supabase secret via https://supabase.com/dashboard/project/vvwojahsianpmwjvkunn/settings/functions, then revoke the old one.** Ideally before you touch the app today.
+
+---
+
+## Golden Path run — 2026-04-18 (post memory+Claude ship)
+
+Adam brought over the Golden Path Protocol from his other app. Ran it
+immediately — found three P0 bugs that every other form of review had
+missed. This is exactly what the protocol is designed for.
+
+### The Golden Path (drafted from the business, pending Adam's confirmation)
+
+1. Creator logs in → admin dashboard with real data
+2. Creator sees real client (Sarah Johnson) in `/admin/clients`
+3. Creator seeds a report from realistic walkthrough notes (Claude Sonnet + RAG)
+4. Creator teaches agent a preference; in a **new session**, agent recalls it
+5. Creator publishes the report (status → `published`)
+6. Client logs into their portal → sees own greeting + property
+7. Client opens the published report → real narrative pages render
+
+### Results table
+
+| # | Step | URL | DB proof | Data visible | Status | Notes |
+|---|---|---|---|---|---|---|
+| 1 | Creator login | `/admin` | Session JWT resolves to creator role | "Good morning, Golden", "1 Active Clients", "43 Avg Score", Creator badge | ✅ | |
+| 2 | Client list | `/admin/clients` | `SELECT properties WHERE client_user_id = Sarah` returns 1 | "Sarah Johnson · 1234 Maple Ridge Drive · Draft · 1/5 · Apr 6" | ✅ | |
+| 3 | Seed report from notes | `POST /functions/v1/seed-report-from-notes` | Claude returned 200 in 113s, `page_count: 24`, 10 recommended pages | Roof page: "architectural asphalt… 18 years… granule loss on south slope… UV degradation" | ✅ | First try dumped raw JSON into `summary` — `parseJSON` hardened + re-run passed |
+| 4 | Remember + recall (new session) | `POST /functions/v1/hbc-agent` × 2 | `agent_memory` row inserted with 768-dim embedding; `match_agent_memory` RPC returns similarity=1.000 on the stored row | Fresh session agent replied: "**$18,500** starting point — 30 squares + structural check" — exactly what was remembered | ✅ | |
+| 5 | Publish report | `PATCH /rest/v1/reports` | `reports.status = 'published'` confirmed by follow-up SELECT | Report row flipped to published | ✅ | **First try FAILED** with constraint 23514. `reports_status_check` and `report_pages_status_check` were missing 'published'. Fixed with migration `20260418020000` |
+| 6 | Client portal home | `/portal/b9d0db18-…` | `properties?select=client_user_id` returns Sarah's id | "GOOD MORNING, SARAH · Johnson Residence · 1234 Maple Ridge Drive" + quick-action tiles | ✅ | |
+| 7 | Client views published report | `/portal/b9d0db18-…/report` → click "Start Reading" | `report_pages?status=eq.published&report_id=eq.<id>` returns 5 rows | Roof page renders with the exact Claude narrative — "architectural asphalt shingles… Granule loss on the south slope… UV degradation… Estimated Remaining Life: 2–7 years" — plus Next→ Front Entry Door | ✅ | **First try CRASHED** with "Cannot read properties of undefined (reading 'price')". `BlockRenderer.tsx` truthy-checked `pageData.tiers` which is `jsonb` and sometimes `[]`. Guard hardened to check shape, not just truthiness |
+
+### Verdict
+
+**Golden Path PASSES — ship.**
+
+Three pre-existing P0 bugs were surfaced and fixed along the way.
+None of them were caught by:
+- Unit tests (no real DB integration)
+- The earlier E2E walkthrough (never exercised the publish flow)
+- Claude Code review (schema drift is invisible to static analysis)
+- The AI smoke test (only tests text-out-of-Gemini, not business state transitions)
+
+The entire app worked 6/7 steps before — but the one step that broke was
+step 5 + step 7, i.e. **the moment the client sees the report**, which is
+the one moment that actually matters to Adam's business.
+
+### P0 fixes shipped in PR #49
+
+1. **reports/report_pages status CHECK constraints** — widened to include
+   'published' (migration `20260418020000`). Until this landed, every
+   publish attempt returned HTTP 400 from the DB.
+2. **PricingTiers crashed on empty tiers** — `pageData.tiers && ...` let
+   an empty array pass the guard, then the component dereferenced
+   `tier.price` and took down the whole report reader with a generic
+   "Something went wrong" ErrorBoundary. Shape-check added.
+3. **seed-report-from-notes parseJSON fragility** — Claude sometimes
+   wraps JSON in fences despite instructions. The shared `parseJSON`
+   helper now handles markdown fences, leading narration, and trailing
+   narration by extracting the outermost balanced `{...}` or `[...]`.
+   Sixth-sense check: the other 6 Claude-swapped functions already used
+   `parseJSON`, so they got the fix automatically.
+
+### Rerun cadence
+
+Adam's Golden Path Protocol doc suggests saving the automation as a
+deploy gate. Not yet scripted — Chrome MCP + Python was the one-off
+harness used tonight. Worth extracting into `scripts/golden-path.ts` so
+it runs on each deploy and a red/green signal lands in front of Adam.
+That's the follow-up.
+
+### Cleanup
+
+- Test report `175c181f-…` + its 5 pages deleted.
+- Golden-path creator throwaway `golden-creator-09525b@clarityhub.test`
+  deleted (CASCADE removed the agent_memory row from step 4).
+- **Sarah Johnson's password was reset during step 6** for the session
+  injection. She's a test account so this isn't sensitive, but flag: if
+  Adam needs to log in as that test client in the future, the old
+  password no longer works.
+- All local `/tmp/*golden*` files wiped.
