@@ -1,5 +1,5 @@
 import AdminHeader from "@/components/admin/AdminHeader";
-import { Users, UserPlus, Smartphone, Camera, FileText, DollarSign, Sparkles, Lock } from "lucide-react";
+import { Users, Smartphone, Camera, FileText, DollarSign, Sparkles, Lock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -49,21 +49,18 @@ const AdminTeam = () => (
         </div>
       </Card>
 
-      {/* Current Team */}
+      {/* Current Team — no disabled "Invite Employee — Coming Soon" button:
+          showing a greyed-out button reads as broken. Instead, an honest
+          roadmap-style message that team invites are on the roadmap. */}
       <Card className="p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-sans font-semibold text-foreground">Your Team</h2>
-          <button
-            disabled
-            className="flex items-center gap-1.5 text-xs font-sans bg-muted text-muted-foreground px-3 py-1.5 rounded-md cursor-not-allowed opacity-60"
-          >
-            <UserPlus className="w-3.5 h-3.5" /> Invite Employee — Coming Soon
-          </button>
+          <Badge variant="outline" className="text-[10px] gap-1"><Lock className="w-2.5 h-2.5" />On the roadmap</Badge>
         </div>
         <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
           <Users className="w-8 h-8 text-muted-foreground/30" />
           <p className="text-sm font-sans text-muted-foreground">You're the only team member right now.</p>
-          <p className="text-xs font-sans text-muted-foreground max-w-sm">When you're ready to add field employees or a sub-admin, use the Invite Employee button above.</p>
+          <p className="text-xs font-sans text-muted-foreground max-w-sm">Sub-admin and field-employee invites are on the roadmap — the features preview below shows what's planned.</p>
         </div>
       </Card>
 
@@ -71,9 +68,9 @@ const AdminTeam = () => (
       <Card className="p-6 space-y-4">
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-sans font-semibold text-foreground">Field Employee Portal</h2>
-          <Badge variant="outline" className="text-[10px] gap-1"><Lock className="w-2.5 h-2.5" />Coming Soon</Badge>
+          <Badge variant="outline" className="text-[10px] gap-1"><Lock className="w-2.5 h-2.5" />On the roadmap</Badge>
         </div>
-        <p className="text-xs font-sans text-muted-foreground">When you add field employees, they'll get their own login with access to:</p>
+        <p className="text-xs font-sans text-muted-foreground">When field-employee invites ship, they'll get their own login with access to:</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {FIELD_FEATURES.map((f) => (
             <div key={f.title} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">

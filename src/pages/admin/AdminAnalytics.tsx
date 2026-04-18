@@ -117,10 +117,23 @@ const AdminAnalytics = () => {
   const { data: engagementData } = useQuery({
     queryKey: ["analytics-engagement"],
     queryFn: async () => {
+      // `client_sessions.client_id` is actually `auth user_id` — so raw counts
+      // include ANY logged-in user (creators, smoke-test users, etc.), not
+      // just real clients. Scope to users who are the `client_user_id` of
+      // an actual property so the "Active Clients" metric means what it
+      // says. Before this fix, the Analytics card reported 8 active when
+      // only 1 client existed.
       const { data: sessions } = await supabase.from("client_sessions").select("client_id, login_at").order("login_at", { ascending: false });
+      const { data: properties } = await supabase.from("properties").select("client_user_id");
+      const clientUserIds = new Set(
+        (properties || [])
+          .map((p: { client_user_id: string | null }) => p.client_user_id)
+          .filter((x): x is string => !!x),
+      );
+      const scopedSessions = (sessions || []).filter((s) => clientUserIds.has(s.client_id));
       const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
-      const activeIds = new Set(sessions?.filter(s => s.login_at > thirtyDaysAgo).map(s => s.client_id) || []);
-      const allIds = new Set(sessions?.map(s => s.client_id) || []);
+      const activeIds = new Set(scopedSessions.filter(s => s.login_at > thirtyDaysAgo).map(s => s.client_id));
+      const allIds = new Set(scopedSessions.map(s => s.client_id));
       return {
         active: activeIds.size,
         atRisk: allIds.size - activeIds.size,
