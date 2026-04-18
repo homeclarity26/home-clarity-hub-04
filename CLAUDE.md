@@ -1,7 +1,104 @@
 # Home Clarity Hub — Developer Reference
 
 **Branch:** `main`
-**Last updated:** 2026-04-18 after the AI memory + Claude Sonnet hybrid rollout
+**Last updated:** 2026-04-18 after the floor rebuild + CI activation.
+
+---
+
+## 🛡️ Rules for any future Claude (or human) session
+
+These are hard rules, not suggestions. They exist because this codebase
+shipped 67 latent schema bugs before tonight's floor rebuild caught them.
+Follow them and we don't rebuild again.
+
+### Before you write any code
+
+1. **Read this file top to bottom.** Then read `TODO.md`. Don't
+   hallucinate columns, tables, or edge-function names — every table and
+   helper is either listed here or documented in its own file.
+2. **Check live-DB columns before using them.** For any table you'll
+   `insert`/`update`/`select` from, run:
+   ```bash
+   SUPABASE_ACCESS_TOKEN=$PAT npx --yes supabase db query --linked <<SQL
+   SELECT column_name, data_type, is_nullable, column_default
+   FROM information_schema.columns
+   WHERE table_schema='public' AND table_name='<your_table>'
+   ORDER BY ordinal_position;
+   SQL
+   ```
+   Or grep the generated types at `src/integrations/supabase/types.ts`.
+   **Do not invent columns** — every single bug the floor rebuild found
+   was a phantom column hiding behind an `as any` cast.
+
+### While you write code
+
+3. **`as any` is banned** except on `"postgres_changes"` realtime subs.
+   If TypeScript won't accept your call, the types are stale or your
+   code is wrong. Regenerate types (step 5) or fix the call.
+4. **Schema first, code second.** Any feature that needs a new column
+   or table starts with a migration file. The commit that adds the
+   migration also regenerates types **in the same PR**.
+5. **Regenerate types after every migration:**
+   ```bash
+   SUPABASE_ACCESS_TOKEN=$PAT npx --yes supabase gen types typescript \
+     --project-id vvwojahsianpmwjvkunn > src/integrations/supabase/types.ts
+   ```
+6. **Every new edge function starts from the template** in
+   `#### Edge function template` below. Auth is on by default — if the
+   function needs to be open (cron/webhook/public), write a one-line
+   comment explaining why.
+
+### Before you claim a task is done
+
+7. **Run `bun run build`.** Must be clean.
+8. **Run `npx tsc --noEmit` (or `tsc -b --force`).** Must be 0 errors.
+   Vite compiles *through* TS errors; tsc doesn't. Build-passes is not
+   proof of correctness.
+9. **Run the Golden Path** locally — at least the flow your change
+   touches:
+   ```bash
+   bun --env-file=.env.local scripts/golden-path-all.ts
+   ```
+   All 8 flows must pass. "It compiled" is not enough; a flow must
+   prove your change survives a real read + write against live prod.
+10. **Let CI run.** Open a PR. The `.github/workflows/golden-path.yml`
+    workflow runs build + 5 deterministic + 3 AI-dependent flows with
+    retries. Red CI = don't merge. Never bypass.
+
+### What you do NOT do
+
+11. **Never edit migrations that already ran in prod.** Write a new one
+    that fixes the previous.
+12. **Never `ALTER TABLE` from the Supabase dashboard.** Every change
+    is a checked-in migration, period.
+13. **Never deploy a single edge function manually** when `_shared/**`
+    changed. The CI's `deploy-edge-functions.yml` redeploys every
+    function when `_shared/` changes — let it run. Manual per-function
+    deploys are what caused 19 stale bundles this session.
+14. **Never add a "Coming soon" placeholder in the UI.** If a feature
+    isn't ready, don't show it. If the data isn't there, show an honest
+    empty state with specifics ("Not yet uploaded", "No services
+    published yet"), not a future promise.
+
+---
+
+## 🚦 Where the app stands (post-floor-rebuild, 2026-04-18)
+
+- Golden Path 8/8 green locally; CI 9/9 green on `main`.
+- 149/149 tables accept UI-shaped writes (synthetic-insert smoke).
+- 89/89 tenant-scoped tables block anon read + write via RLS.
+- 52/70 edge functions auth-gated (18 intentionally open — see PR #66).
+- 70/70 edge functions smoke-ping clean (0 × 500, 0 × 503, 0 × BOOT_ERROR).
+- 0 TypeScript errors; 0 non-legit `as any` casts.
+- CI auto-runs Golden Path on every push + daily at 12:00 UTC.
+- CI auto-deploys edge functions when `supabase/functions/**` changes
+  (individual function deploys on per-function change; full-fleet
+  redeploy on `_shared/**` change).
+
+If you make a change that breaks any of the above, it's a regression.
+Fix before merging.
+
+---
 
 ## 🧠 AI architecture (post-2026-04-18)
 
@@ -290,6 +387,12 @@ const resp = await fetch(URL, {
 headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` }
 ```
 
+#### Edge function template (auth-on-by-default — copy verbatim)
+
+Every new edge function starts from this scaffold. If auth is
+intentionally skipped, replace the `requireRole` block with a
+`// NO AUTH: <reason>` comment.
+
 ### Edge function auth template
 
 ```typescript
@@ -470,12 +573,44 @@ When a new session inherits this file, it should:
 
 ## Known Small TODOs (non-blocking)
 
-- TypeScript strict mode: `noImplicitAny: true` is on, but `strict: false` still. Flipping to full strict would surface errors in ~20 admin files using `any` casts on untyped Supabase tables. Fix incrementally.
-- `supabase/functions/types.ts` needs regeneration after recent migrations (`npx supabase gen types typescript --project-id vvwojahsianpmwjvkunn > src/integrations/supabase/types.ts`)
-- ~50 remaining edge functions still need `requireAuth` applied (18 of 67 have it so far)
-- `files` and `comments` tables referenced in docs but don't exist in DB — code references may need updating (found in post-deploy smoke test)
+- TypeScript `strict: false` at root — `noImplicitAny` + `strictNullChecks`
+  are off. The floor rebuild cleaned up every `as any` (PR #65), so
+  turning on full strict mode would surface only genuine null-safety
+  gaps rather than schema drift. Flip incrementally.
+- The `_shared/ai-client.ts` bundled-per-function model is fragile by
+  design. Long-term we should consider a shared-runtime approach, but
+  the CI deploy workflow covers it in practice — any `_shared/**` change
+  now redeploys every function.
+- 10 edge functions still `throw` on bad input; they all work on good
+  input. Convert remaining ones to structured 400s as you touch them.
+- Pre-launch checklist items (role walk-through, mobile real-device)
+  are **Adam-does-it-before-release** — automation is a substitute but
+  not a replacement. Don't skip.
 
 These are all documented in TODO.md.
+
+---
+
+## Floor-rebuild artifacts (reference)
+
+Tonight's rebuild left these helpers on disk — don't delete them:
+
+- `scripts/ci/golden-path.yml.template` — source of truth for the CI
+  runner; if you need to modify `.github/workflows/golden-path.yml`,
+  update the template first so the intent is documented.
+- `scripts/ci/deploy-edge-functions.yml.template` — same for the
+  edge-function auto-deploy workflow.
+- Migrations `20260418060000_restore_report_and_page_columns.sql`,
+  `20260418070000_harden_triggers.sql`, `20260418080000_restore_creator_notes.sql`
+  restore columns + harden triggers that the rebuild surfaced.
+- `supabase/config.toml` lists `verify_jwt = false` per-function; the
+  functions that matter do their own `requireAuth`/`requireRole` in-app
+  via `_shared/auth.ts`.
+
+If you find yourself about to do something that feels like it's
+papering over a problem — stop. Re-read the rules at the top of this
+file. Most paper-overs are the exact pattern that led to the floor
+rebuild.
 
 ---
 
