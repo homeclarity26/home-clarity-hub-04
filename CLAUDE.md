@@ -359,31 +359,45 @@ const text = await callAI({
 
 ## Runbook
 
-### Run the Golden Path (deploy gate)
+### Run the Golden Paths (deploy gate)
 
-**This is the single most-important check before shipping.** 8-step
-business-critical flow against live prod, end-to-end, with real Claude
-calls + real DB writes. PASS means creator can onboard a client, seed a
-report with Claude + RAG, use persistent memory, publish, send an
-invoice, and the client can view the published report without crashes.
+**This is the single most-important check before shipping.** Four
+business-critical flows, end-to-end, against live prod. If the suite is
+green, the app works for real users right now. Any red = nothing else
+is true until it goes green again.
 
 ```bash
-bun --env-file=.env.local scripts/golden-path.ts
+# Run everything (one green/red signal)
+bun --env-file=.env.local scripts/golden-path-all.ts
+
+# Run one flow (faster iteration when debugging a specific area)
+bun --env-file=.env.local scripts/golden-path.ts            # core: auth → seed → publish → invoice → portal
+bun --env-file=.env.local scripts/golden-path-messaging.ts  # creator ↔ client messaging + cross-tenant check
+bun --env-file=.env.local scripts/golden-path-proposal.ts   # client approves a tier → project + invoice
+bun --env-file=.env.local scripts/golden-path-rls.ts        # every tenant-scoped table resists cross-client reads
 ```
 
 Required env (already in `.env.local` on Adam's machine):
 - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 
-Exits 0 on PASS, 1 on FAIL. Takes ~45s when healthy. Self-cleans — the
-throwaway creator + its report/pages/invoice/memory are deleted at the
-end regardless of pass/fail. See the script's top comment for the full
-rationale and the `WALKTHROUGH_FINDINGS.md` "Golden Path run" section
-for what the 8 steps mean in business terms.
+Each script exits 0 on PASS, 1 on FAIL. The meta-runner does the same
+for the whole suite. Full suite runs in ~50s when healthy. Every script
+self-cleans — throwaway users + test rows are deleted at the end,
+pass or fail. See each script's top comment + `WALKTHROUGH_FINDINGS.md`
+"Golden Path run" section for what each step means in business terms.
 
-Run this after any schema change, edge-function change, or Vercel deploy
-that touches the report/invoice/memory flows. A red Golden Path means
-nothing else is true — not passing unit tests, not "the AI said it's
-done" — until the script turns green again.
+**When to run:**
+- After any migration, edge-function change, or Vercel deploy.
+- Before telling Adam the work is "done." "The AI said it's good" ≠
+  "the Golden Path still passes." Run the suite, then claim green.
+- Weekly even when nothing's changed — catches upstream Supabase /
+  Anthropic / Gemini breakage before a real client hits it.
+
+Every bug this suite has surfaced (5 P0s on 2026-04-18 alone:
+status-constraint drift, PricingTiers crash, seed parseJSON fragility,
+broken invoice gen_random_bytes, client-side RLS on approve-tier) was
+invisible to unit tests + code review + Claude's own inspection. The
+Golden Paths are the only signal that catches these bugs before clients do.
 
 ### Local dev
 ```bash
