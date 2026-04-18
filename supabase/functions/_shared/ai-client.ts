@@ -213,10 +213,50 @@ export async function callAI(opts: AIOptions): Promise<string> {
   return part.text ?? "";
 }
 
-/** Parse JSON from AI response, stripping any markdown fences */
+/**
+ * Parse JSON from AI response, tolerant to:
+ *   - markdown fences (```json ... ``` or ``` ... ```)
+ *   - leading narration ("Here's the JSON: { ... }")
+ *   - trailing narration ("{ ... } Let me know if you need anything else.")
+ *
+ * Claude + Gemini both sometimes ignore "respond with JSON only" instructions.
+ * This parser extracts the outermost balanced {...} or [...] and parses that,
+ * so a single verbose sentence doesn't nuke a whole edge-function response.
+ */
 export function parseJSON<T = unknown>(text: string): T {
-  const cleaned = text.replace(/^```json?\n?/i, "").replace(/\n?```$/i, "").trim();
-  return JSON.parse(cleaned) as T;
+  // Strip markdown fences first (both ```json and plain ``` variants).
+  let cleaned = text.trim();
+  cleaned = cleaned.replace(/^```(?:json|JSON)?\s*\n?/, "").replace(/\n?```\s*$/, "").trim();
+
+  // Try a direct parse. Fast path if the model was well-behaved.
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch { /* fall through to balanced-brace extraction */ }
+
+  // Find the first `{` or `[` and the matching closing brace. Quick balanced
+  // scan that ignores braces inside string literals (with escaping).
+  const first = cleaned.search(/[\{\[]/);
+  if (first === -1) throw new Error("No JSON object/array found in response");
+  const openChar = cleaned[first];
+  const closeChar = openChar === "{" ? "}" : "]";
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  let end = -1;
+  for (let i = first; i < cleaned.length; i++) {
+    const c = cleaned[i];
+    if (escape) { escape = false; continue; }
+    if (c === "\\") { escape = true; continue; }
+    if (c === '"' && !escape) { inString = !inString; continue; }
+    if (inString) continue;
+    if (c === openChar) depth++;
+    else if (c === closeChar) {
+      depth--;
+      if (depth === 0) { end = i; break; }
+    }
+  }
+  if (end === -1) throw new Error("Unbalanced JSON in response");
+  return JSON.parse(cleaned.slice(first, end + 1)) as T;
 }
 
 // ─────────────────────────────────────────────────────────────────────────

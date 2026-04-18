@@ -621,7 +621,16 @@ const BlockRenderer = ({
       )}
 
       {/* ── Investment Tiers Block ────────────────────────────────────── */}
-      {shouldRender("tiers") && pageData.tiers && (
+      {/*
+        Shape guard: `pageData.tiers` is `jsonb`. Historically it gets stored
+        as either the expected { essential, enhanced, signature } object or
+        as `[]` when the page has no pricing yet. A bare `&& pageData.tiers`
+        check lets `[]` through (it's truthy), and then PricingTiers crashes
+        with "Cannot read properties of undefined (reading 'price')" on its
+        first tierKeys[key] lookup. This took down the client-facing report
+        reader on day one of Sarah's report. Check the shape, not just truthy.
+      */}
+      {shouldRender("tiers") && pageData.tiers && !Array.isArray(pageData.tiers) && (pageData.tiers as { essential?: unknown }).essential && (
         <div className="mt-12">
           <h3 className="font-display text-2xl text-foreground mb-6">
             Investment Options

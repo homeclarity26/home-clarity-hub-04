@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
-import { callClaude } from "../_shared/ai-client.ts";
+import { callClaude, parseJSON } from "../_shared/ai-client.ts";
 import { retrieveContext } from "../_shared/rag.ts";
 
 /**
@@ -80,11 +80,14 @@ Be thorough — include every area you can reasonably infer from the notes. When
       maxOutputTokens: 8192,
     });
 
-    let result;
+    // Use parseJSON (strips markdown fences). Claude occasionally wraps JSON
+    // output in ```json ... ``` despite the "no markdown" instruction; raw
+    // JSON.parse on that throws and the whole response falls into the
+    // fallback branch which dumps the raw text into `summary`.
+    let result: { summary?: string; recommended_pages?: string[]; page_seeds?: unknown[] };
     try {
-      result = JSON.parse(aiText);
+      result = parseJSON<typeof result>(aiText);
     } catch {
-      // If the AI returns malformed JSON, wrap the text as a summary
       result = { summary: aiText, recommended_pages: [], page_seeds: [] };
     }
 
