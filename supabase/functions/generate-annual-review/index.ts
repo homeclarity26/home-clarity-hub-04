@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { callClaude, parseJSON } from "../_shared/ai-client.ts";
 import { retrieveContext } from "../_shared/rag.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireRole } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,7 +12,10 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  try {
+  
+  const auth = await requireRole(req, ["creator"]);
+  if ("error" in auth) return auth.error;
+try {
     const { client_id, review_year, property_id } = await req.json();
     if (!client_id || !review_year) {
       return new Response(JSON.stringify({ error: "client_id and review_year required", missing: [!client_id && "client_id", !review_year && "review_year"].filter(Boolean) }), {

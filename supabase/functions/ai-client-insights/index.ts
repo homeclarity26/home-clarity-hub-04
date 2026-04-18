@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { callAI, parseJSON } from "../_shared/ai-client.ts";
+import { requireRole } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,7 +10,10 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  try {
+  
+  const auth = await requireRole(req, ["creator"]);
+  if ("error" in auth) return auth.error;
+try {
     const { clientData } = await req.json();
     const prompt = `You are a CRM intelligence system for a home consulting business. Analyze this client data and return 3-5 actionable insights. Each insight should have a "type" (risk, opportunity, or info), a "title" (short), and a "description" (1-2 sentences).
 
