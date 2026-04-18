@@ -46,7 +46,7 @@ Your condition ratings:
     const _photoText = await callAI({
       system: "You are a professional home inspector. Analyze photos and provide detailed condition assessments.",
       prompt: `${system_context}\n\nPhoto description provided. Assess the condition and identify any issues.\n\nReturn JSON: { "condition_rating": "excellent"|"good"|"fair"|"poor"|"critical", "findings": [{ "title": string, "description": string, "severity": "low"|"medium"|"high"|"critical", "recommendation": string }], "immediate_action_required": boolean, "estimated_cost_range": string|null, "suggested_narrative": string, "detected_items": [string] }`,
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-2.5-pro",
       json: true,
     });
     const response = { ok: true };

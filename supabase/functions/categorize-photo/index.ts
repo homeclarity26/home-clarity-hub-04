@@ -29,7 +29,7 @@ Available report pages: ${(availablePages || []).map((p: any) => `${p.slug} (${p
     const _aiText = await callAI({
       system: systemPrompt,
       prompt: "Categorize this photo. Return the category, room/area, pageSlug (if applicable), and tags as JSON.",
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-2.5-pro",
       json: true,
     });
     const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
