@@ -89,7 +89,11 @@ Only include arrays that have actual data extracted. Return empty arrays for cat
       ];
     }
 
-    // Call Gemini directly for structured extraction
+    // Call Gemini directly for structured extraction. NOTE: `messages` was
+    // constructed above but isn't used — callAI accepts our raw context
+    // directly. The previous shape here had a duplicate `const aiJson`
+    // declaration that made the module fail to compile (Supabase returned
+    // BOOT_ERROR on every invocation).
     const _extractText = await callAI({
       system: systemPrompt,
       messages: isImage ? [
@@ -100,18 +104,7 @@ Only include arrays that have actual data extracted. Return empty arrays for cat
       model: "google/gemini-2.5-flash",
       json: true,
     });
-    const aiResp = { ok: true };
-    const aiJson = { choices: [{ message: { content: _extractText } }] };
-
-    if (!aiResp.ok) {
-      const errText = "AI error";
-      console.error("AI error:", aiResp.status, errText);
-      await supabase.from("document_extractions").update({ extraction_status: "failed" }).eq("id", extractionId);
-      return new Response(JSON.stringify({ error: "AI processing failed" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    const aiJson = await aiResp.json();
-    const result = parseJSON<any>(aiJson.choices[0].message.content);
+    const result = parseJSON<any>(_extractText);
     let itemsCreated = 0;
     const equipmentIdsCreated: string[] = [];
 
