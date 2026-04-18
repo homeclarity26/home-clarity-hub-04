@@ -65,7 +65,7 @@ const ClientEngagementTab = ({ clientUserId, propertyId }: ClientEngagementTabPr
         <Card className="p-4 text-center">
           <Eye className="w-5 h-5 text-accent mx-auto mb-1" />
           <p className="text-lg font-bold text-foreground">{data?.totalLogins || 0}</p>
-          <p className="text-xs text-muted-foreground">Total Logins</p>
+          <p className="text-xs text-muted-foreground">Portal Opens</p>
         </Card>
         <Card className="p-4 text-center">
           <BarChart3 className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
