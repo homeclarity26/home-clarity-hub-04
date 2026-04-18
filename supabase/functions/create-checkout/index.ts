@@ -14,7 +14,12 @@ serve(async (req) => {
 
     const { invoice_id, amount, title, success_url, cancel_url, customer_email } = await req.json();
 
-    if (!invoice_id || !amount) throw new Error("Missing invoice_id or amount");
+    if (!invoice_id || !amount) {
+      return new Response(JSON.stringify({ error: "Missing invoice_id or amount", missing: [!invoice_id && "invoice_id", !amount && "amount"].filter(Boolean) }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Create a Stripe Checkout Session for a one-time payment
     const params = new URLSearchParams({

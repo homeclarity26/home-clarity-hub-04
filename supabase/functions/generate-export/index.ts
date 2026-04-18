@@ -16,6 +16,18 @@ Deno.serve(async (req) => {
 
     const { export_type, filter_params, job_id } = await req.json();
 
+    const VALID_TYPES = ["client_list", "invoice_register", "revenue_report", "equipment_registry", "maintenance_due"];
+    if (!export_type || !VALID_TYPES.includes(export_type)) {
+      return new Response(JSON.stringify({
+        error: "Invalid or missing export_type",
+        valid_types: VALID_TYPES,
+        received: export_type ?? null,
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Update job to processing
     if (job_id) {
       await supabase.from("export_jobs").update({ status: "processing" }).eq("id", job_id);

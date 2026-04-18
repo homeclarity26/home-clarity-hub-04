@@ -12,6 +12,15 @@ serve(async (req) => {
 
   try {
     const { document_id, client_id, file_url, file_type, user_hint } = await req.json();
+    if (!document_id || !client_id || !file_url) {
+      return new Response(JSON.stringify({
+        error: "document_id, client_id, and file_url are required",
+        missing: [!document_id && "document_id", !client_id && "client_id", !file_url && "file_url"].filter(Boolean),
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);

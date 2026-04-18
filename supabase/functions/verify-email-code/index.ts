@@ -11,7 +11,12 @@ serve(async (req) => {
 
   try {
     const { phone, code, userId } = await req.json();
-    if (!phone || !code || !userId) throw new Error("Missing required fields");
+    if (!phone || !code || !userId) {
+      return new Response(JSON.stringify({ error: "Missing required fields", missing: [!phone && "phone", !code && "code", !userId && "userId"].filter(Boolean) }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

@@ -12,7 +12,12 @@ serve(async (req) => {
 
   try {
     const { client_id } = await req.json();
-    if (!client_id) throw new Error("client_id required");
+    if (!client_id) {
+      return new Response(JSON.stringify({ error: "client_id required", missing: ["client_id"] }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
