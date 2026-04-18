@@ -10,7 +10,7 @@ export function useVendorDetail(vendorId: string | undefined) {
     queryKey: ["vendor-detail", vendorId],
     enabled: !!vendorId,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("central_vendors") as any).select("*").eq("id", vendorId).single();
+      const { data, error } = await supabase.from("central_vendors").select("*").eq("id", vendorId).single();
       if (error) throw error;
       return data;
     },
@@ -23,7 +23,7 @@ export function useVendorProjects(vendorId: string | undefined) {
     enabled: !!vendorId,
     queryFn: async () => {
       // Get tasks assigned to this vendor → get unique project IDs
-      const { data: tasks } = await (supabase.from("project_tasks") as any).select("project_id").eq("assigned_vendor_id", vendorId);
+      const { data: tasks } = await supabase.from("project_tasks").select("project_id").eq("assigned_vendor_id", vendorId);
       const projectIds = [...new Set((tasks || []).map((t: any) => t.project_id))] as string[];
       if (projectIds.length === 0) return [];
       const { data: projects } = await supabase.from("projects").select("*").in("id", projectIds).order("created_at", { ascending: false });
@@ -50,7 +50,7 @@ export function useVendorReviews(vendorId: string | undefined) {
     queryKey: ["vendor-reviews", vendorId],
     enabled: !!vendorId,
     queryFn: async () => {
-      const { data } = await (supabase.from("vendor_performance_reviews") as any).select("*").eq("vendor_id", vendorId).order("review_date", { ascending: false });
+      const { data } = await supabase.from("vendor_performance_reviews").select("*").eq("vendor_id", vendorId).order("review_date", { ascending: false });
       return data || [];
     },
   });
@@ -61,7 +61,7 @@ export function useVendorTasks(vendorId: string | undefined) {
     queryKey: ["vendor-tasks", vendorId],
     enabled: !!vendorId,
     queryFn: async () => {
-      const { data } = await (supabase.from("project_tasks") as any).select("*, projects(title, status)").eq("assigned_vendor_id", vendorId).order("due_date", { ascending: true });
+      const { data } = await supabase.from("project_tasks").select("*, projects(title, status)").eq("assigned_vendor_id", vendorId).order("due_date", { ascending: true });
       return data || [];
     },
   });
@@ -75,7 +75,7 @@ export function useMyVendorProfile() {
     queryKey: ["my-vendor-profile", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data } = await (supabase.from("central_vendors") as any).select("*").eq("user_id", user!.id).single();
+      const { data } = await supabase.from("central_vendors").select("*").eq("user_id", user!.id).single();
       return data;
     },
   });
@@ -88,9 +88,9 @@ export function useMyAssignedProjects() {
     enabled: !!user?.id,
     queryFn: async () => {
       // Get vendor profile first
-      const { data: vendor } = await (supabase.from("central_vendors") as any).select("id").eq("user_id", user!.id).single();
+      const { data: vendor } = await supabase.from("central_vendors").select("id").eq("user_id", user!.id).single();
       if (!vendor) return [];
-      const { data: tasks } = await (supabase.from("project_tasks") as any).select("project_id").eq("assigned_vendor_id", vendor.id);
+      const { data: tasks } = await supabase.from("project_tasks").select("project_id").eq("assigned_vendor_id", vendor.id);
       const projectIds = [...new Set((tasks || []).map((t: any) => t.project_id))] as string[];
       if (projectIds.length === 0) return [];
       const { data: projects } = await supabase.from("projects").select("*").in("id", projectIds).order("created_at", { ascending: false });
@@ -105,9 +105,9 @@ export function useMyTasks() {
     queryKey: ["my-tasks", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data: vendor } = await (supabase.from("central_vendors") as any).select("id").eq("user_id", user!.id).single();
+      const { data: vendor } = await supabase.from("central_vendors").select("id").eq("user_id", user!.id).single();
       if (!vendor) return [];
-      const { data } = await (supabase.from("project_tasks") as any).select("*, projects(title)").eq("assigned_vendor_id", vendor.id).order("due_date", { ascending: true });
+      const { data } = await supabase.from("project_tasks").select("*, projects(title)").eq("assigned_vendor_id", vendor.id).order("due_date", { ascending: true });
       return data || [];
     },
   });
@@ -120,7 +120,7 @@ export function useMyBids() {
     enabled: !!user?.id,
     queryFn: async () => {
       // For now return all bids - in real app would filter by vendor email match
-      const { data: vendor } = await (supabase.from("central_vendors") as any).select("id, company_name").eq("user_id", user!.id).single();
+      const { data: vendor } = await supabase.from("central_vendors").select("id, company_name").eq("user_id", user!.id).single();
       if (!vendor) return [];
       const { data } = await supabase.from("contractor_bids").select("*, projects(title)").order("created_at", { ascending: false });
       // Filter by contractor_name matching vendor company_name
@@ -135,7 +135,7 @@ export function useMyMessages() {
     queryKey: ["my-messages", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data } = await (supabase.from("project_messages") as any).select("*, projects(title)").eq("sender_id", user!.id).order("created_at", { ascending: false }).limit(50);
+      const { data } = await supabase.from("project_messages").select("*, projects(title)").eq("sender_id", user!.id).order("created_at", { ascending: false }).limit(50);
       return data || [];
     },
   });
@@ -146,7 +146,7 @@ export function useMyProjectMessages(projectId: string | undefined) {
     queryKey: ["my-project-messages", projectId],
     enabled: !!projectId,
     queryFn: async () => {
-      const { data } = await (supabase.from("project_messages") as any).select("*").eq("project_id", projectId).order("created_at", { ascending: true });
+      const { data } = await supabase.from("project_messages").select("*").eq("project_id", projectId).order("created_at", { ascending: true });
       return data || [];
     },
   });
@@ -158,7 +158,7 @@ export function useMyProjectFiles(projectId?: string) {
     queryKey: ["my-project-files", projectId, user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      let query = (supabase.from("project_files") as any).select("*, projects(title)").order("created_at", { ascending: false });
+      let query = supabase.from("project_files").select("*, projects(title)").order("created_at", { ascending: false });
       if (projectId) query = query.eq("project_id", projectId);
       // Only show files shared with trade partners or uploaded by them
       const { data } = await query;
@@ -171,7 +171,7 @@ export function useUpdateTaskStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ taskId, status }: { taskId: string; status: string }) => {
-      const { error } = await (supabase.from("project_tasks") as any).update({ status }).eq("id", taskId);
+      const { error } = await supabase.from("project_tasks").update({ status }).eq("id", taskId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -186,7 +186,7 @@ export function useSendProjectMessage() {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ projectId, message }: { projectId: string; message: string }) => {
-      const { error } = await (supabase.from("project_messages") as any).insert({
+      const { error } = await supabase.from("project_messages").insert({
         project_id: projectId,
         sender_id: user!.id,
         message,
@@ -206,7 +206,7 @@ export function useCreateVendorReview() {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async (review: { vendor_id: string; project_id?: string; quality_rating: number; timeliness_rating: number; communication_rating: number; cost_accuracy_rating: number; notes?: string }) => {
-      const { error } = await (supabase.from("vendor_performance_reviews") as any).insert({
+      const { error } = await supabase.from("vendor_performance_reviews").insert({
         ...review,
         admin_id: user!.id,
       });

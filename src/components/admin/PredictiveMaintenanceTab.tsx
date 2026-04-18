@@ -33,8 +33,8 @@ export default function PredictiveMaintenanceTab({ clientId, propertyId }: Predi
   const load = async () => {
     setLoading(true);
     const [{ data: preds }, { data: outs }] = await Promise.all([
-      (supabase.from("maintenance_predictions" as any) as any).select("*").eq("client_id", clientId).order("probability_score", { ascending: false }),
-      (supabase.from("maintenance_outcomes" as any) as any).select("*").eq("client_id", clientId).order("actual_service_date", { ascending: false }),
+      supabase.from("maintenance_predictions").select("*").eq("client_id", clientId).order("probability_score", { ascending: false }),
+      supabase.from("maintenance_outcomes").select("*").eq("client_id", clientId).order("actual_service_date", { ascending: false }),
     ]);
     setPredictions(preds || []);
     setOutcomes(outs || []);
@@ -56,7 +56,7 @@ export default function PredictiveMaintenanceTab({ clientId, propertyId }: Predi
   };
 
   const handleDismiss = async (id: string) => {
-    await (supabase.from("maintenance_predictions" as any) as any).update({ status: "dismissed" }).eq("id", id);
+    await supabase.from("maintenance_predictions").update({ status: "dismissed" }).eq("id", id);
     toast.success("Dismissed");
     await load();
   };
@@ -69,7 +69,7 @@ export default function PredictiveMaintenanceTab({ clientId, propertyId }: Predi
   const submitOutcome = async () => {
     if (!outcomeDialog) return;
     const pred = predictions.find(p => p.id === outcomeDialog);
-    await (supabase.from("maintenance_outcomes" as any) as any).insert({
+    await supabase.from("maintenance_outcomes").insert({
       client_id: clientId,
       prediction_id: outcomeDialog,
       equipment_id: pred?.equipment_id || null,
@@ -77,7 +77,7 @@ export default function PredictiveMaintenanceTab({ clientId, propertyId }: Predi
       actual_cost: parseFloat(outcomeForm.actual_cost) || 0,
       outcome_notes: outcomeForm.outcome_notes,
     });
-    await (supabase.from("maintenance_predictions" as any) as any).update({ status: "completed" }).eq("id", outcomeDialog);
+    await supabase.from("maintenance_predictions").update({ status: "completed" }).eq("id", outcomeDialog);
     toast.success("Outcome recorded");
     setOutcomeDialog(null);
     await load();

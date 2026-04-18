@@ -25,7 +25,7 @@ const AIClientInsightsCard = ({ propertyId, clientData }: AIClientInsightsCardPr
   const { data: existing } = useQuery({
     queryKey: ["ai-client-insights", propertyId],
     queryFn: async () => {
-      const { data } = await (supabase.from("ai_client_insights") as any).select("*").eq("client_id", propertyId).order("generated_at", { ascending: false }).limit(1);
+      const { data } = await supabase.from("ai_client_insights").select("*").eq("client_id", propertyId).order("generated_at", { ascending: false }).limit(1);
       return data?.[0] || null;
     },
   });
@@ -36,7 +36,7 @@ const AIClientInsightsCard = ({ propertyId, clientData }: AIClientInsightsCardPr
       const { data, error } = await supabase.functions.invoke("ai-client-insights", { body: { clientData } });
       if (error) throw error;
 
-      await (supabase.from("ai_client_insights") as any).insert({
+      await supabase.from("ai_client_insights").insert({
         client_id: propertyId,
         insights_json: data.insights || [],
       });

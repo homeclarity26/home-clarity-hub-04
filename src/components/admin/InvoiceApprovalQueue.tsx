@@ -56,7 +56,7 @@ export default function InvoiceApprovalQueue({
     setApproving(inv.id);
     try {
       // 1. Update status to 'sent'
-      const { error } = await (supabase.from("invoices" as any) as any)
+      const { error } = await supabase.from("invoices")
         .update({ status: "sent" })
         .eq("id", inv.id);
       if (error) throw error;

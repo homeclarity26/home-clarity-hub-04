@@ -137,10 +137,10 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
   const loadData = useCallback(async () => {
     setLoading(true);
     const [invRes, liRes, coRes, pRes] = await Promise.all([
-      (supabase.from("invoices" as any) as any).select("*").eq("property_id", propertyId).order("created_at", { ascending: false }),
-      (supabase.from("invoice_line_items" as any) as any).select("*"),
-      (supabase.from("change_orders" as any) as any).select("*"),
-      (supabase.from("payments_posted" as any) as any).select("*"),
+      supabase.from("invoices").select("*").eq("property_id", propertyId).order("created_at", { ascending: false }),
+      supabase.from("invoice_line_items").select("*"),
+      supabase.from("change_orders").select("*"),
+      supabase.from("payments_posted").select("*"),
     ]);
     if (invRes.data) setInvoices(invRes.data);
     if (liRes.data) setLineItems(liRes.data);
@@ -190,14 +190,14 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
       updateData.status = "overdue";
     }
 
-    await (supabase.from("invoices" as any) as any).update(updateData).eq("id", invoiceId);
+    await supabase.from("invoices").update(updateData).eq("id", invoiceId);
     loadData();
   };
 
   // CREATE INVOICE
   const handleCreateInvoice = async () => {
     const subtotal = editLineItems.reduce((s, li) => s + (parseFloat(li.quantity) || 0) * (parseFloat(li.unit_price) || 0), 0);
-    const { data: inv, error } = await (supabase.from("invoices" as any) as any).insert({
+    const { data: inv, error } = await supabase.from("invoices").insert({
       property_id: propertyId,
       title: invoiceForm.title || null,
       type: invoiceForm.type,
@@ -225,7 +225,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
         item_type: li.item_type || "service",
         sort_order: i,
       }));
-      await (supabase.from("invoice_line_items" as any) as any).insert(items);
+      await supabase.from("invoice_line_items").insert(items);
     }
 
     toast.success(`${invoiceForm.type === "estimate" ? "Estimate" : "Invoice"} created`);
@@ -241,7 +241,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
     const amount = parseFloat(paymentForm.amount);
     if (!amount || amount <= 0) { toast.error("Enter a valid amount"); return; }
 
-    const { error } = await (supabase.from("payments_posted" as any) as any).insert({
+    const { error } = await supabase.from("payments_posted").insert({
       invoice_id: selectedInvoice.id,
       amount,
       payment_date: paymentForm.payment_date,
@@ -299,7 +299,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
     const newTotal = origTotal + coSum;
     const newBalanceDue = Math.max(0, newTotal - paidSum);
     // 4. Update invoice
-    await (supabase.from("invoices" as any) as any).update({
+    await supabase.from("invoices").update({
       total: newTotal,
       co_total: coSum,
       balance_due: newBalanceDue,
@@ -317,7 +317,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
     // Determine CO status based on mode
     const coStatus = coMode === "verbal" ? "verbal" : "pending";
 
-    const { data: newCO, error } = await (supabase.from("change_orders" as any) as any).insert({
+    const { data: newCO, error } = await supabase.from("change_orders").insert({
       invoice_id: selectedInvoice.id,
       title: changeOrderForm.title,
       description: changeOrderForm.description || null,
@@ -346,7 +346,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
       toast.success("Change order created — review document and send to client");
     } else if (coMode === "interim") {
       // Interim: create a new standalone invoice for this CO
-      const { error: invErr } = await (supabase.from("invoices" as any) as any).insert({
+      const { error: invErr } = await supabase.from("invoices").insert({
         property_id: propertyId,
         title: `Change Order: ${changeOrderForm.title}`,
         description: changeOrderForm.description || `Change Order: ${changeOrderForm.title}`,
@@ -375,7 +375,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
 
   // APPROVE/REJECT CHANGE ORDER
   const updateChangeOrderStatus = async (coId: string, status: string) => {
-    await (supabase.from("change_orders" as any) as any).update({ status }).eq("id", coId);
+    await supabase.from("change_orders").update({ status }).eq("id", coId);
     toast.success(`Change order ${status}`);
     await loadData();
     // 5C: When approved, auto-adjust invoice total
@@ -388,7 +388,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
 
   // DELETE INVOICE
   const deleteInvoice = async (id: string) => {
-    await (supabase.from("invoices" as any) as any).delete().eq("id", id);
+    await supabase.from("invoices").delete().eq("id", id);
     toast.success("Invoice deleted");
     if (selectedInvoice?.id === id) setSelectedInvoice(null);
     loadData();
@@ -397,7 +397,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
 
   // UPDATE INVOICE STATUS
   const updateStatus = async (id: string, status: string) => {
-    await (supabase.from("invoices" as any) as any).update({ status }).eq("id", id);
+    await supabase.from("invoices").update({ status }).eq("id", id);
     loadData();
 
     // QBO sync: when an invoice is marked 'sent', push to QuickBooks
@@ -429,7 +429,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
 
   // UPDATE INVOICE FIELD
   const updateInvoiceField = async (id: string, field: string, value: unknown) => {
-    await (supabase.from("invoices" as any) as any).update({ [field]: value }).eq("id", id);
+    await supabase.from("invoices").update({ [field]: value }).eq("id", id);
     loadData();
   };
 
@@ -855,7 +855,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
           clientName={propertyContext?.clientName}
           brand="hbc"
           onApprove={async () => {
-            await (supabase.from("change_orders" as any) as any).update({ status: "approved" }).eq("id", pendingCoForDocument.id);
+            await supabase.from("change_orders").update({ status: "approved" }).eq("id", pendingCoForDocument.id);
             toast.success("Change order approved");
             setShowCoDocument(false);
             setPendingCoForDocument(null);
@@ -863,7 +863,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
             setTimeout(() => applyApprovedCOs(pendingCoForDocument.invoice_id), 500);
           }}
           onReject={async () => {
-            await (supabase.from("change_orders" as any) as any).update({ status: "rejected" }).eq("id", pendingCoForDocument.id);
+            await supabase.from("change_orders").update({ status: "rejected" }).eq("id", pendingCoForDocument.id);
             toast.success("Change order rejected");
             setShowCoDocument(false);
             setPendingCoForDocument(null);

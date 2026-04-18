@@ -33,7 +33,7 @@ const MaintenanceReminders = ({ propertyId }: MaintenanceRemindersProps) => {
       return;
     }
     const load = async () => {
-      const { data } = await (supabase.from("maintenance_reminders" as any) as any)
+      const { data } = await supabase.from("maintenance_reminders")
         .select("*")
         .eq("property_id", propertyId)
         .order("recommended_month", { ascending: true });
@@ -46,7 +46,7 @@ const MaintenanceReminders = ({ propertyId }: MaintenanceRemindersProps) => {
 
   const handleComplete = async (id: string) => {
     const now = new Date().toISOString();
-    await (supabase.from("maintenance_reminders" as any) as any)
+    await supabase.from("maintenance_reminders")
       .update({ completed_at: now })
       .eq("id", id);
     setReminders((prev) => prev.map((r) => r.id === id ? { ...r, completed_at: now } : r));

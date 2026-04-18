@@ -33,7 +33,7 @@ const HomeGoalsAdmin = ({ clientUserId, propertyId, onCreateProject }: HomeGoals
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await (supabase.from("home_goals" as any) as any)
+      const { data } = await supabase.from("home_goals")
         .select("*")
         .eq("client_id", clientUserId)
         .order("created_at", { ascending: false });

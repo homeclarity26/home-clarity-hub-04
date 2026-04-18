@@ -47,7 +47,7 @@ export function usePropertyValuation(propertyId?: string, address?: string) {
     if (!propertyId) return;
 
     async function loadCached() {
-      const { data } = await (supabase.from("property_valuations" as any) as any)
+      const { data } = await supabase.from("property_valuations")
         .select("*")
         .eq("property_id", propertyId)
         .order("fetched_at", { ascending: false })

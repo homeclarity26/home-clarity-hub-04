@@ -16,7 +16,7 @@ const CRMContactsTab = ({ contactId, people }: { contactId: string; people: CRMP
 
   const handleAdd = async () => {
     if (!form.name.trim()) return;
-    const { error } = await (supabase.from("crm_contacts_people") as any).insert({ contact_id: contactId, ...form });
+    const { error } = await supabase.from("crm_contacts_people").insert({ contact_id: contactId, ...form });
     if (error) { toast.error("Failed to add contact"); return; }
     toast.success("Contact added");
     qc.invalidateQueries({ queryKey: ["crm-people", contactId] });

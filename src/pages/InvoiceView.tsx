@@ -33,7 +33,7 @@ const InvoiceView = () => {
     queryKey: ["invoice-view", token],
     enabled: !!token,
     queryFn: async () => {
-      const { data } = await (supabase.from("invoices") as any).select("*").eq("invoice_token", token).single();
+      const { data } = await supabase.from("invoices").select("*").eq("invoice_token", token).single();
       return data;
     },
   });
@@ -42,7 +42,7 @@ const InvoiceView = () => {
     queryKey: ["invoice-view-lines", invoice?.id],
     enabled: !!invoice?.id,
     queryFn: async () => {
-      const { data } = await (supabase.from("invoice_line_items") as any).select("*").eq("invoice_id", invoice.id).order("sort_order");
+      const { data } = await supabase.from("invoice_line_items").select("*").eq("invoice_id", invoice.id).order("sort_order");
       return data || [];
     },
   });
@@ -51,7 +51,7 @@ const InvoiceView = () => {
     queryKey: ["invoice-property", invoice?.property_id],
     enabled: !!invoice?.property_id,
     queryFn: async () => {
-      const { data } = await (supabase.from("properties") as any).select("property_name, address, city, state, zip, client_user_id").eq("id", invoice.property_id).single();
+      const { data } = await supabase.from("properties").select("property_name, address, city, state, zip, client_user_id").eq("id", invoice.property_id).single();
       return data;
     },
   });
@@ -60,7 +60,7 @@ const InvoiceView = () => {
     queryKey: ["invoice-client", property?.client_user_id],
     enabled: !!property?.client_user_id,
     queryFn: async () => {
-      const { data } = await (supabase.from("profiles") as any).select("full_name, email, phone").eq("user_id", property.client_user_id).single();
+      const { data } = await supabase.from("profiles").select("full_name, email, phone").eq("user_id", property.client_user_id).single();
       return data;
     },
   });
@@ -71,7 +71,7 @@ const InvoiceView = () => {
   // Track view
   useEffect(() => {
     if (!invoice?.id) return;
-    (supabase.from("invoices") as any).update({
+    supabase.from("invoices").update({
       invoice_view_count: (invoice.invoice_view_count || 0) + 1,
     }).eq("id", invoice.id).then(() => {});
   }, [invoice?.id]);

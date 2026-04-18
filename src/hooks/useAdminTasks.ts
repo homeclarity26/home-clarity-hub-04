@@ -21,7 +21,7 @@ export function useAdminTasks(clientId?: string) {
   return useQuery({
     queryKey: ["admin-tasks", clientId],
     queryFn: async (): Promise<AdminTask[]> => {
-      let query = (supabase.from("tasks") as any)
+      let query = supabase.from("tasks")
         .select("*, properties(id, property_name, address)")
         .order("due_date", { ascending: true, nullsFirst: false });
 
@@ -42,7 +42,7 @@ export function useOpenTaskCount() {
   return useQuery({
     queryKey: ["admin-task-count"],
     queryFn: async () => {
-      const { count, error } = await (supabase.from("tasks") as any)
+      const { count, error } = await supabase.from("tasks")
         .select("*", { count: "exact", head: true })
         .in("status", ["open", "in_progress"]);
       if (error) return 0;
@@ -57,7 +57,7 @@ export function useCreateTask() {
     mutationFn: async (task: { title: string; description?: string; due_date?: string; priority?: string; client_id?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      const { error } = await (supabase.from("tasks") as any).insert({
+      const { error } = await supabase.from("tasks").insert({
         admin_id: user.id,
         title: task.title,
         description: task.description || null,
@@ -79,7 +79,7 @@ export function useToggleTaskComplete() {
   return useMutation({
     mutationFn: async ({ id, currentStatus }: { id: string; currentStatus: string }) => {
       const newStatus = currentStatus === "completed" ? "open" : "completed";
-      const { error } = await (supabase.from("tasks") as any).update({ status: newStatus }).eq("id", id);
+      const { error } = await supabase.from("tasks").update({ status: newStatus }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

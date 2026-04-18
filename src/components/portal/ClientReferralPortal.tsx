@@ -27,19 +27,19 @@ const ClientReferralPortal = ({ propertyId }: Props) => {
     if (!user) return;
     const load = async () => {
       // Get or create referral link
-      const { data: existing } = await (supabase.from("referral_links") as any)
+      const { data: existing } = await supabase.from("referral_links")
         .select("*").eq("client_id", user.id).limit(1).maybeSingle();
 
       if (existing) {
         setLink(existing);
         // Load events
-        const { data: evts } = await (supabase.from("referral_events") as any)
+        const { data: evts } = await supabase.from("referral_events")
           .select("*").eq("referral_code", existing.referral_code).order("created_at", { ascending: false });
         setEvents(evts || []);
       } else if (propertyId) {
         const code = `HBC-${user.id.slice(0, 4).toUpperCase()}${Date.now().toString(36).slice(-4).toUpperCase()}`;
         const url = `${window.location.origin}/refer/${code}`;
-        const { data: newLink } = await (supabase.from("referral_links") as any)
+        const { data: newLink } = await supabase.from("referral_links")
           .insert({ property_id: propertyId, client_id: user.id, referral_code: code, referral_url: url })
           .select("*").single();
         setLink(newLink);
@@ -47,7 +47,7 @@ const ClientReferralPortal = ({ propertyId }: Props) => {
 
       // Load credits
       if (propertyId) {
-        const { data: creds } = await (supabase.from("referral_credits") as any)
+        const { data: creds } = await supabase.from("referral_credits")
           .select("*").eq("property_id", propertyId).order("created_at", { ascending: false });
         setCredits(creds || []);
       }

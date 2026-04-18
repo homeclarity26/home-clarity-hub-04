@@ -34,7 +34,7 @@ const ServiceRequestsManager = () => {
 
   useEffect(() => {
     const load = async () => {
-      let query = (supabase.from("service_requests" as any) as any)
+      let query = supabase.from("service_requests")
         .select("*")
         .order("created_at", { ascending: false });
       if (filter !== "all") query = query.eq("status", filter);
@@ -47,7 +47,7 @@ const ServiceRequestsManager = () => {
   const updateStatus = async (id: string, status: string) => {
     const updates: any = { status };
     if (status === "resolved") updates.resolved_at = new Date().toISOString();
-    await (supabase.from("service_requests" as any) as any).update(updates).eq("id", id);
+    await supabase.from("service_requests").update(updates).eq("id", id);
     setRequests((prev) => prev.map((r) => r.id === id ? { ...r, ...updates } : r));
     toast.success(`Request marked as ${status}`);
   };

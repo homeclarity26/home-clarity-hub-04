@@ -23,7 +23,7 @@ export const useTutorialProgress = () => {
     enabled: !!user?.id,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tutorial_progress" as any)
+        .from("tutorial_progress")
         .select("*")
         .eq("user_id", user!.id)
         .maybeSingle();
@@ -36,7 +36,7 @@ export const useTutorialProgress = () => {
   const ensureRecord = async () => {
     if (!user?.id) return null;
     const { data: existing } = await supabase
-      .from("tutorial_progress" as any)
+      .from("tutorial_progress")
       .select("*")
       .eq("user_id", user.id)
       .maybeSingle();
@@ -44,7 +44,7 @@ export const useTutorialProgress = () => {
     if (existing) return existing as unknown as TutorialProgress;
 
     const { data: created } = await supabase
-      .from("tutorial_progress" as any)
+      .from("tutorial_progress")
       .insert({ user_id: user.id } as any)
       .select()
       .single();
@@ -56,7 +56,7 @@ export const useTutorialProgress = () => {
     mutationFn: async (updates: Partial<Pick<TutorialProgress, "checklist_items_json" | "onboarding_complete" | "completed_tours" | "admin_setup_dismissed" | "admin_setup_items_json">>) => {
       await ensureRecord();
       const { error } = await supabase
-        .from("tutorial_progress" as any)
+        .from("tutorial_progress")
         .update({ ...updates, updated_at: new Date().toISOString() } as any)
         .eq("user_id", user!.id);
       if (error) throw error;

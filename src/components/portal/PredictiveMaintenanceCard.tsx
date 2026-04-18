@@ -86,7 +86,7 @@ export default function PredictiveMaintenanceCard({ propertyId, clientId }: { pr
   const loadPredictions = async () => {
     if (!clientId) return;
     setLoading(true);
-    const { data } = await (supabase.from("maintenance_predictions" as any) as any)
+    const { data } = await supabase.from("maintenance_predictions")
       .select("*")
       .eq("client_id", clientId)
       .eq("status", "active")
@@ -113,7 +113,7 @@ export default function PredictiveMaintenanceCard({ propertyId, clientId }: { pr
   };
 
   const handleDismiss = async (id: string) => {
-    await (supabase.from("maintenance_predictions" as any) as any)
+    await supabase.from("maintenance_predictions")
       .update({ status: "dismissed" })
       .eq("id", id);
     setPredictions(prev => prev.filter(p => p.id !== id));

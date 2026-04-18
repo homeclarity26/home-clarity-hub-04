@@ -17,7 +17,7 @@ const ClientServicesTab = ({ propertyId, clientUserId }: ClientServicesTabProps)
     queryKey: ["client-membership", clientUserId],
     enabled: !!clientUserId,
     queryFn: async () => {
-      const { data } = await (supabase.from("client_memberships") as any).select("*, membership_tiers(*)").eq("client_id", clientUserId).eq("status", "active").single();
+      const { data } = await supabase.from("client_memberships").select("*, membership_tiers(*)").eq("client_id", clientUserId).eq("status", "active").single();
       return data;
     },
   });
@@ -27,7 +27,7 @@ const ClientServicesTab = ({ propertyId, clientUserId }: ClientServicesTabProps)
     queryKey: ["tier-services", membership?.tier_id],
     enabled: !!membership?.tier_id,
     queryFn: async () => {
-      const { data } = await (supabase.from("membership_tier_services") as any).select("service_id").eq("tier_id", membership.tier_id);
+      const { data } = await supabase.from("membership_tier_services").select("service_id").eq("tier_id", membership.tier_id);
       return data?.map((ts: any) => ts.service_id) || [];
     },
   });
@@ -35,7 +35,7 @@ const ClientServicesTab = ({ propertyId, clientUserId }: ClientServicesTabProps)
   const { data: allServices = [] } = useQuery({
     queryKey: ["services-library"],
     queryFn: async () => {
-      const { data } = await (supabase.from("services") as any).select("*").eq("is_active", true).order("name");
+      const { data } = await supabase.from("services").select("*").eq("is_active", true).order("name");
       return data || [];
     },
   });
@@ -44,7 +44,7 @@ const ClientServicesTab = ({ propertyId, clientUserId }: ClientServicesTabProps)
   const { data: requests = [] } = useQuery({
     queryKey: ["client-service-requests", propertyId],
     queryFn: async () => {
-      const { data } = await (supabase.from("service_requests") as any).select("*, service_request_items(*, services(*))").eq("property_id", propertyId).order("created_at", { ascending: false });
+      const { data } = await supabase.from("service_requests").select("*, service_request_items(*, services(*))").eq("property_id", propertyId).order("created_at", { ascending: false });
       return data || [];
     },
   });
@@ -53,7 +53,7 @@ const ClientServicesTab = ({ propertyId, clientUserId }: ClientServicesTabProps)
   const { data: estimates = [] } = useQuery({
     queryKey: ["estimates", propertyId],
     queryFn: async () => {
-      const { data } = await (supabase.from("estimates") as any).select("*").eq("property_id", propertyId).order("created_at", { ascending: false });
+      const { data } = await supabase.from("estimates").select("*").eq("property_id", propertyId).order("created_at", { ascending: false });
       return data || [];
     },
   });

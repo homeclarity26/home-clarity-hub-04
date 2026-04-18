@@ -98,7 +98,7 @@ const AdminFieldInspection = () => {
     if (!propertyId || !profile?.user_id || inspectionId) return;
     const createInspection = async () => {
       const { data, error } = await supabase
-        .from("field_inspections" as any)
+        .from("field_inspections")
         .insert({ property_id: propertyId, admin_id: profile.user_id } as any)
         .select("id")
         .single();
@@ -139,7 +139,7 @@ const AdminFieldInspection = () => {
         // Update inspection record
         if (inspectionId) {
           await supabase
-            .from("field_inspections" as any)
+            .from("field_inspections")
             .update({
               gps_lat: coords.lat,
               gps_lng: coords.lng,
@@ -185,7 +185,7 @@ const AdminFieldInspection = () => {
         photoLng = gpsCoords.lng;
       }
 
-      await supabase.from("inspection_photos" as any).insert({
+      await supabase.from("inspection_photos").insert({
         inspection_id: inspectionId,
         photo_url: inspPhotoUrl,
         report_page_id: selectedPageForPhoto || null,
@@ -254,7 +254,7 @@ const AdminFieldInspection = () => {
       if (error) throw error;
 
       // Save to DB
-      const { data: saved } = await supabase.from("inspection_voice_notes" as any).insert({
+      const { data: saved } = await supabase.from("inspection_voice_notes").insert({
         inspection_id: inspectionId,
         transcription: data.transcription,
         ai_narrative: data.narrative?.join("\n\n") || data.transcription,
@@ -289,7 +289,7 @@ const AdminFieldInspection = () => {
     if (!inspectionId) return;
     setSaving(true);
     const { error } = await supabase
-      .from("field_inspections" as any)
+      .from("field_inspections")
       .update({ notes } as any)
       .eq("id", inspectionId);
     setSaving(false);
@@ -301,7 +301,7 @@ const AdminFieldInspection = () => {
   const endInspection = async () => {
     if (!inspectionId) return;
     await supabase
-      .from("field_inspections" as any)
+      .from("field_inspections")
       .update({ status: "completed", checked_out_at: new Date().toISOString(), notes } as any)
       .eq("id", inspectionId);
 

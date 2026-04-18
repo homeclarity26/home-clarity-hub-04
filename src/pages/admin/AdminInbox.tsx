@@ -46,7 +46,7 @@ const AdminInbox = () => {
     queryFn: async () => {
       const { data: props } = await supabase.from("properties").select("id, property_name, address, client_user_id");
       if (!props) return [];
-      const { data: allMsgs } = await (supabase.from("property_messages" as any) as any).select("*").order("created_at", { ascending: false });
+      const { data: allMsgs } = await supabase.from("property_messages").select("*").order("created_at", { ascending: false });
       const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_initials");
       const profileMap: Record<string, any> = {};
       profiles?.forEach(p => { profileMap[p.user_id] = p; });
@@ -91,7 +91,7 @@ const AdminInbox = () => {
 
   const loadThreadMessages = async (propertyId: string) => {
     setLoadingMessages(true);
-    const { data } = await (supabase.from("property_messages" as any) as any).select("*").eq("property_id", propertyId).order("created_at", { ascending: true });
+    const { data } = await supabase.from("property_messages").select("*").eq("property_id", propertyId).order("created_at", { ascending: true });
     const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_initials");
     const profileMap: Record<string, any> = {};
     profiles?.forEach(p => { profileMap[p.user_id] = p; });
@@ -104,7 +104,7 @@ const AdminInbox = () => {
     setLoadingMessages(false);
 
     // Mark as read
-    await (supabase.from("property_messages" as any) as any).update({ is_read: true }).eq("property_id", propertyId).neq("sender_id", user?.id);
+    await supabase.from("property_messages").update({ is_read: true }).eq("property_id", propertyId).neq("sender_id", user?.id);
     queryClient.invalidateQueries({ queryKey: ["inbox-threads"] });
   };
 
@@ -130,7 +130,7 @@ const AdminInbox = () => {
   const sendMessage = async () => {
     if (!newMessage.trim() || !activeThread || !user) return;
     setIsSending(true);
-    const { error } = await (supabase.from("property_messages" as any) as any).insert({ property_id: activeThread, sender_id: user.id, message: newMessage.trim() });
+    const { error } = await supabase.from("property_messages").insert({ property_id: activeThread, sender_id: user.id, message: newMessage.trim() });
     if (error) { toast.error("Failed to send"); setIsSending(false); return; }
     
     // Send push notification to client

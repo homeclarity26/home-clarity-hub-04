@@ -38,7 +38,7 @@ const AdminTaskBoard = () => {
   const { data: tasks, isLoading } = useQuery({
     queryKey: ["admin-tasks-board"],
     queryFn: async () => {
-      const { data, error } = await (supabase.from("tasks") as any).select("*, properties(id, property_name, address)").order("due_date", { ascending: true, nullsFirst: false });
+      const { data, error } = await supabase.from("tasks").select("*, properties(id, property_name, address)").order("due_date", { ascending: true, nullsFirst: false });
       if (error) throw error;
       return (data || []).map((t: any) => ({ ...t, client_name: t.properties?.property_name || t.properties?.address || null }));
     },
@@ -67,7 +67,7 @@ const AdminTaskBoard = () => {
 
   const addQuickTask = async () => {
     if (!quickAdd.trim() || !user) return;
-    await (supabase.from("tasks") as any).insert({ admin_id: user.id, title: quickAdd.trim(), priority: "medium", status: "open" });
+    await supabase.from("tasks").insert({ admin_id: user.id, title: quickAdd.trim(), priority: "medium", status: "open" });
     setQuickAdd("");
     queryClient.invalidateQueries({ queryKey: ["admin-tasks-board"] });
     queryClient.invalidateQueries({ queryKey: ["admin-task-count"] });
@@ -75,7 +75,7 @@ const AdminTaskBoard = () => {
   };
 
   const updateTaskStatus = async (taskId: string, newStatus: string) => {
-    await (supabase.from("tasks") as any).update({ status: newStatus }).eq("id", taskId);
+    await supabase.from("tasks").update({ status: newStatus }).eq("id", taskId);
     queryClient.invalidateQueries({ queryKey: ["admin-tasks-board"] });
     queryClient.invalidateQueries({ queryKey: ["admin-task-count"] });
   };
@@ -84,9 +84,9 @@ const AdminTaskBoard = () => {
     if (!editTask) return;
     const { id, ...rest } = editTask;
     if (id) {
-      await (supabase.from("tasks") as any).update({ title: rest.title, description: rest.description, due_date: rest.due_date || null, priority: rest.priority, category: rest.category, client_id: rest.client_id || null }).eq("id", id);
+      await supabase.from("tasks").update({ title: rest.title, description: rest.description, due_date: rest.due_date || null, priority: rest.priority, category: rest.category, client_id: rest.client_id || null }).eq("id", id);
     } else {
-      await (supabase.from("tasks") as any).insert({ ...rest, admin_id: user?.id, status: "open" });
+      await supabase.from("tasks").insert({ ...rest, admin_id: user?.id, status: "open" });
     }
     setEditOpen(false);
     setEditTask(null);

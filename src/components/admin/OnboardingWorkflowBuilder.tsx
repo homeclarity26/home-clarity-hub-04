@@ -35,7 +35,7 @@ const OnboardingWorkflowBuilder = () => {
   const { data: workflows = [] } = useQuery({
     queryKey: ["onboarding-workflows"],
     queryFn: async () => {
-      const { data } = await (supabase.from("onboarding_workflows") as any).select("*").order("created_at", { ascending: false });
+      const { data } = await supabase.from("onboarding_workflows").select("*").order("created_at", { ascending: false });
       return data || [];
     },
   });
@@ -57,12 +57,12 @@ const OnboardingWorkflowBuilder = () => {
 
   const create = async () => {
     if (!user || !wfName.trim()) return;
-    const { data: wf } = await (supabase.from("onboarding_workflows") as any).insert({
+    const { data: wf } = await supabase.from("onboarding_workflows").insert({
       admin_id: user.id, name: wfName.trim(), description: wfDesc.trim(),
     }).select().single();
 
     if (wf && steps.length > 0) {
-      await (supabase.from("onboarding_steps") as any).insert(
+      await supabase.from("onboarding_steps").insert(
         steps.map(s => ({ ...s, workflow_id: wf.id }))
       );
     }
@@ -73,15 +73,15 @@ const OnboardingWorkflowBuilder = () => {
   };
 
   const toggleActive = async (id: string, active: boolean) => {
-    await (supabase.from("onboarding_workflows") as any).update({ is_active: active }).eq("id", id);
+    await supabase.from("onboarding_workflows").update({ is_active: active }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["onboarding-workflows"] });
   };
 
   const toggleDefault = async (id: string, isDefault: boolean) => {
     if (isDefault) {
-      await (supabase.from("onboarding_workflows") as any).update({ is_default: false }).neq("id", "none");
+      await supabase.from("onboarding_workflows").update({ is_default: false }).neq("id", "none");
     }
-    await (supabase.from("onboarding_workflows") as any).update({ is_default: isDefault }).eq("id", id);
+    await supabase.from("onboarding_workflows").update({ is_default: isDefault }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["onboarding-workflows"] });
   };
 

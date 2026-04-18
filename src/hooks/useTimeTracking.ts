@@ -26,7 +26,7 @@ export function useTimeEntries(clientId?: string) {
     queryKey: ["time-entries", clientId],
     enabled: !!clientId,
     queryFn: async (): Promise<TimeEntry[]> => {
-      const { data, error } = await (supabase.from("time_entries") as any)
+      const { data, error } = await supabase.from("time_entries")
         .select("*")
         .eq("client_id", clientId!)
         .order("entry_date", { ascending: false });
@@ -45,7 +45,7 @@ export function useWeeklyTimeEntries() {
       startOfWeek.setDate(now.getDate() - now.getDay());
       startOfWeek.setHours(0, 0, 0, 0);
 
-      const { data, error } = await (supabase.from("time_entries") as any)
+      const { data, error } = await supabase.from("time_entries")
         .select("*, properties(id, property_name, address)")
         .gte("entry_date", startOfWeek.toISOString().split("T")[0]);
       if (error) throw error;
@@ -60,7 +60,7 @@ export function useCreateTimeEntry() {
     mutationFn: async (entry: { client_id: string; entry_date: string; hours: number; activity_type: string; notes?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      const { error } = await (supabase.from("time_entries") as any).insert({
+      const { error } = await supabase.from("time_entries").insert({
         admin_id: user.id,
         client_id: entry.client_id,
         entry_date: entry.entry_date,

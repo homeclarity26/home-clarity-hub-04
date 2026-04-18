@@ -43,7 +43,7 @@ const AdminMessagesSection = ({ propertyId, clientName, propertyAddress }: Admin
 
   const fetchMessages = async () => {
     try {
-      const { data: msgs, error } = await (supabase.from("property_messages" as any) as any)
+      const { data: msgs, error } = await supabase.from("property_messages")
         .select("*").eq("property_id", propertyId).order("created_at", { ascending: true });
       if (error) throw error;
       const rawMsgs = (msgs as unknown as Message[]) || [];
@@ -64,7 +64,7 @@ const AdminMessagesSection = ({ propertyId, clientName, propertyAddress }: Admin
 
       const unreadIds = rawMsgs.filter((m) => !m.is_read && m.sender_id !== user?.id).map((m) => m.id);
       if (unreadIds.length > 0) {
-        await (supabase.from("property_messages" as any) as any).update({ is_read: true }).in("id", unreadIds);
+        await supabase.from("property_messages").update({ is_read: true }).in("id", unreadIds);
       }
     } catch (err) { console.error("Error loading messages:", err); }
     finally { setIsLoading(false); }
@@ -89,7 +89,7 @@ const AdminMessagesSection = ({ propertyId, clientName, propertyAddress }: Admin
     if (!newMessage.trim() || !user) return;
     setIsSending(true);
     try {
-      const { error } = await (supabase.from("property_messages" as any) as any).insert({ property_id: propertyId, sender_id: user.id, message: newMessage.trim() });
+      const { error } = await supabase.from("property_messages").insert({ property_id: propertyId, sender_id: user.id, message: newMessage.trim() });
       if (error) throw error;
       setNewMessage(""); await fetchMessages();
     } catch (err) { console.error("Send failed:", err); toast.error("Failed to send message."); }
@@ -100,7 +100,7 @@ const AdminMessagesSection = ({ propertyId, clientName, propertyAddress }: Admin
     if (!videoUrl.trim() || !user) return;
     setIsSending(true);
     try {
-      const { error } = await (supabase.from("property_messages" as any) as any).insert({
+      const { error } = await supabase.from("property_messages").insert({
         property_id: propertyId,
         sender_id: user.id,
         message: "📹 Video Message",

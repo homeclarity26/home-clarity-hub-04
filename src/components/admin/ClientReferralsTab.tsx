@@ -32,7 +32,7 @@ const ClientReferralsTab = ({ propertyId, clientId }: Props) => {
     setLoading(true);
 
     // Get or create referral link
-    const { data: existingLink } = await (supabase.from("referral_links") as any)
+    const { data: existingLink } = await supabase.from("referral_links")
       .select("*").eq("client_id", clientId).eq("property_id", propertyId).maybeSingle();
 
     if (existingLink) {
@@ -40,7 +40,7 @@ const ClientReferralsTab = ({ propertyId, clientId }: Props) => {
     } else {
       const code = `HBC-${clientId.slice(0, 4).toUpperCase()}${Date.now().toString(36).slice(-4).toUpperCase()}`;
       const url = `${window.location.origin}/refer/${code}`;
-      const { data: newLink } = await (supabase.from("referral_links") as any)
+      const { data: newLink } = await supabase.from("referral_links")
         .insert({ property_id: propertyId, client_id: clientId, referral_code: code, referral_url: url })
         .select("*").single();
       setLink(newLink);
@@ -48,13 +48,13 @@ const ClientReferralsTab = ({ propertyId, clientId }: Props) => {
 
     // Load events for this referral code
     if (existingLink?.referral_code) {
-      const { data: evts } = await (supabase.from("referral_events") as any)
+      const { data: evts } = await supabase.from("referral_events")
         .select("*").eq("referral_code", existingLink.referral_code).order("created_at", { ascending: false });
       setEvents(evts || []);
     }
 
     // Load credits
-    const { data: creds } = await (supabase.from("referral_credits") as any)
+    const { data: creds } = await supabase.from("referral_credits")
       .select("*").eq("property_id", propertyId).order("created_at", { ascending: false });
     setCredits(creds || []);
 
@@ -83,7 +83,7 @@ const ClientReferralsTab = ({ propertyId, clientId }: Props) => {
 
   const handleApplyCredit = async () => {
     if (!selectedCreditId || !selectedInvoiceId) return;
-    await (supabase.from("referral_credits") as any)
+    await supabase.from("referral_credits")
       .update({ status: "applied", applied_to_invoice_id: selectedInvoiceId, applied_at: new Date().toISOString() })
       .eq("id", selectedCreditId);
     toast.success("Credit applied to invoice");

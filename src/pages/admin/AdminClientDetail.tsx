@@ -157,7 +157,7 @@ const AdminClientDetail = () => {
     enabled: !!clientId,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      const { count, error } = await (supabase.from("property_messages" as any) as any).select("*", { count: "exact", head: true }).eq("property_id", clientId).eq("is_read", false).neq("sender_id", user?.id);
+      const { count, error } = await supabase.from("property_messages").select("*", { count: "exact", head: true }).eq("property_id", clientId).eq("is_read", false).neq("sender_id", user?.id);
       if (error) return 0;
       return count || 0;
     },

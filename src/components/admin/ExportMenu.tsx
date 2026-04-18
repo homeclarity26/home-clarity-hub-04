@@ -33,7 +33,7 @@ const ExportMenu = ({ variant = "outline", size = "sm" }: ExportMenuProps) => {
     try {
       // Create job record
       const { data: user } = await supabase.auth.getUser();
-      const { data: job } = await (supabase.from("export_jobs") as any)
+      const { data: job } = await supabase.from("export_jobs")
         .insert({
           export_type: exportType,
           filter_params: exportType === "maintenance_due" ? { days: Number(maintenanceDays) } : {},

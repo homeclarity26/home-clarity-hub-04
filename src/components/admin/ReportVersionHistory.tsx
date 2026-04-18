@@ -28,7 +28,7 @@ const ReportVersionHistory = ({ propertyId, reportId, currentPages }: ReportVers
     queryKey: ["report-versions", propertyId],
     enabled: open,
     queryFn: async () => {
-      const { data } = await (supabase.from("report_versions") as any).select("*").eq("client_id", propertyId).order("saved_at", { ascending: false });
+      const { data } = await supabase.from("report_versions").select("*").eq("client_id", propertyId).order("saved_at", { ascending: false });
       return data || [];
     },
   });
@@ -36,7 +36,7 @@ const ReportVersionHistory = ({ propertyId, reportId, currentPages }: ReportVers
   const saveVersion = async (notes?: string) => {
     if (!currentPages || !user) return;
     const lastVersion = versions?.[0]?.version_number || 0;
-    await (supabase.from("report_versions") as any).insert({
+    await supabase.from("report_versions").insert({
       client_id: propertyId,
       version_number: lastVersion + 1,
       report_snapshot_json: { pages: currentPages },

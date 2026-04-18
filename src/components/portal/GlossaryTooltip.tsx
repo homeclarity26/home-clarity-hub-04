@@ -18,7 +18,7 @@ const fetchTerms = (): Promise<GlossaryTerm[]> => {
   if (termsCachePromise) return termsCachePromise;
 
   termsCachePromise = (async () => {
-    const { data } = await (supabase.from("glossary_terms" as any) as any)
+    const { data } = await supabase.from("glossary_terms")
       .select("id, term, definition, category")
       .order("term");
     termsCache = (data || []) as GlossaryTerm[];

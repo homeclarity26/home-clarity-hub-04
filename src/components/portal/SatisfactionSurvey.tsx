@@ -32,7 +32,7 @@ const SatisfactionSurvey = ({ propertyId, reportId }: SatisfactionSurveyProps) =
 
     const checkIfShouldShow = async () => {
       // Check if already submitted for this report
-      const { data } = await (supabase.from("client_satisfaction_scores" as any) as any)
+      const { data } = await supabase.from("client_satisfaction_scores")
         .select("id")
         .eq("client_id", user.id)
         .eq("report_id", reportId)
@@ -50,7 +50,7 @@ const SatisfactionSurvey = ({ propertyId, reportId }: SatisfactionSurveyProps) =
     if (!user || !selectedScore) return;
     setSubmitting(true);
     try {
-      const { error } = await (supabase.from("client_satisfaction_scores" as any) as any).insert({
+      const { error } = await supabase.from("client_satisfaction_scores").insert({
         client_id: user.id,
         report_id: reportId,
         score: selectedScore,

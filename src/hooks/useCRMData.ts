@@ -64,7 +64,7 @@ export function useCRMContacts(contactType?: "client" | "trade_partner") {
   return useQuery({
     queryKey: ["crm-contacts", contactType],
     queryFn: async () => {
-      let query = (supabase.from("crm_contacts") as any).select("*").order("created_at", { ascending: false });
+      let query = supabase.from("crm_contacts").select("*").order("created_at", { ascending: false });
       if (contactType) query = query.eq("contact_type", contactType);
       const { data, error } = await query;
       if (error) throw error;
@@ -78,7 +78,7 @@ export function useCRMContact(id: string | undefined) {
     queryKey: ["crm-contact", id],
     enabled: !!id,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("crm_contacts") as any)
+      const { data, error } = await supabase.from("crm_contacts")
         .select("*")
         .eq("id", id)
         .single();
@@ -93,7 +93,7 @@ export function useCRMActivities(contactId: string | undefined) {
     queryKey: ["crm-activities", contactId],
     enabled: !!contactId,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("crm_activity_log") as any)
+      const { data, error } = await supabase.from("crm_activity_log")
         .select("*")
         .eq("contact_id", contactId)
         .order("logged_at", { ascending: false });
@@ -108,7 +108,7 @@ export function useCRMPipelineHistory(contactId: string | undefined) {
     queryKey: ["crm-pipeline-history", contactId],
     enabled: !!contactId,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("crm_pipeline_history") as any)
+      const { data, error } = await supabase.from("crm_pipeline_history")
         .select("*")
         .eq("contact_id", contactId)
         .order("changed_at", { ascending: false });
@@ -123,7 +123,7 @@ export function useCRMPeople(contactId: string | undefined) {
     queryKey: ["crm-people", contactId],
     enabled: !!contactId,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("crm_contacts_people") as any)
+      const { data, error } = await supabase.from("crm_contacts_people")
         .select("*")
         .eq("contact_id", contactId)
         .order("created_at");
@@ -137,7 +137,7 @@ export function useCRMSavedFilters(contactType?: "client" | "trade_partner") {
   return useQuery({
     queryKey: ["crm-saved-filters", contactType],
     queryFn: async () => {
-      let query = (supabase.from("crm_saved_filters") as any).select("*").order("created_at");
+      let query = supabase.from("crm_saved_filters").select("*").order("created_at");
       if (contactType) query = query.eq("contact_type", contactType);
       const { data, error } = await query;
       if (error) throw error;
@@ -153,16 +153,16 @@ export function useUpdateCRMStage() {
   return useMutation({
     mutationFn: async ({ contactId, contactType, newStage, userId }: { contactId: string; contactType: "client" | "trade_partner"; newStage: string; userId: string }) => {
       // Get current stage
-      const { data: contact } = await (supabase.from("crm_contacts") as any).select("client_stage, partner_stage").eq("id", contactId).single();
+      const { data: contact } = await supabase.from("crm_contacts").select("client_stage, partner_stage").eq("id", contactId).single();
       const fromStage = contactType === "client" ? contact?.client_stage : contact?.partner_stage;
 
       // Update stage
       const updateCol = contactType === "client" ? { client_stage: newStage } : { partner_stage: newStage };
-      const { error: updateErr } = await (supabase.from("crm_contacts") as any).update(updateCol).eq("id", contactId);
+      const { error: updateErr } = await supabase.from("crm_contacts").update(updateCol).eq("id", contactId);
       if (updateErr) throw updateErr;
 
       // Log history
-      await (supabase.from("crm_pipeline_history") as any).insert({
+      await supabase.from("crm_pipeline_history").insert({
         contact_id: contactId,
         from_stage: fromStage,
         to_stage: newStage,
@@ -181,7 +181,7 @@ export function useLogCRMActivity() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (entry: Omit<CRMActivityEntry, "id" | "logged_at">) => {
-      const { error } = await (supabase.from("crm_activity_log") as any).insert(entry);
+      const { error } = await supabase.from("crm_activity_log").insert(entry);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -194,7 +194,7 @@ export function useCreateCRMContact() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (contact: Partial<CRMContact>) => {
-      const { data, error } = await (supabase.from("crm_contacts") as any).insert(contact).select().single();
+      const { data, error } = await supabase.from("crm_contacts").insert(contact).select().single();
       if (error) throw error;
       return data;
     },
@@ -209,7 +209,7 @@ export function useUpdateCRMContact() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<CRMContact> & { id: string }) => {
-      const { error } = await (supabase.from("crm_contacts") as any).update(updates).eq("id", id);
+      const { error } = await supabase.from("crm_contacts").update(updates).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -227,7 +227,7 @@ export function useCRMClientsEnriched() {
     queryKey: ["crm-clients-enriched"],
     queryFn: async () => {
       // Get CRM contacts of type client
-      const { data: contacts, error: cErr } = await (supabase.from("crm_contacts") as any)
+      const { data: contacts, error: cErr } = await supabase.from("crm_contacts")
         .select("*")
         .eq("contact_type", "client")
         .order("created_at", { ascending: false });
@@ -326,13 +326,13 @@ export function useCRMTradePartnersEnriched() {
   return useQuery({
     queryKey: ["crm-trade-partners-enriched"],
     queryFn: async () => {
-      const { data: contacts, error: cErr } = await (supabase.from("crm_contacts") as any)
+      const { data: contacts, error: cErr } = await supabase.from("crm_contacts")
         .select("*")
         .eq("contact_type", "trade_partner")
         .order("created_at", { ascending: false });
       if (cErr) throw cErr;
 
-      const { data: vendors } = await (supabase.from("central_vendors") as any).select("*");
+      const { data: vendors } = await supabase.from("central_vendors").select("*");
       const vendorMap = new Map((vendors || []).map((v: any) => [v.id, v]));
 
       return (contacts || []).map((c: CRMContact) => {

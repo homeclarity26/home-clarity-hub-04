@@ -12,7 +12,7 @@ export function usePortalTracking(activeTab: string) {
     if (!user || isCreator) return;
 
     const createSession = async () => {
-      const { data } = await (supabase.from("client_sessions" as any) as any).insert({
+      const { data } = await supabase.from("client_sessions").insert({
         client_id: user.id,
       }).select("id").single();
       if (data) sessionId.current = data.id;
@@ -22,7 +22,7 @@ export function usePortalTracking(activeTab: string) {
     // Update session duration on interval
     const interval = setInterval(async () => {
       if (!sessionId.current) return;
-      await (supabase.from("client_sessions" as any) as any)
+      await supabase.from("client_sessions")
         .update({ last_active_at: new Date().toISOString() })
         .eq("id", sessionId.current);
     }, 60_000); // every minute
@@ -36,7 +36,7 @@ export function usePortalTracking(activeTab: string) {
     lastTab.current = activeTab;
 
     const logView = async () => {
-      await (supabase.from("page_views" as any) as any).insert({
+      await supabase.from("page_views").insert({
         client_id: user.id,
         page_name: activeTab,
       });
@@ -45,7 +45,7 @@ export function usePortalTracking(activeTab: string) {
       // Find user's property
       const { data: props } = await supabase.from("properties").select("id").eq("client_user_id", user.id).limit(1);
       if (props && props.length > 0) {
-        await (supabase.from("activity_log") as any).insert({
+        await supabase.from("activity_log").insert({
           user_id: user.id,
           property_id: props[0].id,
           action_type: "page_view",
@@ -66,18 +66,18 @@ export function usePortalEngagement(propertyId?: string) {
     // sessions showed "Total Logins 50" while page views (not similarly
     // capped beyond 200) could appear larger or smaller in confusing ways.
     const [sessionsCountRes, viewsCountRes, sessionsRes, viewsRes] = await Promise.all([
-      (supabase.from("client_sessions" as any) as any)
+      supabase.from("client_sessions")
         .select("id", { count: "exact", head: true })
         .eq("client_id", clientUserId),
-      (supabase.from("page_views" as any) as any)
+      supabase.from("page_views")
         .select("id", { count: "exact", head: true })
         .eq("client_id", clientUserId),
-      (supabase.from("client_sessions" as any) as any)
+      supabase.from("client_sessions")
         .select("login_at")
         .eq("client_id", clientUserId)
         .order("login_at", { ascending: false })
         .limit(1),
-      (supabase.from("page_views" as any) as any)
+      supabase.from("page_views")
         .select("page_name")
         .eq("client_id", clientUserId)
         .order("viewed_at", { ascending: false })

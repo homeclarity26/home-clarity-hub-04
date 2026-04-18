@@ -63,7 +63,7 @@ export function useAdminClients() {
 
       // Fetch unread message counts per property
       const { data: unreadMessages } = await (supabase
-        .from("property_messages" as any) as any)
+        .from("property_messages"))
         .select("property_id")
         .eq("is_read", false);
 
@@ -209,7 +209,7 @@ export function useClientsNeedingAttention() {
 
       // Unread messages grouped by property
       const { data: unreadMsgs } = await (supabase
-        .from("property_messages" as any) as any)
+        .from("property_messages"))
         .select("property_id, sender_id")
         .eq("is_read", false);
 

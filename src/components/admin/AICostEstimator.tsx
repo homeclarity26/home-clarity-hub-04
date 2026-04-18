@@ -39,7 +39,7 @@ const AICostEstimator = ({ propertyId, propertyAddress, onSelectEstimate }: AICo
         premium: tiers.premium || tiers.high || { amount: 0, description: "Premium scope" },
       });
 
-      await (supabase.from("ai_cost_estimates") as any).insert({
+      await supabase.from("ai_cost_estimates").insert({
         client_id: propertyId,
         project_type: projectType,
         inputs_json: { projectType, systemAge, brandModel, condition, location: propertyAddress },

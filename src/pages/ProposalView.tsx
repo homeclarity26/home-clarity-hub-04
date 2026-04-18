@@ -52,7 +52,7 @@ const ProposalView = () => {
     queryKey: ["proposal", token],
     enabled: !!token,
     queryFn: async () => {
-      const { data } = await (supabase.from("estimates") as any).select("*").eq("proposal_token", token).single();
+      const { data } = await supabase.from("estimates").select("*").eq("proposal_token", token).single();
       return data;
     },
   });
@@ -61,7 +61,7 @@ const ProposalView = () => {
     queryKey: ["proposal-lines", proposal?.id],
     enabled: !!proposal?.id,
     queryFn: async () => {
-      const { data } = await (supabase.from("estimate_line_items") as any).select("*").eq("estimate_id", proposal.id).order("sort_order");
+      const { data } = await supabase.from("estimate_line_items").select("*").eq("estimate_id", proposal.id).order("sort_order");
       return data || [];
     },
   });
@@ -70,7 +70,7 @@ const ProposalView = () => {
     queryKey: ["proposal-property", proposal?.property_id],
     enabled: !!proposal?.property_id,
     queryFn: async () => {
-      const { data } = await (supabase.from("properties") as any).select("property_name, address, city, state, zip").eq("id", proposal.property_id).single();
+      const { data } = await supabase.from("properties").select("property_name, address, city, state, zip").eq("id", proposal.property_id).single();
       return data;
     },
   });
@@ -83,7 +83,7 @@ const ProposalView = () => {
   useEffect(() => {
     if (!proposal?.id) return;
     // Increment view count
-    (supabase.from("estimates") as any).update({
+    supabase.from("estimates").update({
       proposal_view_count: (proposal.proposal_view_count || 0) + 1,
       proposal_last_viewed_at: new Date().toISOString(),
       ...(proposal.proposal_first_viewed_at ? {} : { proposal_first_viewed_at: new Date().toISOString() }),
@@ -94,7 +94,7 @@ const ProposalView = () => {
     const interval = setInterval(() => {
       timeRef.current += 10;
       if (timeRef.current % 30 === 0) {
-        (supabase.from("estimates") as any).update({
+        supabase.from("estimates").update({
           proposal_time_spent_seconds: (proposal.proposal_time_spent_seconds || 0) + 30,
           proposal_sections_viewed: Array.from(viewedSections.current),
         }).eq("id", proposal.id).then(() => {});
@@ -169,7 +169,7 @@ const ProposalView = () => {
       const next = { ...prev, [id]: !prev[id] };
       // Save client selections
       if (proposal?.id) {
-        (supabase.from("estimates") as any).update({ proposal_client_selections: next }).eq("id", proposal.id);
+        supabase.from("estimates").update({ proposal_client_selections: next }).eq("id", proposal.id);
       }
       return next;
     });

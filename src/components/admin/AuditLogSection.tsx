@@ -19,7 +19,7 @@ const AuditLogSection = () => {
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ["audit-log", page, actorFilter, actionFilter, search],
     queryFn: async () => {
-      let query = (supabase.from("audit_log") as any)
+      let query = supabase.from("audit_log")
         .select("*")
         .order("created_at", { ascending: false })
         .range(page * 50, (page + 1) * 50 - 1);

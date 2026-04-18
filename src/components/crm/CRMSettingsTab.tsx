@@ -14,7 +14,7 @@ const CRMSettingsTab = ({ contact }: { contact: CRMContact }) => {
   const qc = useQueryClient();
 
   const handleDelete = async () => {
-    const { error } = await (supabase.from("crm_contacts") as any).delete().eq("id", contact.id);
+    const { error } = await supabase.from("crm_contacts").delete().eq("id", contact.id);
     if (error) { toast.error("Failed to delete contact"); return; }
     toast.success("Contact deleted");
     qc.invalidateQueries({ queryKey: ["crm-contacts"] });

@@ -47,7 +47,7 @@ const ScopeGeneratorModal = ({ open, onOpenChange, projectId, projectTitle }: Sc
     queryKey: ["project-scopes", projectId],
     enabled: open && !!projectId,
     queryFn: async () => {
-      const { data } = await (supabase.from("project_scopes" as any) as any)
+      const { data } = await supabase.from("project_scopes")
         .select("*")
         .eq("project_id", projectId)
         .order("version_number", { ascending: false });
@@ -90,7 +90,7 @@ const ScopeGeneratorModal = ({ open, onOpenChange, projectId, projectTitle }: Sc
 
   const handleSave = async () => {
     if (!currentScope) return;
-    const { error } = await (supabase.from("project_scopes" as any) as any)
+    const { error } = await supabase.from("project_scopes")
       .update({ formatted_markdown: editableMarkdown })
       .eq("id", currentScope.id);
     if (error) { toast.error("Save failed"); return; }
@@ -103,10 +103,10 @@ const ScopeGeneratorModal = ({ open, onOpenChange, projectId, projectTitle }: Sc
   };
 
   const handleRestoreVersion = async (scope: any) => {
-    await (supabase.from("project_scopes" as any) as any)
+    await supabase.from("project_scopes")
       .update({ is_current: false })
       .eq("project_id", projectId);
-    await (supabase.from("project_scopes" as any) as any)
+    await supabase.from("project_scopes")
       .update({ is_current: true })
       .eq("id", scope.id);
     setCurrentScope(scope);

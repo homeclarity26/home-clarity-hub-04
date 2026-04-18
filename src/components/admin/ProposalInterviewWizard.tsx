@@ -321,7 +321,7 @@ const ProposalInterviewWizard = ({
 
       const colorTheme = answers.brand; // 'hbc' | 'akr'
 
-      const { data: est, error: estErr } = await (supabase.from("estimates") as any)
+      const { data: est, error: estErr } = await supabase.from("estimates")
         .insert({
           property_id: propertyId,
           admin_id: user.id,
@@ -349,7 +349,7 @@ const ProposalInterviewWizard = ({
       if (estErr || !est) throw estErr;
 
       // Insert line items
-      await (supabase.from("estimate_line_items") as any).insert(
+      await supabase.from("estimate_line_items").insert(
         data.lineItems.map((li: any, i: number) => ({
           estimate_id: est.id,
           description: li.description || "",

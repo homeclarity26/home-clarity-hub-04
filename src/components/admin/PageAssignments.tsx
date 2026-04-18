@@ -24,7 +24,7 @@ const PageAssignments = ({ reportPageId, pageTitle }: Props) => {
     queryKey: ["page-assignments", reportPageId],
     enabled: !!reportPageId,
     queryFn: async () => {
-      const { data } = await (supabase.from("page_assignments" as any) as any)
+      const { data } = await supabase.from("page_assignments")
         .select("*")
         .eq("report_page_id", reportPageId)
         .order("created_at");
@@ -36,7 +36,7 @@ const PageAssignments = ({ reportPageId, pageTitle }: Props) => {
     if (!name.trim()) return;
     setSaving(true);
     try {
-      await (supabase.from("page_assignments" as any) as any).insert({
+      await supabase.from("page_assignments").insert({
         report_page_id: reportPageId,
         assigned_to: name.trim(),
         due_date: dueDate || null,
@@ -49,7 +49,7 @@ const PageAssignments = ({ reportPageId, pageTitle }: Props) => {
   };
 
   const handleRemove = async (id: string) => {
-    await (supabase.from("page_assignments" as any) as any).delete().eq("id", id);
+    await supabase.from("page_assignments").delete().eq("id", id);
     queryClient.invalidateQueries({ queryKey: ["page-assignments", reportPageId] });
   };
 

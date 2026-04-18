@@ -38,12 +38,12 @@ const MessageTemplateLibrary = () => {
   const { data: templates = [] } = useQuery({
     queryKey: ["message-templates"],
     queryFn: async () => {
-      const { data } = await (supabase.from("message_templates") as any).select("*").order("use_count", { ascending: false });
+      const { data } = await supabase.from("message_templates").select("*").order("use_count", { ascending: false });
       if (data && data.length === 0 && user) {
         // Seed templates
         const seeds = SEED_TEMPLATES.map(t => ({ ...t, admin_id: user.id }));
-        await (supabase.from("message_templates") as any).insert(seeds);
-        const { data: seeded } = await (supabase.from("message_templates") as any).select("*").order("use_count", { ascending: false });
+        await supabase.from("message_templates").insert(seeds);
+        const { data: seeded } = await supabase.from("message_templates").select("*").order("use_count", { ascending: false });
         return seeded || [];
       }
       return data || [];
@@ -58,7 +58,7 @@ const MessageTemplateLibrary = () => {
 
   const create = async () => {
     if (!user || !title.trim() || !body.trim()) return;
-    await (supabase.from("message_templates") as any).insert({
+    await supabase.from("message_templates").insert({
       admin_id: user.id, title: title.trim(), category, body_text: body.trim(),
     });
     setCreateOpen(false); setTitle(""); setBody("");
@@ -67,7 +67,7 @@ const MessageTemplateLibrary = () => {
   };
 
   const deleteTemplate = async (id: string) => {
-    await (supabase.from("message_templates") as any).delete().eq("id", id);
+    await supabase.from("message_templates").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["message-templates"] });
     toast.success("Template deleted");
   };

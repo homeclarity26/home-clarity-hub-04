@@ -22,7 +22,7 @@ const AdminAnnualReviews = () => {
   const { data: clients, isLoading } = useQuery({
     queryKey: ["annual-review-clients"],
     queryFn: async () => {
-      const { data: memberships } = await (supabase.from("client_memberships") as any)
+      const { data: memberships } = await supabase.from("client_memberships")
         .select("*, membership_tiers(*)")
         .order("current_period_end", { ascending: true });
 
@@ -35,7 +35,7 @@ const AdminAnnualReviews = () => {
       // Load existing reviews for current year
       const year = new Date().getFullYear();
       const propIds = (properties || []).map((p: any) => p.id) as string[];
-      const { data: reviews } = await (supabase.from("annual_reviews" as any) as any)
+      const { data: reviews } = await supabase.from("annual_reviews")
         .select("*")
         .in("property_id", propIds.length ? propIds : ["none"])
         .eq("review_year", year);
@@ -82,7 +82,7 @@ const AdminAnnualReviews = () => {
   };
 
   const handleComplete = async (reviewId: string) => {
-    await (supabase.from("annual_reviews" as any) as any)
+    await supabase.from("annual_reviews")
       .update({
         status: "completed",
         completed_at: new Date().toISOString(),

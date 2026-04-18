@@ -38,14 +38,14 @@ const NotificationBell = ({ propertyId, onNavigate }: NotificationBellProps) => 
 
     const load = async () => {
       // Fetch unread messages count
-      const { count: msgCount } = await (supabase.from("property_messages" as any) as any)
+      const { count: msgCount } = await supabase.from("property_messages")
         .select("*", { count: "exact", head: true })
         .eq("property_id", propertyId)
         .eq("is_read", false)
         .neq("sender_id", user.id);
 
       // Fetch recent nudges  
-      const { data: nudges } = await (supabase.from("ai_notification_nudges") as any)
+      const { data: nudges } = await supabase.from("ai_notification_nudges")
         .select("*")
         .eq("property_id", propertyId)
         .eq("is_dismissed", false)
@@ -89,7 +89,7 @@ const NotificationBell = ({ propertyId, onNavigate }: NotificationBellProps) => 
   const dismiss = async (id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
     if (id !== "unread-msgs") {
-      await (supabase.from("ai_notification_nudges") as any)
+      await supabase.from("ai_notification_nudges")
         .update({ is_dismissed: true })
         .eq("id", id);
     }

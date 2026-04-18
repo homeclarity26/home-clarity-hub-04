@@ -41,7 +41,7 @@ const ClientTimelineTab = ({ propertyId }: ClientTimelineTabProps) => {
     queryKey: ["client-timeline", propertyId],
     queryFn: async () => {
       // Get timeline events
-      const { data: timeline } = await (supabase.from("client_timeline_events") as any).select("*").eq("client_id", propertyId).order("created_at", { ascending: false }).limit(100);
+      const { data: timeline } = await supabase.from("client_timeline_events").select("*").eq("client_id", propertyId).order("created_at", { ascending: false }).limit(100);
       
       // Also get activity_log events
       const { data: activity } = await supabase.from("activity_log").select("*").eq("property_id", propertyId).order("created_at", { ascending: false }).limit(50);
@@ -58,7 +58,7 @@ const ClientTimelineTab = ({ propertyId }: ClientTimelineTabProps) => {
   const addNote = async () => {
     if (!noteText.trim() || !user) return;
     setAddingNote(true);
-    await (supabase.from("client_timeline_events") as any).insert({
+    await supabase.from("client_timeline_events").insert({
       client_id: propertyId,
       event_type: "admin_note",
       event_description: noteText.trim(),

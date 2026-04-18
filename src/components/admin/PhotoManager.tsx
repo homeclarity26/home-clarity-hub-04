@@ -82,7 +82,7 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
   const { data: photos = [], isLoading } = useQuery({
     queryKey: ["property-photos", propertyId],
     queryFn: async () => {
-      const { data } = await (supabase.from("property_photos") as any)
+      const { data } = await supabase.from("property_photos")
         .select("*")
         .eq("property_id", propertyId)
         .order("created_at", { ascending: false });
@@ -128,7 +128,7 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
         if (upErr) { console.error(upErr); continue; }
         const { data: signedData } = await supabase.storage.from("property-photos").createSignedUrl(path, 3600);
         const photoUrl = signedData?.signedUrl || path;
-        await (supabase.from("property_photos") as any).insert({
+        await supabase.from("property_photos").insert({
           property_id: propertyId,
           file_url: photoUrl,
           title: file.name.replace(/\.[^/.]+$/, ""),
@@ -154,14 +154,14 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
   }, [handleBulkUpload]);
 
   const toggleVisibility = async (photo: PropertyPhoto) => {
-    await (supabase.from("property_photos") as any)
+    await supabase.from("property_photos")
       .update({ is_client_visible: !photo.is_client_visible })
       .eq("id", photo.id);
     qc.invalidateQueries({ queryKey: ["property-photos", propertyId] });
   };
 
   const updatePhoto = async (id: string, updates: Record<string, unknown>) => {
-    await (supabase.from("property_photos") as any).update(updates).eq("id", id);
+    await supabase.from("property_photos").update(updates).eq("id", id);
     qc.invalidateQueries({ queryKey: ["property-photos", propertyId] });
     if (lightboxPhoto?.id === id) {
       setLightboxPhoto({ ...lightboxPhoto, ...updates } as PropertyPhoto);
@@ -169,7 +169,7 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
   };
 
   const deletePhoto = async (id: string) => {
-    await (supabase.from("property_photos") as any).delete().eq("id", id);
+    await supabase.from("property_photos").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["property-photos", propertyId] });
     setLightboxPhoto(null);
     toast.success("Photo deleted");
@@ -193,7 +193,7 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
             const category = data.category || "other";
             const room = data.room_or_area || data.pageSlug || null;
             const tags = data.tags || [];
-            await (supabase.from("property_photos") as any)
+            await supabase.from("property_photos")
               .update({ category, room_or_area: room, tags })
               .eq("id", photo.id);
             updated++;

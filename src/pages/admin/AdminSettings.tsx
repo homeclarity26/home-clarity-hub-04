@@ -128,7 +128,7 @@ const AdminSettings = () => {
   const handleNotifSave = async () => {
     if (!user) return;
     setSavingNotifs(true);
-    const { error } = await (supabase.from("profiles") as any).update({ notification_preferences: notifPrefs }).eq("user_id", user.id);
+    const { error } = await supabase.from("profiles").update({ notification_preferences: notifPrefs }).eq("user_id", user.id);
     setSavingNotifs(false);
     if (error) { toast.error("Failed to save preferences"); return; }
     toast.success("Notification preferences saved");

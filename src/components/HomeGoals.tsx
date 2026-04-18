@@ -42,7 +42,7 @@ const HomeGoals = ({ propertyId }: HomeGoalsProps) => {
   const loadGoals = async () => {
     if (!user) return;
     const { data } = await supabase
-      .from("home_goals" as any)
+      .from("home_goals")
       .select("*")
       .eq("client_id", user.id)
       .order("created_at", { ascending: false });
@@ -54,7 +54,7 @@ const HomeGoals = ({ propertyId }: HomeGoalsProps) => {
 
   const handleSubmit = async () => {
     if (!user || !form.title.trim()) return;
-    const { error } = await (supabase.from("home_goals" as any) as any).insert({
+    const { error } = await supabase.from("home_goals").insert({
       client_id: user.id,
       title: form.title,
       description: form.description || null,
@@ -70,7 +70,7 @@ const HomeGoals = ({ propertyId }: HomeGoalsProps) => {
   };
 
   const updateStatus = async (id: string, status: string) => {
-    const { error } = await (supabase.from("home_goals" as any) as any).update({ status }).eq("id", id);
+    const { error } = await supabase.from("home_goals").update({ status }).eq("id", id);
     if (error) { toast.error("Failed to update"); return; }
     setGoals((prev) => prev.map((g) => g.id === id ? { ...g, status } : g));
   };

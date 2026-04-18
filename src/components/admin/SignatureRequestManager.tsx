@@ -30,7 +30,7 @@ const SignatureRequestManager = ({ clientId, propertyId }: SignatureRequestManag
   const { data: requests = [] } = useQuery({
     queryKey: ["signature-requests", clientId],
     queryFn: async () => {
-      const { data } = await (supabase.from("signature_requests") as any)
+      const { data } = await supabase.from("signature_requests")
         .select("*")
         .eq("client_id", clientId)
         .order("created_at", { ascending: false });
@@ -41,7 +41,7 @@ const SignatureRequestManager = ({ clientId, propertyId }: SignatureRequestManag
   const create = async () => {
     if (!user || !title.trim() || !content.trim()) return;
     const expiresAt = new Date(Date.now() + expiresIn * 86400000).toISOString();
-    await (supabase.from("signature_requests") as any).insert({
+    await supabase.from("signature_requests").insert({
       client_id: clientId, admin_id: user.id, document_title: title.trim(),
       document_type: docType, document_content_html: content.trim(),
       status: "sent", sent_at: new Date().toISOString(), expires_at: expiresAt,

@@ -36,7 +36,7 @@ const MembershipTierManager = () => {
   const { data: tiers = [] } = useQuery({
     queryKey: ["membership-tiers"],
     queryFn: async () => {
-      const { data } = await (supabase.from("membership_tiers") as any).select("*").eq("is_active", true).order("sort_order").order("price_annually");
+      const { data } = await supabase.from("membership_tiers").select("*").eq("is_active", true).order("sort_order").order("price_annually");
       return data || [];
     },
   });
@@ -44,7 +44,7 @@ const MembershipTierManager = () => {
   const { data: services = [] } = useQuery({
     queryKey: ["services-library"],
     queryFn: async () => {
-      const { data } = await (supabase.from("services") as any).select("*").eq("is_active", true).order("name");
+      const { data } = await supabase.from("services").select("*").eq("is_active", true).order("name");
       return data || [];
     },
   });
@@ -52,7 +52,7 @@ const MembershipTierManager = () => {
   const { data: tierServices = [] } = useQuery({
     queryKey: ["membership-tier-services"],
     queryFn: async () => {
-      const { data } = await (supabase.from("membership_tier_services") as any).select("*");
+      const { data } = await supabase.from("membership_tier_services").select("*");
       return data || [];
     },
   });
@@ -91,17 +91,17 @@ const MembershipTierManager = () => {
 
     let tierId = editId;
     if (editId) {
-      await (supabase.from("membership_tiers") as any).update(payload).eq("id", editId);
+      await supabase.from("membership_tiers").update(payload).eq("id", editId);
     } else {
-      const { data } = await (supabase.from("membership_tiers") as any).insert(payload).select("id").single();
+      const { data } = await supabase.from("membership_tiers").insert(payload).select("id").single();
       tierId = data?.id;
     }
 
     if (tierId) {
       // Sync tier services
-      await (supabase.from("membership_tier_services") as any).delete().eq("tier_id", tierId);
+      await supabase.from("membership_tier_services").delete().eq("tier_id", tierId);
       if (selectedServiceIds.length > 0) {
-        await (supabase.from("membership_tier_services") as any).insert(
+        await supabase.from("membership_tier_services").insert(
           selectedServiceIds.map(sid => ({ tier_id: tierId, service_id: sid }))
         );
       }
@@ -114,7 +114,7 @@ const MembershipTierManager = () => {
   };
 
   const archive = async (id: string) => {
-    await (supabase.from("membership_tiers") as any).update({ is_active: false }).eq("id", id);
+    await supabase.from("membership_tiers").update({ is_active: false }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["membership-tiers"] });
     toast.success("Tier archived");
   };

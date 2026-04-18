@@ -101,7 +101,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
   const { data: estimates = [], isLoading } = useQuery({
     queryKey: ["estimates", propertyId],
     queryFn: async () => {
-      const { data } = await (supabase.from("estimates") as any).select("*").eq("property_id", propertyId).order("created_at", { ascending: false });
+      const { data } = await supabase.from("estimates").select("*").eq("property_id", propertyId).order("created_at", { ascending: false });
       return data || [];
     },
   });
@@ -111,7 +111,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
     queryFn: async () => {
       const estIds = estimates.map((e: any) => e.id);
       if (estIds.length === 0) return [];
-      const { data } = await (supabase.from("estimate_line_items") as any).select("*").in("estimate_id", estIds).order("sort_order");
+      const { data } = await supabase.from("estimate_line_items").select("*").in("estimate_id", estIds).order("sort_order");
       return data || [];
     },
     enabled: estimates.length > 0,
@@ -120,7 +120,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
   const { data: services = [] } = useQuery({
     queryKey: ["services-library"],
     queryFn: async () => {
-      const { data } = await (supabase.from("services") as any).select("*").eq("is_active", true).order("name");
+      const { data } = await supabase.from("services").select("*").eq("is_active", true).order("name");
       return data || [];
     },
   });
@@ -139,7 +139,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
   const { data: hcrReportPages = [] } = useQuery({
     queryKey: ['report-pages-for-import', reportId],
     queryFn: async () => {
-      const { data } = await (supabase.from('report_pages') as any).select('*').eq('report_id', reportId).order('page_order');
+      const { data } = await supabase.from("report_pages").select('*').eq('report_id', reportId).order('page_order');
       return data || [];
     },
     enabled: !!reportId && showHCRImport,
@@ -211,14 +211,14 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
       const lis = estimateLineItems.filter((li: any) => li.estimate_id === est.id && selectedLineItemIds.has(li.id));
       const partialSubtotal = lis.reduce((s: number, li: any) => s + Number(li.total), 0);
 
-      const { data: inv, error } = await (supabase.from("invoices") as any).insert({
+      const { data: inv, error } = await supabase.from("invoices").insert({
         property_id: propertyId, title: `${est.title} (partial)`, description: est.title,
         amount: partialSubtotal, subtotal: partialSubtotal, tax: 0, total: partialSubtotal,
         balance_due: partialSubtotal, status: "draft", type: "invoice", notes: est.notes,
       }).select("id").single();
       if (error || !inv) throw error;
 
-      await (supabase.from("invoice_line_items") as any).insert(
+      await supabase.from("invoice_line_items").insert(
         lis.map((li: any, i: number) => ({
           invoice_id: inv.id, service_id: li.service_id, description: li.description,
           quantity: li.quantity, unit_price: li.unit_price, total: li.total, sort_order: i,
@@ -239,13 +239,13 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
 
   const createEstimate = async () => {
     if (!user || lineItems.length === 0) return;
-    const { data: est, error } = await (supabase.from("estimates") as any).insert({
+    const { data: est, error } = await supabase.from("estimates").insert({
       property_id: propertyId, admin_id: user.id, title, notes, subtotal,
       discount_amount: discountAmount, discount_type: discountType, tax, total,
     }).select("id").single();
     if (error || !est) { toast.error("Failed to create estimate"); return; }
 
-    await (supabase.from("estimate_line_items") as any).insert(
+    await supabase.from("estimate_line_items").insert(
       lineItems.map((li, i) => ({
         estimate_id: est.id, service_id: li.service_id || null,
         description: li.description, quantity: parseFloat(li.quantity) || 1,
@@ -262,7 +262,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
   };
 
   const updateStatus = async (id: string, status: string) => {
-    await (supabase.from("estimates") as any).update({ status, ...(status === "sent" ? { sent_at: new Date().toISOString() } : {}) }).eq("id", id);
+    await supabase.from("estimates").update({ status, ...(status === "sent" ? { sent_at: new Date().toISOString() } : {}) }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["estimates", propertyId] });
     toast.success(`Estimate ${status}`);
   };
@@ -274,7 +274,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
       const lis = estimateLineItems.filter((li: any) => li.estimate_id === est.id);
 
       // Create invoice
-      const { data: inv, error } = await (supabase.from("invoices") as any).insert({
+      const { data: inv, error } = await supabase.from("invoices").insert({
         property_id: propertyId, title: est.title, description: est.title,
         amount: est.total, subtotal: est.subtotal, tax: est.tax, total: est.total,
         balance_due: est.total, status: "draft", type: "invoice", notes: est.notes,
@@ -283,7 +283,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
 
       // Copy line items
       if (lis.length > 0) {
-        await (supabase.from("invoice_line_items") as any).insert(
+        await supabase.from("invoice_line_items").insert(
           lis.map((li: any) => ({
             invoice_id: inv.id, service_id: li.service_id, description: li.description,
             quantity: li.quantity, unit_price: li.unit_price, total: li.total, sort_order: li.sort_order,
@@ -292,7 +292,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
       }
 
       // Mark estimate as converted
-      await (supabase.from("estimates") as any).update({ status: "converted", converted_invoice_id: inv.id }).eq("id", est.id);
+      await supabase.from("estimates").update({ status: "converted", converted_invoice_id: inv.id }).eq("id", est.id);
 
       toast.success("Estimate converted to invoice");
       qc.invalidateQueries({ queryKey: ["estimates", propertyId] });
@@ -305,8 +305,8 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
   };
 
   const deleteEstimate = async (id: string) => {
-    await (supabase.from("estimate_line_items") as any).delete().eq("estimate_id", id);
-    await (supabase.from("estimates") as any).delete().eq("id", id);
+    await supabase.from("estimate_line_items").delete().eq("estimate_id", id);
+    await supabase.from("estimates").delete().eq("id", id);
     if (selectedId === id) setSelectedId(null);
     qc.invalidateQueries({ queryKey: ["estimates", propertyId] });
     toast.success("Estimate deleted");
@@ -345,7 +345,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
 
       // Create estimate
       const proposalToken = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
-      const { data: est, error: estErr } = await (supabase.from("estimates") as any).insert({
+      const { data: est, error: estErr } = await supabase.from("estimates").insert({
         property_id: propertyId,
         admin_id: user.id,
         title: data.title || "Estimate",
@@ -368,7 +368,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
       if (estErr || !est) throw estErr;
 
       // Insert line items
-      await (supabase.from("estimate_line_items") as any).insert(
+      await supabase.from("estimate_line_items").insert(
         data.lineItems.map((li: any, i: number) => ({
           estimate_id: est.id,
           description: li.description || "",
@@ -828,7 +828,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
                 }));
                 // Create a new estimate with these scope sections
                 const subtotal = 0;
-                const { data: newEst, error } = await (supabase.from('estimates') as any).insert({
+                const { data: newEst, error } = await supabase.from("estimates").insert({
                   property_id: propertyId,
                   admin_id: user?.id,
                   title: 'Imported from HCR',

@@ -141,7 +141,7 @@ const ProjectUpdateFeed = ({ projectId, isMock }: { projectId: string; isMock: b
       return;
     }
     const { data } = await supabase
-      .from("project_updates" as any)
+      .from("project_updates")
       .select("*")
       .eq("project_id", projectId)
       .order("created_at", { ascending: false })
@@ -156,7 +156,7 @@ const ProjectUpdateFeed = ({ projectId, isMock }: { projectId: string; isMock: b
     if (!newContent.trim() || isMock) return;
     setPosting(true);
     try {
-      await (supabase.from("project_updates" as any) as any).insert({
+      await supabase.from("project_updates").insert({
         project_id: projectId,
         content: newContent.trim(),
         photos: [],

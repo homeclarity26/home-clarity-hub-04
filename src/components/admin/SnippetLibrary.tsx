@@ -34,7 +34,7 @@ const SnippetLibrary = ({ onInsert, mode = "manage" }: SnippetLibraryProps) => {
   const { data: snippets, isLoading } = useQuery({
     queryKey: ["narrative-snippets"],
     queryFn: async () => {
-      const { data, error } = await (supabase.from("narrative_snippets" as any) as any)
+      const { data, error } = await supabase.from("narrative_snippets")
         .select("*")
         .order("usage_count", { ascending: false });
       if (error) throw error;
@@ -52,7 +52,7 @@ const SnippetLibrary = ({ onInsert, mode = "manage" }: SnippetLibraryProps) => {
     if (!newTitle || !newContent || !user) return;
     setSaving(true);
     try {
-      const { error } = await (supabase.from("narrative_snippets" as any) as any).insert({
+      const { error } = await supabase.from("narrative_snippets").insert({
         title: newTitle, content: newContent, category: newCategory, created_by: user.id,
       });
       if (error) throw error;
@@ -66,7 +66,7 @@ const SnippetLibrary = ({ onInsert, mode = "manage" }: SnippetLibraryProps) => {
   const handleInsert = async (snippet: { id: string; content: string }) => {
     onInsert?.(snippet.content);
     // Increment usage count
-    await (supabase.from("narrative_snippets" as any) as any)
+    await supabase.from("narrative_snippets")
       .update({ usage_count: (snippets?.find(s => s.id === snippet.id)?.usage_count || 0) + 1 })
       .eq("id", snippet.id);
     queryClient.invalidateQueries({ queryKey: ["narrative-snippets"] });
@@ -75,7 +75,7 @@ const SnippetLibrary = ({ onInsert, mode = "manage" }: SnippetLibraryProps) => {
   };
 
   const handleDelete = async (id: string) => {
-    await (supabase.from("narrative_snippets" as any) as any).delete().eq("id", id);
+    await supabase.from("narrative_snippets").delete().eq("id", id);
     queryClient.invalidateQueries({ queryKey: ["narrative-snippets"] });
     toast.success("Snippet deleted");
   };

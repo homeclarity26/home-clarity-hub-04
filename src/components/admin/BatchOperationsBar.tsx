@@ -73,7 +73,7 @@ const BatchOperationsBar = ({ selectedIds, onClear, context, reportId, clients }
         if (pages && pages.length > 0) {
           const done = pages.filter((p) => p.status === "complete" || p.status === "published").length;
           const pct = Math.round((done / pages.length) * 100);
-          await (supabase.from("reports") as any).update({ completion_percent: pct }).eq("id", reportId);
+          await supabase.from("reports").update({ completion_percent: pct }).eq("id", reportId);
         }
       }
 

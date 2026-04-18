@@ -85,7 +85,7 @@ const ReportBuildProgress = ({
   }, [reportId]);
 
   const fetchPages = async () => {
-    const { data, error } = await (supabase.from("report_pages" as any) as any)
+    const { data, error } = await supabase.from("report_pages")
       .select("id, page_key, title, group_name, status, condition_rating, sort_order")
       .eq("report_id", reportId)
       .order("sort_order", { ascending: true });

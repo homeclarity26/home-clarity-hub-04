@@ -354,7 +354,7 @@ const BlockRenderer = ({
       const slug = pageData.pageSlug || pageData.title?.toLowerCase().replace(/\s+/g, "-");
       const name = [scanResult.brand, scanResult.model].filter(Boolean).join(" ") || pageData.title || "Equipment";
 
-      const { error } = await (supabase.from("equipment" as any) as any).insert({
+      const { error } = await supabase.from("equipment").insert({
         property_id: propertyId,
         name,
         category: inferCategory(slug),

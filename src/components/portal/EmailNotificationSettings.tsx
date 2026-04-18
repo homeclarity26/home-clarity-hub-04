@@ -32,7 +32,7 @@ const EmailNotificationSettings = () => {
       // Pre-fill with account email
       if (user.email) setEmail(user.email);
 
-      const { data } = await (supabase.from("sms_subscriptions" as any) as any)
+      const { data } = await supabase.from("sms_subscriptions")
         .select("*")
         .eq("user_id", user.id)
         .limit(1);
@@ -103,11 +103,11 @@ const EmailNotificationSettings = () => {
     setSaving(true);
     try {
       if (subId) {
-        await (supabase.from("sms_subscriptions" as any) as any)
+        await supabase.from("sms_subscriptions")
           .update({ opted_in_events_json: events })
           .eq("id", subId);
       } else {
-        await (supabase.from("sms_subscriptions" as any) as any).insert({
+        await supabase.from("sms_subscriptions").insert({
           user_id: user.id,
           phone_number: email,
           is_verified: isVerified,

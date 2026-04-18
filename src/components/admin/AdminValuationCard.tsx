@@ -34,7 +34,7 @@ const AdminValuationCard = ({ propertyId, address, estimatedValue, city, state, 
 
   useEffect(() => {
     if (!propertyId) return;
-    (supabase.from("home_value_snapshots") as any)
+    supabase.from("home_value_snapshots")
       .select("*")
       .eq("property_id", propertyId)
       .order("snapshot_date", { ascending: true })
@@ -49,7 +49,7 @@ const AdminValuationCard = ({ propertyId, address, estimatedValue, city, state, 
       });
       if (error) throw error;
       // Reload snapshots
-      const { data: fresh } = await (supabase.from("home_value_snapshots") as any)
+      const { data: fresh } = await supabase.from("home_value_snapshots")
         .select("*")
         .eq("property_id", propertyId)
         .order("snapshot_date", { ascending: true });

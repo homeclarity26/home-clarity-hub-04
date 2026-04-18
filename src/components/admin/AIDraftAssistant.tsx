@@ -34,7 +34,7 @@ const AIDraftAssistant = ({ propertyId, propertyContext, onInsert }: AIDraftAssi
       setGeneratedText(data.generatedText || "");
 
       // Save to history
-      await (supabase.from("ai_draft_history") as any).insert({
+      await supabase.from("ai_draft_history").insert({
         client_id: propertyId,
         section_type: section,
         input_notes: notes,

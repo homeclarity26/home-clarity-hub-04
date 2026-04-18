@@ -30,7 +30,7 @@ const AdminReferrals = () => {
   const { data: referrals, isLoading } = useQuery({
     queryKey: ["referrals"],
     queryFn: async () => {
-      const { data, error } = await (supabase.from("referrals") as any).select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("referrals").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       // Join with profiles for referring client name
       const clientIds = [...new Set((data || []).map((r: any) => r.referring_client_id))];
@@ -61,9 +61,9 @@ const AdminReferrals = () => {
     if (!form.referred_name?.trim() || !form.referring_client_id) return;
     const payload = { referring_client_id: form.referring_client_id, referred_name: form.referred_name, referred_email: form.referred_email || null, referred_phone: form.referred_phone || null, status: form.status || "lead", reward_status: form.reward_status || "pending", reward_amount: form.reward_amount || 250, notes: form.notes || null, admin_id: user?.id };
     if (form.id) {
-      await (supabase.from("referrals") as any).update(payload).eq("id", form.id);
+      await supabase.from("referrals").update(payload).eq("id", form.id);
     } else {
-      await (supabase.from("referrals") as any).insert(payload);
+      await supabase.from("referrals").insert(payload);
     }
     setEditOpen(false); setForm({});
     queryClient.invalidateQueries({ queryKey: ["referrals"] });
@@ -71,7 +71,7 @@ const AdminReferrals = () => {
   };
 
   const updateStatus = async (id: string, status: string) => {
-    await (supabase.from("referrals") as any).update({ status }).eq("id", id);
+    await supabase.from("referrals").update({ status }).eq("id", id);
     queryClient.invalidateQueries({ queryKey: ["referrals"] });
   };
 

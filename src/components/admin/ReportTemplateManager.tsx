@@ -29,14 +29,14 @@ const ReportTemplateManager = () => {
   const { data: templates = [] } = useQuery({
     queryKey: ["report-templates"],
     queryFn: async () => {
-      const { data } = await (supabase.from("report_templates") as any).select("*").order("created_at", { ascending: false });
+      const { data } = await supabase.from("report_templates").select("*").order("created_at", { ascending: false });
       return data || [];
     },
   });
 
   const create = async () => {
     if (!user || !name.trim()) return;
-    await (supabase.from("report_templates") as any).insert({
+    await supabase.from("report_templates").insert({
       admin_id: user.id, name: name.trim(), description: description.trim(),
       tier_label: tierLabel, cover_style: coverStyle,
       scoring_weights_json: { exterior: extWeight, interior: intWeight, systems: sysWeight },
@@ -47,8 +47,8 @@ const ReportTemplateManager = () => {
   };
 
   const setDefault = async (id: string) => {
-    await (supabase.from("report_templates") as any).update({ is_default: false }).neq("id", "none");
-    await (supabase.from("report_templates") as any).update({ is_default: true }).eq("id", id);
+    await supabase.from("report_templates").update({ is_default: false }).neq("id", "none");
+    await supabase.from("report_templates").update({ is_default: true }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["report-templates"] });
     toast.success("Default template updated");
   };

@@ -113,7 +113,7 @@ const ProposalBuilder = ({ estimate, lineItems, clientName, propertyAddress, onU
     setSaving(true);
     const payload: any = { ...form };
     // Ensure pricing_type is persisted
-    await (supabase.from("estimates") as any).update(payload).eq("id", estimate.id);
+    await supabase.from("estimates").update(payload).eq("id", estimate.id);
     setSaving(false);
     toast.success("Proposal saved");
     onUpdate();

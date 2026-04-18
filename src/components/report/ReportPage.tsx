@@ -129,7 +129,7 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
       updatePageData(updates);
       toast.success("Draft generated — review and edit as needed.");
 
-      supabase.from("learning_events" as any).insert({
+      supabase.from("learning_events").insert({
         event_type: "draft_narrative_generated",
         actor_role: "creator",
         entity_type: "report_page",

@@ -172,7 +172,7 @@ const IntegrationsHub = () => {
   const { data: apiKeys = [] } = useQuery({
     queryKey: ["api-keys"],
     queryFn: async () => {
-      const { data } = await (supabase.from("api_keys") as any).select("*").order("created_at", { ascending: false });
+      const { data } = await supabase.from("api_keys").select("*").order("created_at", { ascending: false });
       return data || [];
     },
   });
@@ -180,7 +180,7 @@ const IntegrationsHub = () => {
   const { data: webhooks = [] } = useQuery({
     queryKey: ["webhooks"],
     queryFn: async () => {
-      const { data } = await (supabase.from("webhooks") as any).select("*").order("created_at", { ascending: false });
+      const { data } = await supabase.from("webhooks").select("*").order("created_at", { ascending: false });
       return data || [];
     },
   });
@@ -193,7 +193,7 @@ const IntegrationsHub = () => {
     const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-    await (supabase.from("api_keys") as any).insert({ admin_id: user.id, key_hash: hashHex, label: newKeyLabel.trim() });
+    await supabase.from("api_keys").insert({ admin_id: user.id, key_hash: hashHex, label: newKeyLabel.trim() });
     setGeneratedKey(key);
     setNewKeyLabel("");
     setShowKeyDialog(false);
@@ -202,7 +202,7 @@ const IntegrationsHub = () => {
   };
 
   const revokeKey = async (id: string) => {
-    await (supabase.from("api_keys") as any).update({ is_active: false }).eq("id", id);
+    await supabase.from("api_keys").update({ is_active: false }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["api-keys"] });
     toast.success("API key revoked");
   };
@@ -210,7 +210,7 @@ const IntegrationsHub = () => {
   const addWebhook = async () => {
     if (!user || !whUrl.trim() || !whLabel.trim() || whEvents.length === 0) return;
     const secret = `whsec_${crypto.randomUUID().replace(/-/g, "")}`;
-    await (supabase.from("webhooks") as any).insert({
+    await supabase.from("webhooks").insert({
       admin_id: user.id, endpoint_url: whUrl.trim(), label: whLabel.trim(),
       events_subscribed_json: whEvents, secret_token: secret,
     });
@@ -221,12 +221,12 @@ const IntegrationsHub = () => {
   };
 
   const toggleWebhook = async (id: string, active: boolean) => {
-    await (supabase.from("webhooks") as any).update({ is_active: active }).eq("id", id);
+    await supabase.from("webhooks").update({ is_active: active }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["webhooks"] });
   };
 
   const deleteWebhook = async (id: string) => {
-    await (supabase.from("webhooks") as any).delete().eq("id", id);
+    await supabase.from("webhooks").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["webhooks"] });
     toast.success("Webhook deleted");
   };
@@ -234,7 +234,7 @@ const IntegrationsHub = () => {
   const testWebhook = async (wh: any) => {
     setTesting(wh.id);
     try {
-      await (supabase.from("webhook_logs") as any).insert({
+      await supabase.from("webhook_logs").insert({
         webhook_id: wh.id, event_type: "test", payload_json: { event: "test", timestamp: new Date().toISOString() },
         response_status: 200, success: true,
       });

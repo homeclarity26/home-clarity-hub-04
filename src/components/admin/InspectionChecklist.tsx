@@ -33,7 +33,7 @@ const InspectionChecklist = ({ reportPageId, pageTitle }: Props) => {
 
   const loadChecklist = async () => {
     try {
-      const { data } = await (supabase.from("inspection_checklists" as any) as any)
+      const { data } = await supabase.from("inspection_checklists")
         .select("*")
         .eq("report_page_id", reportPageId)
         .limit(1);
@@ -69,9 +69,9 @@ const InspectionChecklist = ({ reportPageId, pageTitle }: Props) => {
       const completed = items.filter((i) => i.checked).length;
       const payload = { report_page_id: reportPageId, items: items as any, completed_count: completed, total_count: items.length };
       if (checklistId) {
-        await (supabase.from("inspection_checklists" as any) as any).update(payload).eq("id", checklistId);
+        await supabase.from("inspection_checklists").update(payload).eq("id", checklistId);
       } else {
-        const { data } = await (supabase.from("inspection_checklists" as any) as any).insert(payload).select().single();
+        const { data } = await supabase.from("inspection_checklists").insert(payload).select().single();
         if (data) setChecklistId(data.id);
       }
       toast.success("Checklist saved");
