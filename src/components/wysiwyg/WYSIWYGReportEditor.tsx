@@ -244,14 +244,20 @@ const WYSIWYGReportEditor = ({ reportId, propertyAddress, initialBlocks, propert
           const { data: lastVer } = await (supabase.from('report_versions') as any)
             .select('version_number').eq('client_id', propertyId).order('version_number', { ascending: false }).limit(1).maybeSingle();
           const nextVersion = (lastVer?.version_number || 0) + 1;
-          await (supabase.from('report_versions') as any).insert({
-            client_id: propertyId,
-            report_id: reportId,
-            version_number: nextVersion,
-            report_snapshot_json: blocksToSave,
-            saved_by: 'auto',
-            saved_at: new Date().toISOString(),
-          });
+          // report_versions schema is (client_id, version_number, report_snapshot_json,
+          // saved_at, saved_by_admin_id, change_notes, is_published). It does not
+          // have `report_id` or `saved_by`. saved_by_admin_id is NOT NULL — use the
+          // current user's id.
+          const { data: { user: currentUser } } = await supabase.auth.getUser();
+          if (currentUser?.id) {
+            await (supabase.from('report_versions') as any).insert({
+              client_id: propertyId,
+              version_number: nextVersion,
+              report_snapshot_json: blocksToSave,
+              saved_by_admin_id: currentUser.id,
+              change_notes: 'auto-save',
+            });
+          }
         } catch (e) {
           console.warn('Auto-snapshot failed silently:', e);
         }

@@ -124,11 +124,20 @@ const MessagesTab = ({ propertyId, creatorName = "Your HBC Advisor", creatorInit
       const { error } = await (supabase.from("property_messages" as any) as any).insert({ property_id: propertyId, sender_id: user.id, message: newMessage.trim() });
       if (error) throw error;
       
-      // Notify the admin/creator about the new client message
-      const { data: prop } = await (supabase.from("properties") as any).select("creator_user_id").eq("id", propertyId).single();
-      if (prop?.creator_user_id) {
+      // Notify the admin/creator about the new client message.
+      // `properties` has no `creator_user_id` column — the creator lives on
+      // the property's report row (`reports.created_by`). Fall back to
+      // whichever admin most recently created/published a report for this
+      // property; if there's none, skip the push rather than crash.
+      const { data: creatorReport } = await (supabase.from("reports") as any)
+        .select("created_by")
+        .eq("property_id", propertyId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (creatorReport?.created_by) {
         const senderName = profile?.full_name || "A client";
-        sendPushNotification(pushTemplates.newMessage(prop.creator_user_id, senderName, newMessage.trim()));
+        sendPushNotification(pushTemplates.newMessage(creatorReport.created_by, senderName, newMessage.trim()));
       }
       
       setNewMessage(""); await fetchMessages();
