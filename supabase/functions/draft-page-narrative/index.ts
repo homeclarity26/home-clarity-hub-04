@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
+import { callClaude, parseJSON } from "../_shared/ai-client.ts";
+import { retrieveContext } from "../_shared/rag.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -48,10 +50,14 @@ serve(async (req) => {
       );
     }
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
+    // Note: we no longer directly call Gemini here — callClaude handles the
+    // model call (with graceful Gemini fallback). The legacy GEMINI_API_KEY
+    // check was removed when this function switched to the Claude hybrid
+    // in the 2026-04-18 memory/Claude rollout.
 
-    // --- Knowledge Base Context Injection ---
+    // --- Knowledge Base Context Injection (legacy keyword KB) ---
+    // Kept as a secondary belt-and-suspenders signal alongside the semantic
+    // RAG retrieval above. Safe to remove once embeddings cover 100% of KB.
     let kbContext = "";
     try {
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -135,42 +141,29 @@ Return a JSON object with:
 - "narrative": array of 2-3 paragraph strings
 - "key_observations": array of 3-5 concise observation strings (no bullet symbols, just the text)`;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: systemInstruction }],
-          },
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: `Write the narrative and key observations for the "${pageName}" page.` }],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 1500,
-            responseMimeType: "application/json",
-          },
-        }),
-      }
-    );
+    // RAG: pull past narratives on the same page/system + relevant memories.
+    // This is where Claude + retrieval is most valuable — the narrative
+    // should match the voice Adam used on the same page type in past reports.
+    const ragContext = await retrieveContext({
+      query: `${pageName} ${pageSlug} ${propertyType || ""} ${existingConditionRating || ""}`.slice(0, 3000),
+      adminSupabase: auth.adminSupabase as unknown as { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown[] | null; error: unknown }> },
+      creatorUserId: auth.user.id,
+      sources: ["report_pages", "knowledge_templates", "agent_memory"],
+      perSource: 3,
+    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
-    }
+    const rawContent = await callClaude({
+      system: systemInstruction,
+      cacheableContext: ragContext || undefined,
+      prompt: `Write the narrative and key observations for the "${pageName}" page.`,
+      json: true,
+      temperature: 0.4,
+      maxOutputTokens: 1500,
+    });
 
-    const aiResult = await response.json();
-    const rawContent = aiResult.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-    let parsed;
+    let parsed: { narrative?: string[]; key_observations?: string[] };
     try {
-      const cleaned = rawContent.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
-      parsed = JSON.parse(cleaned);
+      parsed = parseJSON<{ narrative?: string[]; key_observations?: string[] }>(rawContent);
     } catch {
       parsed = {
         narrative: [rawContent],

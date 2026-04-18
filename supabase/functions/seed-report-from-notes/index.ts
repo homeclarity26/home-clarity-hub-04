@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
-import { callAI } from "../_shared/ai-client.ts";
+import { callClaude } from "../_shared/ai-client.ts";
+import { retrieveContext } from "../_shared/rag.ts";
 
 /**
  * seed-report-from-notes — The AI report creation entry point.
@@ -57,8 +58,22 @@ Be thorough — include every area you can reasonably infer from the notes. When
 
     const userMessage = `Meeting notes:\n${meeting_notes}${photo_descriptions ? `\n\nPhoto observations:\n${photo_descriptions}` : ""}${contextStr}`;
 
-    const aiText = await callAI({
+    // RAG: pull Adam's past published pages + saved templates + per-client
+    // facts + agent memories that are semantically similar to these notes.
+    // First report run returns an empty string (no corpus yet); every
+    // subsequent report pulls from accumulated past work.
+    const ragContext = await retrieveContext({
+      query: `${property_context ? JSON.stringify(property_context) + " " : ""}${meeting_notes}`.slice(0, 3000),
+      adminSupabase: auth.adminSupabase as unknown as { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown[] | null; error: unknown }> },
+      creatorUserId: auth.user.id,
+      propertyId: property_id,
+      sources: ["report_pages", "knowledge_templates", "home_knowledge_base", "agent_memory"],
+      perSource: 3,
+    });
+
+    const aiText = await callClaude({
       system: systemPrompt,
+      cacheableContext: ragContext || undefined,
       prompt: userMessage,
       json: true,
       temperature: 0.4,

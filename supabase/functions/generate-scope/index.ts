@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callAI, parseJSON } from "../_shared/ai-client.ts";
+import { callClaude, parseJSON } from "../_shared/ai-client.ts";
+import { retrieveContext } from "../_shared/rag.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -135,10 +136,23 @@ Generate a complete, professional scope of work document. Return a JSON object w
   ]
 }`;
 
-    const _aiText = await callAI({ messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: contextParts.join("\n") },
-        ], model: "google/gemini-2.5-flash" });
+    const userContent = contextParts.join("\n");
+    const ragContext = await retrieveContext({
+      query: userContent.slice(0, 3000),
+      adminSupabase: auth.adminSupabase as unknown as { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown[] | null; error: unknown }> },
+      creatorUserId: auth.user.id,
+      sources: ["report_pages", "knowledge_templates", "agent_memory"],
+      perSource: 3,
+    });
+
+    const _aiText = await callClaude({
+      system: systemPrompt,
+      cacheableContext: ragContext || undefined,
+      prompt: userContent,
+      json: true,
+      temperature: 0.3,
+      maxOutputTokens: 8192,
+    });
     const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
 
     if (!response.ok) {
@@ -153,14 +167,14 @@ Generate a complete, professional scope of work document. Return a JSON object w
       throw new Error("AI generation failed");
     }
 
-    const aiResult = await response.json();
-    const toolCall = aiResult.choices?.[0]?.message?.tool_calls?.[0];
-    let scopeContent: any;
-    
-    if (toolCall?.function?.arguments) {
-      scopeContent = typeof toolCall.function.arguments === "string" ? JSON.parse(toolCall.function.arguments) : toolCall.function.arguments;
-    } else {
-      throw new Error("No structured output from AI");
+    // Claude returns a JSON string in the message content (json:true wraps
+    // with "respond with valid JSON only"). parseJSON strips fences too.
+    let scopeContent: Record<string, unknown>;
+    try {
+      scopeContent = parseJSON<Record<string, unknown>>(_aiText);
+    } catch (parseErr) {
+      console.error("generate-scope: JSON parse failed:", parseErr, "raw:", _aiText.slice(0, 500));
+      throw new Error("AI returned non-JSON — please retry");
     }
 
     // Generate formatted markdown

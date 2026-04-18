@@ -1,17 +1,56 @@
 # Home Clarity Hub — Developer Reference
 
-**Branch:** `main` (all feature branches merged through PR #43)
-**Last updated:** 2026-04-18 after the E2E verification run
+**Branch:** `main`
+**Last updated:** 2026-04-18 after the AI memory + Claude Sonnet hybrid rollout
 
-## ✅ All migrations applied
+## 🧠 AI architecture (post-2026-04-18)
 
-`supabase/migrations/20260417120000_handle_new_user_role_metadata.sql` was
-applied to prod on 2026-04-18 via `npx supabase db push --linked` (along
-with the earlier `20260417000000_restore_creators_view_all_profiles.sql`).
-The `handle_new_user()` trigger now honors `raw_user_meta_data.role` when
-an admin creates a user via `auth.admin.createUser` — so
-`user_metadata: { role: 'creator' }` yields one `creator` row instead of
-creator+client.
+Two-model hybrid with persistent semantic memory:
+
+- **Gemini (*-latest aliases)** — fast, cheap, vision-capable. Used for:
+  chat agent (hbc-agent), photo analysis (analyze-photo, categorize-photo,
+  enhance-photo → `gemini-pro-latest`), embeddings (`gemini-embedding-001`,
+  768-dim via `outputDimensionality: 768`), and ~50 smaller background
+  tasks. Model IDs in `MODEL_MAP` all resolve to `gemini-flash-latest` /
+  `gemini-pro-latest` / `gemini-flash-lite-latest` — which Google auto-bumps
+  to the current stable.
+- **Claude Sonnet 4.6 (`claude-sonnet-4-6`)** — long-form writing with
+  consistency + voice. Used by 7 heavy functions: `seed-report-from-notes`,
+  `generate-scope`, `generate-annual-review`, `draft-page-narrative`,
+  `generate-exec-summary`, `ai-proposal-kickoff`, `ai-invoice-assistant`.
+  Via `callClaude()` in `_shared/ai-client.ts` with prompt caching enabled
+  (`cacheableContext` → `cache_control: ephemeral`). Falls back to Gemini
+  Flash if `ANTHROPIC_API_KEY` is unset.
+
+**Persistent memory + RAG (pgvector):**
+- Tables with `embedding vector(768)` columns: `report_pages`,
+  `knowledge_templates`, `home_knowledge_base`, plus the new `agent_memory`
+  (per-creator, optionally per-property).
+- RPCs for cosine-similarity search: `match_report_pages`,
+  `match_knowledge_templates`, `match_home_knowledge`, `match_agent_memory`.
+- `retrieveContext()` in `_shared/rag.ts` is the single helper for RAG —
+  embeds a query, pulls top-K from each source, formats for Claude's
+  `cacheableContext`. Call it at the top of any writing function.
+- `embed-content` edge function backfills embeddings for any row with
+  `embedding IS NULL`. `retrieve-similar` is the HTTP-facing version of
+  `retrieveContext`.
+- Agent tools: **`remember`** stores a memory (embeds inline), **`recall`**
+  semantic-searches stored memories, **`retrieve_context`** pulls across
+  all four sources, **`search_knowledge_base`** became semantic too.
+- **Gotcha:** Supabase edge functions can't fire-and-forget — when the
+  `serve()` handler returns, any pending work is killed. That's why
+  `remember`/`add_kb_article` embed synchronously via `callGeminiEmbedding`
+  rather than calling `embed-content` in the background.
+
+## ✅ Migrations applied through 2026-04-18
+
+Most recent: `20260418000000_pgvector_memory_foundation.sql` — enables
+pgvector, adds embedding columns, creates `agent_memory`, registers the
+four `match_*()` RPCs. Applied via `npx supabase db push --linked`.
+
+Earlier today: `20260417120000_handle_new_user_role_metadata.sql` —
+honors `raw_user_meta_data.role` in the `handle_new_user()` trigger so
+admin-created creators don't get stuck with a `client` role too.
 **Stack:** React 18 + TypeScript + Vite (Bun runtime) · Supabase (Postgres, Auth, Storage, Edge Functions) · Gemini 2.0 Flash · shadcn/ui · TanStack React Query · Tiptap WYSIWYG · @react-pdf/renderer · date-fns · framer-motion · DOMPurify · @dnd-kit
 
 ---
@@ -131,7 +170,8 @@ portal domains, then drop it into `.env.local` as `VITE_GOOGLE_MAPS_API_KEY=...`
 
 ### Supabase Edge Function Secrets (all set)
 ```
-GEMINI_API_KEY              ✅ (for all AI functions)
+GEMINI_API_KEY              ✅ (flash/pro via *-latest, + embeddings)
+ANTHROPIC_API_KEY           ✅ (added 2026-04-18 for Claude Sonnet hybrid)
 RENTCAST_API_KEY            ✅ (for lookup-property-data)
 RESEND_API_KEY              ✅ (for email)
 STRIPE_SECRET_KEY           ✅ (for create-checkout / subscriptions)

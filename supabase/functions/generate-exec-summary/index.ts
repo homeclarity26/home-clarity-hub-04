@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callAI, parseJSON } from "../_shared/ai-client.ts";
+import { callClaude, parseJSON } from "../_shared/ai-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,12 +14,13 @@ serve(async (req) => {
     if (!pages || !Array.isArray(pages)) {
       return new Response(JSON.stringify({ error: "pages array required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const pagesContext = pages.map((p: any) => {
-      const narrative = Array.isArray(p.narrative) ? p.narrative.join(" ") : "";
-      return `## ${p.title} (Condition: ${p.conditionRating || "N/A"}, Timing: ${p.timing || "N/A"})\n${narrative}\nRecommendations: ${(p.recommendations || []).join("; ")}`;
+    const pagesContext = pages.map((p: Record<string, unknown>) => {
+      const narrative = Array.isArray(p.narrative) ? (p.narrative as string[]).join(" ") : "";
+      const recs = Array.isArray(p.recommendations) ? (p.recommendations as string[]).join("; ") : "";
+      return `## ${p.title} (Condition: ${p.conditionRating || "N/A"}, Timing: ${p.timing || "N/A"})\n${narrative}\nRecommendations: ${recs}`;
     }).join("\n\n");
 
-    const systemPrompt = `You are a professional home consultant writing an executive summary for a Home Clarity Report. 
+    const systemPrompt = `You are a professional home consultant writing an executive summary for a Home Clarity Report.
 
 Based on ALL the report pages provided, create a comprehensive 1-page executive summary that a homeowner can read to understand the overall state of their home.
 
@@ -31,21 +32,23 @@ Return JSON:
 - "keyStrengths": array of 3 strings
 - "criticalConcerns": array of 3 strings`;
 
-    const _aiText = await callAI({ messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Property: ${propertyName || "Home"} at ${propertyAddress || ""}.\n\nReport Pages:\n${pagesContext}\n\nGenerate the executive summary.` },
-        ], model: "google/gemini-3-flash-preview" });
-    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
+    // No RAG for exec summary: the pages array IS the full context. Adding
+    // retrieval would dilute the signal. Keep it focused.
+    const _aiText = await callClaude({
+      system: systemPrompt,
+      prompt: `Property: ${propertyName || "Home"} at ${propertyAddress || ""}.\n\nReport Pages:\n${pagesContext}\n\nGenerate the executive summary.`,
+      json: true,
+      temperature: 0.3,
+      maxOutputTokens: 4096,
+    });
 
-    if (!response.ok) {
-      if (response.status === 429) return new Response(JSON.stringify({ error: "Rate limited" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (response.status === 402) return new Response(JSON.stringify({ error: "Credits exhausted" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      throw new Error(`AI error: ${response.status}`);
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = parseJSON<Record<string, unknown>>(_aiText);
+    } catch (e) {
+      console.error("generate-exec-summary: JSON parse failed:", e, "raw:", _aiText.slice(0, 500));
+      parsed = { summary: ["Could not generate summary."], topPriorities: [], overallHealthScore: 0, investmentRange: { low: "$0", high: "$0" }, keyStrengths: [], criticalConcerns: [] };
     }
-
-    const result = await response.json();
-    const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
-    const parsed = toolCall ? JSON.parse(toolCall.function.arguments) : { summary: ["Could not generate summary."], topPriorities: [], overallHealthScore: 0, investmentRange: { low: "$0", high: "$0" }, keyStrengths: [], criticalConcerns: [] };
 
     return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err) {

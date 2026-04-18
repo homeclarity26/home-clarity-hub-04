@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callAI, parseJSON } from "../_shared/ai-client.ts";
+import { callClaude, parseJSON } from "../_shared/ai-client.ts";
+import { retrieveContext } from "../_shared/rag.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -146,27 +147,35 @@ Generate a complete advisor briefing with these sections. Return a JSON object w
   "suggested_renewal_offer": { "recommendation": "standard"|"upgrade"|"loyalty_rate", "reasoning": string }
 }`;
 
-    const _aiText = await callAI({ messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: contextParts.join("\n") },
-        ], model: "google/gemini-2.5-flash" });
-    const response = { ok: true, json: async () => ({ choices: [{ message: { content: _aiText } }] }) };
+    const userContent = contextParts.join("\n");
+    // Annual reviews benefit hugely from RAG — we want to pull THIS client's
+    // past report pages and any memories we have about them so the review
+    // sounds like a continuation, not a fresh template.
+    const ragContext = await retrieveContext({
+      query: userContent.slice(0, 3000),
+      adminSupabase: sb as unknown as { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown[] | null; error: unknown }> },
+      creatorUserId: property?.creator_user_id || "",
+      propertyId: property_id || property?.id,
+      clientUserId: property?.client_user_id,
+      sources: ["report_pages", "home_knowledge_base", "agent_memory"],
+      perSource: 3,
+    });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("AI error:", response.status, errText);
-      if (response.status === 429) return new Response(JSON.stringify({ error: "Rate limit exceeded" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (response.status === 402) return new Response(JSON.stringify({ error: "AI credits exhausted" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      throw new Error("AI generation failed");
-    }
+    const _aiText = await callClaude({
+      system: systemPrompt,
+      cacheableContext: ragContext || undefined,
+      prompt: userContent,
+      json: true,
+      temperature: 0.3,
+      maxOutputTokens: 8192,
+    });
 
-    const aiResult = await response.json();
-    const toolCall = aiResult.choices?.[0]?.message?.tool_calls?.[0];
-    let briefing: any;
-    if (toolCall?.function?.arguments) {
-      briefing = typeof toolCall.function.arguments === "string" ? JSON.parse(toolCall.function.arguments) : toolCall.function.arguments;
-    } else {
-      throw new Error("No structured output from AI");
+    let briefing: Record<string, unknown>;
+    try {
+      briefing = parseJSON<Record<string, unknown>>(_aiText);
+    } catch (parseErr) {
+      console.error("generate-annual-review: JSON parse failed:", parseErr, "raw:", _aiText.slice(0, 500));
+      throw new Error("AI returned non-JSON — please retry");
     }
 
     // Upsert the review
