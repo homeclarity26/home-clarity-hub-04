@@ -39,7 +39,7 @@ const InspectionChecklist = ({ reportPageId, pageTitle }: Props) => {
         .limit(1);
       if (data && data.length > 0) {
         setChecklistId(data[0].id);
-        setItems((data[0].items as CheckItem[]) || []);
+        setItems(((data[0].items as unknown) as CheckItem[]) || []);
       }
     } catch (err) { console.error(err); }
     finally { setIsLoading(false); }

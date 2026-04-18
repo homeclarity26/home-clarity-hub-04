@@ -253,7 +253,8 @@ const WYSIWYGReportEditor = ({ reportId, propertyAddress, initialBlocks, propert
             await supabase.from("report_versions").insert({
               client_id: propertyId,
               version_number: nextVersion,
-              report_snapshot_json: blocksToSave,
+              // ReportBlock[] stored as Json (jsonb column accepts any shape).
+              report_snapshot_json: blocksToSave as unknown as import("@/integrations/supabase/types").Json,
               saved_by_admin_id: currentUser.id,
               change_notes: 'auto-save',
             });

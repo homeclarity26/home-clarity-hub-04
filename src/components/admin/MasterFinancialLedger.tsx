@@ -126,7 +126,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
     if (liRes.data) setLineItems(liRes.data);
     if (coRes.data) setChangeOrders(coRes.data);
     if (pRes.data) setPayments(pRes.data);
-    if (rRes.data) setRecurringPlans(rRes.data);
+    if (rRes.data) setRecurringPlans(rRes.data as any);
     setLoading(false);
   }, [propertyId]);
 

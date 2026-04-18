@@ -148,10 +148,13 @@ const SidebarContent = ({
                     style={{ background: "rgba(196,162,101,0.08)" }}
                   />
                 )}
-                <item.icon
-                  className="w-[15px] h-[15px] shrink-0 relative z-10"
+                {/* lucide icons accept className but not `style`; use a wrapper span for the color. */}
+                <span
+                  className="shrink-0 relative z-10 inline-flex"
                   style={{ color: isActive ? GOLD : "rgba(255,255,255,0.55)" }}
-                />
+                >
+                  <item.icon className="w-[15px] h-[15px]" />
+                </span>
                 {!collapsed && (
                   <span
                     className="text-xs font-sans relative z-10 truncate"
