@@ -98,3 +98,22 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   });
 }
+
+// ── Vercel / Vite chunk-drift auto-reload ──────────────────────────────
+// After a new deploy, the browser often still has the old index.html cached
+// which references asset hashes (e.g. AdminAutomations-xxx.js) that no
+// longer exist. Vite fires `vite:preloadError` in that case — we hard-reload
+// once to pick up the fresh index.html. Guard against a reload loop with a
+// session-scoped flag (same sentinel used in ErrorBoundary).
+window.addEventListener("vite:preloadError", (event) => {
+  event.preventDefault();
+  if (sessionStorage.getItem("hbc:chunk-reload") === "1") return;
+  sessionStorage.setItem("hbc:chunk-reload", "1");
+  window.location.reload();
+});
+
+// If the app stayed alive for 5s, assume chunks loaded fine and clear
+// the sentinel so the next deploy's drift can auto-reload once again.
+setTimeout(() => {
+  sessionStorage.removeItem("hbc:chunk-reload");
+}, 5000);
