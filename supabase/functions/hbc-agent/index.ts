@@ -1892,10 +1892,24 @@ serve(async (req) => {
         }
 
         const result = await executeTool(supabase, fc.name, fc.args, userId);
+        // Build a human-readable one-liner. Used to fall back to
+        // JSON.stringify(result).slice(0, 200) which leaked raw backend
+        // objects like `{"count":2,"projects":[{"id":"…`} into the chat
+        // UI. Prefer any message-like field; otherwise use count/rows
+        // with a derived verb from the tool name; last resort is just
+        // the tool name prettified. The user's real answer lives in the
+        // LLM's conversational reply — this chip is only a receipt.
+        const r = (result.result ?? {}) as Record<string, unknown>;
+        let summary: string;
+        if (typeof r.message === "string" && r.message) summary = r.message;
+        else if (typeof r.summary === "string" && r.summary) summary = r.summary;
+        else if (typeof r.count === "number") summary = `${fc.name.replace(/_/g, " ")} — ${r.count} result${r.count === 1 ? "" : "s"}`;
+        else if (Array.isArray(r.rows)) summary = `${fc.name.replace(/_/g, " ")} — ${r.rows.length} row${r.rows.length === 1 ? "" : "s"}`;
+        else summary = fc.name.replace(/_/g, " ");
         toolsCalled.push({
           tool_name: fc.name,
           params: fc.args,
-          result_summary: result.result?.message || JSON.stringify(result.result).slice(0, 200),
+          result_summary: summary,
           success: result.success,
           entity_id: result.entity_id,
           entity_type: result.entity_type,

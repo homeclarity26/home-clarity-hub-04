@@ -78,13 +78,18 @@ const AgentPanel = () => {
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="right" className="w-[440px] max-w-full p-0 flex flex-col">
-          <div className="flex items-center justify-end px-2 pt-2">
+        <SheetContent side="right" className="w-[440px] max-w-full p-0 flex flex-col h-full">
+          <div className="flex items-center justify-end px-2 pt-2 shrink-0">
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)} className="h-7 w-7 p-0">
               <X className="w-4 h-4" />
             </Button>
           </div>
-          <AgentChat contextOverride={agentContext} />
+          {/* flex-1 min-h-0 is load-bearing: without min-h-0, the inner
+              message list can't shrink under its content, which pushes
+              the textarea input off the viewport on mobile. */}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <AgentChat contextOverride={agentContext} />
+          </div>
         </SheetContent>
       </Sheet>
     </>

@@ -62,10 +62,20 @@ const ActionCard = ({ action, onNavigate }: { action: any; onNavigate?: (tab: st
     }
   };
 
+  // Guard against raw JSON leaking in here — if the backend couldn't
+  // produce a human-readable summary and fell back to JSON.stringify,
+  // show the tool name instead. The conversational reply already has
+  // the real answer; this chip is supposed to be a one-line receipt.
+  const rawSummary = typeof action.result_summary === "string" ? action.result_summary.trim() : "";
+  const looksLikeJson = rawSummary.startsWith("{") || rawSummary.startsWith("[");
+  const displaySummary = !rawSummary || looksLikeJson
+    ? (action.tool_name ? action.tool_name.replace(/_/g, " ") : "Action completed")
+    : rawSummary;
+
   return (
     <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2 text-xs font-sans">
       <span className="text-base">{icon}</span>
-      <span className="flex-1 text-foreground">{action.result_summary}</span>
+      <span className="flex-1 text-foreground">{displaySummary}</span>
       {action.nav_link && (
         <a href={action.nav_link} onClick={handleNav} className="text-primary hover:underline flex items-center gap-0.5">
           View <ExternalLink className="w-3 h-3" />
