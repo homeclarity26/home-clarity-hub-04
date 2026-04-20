@@ -4,6 +4,26 @@ import * as Sentry from "@sentry/react";
 import App from "./App.tsx";
 import "./index.css";
 
+// ── Password-recovery redirect (must run before React mounts) ──────────
+// Supabase appends `#type=recovery&access_token=…` to whatever URL the
+// recovery email redirects to. If the email's redirect_to is the app
+// root (the Supabase default when no explicit override is set on the
+// server side), we'd otherwise bounce straight into the role-based
+// dashboard, skipping the set-new-password form. Detect the recovery
+// fragment and rewrite the URL to `/reset-password` before Router runs,
+// preserving the fragment so supabase-js can still pick up the session.
+if (
+  typeof window !== "undefined" &&
+  window.location.hash.includes("type=recovery") &&
+  window.location.pathname !== "/reset-password"
+) {
+  window.history.replaceState(
+    null,
+    "",
+    "/reset-password" + window.location.search + window.location.hash,
+  );
+}
+
 // ── Sentry error monitoring ───────────────────────────────────────────
 // Initializes only when VITE_SENTRY_DSN is set (production). In local dev
 // without a DSN, Sentry is a no-op — nothing is sent, nothing breaks.
