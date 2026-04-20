@@ -45,7 +45,7 @@ Extract all visible information from the equipment label or serial plate in the 
 Only include fields where you can clearly read the text. Do not guess or hallucinate values. Return ONLY valid JSON — no markdown, no explanation.`;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
