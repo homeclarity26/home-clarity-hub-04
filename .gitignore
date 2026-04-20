@@ -26,3 +26,8 @@ dist-ssr
 # Supabase CLI temp state
 supabase/.temp/
 tsconfig.*.tsbuildinfo
+
+# WebKit E2E ephemera — manifest is per-seed, result JSONs rotate on each run.
+scripts/_webkit-e2e-manifest.json
+scripts/_webkit-*-result.json
+scripts/_smoke-agents-result.json
