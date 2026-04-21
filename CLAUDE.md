@@ -1,5 +1,14 @@
 # Home Clarity Hub — Developer Reference
 
+<!-- ADAM-BRAIN CONTEXT — read at session start -->
+<!-- Run: python3 ~/Desktop/organize-pipeline/brain/memory.py recall "HCR HCH" -->
+<!-- Or via claude.ai: adam-brain connector → recent or recall -->
+<!-- Master context: ~/Desktop/organize-pipeline/brain/master-context.md -->
+<!-- Owner: Adam Kilgore, Summit County OH. 27 years renovation. HCH = platform every HCR client gets for life. -->
+<!-- HCR = $4,500, 48-hr assessment. First beta: Johnsons mid-May 2026. -->
+<!-- Brand: Navy #0A1628, Gold #B87333, Cream #EDE9E1. NO em-dashes EVER. -->
+<!-- Token efficiency: read this file + TODO.md only. Don't re-read all components unless modifying one. -->
+
 **Branch:** `main`
 **Last updated:** 2026-04-18 after the floor rebuild + CI activation.
 
@@ -453,7 +462,7 @@ const text = await callAI({
   - Cream `40 33% 97%` (background)
   - Gold `43 41% 59%` (accent) + `--hbc-gold-readable: 34 47% 38%` for text on cream
   - Rust `16 86% 39%` (destructive/rust accent)
-- **Fonts:** Playfair Display (headings, `font-display`), IBM Plex Mono (labels/badges/timestamps, `font-mono`), Inter (body, `font-sans`)
+- **Fonts:** Cormorant Garamond SemiBold/Bold (headings, `font-display`), IBM Plex Mono (labels/badges/timestamps, `font-mono`), Inter (body, `font-sans`)
 - **Monograms:** ES (Executive Summary, gold circle navy text), EX (Exterior, navy circle gold text), IN (Interior, gold circle navy text), SY (Systems, navy circle gold text), SP (Strategy, gold circle navy text), SA (Safety, navy circle gold text)
 - **Touch targets:** all interactive elements `min-h-[44px]`
 - **Motion:** 400-800ms ease-out, respects `prefers-reduced-motion` (zeroed globally in index.css)
