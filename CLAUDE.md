@@ -20,6 +20,12 @@ These are hard rules, not suggestions. They exist because this codebase
 shipped 67 latent schema bugs before tonight's floor rebuild caught them.
 Follow them and we don't rebuild again.
 
+### UI / visual changes — one approval per session
+
+Before making any UI or visual change (layout, component, color, spacing, font, copy), **present the full plan for all UI changes in the session in a single message and wait for Adam's approval**. Once approved, execute all of them without asking again. Do not ask per-change. Do not make UI changes without the upfront plan.
+
+If a session has no UI changes, skip this step entirely.
+
 ### Before you write any code
 
 1. **Read this file top to bottom.** Then read `TODO.md`. Don't
