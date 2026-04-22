@@ -6,102 +6,106 @@
 
 @layer base {
   :root {
-    /* HBC Brand Colors */
-    --hbc-navy: 221 47% 20%;
-    --hbc-cream: 40 33% 97%;
-    --hbc-gold: 43 41% 59%;
-    /* Darker gold for body text on cream — ~4.9:1 contrast, passes WCAG AA */
-    --hbc-gold-readable: 34 47% 38%;
+    /* HCR Brand Colors — exact values from hcr-design-reference.html */
+    --hbc-navy: 216 60% 10%;          /* #0A1628 */
+    --hbc-cream: 40 25% 91%;          /* #EDE9E1 */
+    --hbc-surface: 34 26% 95%;        /* #F5F2EE */
+    --hbc-gold: 29 57% 46%;           /* #B87333 */
+    /* Darker gold for body text on cream — passes WCAG AA at normal text sizes */
+    --hbc-gold-readable: 29 57% 32%;  /* ~#7a4d1e */
+    --hbc-border: 39 14% 80%;         /* #D4CFC6 */
+    --hbc-text-secondary: 36 4% 52%;  /* #8A8680 */
+    --hbc-text-muted: 42 6% 67%;      /* #B0ADA6 */
     --hbc-rust: 16 86% 39%;
     --hbc-white: 0 0% 100%;
-    --hbc-grey-100: 30 11% 95%;
-    --hbc-grey-500: 220 7% 57%;
-    
+    --hbc-grey-100: 34 26% 95%;       /* surface */
+    --hbc-grey-500: 36 4% 52%;        /* text-secondary */
+
     /* Semantic Tokens */
-    --background: 40 33% 97%;
-    --foreground: 221 47% 20%;
-    
-    --card: 0 0% 100%;
-    --card-foreground: 221 47% 20%;
-    
-    --popover: 0 0% 100%;
-    --popover-foreground: 221 47% 20%;
-    
-    --primary: 221 47% 20%;
+    --background: 40 25% 91%;          /* cream  #EDE9E1 */
+    --foreground: 216 60% 10%;         /* navy   #0A1628 */
+
+    --card: 34 26% 95%;                /* surface #F5F2EE */
+    --card-foreground: 216 60% 10%;
+
+    --popover: 34 26% 95%;
+    --popover-foreground: 216 60% 10%;
+
+    --primary: 216 60% 10%;            /* navy */
     --primary-foreground: 0 0% 100%;
-    
-    --secondary: 40 33% 97%;
-    --secondary-foreground: 221 47% 20%;
-    
-    --muted: 30 11% 95%;
-    --muted-foreground: 220 7% 57%;
-    
-    --accent: 43 41% 59%;
-    --accent-foreground: 221 47% 20%;
-    
+
+    --secondary: 34 26% 95%;           /* surface */
+    --secondary-foreground: 216 60% 10%;
+
+    --muted: 34 26% 95%;               /* surface */
+    --muted-foreground: 36 4% 52%;     /* text-secondary #8A8680 */
+
+    --accent: 29 57% 46%;              /* gold #B87333 */
+    --accent-foreground: 216 60% 10%;  /* navy */
+
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-    
-    --border: 221 47% 20% / 0.05;
-    --input: 221 47% 20% / 0.05;
-    --ring: 221 47% 20%;
-    
+
+    --border: 39 14% 80%;              /* #D4CFC6 — solid */
+    --input: 39 14% 80%;
+    --ring: 216 60% 10%;
+
     --radius: 0.5rem;
-    
+
     /* Sidebar tokens */
-    --sidebar-background: 30 11% 95%;
-    --sidebar-foreground: 221 47% 20%;
-    --sidebar-primary: 221 47% 20%;
+    --sidebar-background: 34 26% 95%;
+    --sidebar-foreground: 216 60% 10%;
+    --sidebar-primary: 216 60% 10%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 43 41% 59%;
-    --sidebar-accent-foreground: 221 47% 20%;
-    --sidebar-border: 221 47% 20% / 0.05;
-    --sidebar-ring: 221 47% 20%;
-    
-    /* HBC Shadows */
-    --shadow-sm: 0 2px 8px hsl(221 47% 20% / 0.04);
-    --shadow-md: 0 4px 12px hsl(221 47% 20% / 0.08);
-    --shadow-lg: 0 4px 20px hsl(221 47% 20% / 0.08);
+    --sidebar-accent: 29 57% 46%;
+    --sidebar-accent-foreground: 216 60% 10%;
+    --sidebar-border: 39 14% 80%;
+    --sidebar-ring: 216 60% 10%;
+
+    /* HCR Shadows */
+    --shadow-sm: 0 2px 8px hsl(216 60% 10% / 0.04);
+    --shadow-md: 0 4px 12px hsl(216 60% 10% / 0.08);
+    --shadow-lg: 0 4px 20px hsl(216 60% 10% / 0.08);
   }
 
   .dark {
-    --background: 221 47% 12%;
-    --foreground: 40 33% 95%;
-    
-    --card: 221 47% 16%;
-    --card-foreground: 40 33% 95%;
-    
-    --popover: 221 47% 16%;
-    --popover-foreground: 40 33% 95%;
-    
-    --primary: 43 41% 59%;
-    --primary-foreground: 221 47% 12%;
-    
-    --secondary: 221 40% 22%;
-    --secondary-foreground: 40 33% 90%;
-    
-    --muted: 221 40% 20%;
-    --muted-foreground: 220 10% 62%;
-    
-    --accent: 43 41% 59%;
-    --accent-foreground: 221 47% 12%;
-    
+    --background: 216 60% 8%;
+    --foreground: 40 25% 93%;
+
+    --card: 216 50% 13%;
+    --card-foreground: 40 25% 93%;
+
+    --popover: 216 50% 13%;
+    --popover-foreground: 40 25% 93%;
+
+    --primary: 29 57% 46%;
+    --primary-foreground: 216 60% 8%;
+
+    --secondary: 216 40% 18%;
+    --secondary-foreground: 40 25% 90%;
+
+    --muted: 216 40% 16%;
+    --muted-foreground: 42 6% 62%;
+
+    --accent: 29 57% 46%;
+    --accent-foreground: 216 60% 8%;
+
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    
-    --border: 221 30% 28%;
-    --input: 221 30% 28%;
-    --ring: 43 41% 59%;
-    
+
+    --border: 216 30% 24%;
+    --input: 216 30% 24%;
+    --ring: 29 57% 46%;
+
     /* Sidebar dark */
-    --sidebar-background: 221 47% 14%;
-    --sidebar-foreground: 40 33% 90%;
-    --sidebar-primary: 43 41% 59%;
-    --sidebar-primary-foreground: 221 47% 12%;
-    --sidebar-accent: 221 40% 22%;
-    --sidebar-accent-foreground: 40 33% 90%;
-    --sidebar-border: 221 30% 28%;
-    --sidebar-ring: 43 41% 59%;
+    --sidebar-background: 216 60% 10%;
+    --sidebar-foreground: 40 25% 90%;
+    --sidebar-primary: 29 57% 46%;
+    --sidebar-primary-foreground: 216 60% 8%;
+    --sidebar-accent: 216 40% 18%;
+    --sidebar-accent-foreground: 40 25% 90%;
+    --sidebar-border: 216 30% 24%;
+    --sidebar-ring: 29 57% 46%;
     
     /* Dark shadows */
     --shadow-sm: 0 2px 8px hsl(0 0% 0% / 0.2);
@@ -121,14 +125,14 @@
     -webkit-font-smoothing: antialiased;
   }
   
-  /* HBC Typography */
+  /* HCR Typography */
   .font-display {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Cormorant Garamond', serif;
     font-weight: 400;
   }
-  
+
   .font-mono {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Inter', sans-serif;
     font-weight: 400;
   }
 }
@@ -195,7 +199,7 @@
 
   body {
     background: white !important;
-    color: hsl(221 47% 20%) !important;
+    color: hsl(216 60% 10%) !important;
     font-size: 11pt;
     line-height: 1.5;
   }
@@ -240,7 +244,7 @@
 
   /* Keep accent colors for condition ratings */
   .text-accent {
-    color: hsl(43 41% 59%) !important;
+    color: hsl(29 57% 46%) !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

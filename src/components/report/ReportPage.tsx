@@ -28,14 +28,15 @@ interface ReportPageProps {
   propertyContext?: PropertyContext;
 }
 
-// ── Condition hero strip colors ──────────────────────────────────────────────
-const conditionStripColor: Record<string, string> = {
-  Excellent: "#4CAF81",
-  Good: "#1B2B4D",
-  Fair: "#C4A265",
-  Poor: "#f97316",
-  Critical: "#B5450B",
-  "N/A": "#8A8E99",
+// ── Chapter label from page group ────────────────────────────────────────────
+const chapterLabelFromGroup = (group?: string): string => {
+  if (!group) return "Report";
+  if (group.startsWith("exterior")) return "Exterior";
+  if (group === "appliances" || group.startsWith("interior")) return "Interior";
+  if (group.startsWith("systems")) return "Systems";
+  if (group.startsWith("safety")) return "Safety";
+  if (group.startsWith("strategy")) return "Strategic Plan";
+  return "Report";
 };
 
 // ── Condition badge pill (compact, used in sticky header) ────────────────────
@@ -43,7 +44,7 @@ const conditionBadgeMini = (rating: string) => {
   const colorMap: Record<string, string> = {
     Excellent: "bg-emerald-100 text-emerald-800",
     Good: "bg-primary/10 text-primary",
-    Fair: "bg-accent/15 text-[#7a612a]",
+    Fair: "bg-accent/15 text-accent-readable",
     Poor: "bg-orange-100 text-orange-700",
     Critical: "bg-[#B5450B]/10 text-[#B5450B]",
     "N/A": "bg-muted text-muted-foreground",
@@ -176,10 +177,6 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
     creator_notes: (pageData as unknown as Record<string, unknown>).creator_notes as string | undefined,
   };
 
-  const stripColor = pageData.conditionRating
-    ? conditionStripColor[pageData.conditionRating] || "#C4A265"
-    : "#C4A265";
-
   return (
     <div className="animate-in fade-in duration-300">
       {/* ── Creator toolbar ──────────────────────────────────────────── */}
@@ -200,26 +197,31 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
 
       {/* ── Sticky breadcrumb (appears after scroll 100px) ────────────── */}
       {scrolled && (
-        <div className="fixed top-16 left-0 right-0 z-40 flex items-center gap-3 px-6 py-2 border-b border-border/40"
-          style={{ background: "rgba(248, 246, 242, 0.95)", backdropFilter: "blur(8px)" }}
+        <div
+          className="fixed top-16 left-0 right-0 z-40 flex items-center gap-3 px-6 py-2 border-b border-border bg-background/95 backdrop-blur-sm"
         >
-          <span
-            className="font-mono text-[11px] uppercase tracking-[0.15em]"
-            style={{ color: "#1B2B4D" }}
-          >
+          <span className="font-sans text-[11px] uppercase tracking-[0.15em] font-semibold text-primary">
             {page.title}
           </span>
           {pageData.conditionRating && conditionBadgeMini(pageData.conditionRating)}
         </div>
       )}
 
-      <div ref={contentRef} className="max-w-[800px] mx-auto px-6 md:px-20 py-16 md:py-24 report-page">
-        {/* ── Page hero condition strip ─────────────────────────────── */}
-        <div
-          className="w-full h-1 rounded-full mb-6"
-          style={{ background: stripColor }}
-        />
+      {/* ── Navy section header ──────────────────────────────────────── */}
+      <div className="bg-primary px-7 pt-8 pb-7 no-print">
+        <div className="text-[10px] font-semibold tracking-[0.14em] uppercase text-primary-foreground/35 mb-[22px]">
+          ← {chapterLabelFromGroup(page.group)}
+        </div>
+        <div className="w-7 h-[1.5px] bg-accent rounded-[1px] mb-3.5" />
+        <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-primary-foreground/35 mb-2.5 font-sans">
+          {chapterLabelFromGroup(page.group)} · {page.title}
+        </p>
+        <h1 className="font-display text-[34px] text-primary-foreground font-semibold leading-[1.08]">
+          {page.title}
+        </h1>
+      </div>
 
+      <div ref={contentRef} className="max-w-[800px] mx-auto px-6 md:px-20 py-10 md:py-16 report-page">
         {/* Share button */}
         <div className="flex justify-end mb-4 no-print">
           <ShareSectionButton pageSlug={page.id} />

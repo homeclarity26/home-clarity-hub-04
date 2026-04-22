@@ -1,44 +1,8 @@
 import { useMemo } from "react";
-import { motion } from "framer-motion";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
-import PDFDownloadButton from "@/features/pdf/PDFDownloadButton";
 import { CHAPTERS } from "./ReportChapterNav";
-import { Monogram, chapterToMonogram } from "@/components/ui/Monogram";
-import { HealthScoreRing } from "@/components/ui/HealthScoreRing";
-import {
-  ChevronRight,
-  ArrowRight,
-  BookOpen,
-  AlertTriangle,
-} from "lucide-react";
-
-const fadeUp = {
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
-};
-
-const stagger = {
-  animate: { transition: { staggerChildren: 0.08 } },
-};
-
-const CONDITION_SCORE: Record<string, number> = {
-  Excellent: 100,
-  Good: 75,
-  Fair: 50,
-  Poor: 25,
-  Critical: 10,
-};
-
-const conditionBadgeStyle: Record<string, string> = {
-  Excellent: "bg-emerald-100 text-emerald-700",
-  Good: "bg-emerald-100 text-emerald-700",
-  Fair: "bg-amber-100 text-amber-700",
-  Poor: "bg-red-100 text-red-700",
-  Critical: "bg-red-100 text-red-700",
-};
 
 interface ReportOverviewProps {
   groups: PortalGroup[];
@@ -67,18 +31,10 @@ const ReportOverview = ({
   pages,
   propertyName,
   propertyAddress,
-  pdfData,
   onChapterSelect,
   onPageSelect,
-  onSendMessage,
-  heroImageUrl,
   creatorName = "Adam Kilgore",
-  advisorNote,
-  isReportEmpty = false,
 }: ReportOverviewProps) => {
-  const allPagesList = useMemo(() => Object.values(pages), [pages]);
-
-  // Chapter scores + section counts
   const chapterData = useMemo(() => {
     return CHAPTERS.map((ch) => {
       const chapterPages = groups
@@ -87,31 +43,9 @@ const ReportOverview = ({
         .map((pid) => pages[pid])
         .filter(Boolean);
 
-      const rated = chapterPages.filter(
-        (p) => p?.conditionRating && CONDITION_SCORE[p.conditionRating],
-      );
-      const total = rated.reduce(
-        (sum, p) => sum + (CONDITION_SCORE[p!.conditionRating!] || 0),
-        0,
-      );
-      const score = rated.length > 0 ? Math.round(total / rated.length) : null;
-
-      const counts: Record<string, number> = {};
-      for (const p of chapterPages) {
-        const r = p?.conditionRating;
-        if (r) counts[r] = (counts[r] || 0) + 1;
-      }
-
-      const firstPageId = groups
-        .filter((g) => ch.groupIds.some((gid) => g.id === gid || g.id.includes(gid)))
-        .flatMap((g) => g.pages)[0];
-
       return {
         ...ch,
-        score,
         sectionCount: chapterPages.length,
-        counts,
-        firstPageId,
       };
     });
   }, [groups, pages]);
@@ -121,377 +55,103 @@ const ReportOverview = ({
     [groups],
   );
 
-  // Does the report have any chapter with actual content? If not, the
-  // chapter TOC + chapter cards are meaningless empty-state UI — hide them
-  // rather than leaving "Chapters" / "Report Chapters" headings floating.
   const hasChapters = chapterData.some((c) => c.sectionCount > 0);
-
-  // Overall score — the average across all chapters with ratings. Anchors the cover.
-  const overallScore = useMemo(() => {
-    const scores = chapterData.map((c) => c.score).filter((s): s is number => s != null);
-    if (scores.length === 0) return null;
-    return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-  }, [chapterData]);
 
   const reportDate = useMemo(
     () => new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
     [],
   );
 
-  const priorityItems = useMemo(() => {
-    return allPagesList
-      .filter(
-        (p) =>
-          p.conditionRating === "Poor" ||
-          p.conditionRating === "Critical" ||
-          p.timing === "Immediate" ||
-          p.timing === "Year 1",
-      )
-      .sort(
-        (a, b) =>
-          (CONDITION_SCORE[a.conditionRating || "Good"] || 75) -
-          (CONDITION_SCORE[b.conditionRating || "Good"] || 75),
-      )
-      .slice(0, 3);
-  }, [allPagesList]);
-
-  const displayNote = useMemo(() => {
-    if (advisorNote) return advisorNote;
-    const poorCount = allPagesList.filter(
-      (p) => p.conditionRating === "Poor" || p.conditionRating === "Critical",
-    ).length;
-    const goodCount = allPagesList.filter(
-      (p) => p.conditionRating === "Good" || p.conditionRating === "Excellent",
-    ).length;
-    const totalRated = allPagesList.filter((p) => p.conditionRating).length;
-    if (totalRated === 0) {
-      return `I've completed a thorough review of ${propertyName || "your home"} and put together this report to give you a clear picture of where things stand. Take your time reading through each section — I'm here if you have any questions.`;
-    }
-    return `I've completed a thorough review of ${propertyName || "your home"} and this report covers all ${totalRated} systems and components in detail. ${goodCount > 0 ? `The good news: ${goodCount} area${goodCount > 1 ? "s are" : " is"} in solid condition.` : ""} ${poorCount > 0 ? `There are ${poorCount} item${poorCount > 1 ? "s" : ""} that need your attention — I've highlighted those at the top.` : "Overall the home is in good shape."} Read through each chapter and reach out with any questions.`;
-  }, [advisorNote, allPagesList, propertyName]);
-
   return (
     <div className="min-h-screen bg-background">
-      {/* ═══════════════════════════════════════════════════════════════
-          REPORT COVER — Architectural title page.
-          Full-bleed property photo, navy gradient, monogram visual TOC.
-          The "WOW" moment on report open.
-          ═══════════════════════════════════════════════════════════════ */}
-      <section className="relative bg-primary overflow-hidden h-[70vh] min-h-[520px]">
-        {heroImageUrl ? (
-          <img
-            src={heroImageUrl}
-            alt={propertyAddress || propertyName}
-            className="absolute inset-0 w-full h-full object-cover opacity-60"
-            loading="eager"
-            decoding="async"
-            // @ts-expect-error - fetchpriority is a valid HTML attr
-            fetchpriority="high"
-          />
-        ) : (
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 opacity-5"
-            style={{
-              backgroundImage:
-                "repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%)",
-              backgroundSize: "20px 20px",
-            }}
-          />
-        )}
-        {/* Navy wash for legibility, pulled in from top & bottom */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-b from-primary/40 via-primary/70 to-primary"
-        />
+      <div className="px-7 pt-10 pb-14 max-w-[480px] mx-auto">
 
-        <div className="relative z-10 h-full flex flex-col justify-between max-w-4xl mx-auto px-6 md:px-16 py-12 md:py-16">
-          {/* Top — edition + author */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-          >
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">
-              Home Clarity Report
-            </p>
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary-foreground/55 mt-2">
-              Prepared {reportDate} by {creatorName}
-            </p>
-          </motion.div>
-
-          {/* Middle — property identity */}
-          <div className="space-y-3">
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-              className="font-display text-5xl md:text-7xl text-primary-foreground leading-[0.95] max-w-3xl"
-            >
-              {propertyName}
-            </motion.h1>
-            {propertyAddress && (
-              <p className="font-sans text-base md:text-lg text-primary-foreground/70">
-                {propertyAddress}
-              </p>
-            )}
-            {overallScore != null && (
-              <div className="flex items-center gap-3 pt-3">
-                <HealthScoreRing
-                  score={overallScore}
-                  size={64}
-                  strokeWidth={5}
-                  animate
-                  trackClassName="text-white/15"
-                  numberClassName="text-white font-display"
-                />
-                <div>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary-foreground/60">
-                    Overall Home Condition
-                  </p>
-                  <p className="font-display text-primary-foreground text-xl leading-tight mt-0.5">
-                    {overallScore}/100
-                  </p>
-                </div>
-              </div>
-            )}
+        {/* HCR logo mark */}
+        <div className="flex items-start gap-0 mb-8">
+          <div className="flex flex-col items-start">
+            <span className="font-display text-2xl font-bold text-primary leading-none tracking-tight">HCR</span>
+            <div className="w-full h-[1.5px] bg-accent my-1.5" />
+            <span className="font-sans text-[8px] uppercase tracking-[0.22em] text-primary leading-none font-semibold">Home Clarity</span>
+            <span className="font-sans text-[7px] tracking-[0.12em] text-accent leading-none mt-0.5">Report</span>
           </div>
+        </div>
 
-          {/* Bottom — visual monogram TOC */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-          >
-            {hasChapters && (
-              <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-primary-foreground/50 mb-4">
-                Chapters
-              </p>
-            )}
-            <div className="grid grid-cols-5 gap-3 md:gap-6 max-w-md">
+        {/* Report label cap */}
+        <p className="font-sans text-[10px] uppercase tracking-[0.25em] font-semibold text-muted-foreground mb-5">
+          Home Clarity Report · {reportDate}
+        </p>
+
+        {/* Property name */}
+        <h1 className="font-display text-[50px] text-primary font-semibold leading-[1.0] mb-2">
+          {propertyName || "Your Home"}
+        </h1>
+
+        {/* Property address — italic display secondary */}
+        {propertyAddress && (
+          <p className="font-display italic text-[20px] text-muted-foreground leading-snug mb-7">
+            {propertyAddress}
+          </p>
+        )}
+
+        {/* Rule */}
+        <div className="border-t border-border mb-6" />
+
+        {/* Metadata rows */}
+        <div className="space-y-3 mb-6">
+          {propertyAddress && (
+            <div className="flex gap-5">
+              <span className="font-sans text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold w-24 flex-shrink-0">Address</span>
+              <span className="font-sans text-sm text-foreground">{propertyAddress}</span>
+            </div>
+          )}
+          <div className="flex gap-5">
+            <span className="font-sans text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold w-24 flex-shrink-0">Prepared by</span>
+            <span className="font-sans text-sm text-foreground">{creatorName}</span>
+          </div>
+        </div>
+
+        {/* Rule */}
+        <div className="border-t border-border mb-6" />
+
+        {/* Report chapters */}
+        {hasChapters && (
+          <>
+            <p className="font-sans text-[9px] uppercase tracking-[0.28em] font-semibold text-muted-foreground mb-3">
+              Report Chapters
+            </p>
+            <div>
               {chapterData
-                .filter((c) => c.sectionCount > 0)
-                .slice(0, 5)
+                .filter((ch) => ch.sectionCount > 0)
                 .map((ch) => (
                   <button
                     key={ch.id}
                     onClick={() => onChapterSelect(ch.id)}
-                    className="group flex flex-col items-center gap-2 bg-transparent border-none cursor-pointer text-left hover:opacity-90 transition-opacity"
-                    aria-label={`Open ${ch.label}`}
+                    className="flex items-center justify-between w-full py-3.5 border-b border-border/60 text-left hover:opacity-75 transition-opacity group"
                   >
-                    <Monogram code={chapterToMonogram(ch.id)} size="lg" />
-                    <span className="font-mono text-[9px] uppercase tracking-wider text-primary-foreground/60 group-hover:text-accent transition-colors">
+                    <span className="font-display text-[20px] text-primary leading-none">
                       {ch.label}
                     </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-sans text-[9px] uppercase tracking-[0.2em] text-accent font-semibold">
+                        {ch.sectionCount} Section{ch.sectionCount !== 1 ? "s" : ""}
+                      </span>
+                      <span className="text-accent font-semibold text-base leading-none">›</span>
+                    </div>
                   </button>
                 ))}
             </div>
-
-            <div className="flex flex-wrap gap-3 mt-8">
-              {firstPageId && (
-                <button
-                  onClick={() => onPageSelect(firstPageId)}
-                  className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-6 py-3 rounded-md font-sans text-sm font-medium hover:bg-accent/90 transition-colors"
-                >
-                  Begin Reading
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              )}
-              {pdfData && (
-                <PDFDownloadButton
-                  data={pdfData}
-                  variant="ghost"
-                  size="sm"
-                  className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground text-xs font-mono uppercase tracking-wider border border-primary-foreground/20"
-                  label="Download PDF"
-                />
-              )}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      <div className="max-w-4xl mx-auto px-6 md:px-16 py-12 space-y-12">
-        {/* A NOTE FROM YOUR ADVISOR — hidden on empty reports so clients don't
-            see a canned "I've completed a thorough review" message before a
-            report has actually been written. */}
-        {!isReportEmpty && (
-          <div className="bg-card rounded-xl border border-border p-6 md:p-8">
-            <div className="flex items-start gap-4">
-              <div className="w-11 h-11 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="font-mono text-[11px] uppercase tracking-wider text-accent-readable font-semibold">
-                  {creatorName
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)}
-                </span>
-              </div>
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
-                  A note from {creatorName}
-                </p>
-                <p className="font-sans text-base text-foreground leading-relaxed">
-                  {displayNote}
-                </p>
-              </div>
-            </div>
-          </div>
+          </>
         )}
 
-        {/* PRIORITY ITEMS */}
-        {priorityItems.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
-              <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-foreground">
-                Needs Your Attention
-              </h2>
-            </div>
-            <div className="space-y-2">
-              {priorityItems.map((item) => {
-                const pageKey = Object.entries(pages).find(
-                  ([, v]) => v === item,
-                )?.[0];
-                return (
-                  <button
-                    key={pageKey}
-                    onClick={() => pageKey && onPageSelect(pageKey)}
-                    className="w-full flex items-center justify-between bg-card border border-border border-l-4 border-l-red-500 rounded-lg px-5 py-4 text-left hover:border-accent/40 hover:bg-accent/5 transition-all group min-h-[64px]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded ${
-                          conditionBadgeStyle[item.conditionRating || "Fair"]
-                        }`}
-                      >
-                        {item.conditionRating}
-                      </span>
-                      <span className="font-sans text-sm text-foreground">
-                        {item.title}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {item.timing && (
-                        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground hidden sm:block">
-                          {item.timing}
-                        </span>
-                      )}
-                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            {onSendMessage && (
-              <button
-                onClick={() =>
-                  onSendMessage(
-                    "I have a question about the priority items in my report.",
-                  )
-                }
-                className="mt-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-accent transition-colors"
-              >
-                Ask about these →
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* CHAPTER CARDS — monograms + animated score rings.
-            Hide entirely when no chapter has content — otherwise the heading
-            hangs in space above an empty grid, which happens on brand-new
-            reports that aren't built out yet. */}
-        {hasChapters && (
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <BookOpen className="w-4 h-4 text-muted-foreground" />
-            <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-foreground">
-              Report Chapters
-            </h2>
-          </div>
-          <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 gap-3"
-            variants={stagger}
-            initial="initial"
-            animate="animate"
-          >
-            {chapterData
-              .filter((ch) => ch.sectionCount > 0)
-              .map((ch) => (
-                <motion.button
-                  key={ch.id}
-                  variants={fadeUp}
-                  onClick={() => onChapterSelect(ch.id)}
-                  className="flex items-center gap-4 bg-card border border-border rounded-xl px-5 py-4 text-left hover:border-accent/40 hover:bg-accent/5 transition-all group min-h-[88px]"
-                >
-                  <div className="relative">
-                    <Monogram code={chapterToMonogram(ch.id)} size="md" />
-                    {ch.score != null && (
-                      <span className="absolute -bottom-1 -right-1 bg-card border border-border rounded-full px-1.5 text-[9px] font-mono text-foreground">
-                        {ch.score}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="font-display text-base text-foreground group-hover:text-accent transition-colors">
-                      {ch.label}
-                    </p>
-                    <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5 truncate">
-                      {ch.sectionCount} section{ch.sectionCount !== 1 ? "s" : ""}
-                      {Object.entries(ch.counts).length > 0 && (
-                        <span className="ml-2">
-                          ·{" "}
-                          {Object.entries(ch.counts)
-                            .sort(
-                              ([a], [b]) =>
-                                (CONDITION_SCORE[a] || 0) -
-                                (CONDITION_SCORE[b] || 0),
-                            )
-                            .map(([cond, count]) => `${count} ${cond}`)
-                            .join(", ")}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-
-                  {ch.score != null && (
-                    <HealthScoreRing
-                      score={ch.score}
-                      size={48}
-                      strokeWidth={4}
-                      animate
-                      showNumber={false}
-                    />
-                  )}
-
-                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent flex-shrink-0 transition-colors" />
-                </motion.button>
-              ))}
-          </motion.div>
-        </div>
-        )}
-
-        {/* BEGIN READING FOOTER */}
+        {/* Begin reading CTA */}
         {firstPageId && (
-          <div className="border-t border-border pt-8 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <p className="font-display text-lg text-foreground">
-                Ready to read through your report?
-              </p>
-              <p className="font-sans text-sm text-muted-foreground mt-1">
-                Each section has full details, photos, cost estimates, and recommendations.
-              </p>
-            </div>
-            <button
-              onClick={() => onPageSelect(firstPageId)}
-              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-md font-sans text-sm font-medium hover:bg-primary/90 transition-colors flex-shrink-0"
-            >
-              Start Reading
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            onClick={() => onPageSelect(firstPageId)}
+            className="w-full mt-8 bg-primary text-primary-foreground py-4 rounded font-sans text-sm font-semibold tracking-[0.04em] hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 min-h-[52px]"
+          >
+            Begin reading
+            <span className="text-accent font-bold text-base">→</span>
+          </button>
         )}
       </div>
     </div>

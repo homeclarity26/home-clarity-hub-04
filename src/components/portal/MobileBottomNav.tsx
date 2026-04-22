@@ -33,7 +33,7 @@ export function MobileBottomNav({
     <nav
       aria-label="Primary navigation"
       className={cn(
-        "md:hidden fixed bottom-0 inset-x-0 z-40 h-14 bg-card/95 backdrop-blur border-t border-border flex items-stretch",
+        "md:hidden fixed bottom-0 inset-x-0 z-40 h-14 bg-background/95 backdrop-blur border-t border-border flex items-stretch",
         className,
       )}
       style={{
@@ -52,13 +52,16 @@ export function MobileBottomNav({
             aria-current={active ? "page" : undefined}
             className={cn(
               "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors border-none bg-transparent cursor-pointer min-h-[44px]",
-              active ? "text-accent" : "text-muted-foreground hover:text-foreground",
+              active ? "text-primary" : "text-hbc-text-secondary hover:text-foreground",
             )}
           >
             <Icon className="w-5 h-5" aria-hidden="true" />
-            <span className="font-mono text-[9px] uppercase tracking-wider">
+            <span className="font-sans text-[10px] uppercase tracking-[0.18em] font-semibold">
               {tab.label}
             </span>
+            {active && (
+              <span className="w-3.5 h-[1.5px] bg-accent rounded-full" aria-hidden="true" />
+            )}
           </button>
         );
       })}
@@ -66,10 +69,10 @@ export function MobileBottomNav({
         type="button"
         onClick={onOpenMore}
         aria-label="More options"
-        className="flex-1 flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors border-none bg-transparent cursor-pointer min-h-[44px]"
+        className="flex-1 flex flex-col items-center justify-center gap-0.5 text-hbc-text-secondary hover:text-foreground transition-colors border-none bg-transparent cursor-pointer min-h-[44px]"
       >
         <More className="w-5 h-5" aria-hidden="true" />
-        <span className="font-mono text-[9px] uppercase tracking-wider">More</span>
+        <span className="font-sans text-[10px] uppercase tracking-[0.18em] font-semibold">More</span>
       </button>
     </nav>
   );

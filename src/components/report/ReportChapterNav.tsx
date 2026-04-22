@@ -83,22 +83,22 @@ const ReportChapterNav = ({
   return (
     <>
       {/* ── STICKY NAV BAR ── */}
-      <div className="sticky top-[80px] z-30 bg-background/95 backdrop-blur-sm border-b border-border">
+      <div className="sticky top-[80px] z-30 bg-card border-b border-border">
         <div className="max-w-[1000px] mx-auto px-4 md:px-10">
-          <div className="flex items-center gap-2 py-2.5">
+          <div className="flex items-center gap-0 py-0">
 
             {/* Back to overview */}
             {onBackToHome && (
               <button
                 onClick={onBackToHome}
-                className="flex-shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-accent transition-colors pr-3 border-r border-border mr-1"
+                className="flex-shrink-0 font-sans text-[10px] uppercase tracking-[0.14em] font-semibold text-muted-foreground hover:text-accent transition-colors pr-4 border-r border-border mr-2 py-4"
               >
                 ← Overview
               </button>
             )}
 
-            {/* Chapter pills — scrollable, with monogram accent when active */}
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1">
+            {/* Chapter tabs — underline style matching design reference */}
+            <div className="flex items-stretch gap-0 overflow-x-auto scrollbar-hide flex-1">
               {CHAPTERS.map((ch) => {
                 const hasPages = groups.some((g) =>
                   ch.groupIds.some((gid) => g.id === gid || g.id.includes(gid))
@@ -109,18 +109,19 @@ const ReportChapterNav = ({
                   <button
                     key={ch.id}
                     onClick={() => onChapterChange(ch.id)}
-                    className={`whitespace-nowrap inline-flex items-center gap-2 pl-1.5 pr-4 py-1 rounded-full font-sans text-sm transition-all duration-200 min-h-[36px] ${
+                    className={`whitespace-nowrap inline-flex items-center gap-2 px-4 py-4 font-sans text-[11px] tracking-[0.06em] transition-all duration-200 border-b-2 ${
                       active
-                        ? "bg-accent text-accent-foreground font-medium shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        ? "text-primary font-semibold border-accent"
+                        : "text-hbc-text-muted hover:text-foreground border-transparent"
                     }`}
                   >
-                    <Monogram
-                      code={chapterToMonogram(ch.id)}
-                      size="xs"
-                      // On the active gold pill, use a navy-on-white monogram for contrast
-                      variant={active ? "navy-on-gold" : undefined}
-                    />
+                    {active && (
+                      <Monogram
+                        code={chapterToMonogram(ch.id)}
+                        size="xs"
+                        variant="navy-on-gold"
+                      />
+                    )}
                     {ch.label}
                   </button>
                 );
@@ -130,7 +131,7 @@ const ReportChapterNav = ({
             {/* Table of Contents button */}
             <button
               onClick={() => setTocOpen(true)}
-              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:text-accent hover:border-accent/40 transition-all font-mono text-[10px] uppercase tracking-wider ml-2"
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:text-accent hover:border-accent/40 transition-all font-sans text-[10px] uppercase tracking-wider ml-2"
             >
               <List className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Contents</span>
@@ -226,7 +227,7 @@ const ReportChapterNav = ({
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-border flex-shrink-0">
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Navigation</p>
+                <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">Navigation</p>
                 <h2 className="font-display text-xl text-foreground mt-0.5">Table of Contents</h2>
               </div>
               <button
@@ -262,7 +263,7 @@ const ReportChapterNav = ({
                       <span className="font-sans text-sm font-medium text-foreground group-hover:text-accent transition-colors">
                         {ch.label}
                       </span>
-                      <span className="ml-auto font-mono text-[10px] text-muted-foreground">
+                      <span className="ml-auto font-sans text-[10px] text-muted-foreground">
                         {ch.pages.length} sections
                       </span>
                     </button>
