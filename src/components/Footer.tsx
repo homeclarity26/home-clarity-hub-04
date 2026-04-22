@@ -45,7 +45,7 @@ const Footer = ({ activeTab, onNavigate, reportContext }: FooterProps) => {
   return (
     <>
       {/* ── FAB on all tabs ── */}
-      <div ref={fabPanelRef} className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+      <div ref={fabPanelRef} className="hidden md:flex md:fixed md:bottom-6 md:right-6 md:z-50 flex-col items-end gap-3">
         {/* Popup panel */}
         {fabOpen && (
           <div className="bg-card border border-border rounded-2xl shadow-lg p-4 w-[320px] animate-in fade-in slide-in-from-bottom-2 duration-200">
