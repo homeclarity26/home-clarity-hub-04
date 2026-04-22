@@ -212,10 +212,10 @@ const ReportOverview = ({
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
           >
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">
+            <p className="font-sans text-[10px] uppercase tracking-[0.3em] text-accent">
               Home Clarity Report
             </p>
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary-foreground/55 mt-2">
+            <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-primary-foreground/55 mt-2">
               Prepared {reportDate} by {creatorName}
             </p>
           </motion.div>
@@ -246,7 +246,7 @@ const ReportOverview = ({
                   numberClassName="text-white font-display"
                 />
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary-foreground/60">
+                  <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-primary-foreground/60">
                     Overall Home Condition
                   </p>
                   <p className="font-display text-primary-foreground text-xl leading-tight mt-0.5">
@@ -264,7 +264,7 @@ const ReportOverview = ({
             transition={{ delay: 0.5, duration: 0.6 }}
           >
             {hasChapters && (
-              <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-primary-foreground/50 mb-4">
+              <p className="font-sans text-[9px] uppercase tracking-[0.3em] text-primary-foreground/50 mb-4">
                 Chapters
               </p>
             )}
@@ -280,7 +280,7 @@ const ReportOverview = ({
                     aria-label={`Open ${ch.label}`}
                   >
                     <Monogram code={chapterToMonogram(ch.id)} size="lg" />
-                    <span className="font-mono text-[9px] uppercase tracking-wider text-primary-foreground/60 group-hover:text-accent transition-colors">
+                    <span className="font-sans text-[9px] uppercase tracking-wider text-primary-foreground/60 group-hover:text-accent transition-colors">
                       {ch.label}
                     </span>
                   </button>
@@ -318,8 +318,8 @@ const ReportOverview = ({
         {!isReportEmpty && (
           <div className="bg-card rounded-xl border border-border p-6 md:p-8">
             <div className="flex items-start gap-4">
-              <div className="w-11 h-11 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="font-mono text-[11px] uppercase tracking-wider text-accent-readable font-semibold">
+              <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="font-display text-sm font-bold text-primary-foreground tracking-[0.04em]">
                   {creatorName
                     .split(" ")
                     .map((n) => n[0])
@@ -328,10 +328,13 @@ const ReportOverview = ({
                 </span>
               </div>
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
-                  A note from {creatorName}
+                <p className="font-sans text-[11px] font-semibold text-foreground mb-0.5">
+                  {creatorName}
                 </p>
-                <p className="font-sans text-base text-foreground leading-relaxed">
+                <p className="font-sans text-[9px] uppercase tracking-[0.14em] text-accent font-semibold mb-3">
+                  Hometown Builders Club
+                </p>
+                <p className="font-display text-base italic text-foreground leading-relaxed">
                   {displayNote}
                 </p>
               </div>
@@ -344,7 +347,7 @@ const ReportOverview = ({
           <div>
             <div className="flex items-center gap-2 mb-4">
               <AlertTriangle className="w-4 h-4 text-amber-500" />
-              <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-foreground">
+              <h2 className="font-sans text-[11px] uppercase tracking-[0.2em] text-foreground font-semibold">
                 Needs Your Attention
               </h2>
             </div>
@@ -361,7 +364,7 @@ const ReportOverview = ({
                   >
                     <div className="flex items-center gap-3">
                       <span
-                        className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded ${
+                        className={`text-[10px] font-sans uppercase tracking-wider px-2 py-0.5 rounded ${
                           conditionBadgeStyle[item.conditionRating || "Fair"]
                         }`}
                       >
@@ -373,7 +376,7 @@ const ReportOverview = ({
                     </div>
                     <div className="flex items-center gap-3">
                       {item.timing && (
-                        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground hidden sm:block">
+                        <span className="font-sans text-[10px] uppercase tracking-wider text-muted-foreground hidden sm:block">
                           {item.timing}
                         </span>
                       )}
@@ -390,7 +393,7 @@ const ReportOverview = ({
                     "I have a question about the priority items in my report.",
                   )
                 }
-                className="mt-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-accent transition-colors"
+                className="mt-3 font-sans text-[10px] uppercase tracking-wider text-muted-foreground hover:text-accent transition-colors"
               >
                 Ask about these →
               </button>
@@ -406,7 +409,7 @@ const ReportOverview = ({
         <div>
           <div className="flex items-center gap-2 mb-4">
             <BookOpen className="w-4 h-4 text-muted-foreground" />
-            <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-foreground">
+            <h2 className="font-sans text-[11px] uppercase tracking-[0.2em] text-foreground font-semibold">
               Report Chapters
             </h2>
           </div>
@@ -438,7 +441,7 @@ const ReportOverview = ({
                     <p className="font-display text-base text-foreground group-hover:text-accent transition-colors">
                       {ch.label}
                     </p>
-                    <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5 truncate">
+                    <p className="font-sans text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5 truncate">
                       {ch.sectionCount} section{ch.sectionCount !== 1 ? "s" : ""}
                       {Object.entries(ch.counts).length > 0 && (
                         <span className="ml-2">

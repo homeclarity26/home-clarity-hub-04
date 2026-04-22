@@ -60,9 +60,13 @@ export default {
         hbc: {
           navy: "hsl(var(--hbc-navy))",
           cream: "hsl(var(--hbc-cream))",
+          surface: "hsl(var(--hbc-surface))",
           gold: "hsl(var(--hbc-gold))",
           rust: "hsl(var(--hbc-rust))",
           white: "hsl(var(--hbc-white))",
+          border: "hsl(var(--hbc-border))",
+          "text-secondary": "hsl(var(--hbc-text-secondary))",
+          "text-muted": "hsl(var(--hbc-text-muted))",
           grey: {
             100: "hsl(var(--hbc-grey-100))",
             500: "hsl(var(--hbc-grey-500))",
@@ -70,8 +74,8 @@ export default {
         },
       },
       fontFamily: {
-        display: ['Playfair Display', 'serif'],
-        mono: ['IBM Plex Mono', 'monospace'],
+        display: ['Cormorant Garamond', 'serif'],
+        mono: ['Inter', 'sans-serif'],
         sans: ['Inter', 'sans-serif'],
       },
       borderRadius: {

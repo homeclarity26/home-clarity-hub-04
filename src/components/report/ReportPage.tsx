@@ -31,11 +31,11 @@ interface ReportPageProps {
 // ── Condition hero strip colors ──────────────────────────────────────────────
 const conditionStripColor: Record<string, string> = {
   Excellent: "#4CAF81",
-  Good: "#1B2B4D",
-  Fair: "#C4A265",
+  Good: "#0A1628",
+  Fair: "#B87333",
   Poor: "#f97316",
   Critical: "#B5450B",
-  "N/A": "#8A8E99",
+  "N/A": "#B0ADA6",
 };
 
 // ── Condition badge pill (compact, used in sticky header) ────────────────────
@@ -43,7 +43,7 @@ const conditionBadgeMini = (rating: string) => {
   const colorMap: Record<string, string> = {
     Excellent: "bg-emerald-100 text-emerald-800",
     Good: "bg-primary/10 text-primary",
-    Fair: "bg-accent/15 text-[#7a612a]",
+    Fair: "bg-accent/15 text-accent-readable",
     Poor: "bg-orange-100 text-orange-700",
     Critical: "bg-[#B5450B]/10 text-[#B5450B]",
     "N/A": "bg-muted text-muted-foreground",
@@ -200,13 +200,10 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
 
       {/* ── Sticky breadcrumb (appears after scroll 100px) ────────────── */}
       {scrolled && (
-        <div className="fixed top-16 left-0 right-0 z-40 flex items-center gap-3 px-6 py-2 border-b border-border/40"
-          style={{ background: "rgba(248, 246, 242, 0.95)", backdropFilter: "blur(8px)" }}
+        <div
+          className="fixed top-16 left-0 right-0 z-40 flex items-center gap-3 px-6 py-2 border-b border-border bg-background/95 backdrop-blur-sm"
         >
-          <span
-            className="font-mono text-[11px] uppercase tracking-[0.15em]"
-            style={{ color: "#1B2B4D" }}
-          >
+          <span className="font-sans text-[11px] uppercase tracking-[0.15em] font-semibold text-primary">
             {page.title}
           </span>
           {pageData.conditionRating && conditionBadgeMini(pageData.conditionRating)}
