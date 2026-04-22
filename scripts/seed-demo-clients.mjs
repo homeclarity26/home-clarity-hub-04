@@ -10,9 +10,7 @@
 // Cleanup (one-shot, cascades through FKs):
 //   DELETE FROM auth.users WHERE email LIKE '%@homeclarityhub.test';
 //   DELETE FROM properties WHERE (metadata->>'demo')::boolean IS TRUE;
-//
-// Shared password for all three clients — login via /login:
-//   HBC-Demo-2026!
+// (All lowercase, no special chars — chosen to survive mobile typing.)
 
 import { loadEnv, mgmtQuery, SUPABASE_URL } from "./_webkit-helpers.mjs";
 import { ALDERWOOD } from "./_demo-data/home-alderwood.mjs";
@@ -20,7 +18,7 @@ import { BROOKHAVEN } from "./_demo-data/home-brookhaven.mjs";
 import { COPPERLINE } from "./_demo-data/home-copperline.mjs";
 
 const env = loadEnv();
-const PASSWORD = "HBC-Demo-2026!";
+const PASSWORD = "demohomes2026";
 const CREATOR_EMAIL = "adam@hometownbuildersclub.com";
 
 // ─── Low-level helpers ──────────────────────────────────────────────
