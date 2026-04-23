@@ -3,6 +3,7 @@ import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import { CHAPTERS } from "./ReportChapterNav";
+import HCRLogo from "@/components/brand/HCRLogo";
 
 interface ReportOverviewProps {
   groups: PortalGroup[];
@@ -34,6 +35,7 @@ const ReportOverview = ({
   onChapterSelect,
   onPageSelect,
   creatorName = "Adam Kilgore",
+  isReportEmpty = false,
 }: ReportOverviewProps) => {
   const chapterData = useMemo(() => {
     return CHAPTERS.map((ch) => {
@@ -56,6 +58,7 @@ const ReportOverview = ({
   );
 
   const hasChapters = chapterData.some((c) => c.sectionCount > 0);
+  const reportEmpty = isReportEmpty || !hasChapters;
 
   const reportDate = useMemo(
     () => new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
@@ -64,95 +67,112 @@ const ReportOverview = ({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="px-7 pt-10 pb-14 max-w-[480px] mx-auto">
+      <div className="max-w-[1040px] mx-auto px-6 sm:px-8 md:px-10 pt-10 md:pt-16 pb-14">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
+          {/* ── Left column: document cover ─────────────────────────── */}
+          <div className="lg:col-span-7">
+            <HCRLogo size="md" className="mb-8" />
 
-        {/* HCR logo mark */}
-        <div className="flex items-start gap-0 mb-8">
-          <div className="flex flex-col items-start">
-            <span className="font-display text-2xl font-bold text-primary leading-none tracking-tight">HCR</span>
-            <div className="w-full h-[1.5px] bg-accent my-1.5" />
-            <span className="font-sans text-[8px] uppercase tracking-[0.22em] text-primary leading-none font-semibold">Home Clarity</span>
-            <span className="font-sans text-[7px] tracking-[0.12em] text-accent leading-none mt-0.5">Report</span>
-          </div>
-        </div>
-
-        {/* Report label cap */}
-        <p className="font-sans text-[10px] uppercase tracking-[0.25em] font-semibold text-muted-foreground mb-5">
-          Home Clarity Report · {reportDate}
-        </p>
-
-        {/* Property name */}
-        <h1 className="font-display text-[50px] text-primary font-semibold leading-[1.0] mb-2">
-          {propertyName || "Your Home"}
-        </h1>
-
-        {/* Property address — italic display secondary */}
-        {propertyAddress && (
-          <p className="font-display italic text-[20px] text-muted-foreground leading-snug mb-7">
-            {propertyAddress}
-          </p>
-        )}
-
-        {/* Rule */}
-        <div className="border-t border-border mb-6" />
-
-        {/* Metadata rows */}
-        <div className="space-y-3 mb-6">
-          {propertyAddress && (
-            <div className="flex gap-5">
-              <span className="font-sans text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold w-24 flex-shrink-0">Address</span>
-              <span className="font-sans text-sm text-foreground">{propertyAddress}</span>
-            </div>
-          )}
-          <div className="flex gap-5">
-            <span className="font-sans text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold w-24 flex-shrink-0">Prepared by</span>
-            <span className="font-sans text-sm text-foreground">{creatorName}</span>
-          </div>
-        </div>
-
-        {/* Rule */}
-        <div className="border-t border-border mb-6" />
-
-        {/* Report chapters */}
-        {hasChapters && (
-          <>
-            <p className="font-sans text-[9px] uppercase tracking-[0.28em] font-semibold text-muted-foreground mb-3">
-              Report Chapters
+            <p className="font-sans text-[10px] uppercase tracking-[0.25em] font-semibold text-muted-foreground mb-5">
+              Home Clarity Report · {reportDate}
             </p>
-            <div>
-              {chapterData
-                .filter((ch) => ch.sectionCount > 0)
-                .map((ch) => (
-                  <button
-                    key={ch.id}
-                    onClick={() => onChapterSelect(ch.id)}
-                    className="flex items-center justify-between w-full py-3.5 border-b border-border/60 text-left hover:opacity-75 transition-opacity group"
-                  >
-                    <span className="font-display text-[20px] text-primary leading-none">
-                      {ch.label}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-sans text-[9px] uppercase tracking-[0.2em] text-accent font-semibold">
-                        {ch.sectionCount} Section{ch.sectionCount !== 1 ? "s" : ""}
-                      </span>
-                      <span className="text-accent font-semibold text-base leading-none">›</span>
-                    </div>
-                  </button>
-                ))}
-            </div>
-          </>
-        )}
 
-        {/* Begin reading CTA */}
-        {firstPageId && (
-          <button
-            onClick={() => onPageSelect(firstPageId)}
-            className="w-full mt-8 bg-primary text-primary-foreground py-4 rounded font-sans text-sm font-semibold tracking-[0.04em] hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 min-h-[52px]"
-          >
-            Begin reading
-            <span className="text-accent font-bold text-base">→</span>
-          </button>
-        )}
+            <h1 className="font-display text-[38px] md:text-[50px] lg:text-[64px] text-primary font-semibold leading-[1.0] mb-3">
+              {propertyName || "Your Home"}
+            </h1>
+
+            {propertyAddress && (
+              <p className="font-display italic text-[18px] md:text-[22px] text-muted-foreground leading-snug mb-7">
+                {propertyAddress}
+              </p>
+            )}
+
+            <div className="border-t border-border mb-6" />
+
+            <div className="space-y-3 mb-6">
+              {propertyAddress && (
+                <div className="flex gap-5">
+                  <span className="font-sans text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold w-24 flex-shrink-0">
+                    Address
+                  </span>
+                  <span className="font-sans text-sm text-foreground">{propertyAddress}</span>
+                </div>
+              )}
+              <div className="flex gap-5">
+                <span className="font-sans text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold w-24 flex-shrink-0">
+                  Prepared by
+                </span>
+                <span className="font-sans text-sm text-foreground">{creatorName}</span>
+              </div>
+              <div className="flex gap-5">
+                <span className="font-sans text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold w-24 flex-shrink-0">
+                  Issued
+                </span>
+                <span className="font-sans text-sm text-foreground">{reportDate}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Right column: chapter list + CTA ────────────────────── */}
+          <div className="lg:col-span-5">
+            {reportEmpty ? (
+              <div className="bg-card border border-border rounded p-6">
+                <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold mb-3">
+                  In Preparation
+                </p>
+                <p className="font-display text-lg text-foreground mb-2 leading-snug">
+                  Your Home Clarity Report is being prepared by {creatorName}.
+                </p>
+                <p className="font-sans text-sm text-muted-foreground">
+                  You'll get an email when it's ready.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="bg-card border border-border rounded">
+                  <p className="font-sans text-[9px] uppercase tracking-[0.28em] font-semibold text-muted-foreground px-5 pt-5 pb-3">
+                    Report Chapters
+                  </p>
+                  <div>
+                    {chapterData
+                      .filter((ch) => ch.sectionCount > 0)
+                      .map((ch, idx, arr) => (
+                        <button
+                          key={ch.id}
+                          onClick={() => onChapterSelect(ch.id)}
+                          className={`flex items-center justify-between w-full px-5 py-4 text-left hover:bg-accent/5 transition-colors group ${
+                            idx < arr.length - 1 ? "border-b border-border/60" : ""
+                          }`}
+                        >
+                          <span className="font-display text-[20px] text-primary leading-none">
+                            {ch.label}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-sans text-[9px] uppercase tracking-[0.2em] text-accent font-semibold">
+                              {ch.sectionCount} Section{ch.sectionCount !== 1 ? "s" : ""}
+                            </span>
+                            <span className="text-accent font-semibold text-base leading-none group-hover:translate-x-0.5 transition-transform">
+                              ›
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+
+                {firstPageId && (
+                  <button
+                    onClick={() => onPageSelect(firstPageId)}
+                    className="w-full mt-6 bg-primary text-primary-foreground py-4 rounded font-sans text-sm font-semibold tracking-[0.04em] hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 min-h-[52px]"
+                  >
+                    Begin reading
+                    <span className="text-accent font-bold text-base">→</span>
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

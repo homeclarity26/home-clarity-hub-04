@@ -21,6 +21,7 @@ import Index from "./pages/Index";
 
 // Everything else lazy-loads to cut the initial bundle for mobile clients.
 const Landing = lazy(() => import("./pages/Landing"));
+const DevPortalQA = lazy(() => import("./pages/DevPortalQA"));
 const ProposalView = lazy(() => import("./pages/ProposalView"));
 const InvoiceView = lazy(() => import("./pages/InvoiceView"));
 const Privacy = lazy(() => import("./pages/Privacy"));
@@ -243,6 +244,9 @@ const AppRoutes = () => {
 
         {/* Public landing page */}
         <Route path="/welcome" element={<Landing />} />
+
+        {/* Developer-only QA page for HCR portal shell pieces */}
+        <Route path="/dev/portal-qa" element={<DevPortalQA />} />
 
         {/* Auth routes */}
         <Route

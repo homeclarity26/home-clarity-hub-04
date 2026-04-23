@@ -2,13 +2,11 @@ import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, Circle, ChevronRight, CalendarPlus, ChevronDown } from "lucide-react";
 import { PropertyHero } from "@/components/portal/PropertyHero";
-import { Monogram } from "@/components/ui/Monogram";
 import AICommandBar from "@/components/portal/AICommandBar";
 import SmartActionTiles, { trackSectionVisit } from "@/components/portal/SmartActionTiles";
 import AISuggestionsStrip from "@/components/portal/AISuggestionsStrip";
 import ActiveProjectCard from "@/components/portal/ActiveProjectCard";
 import LiveInvoiceStrip from "@/components/portal/LiveInvoiceStrip";
-import ReportCompletionRing from "@/components/portal/ReportCompletionRing";
 import HomeHealthScore from "@/components/portal/HomeHealthScore";
 import SeasonalChecklist from "@/components/portal/SeasonalChecklist";
 import ClientGoalsWidget from "@/components/portal/ClientGoalsWidget";
@@ -200,7 +198,7 @@ const HomeTab = ({
 
       {/* Consistent max-w container below the hero */}
       <motion.div
-        className="max-w-5xl mx-auto px-6 md:px-20 w-full space-y-8 mt-8"
+        className="max-w-[1040px] mx-auto px-6 md:px-10 w-full space-y-8 mt-8"
         variants={stagger}
         initial="initial"
         animate="animate"
@@ -235,10 +233,23 @@ const HomeTab = ({
           </motion.div>
         )}
 
-        {/* Report progress nudge — only when the report is in-flight */}
+        {/* Report progress nudge — text-only completion strip, no ring visuals */}
         {completionPercent > 0 && completionPercent < 100 && (
-          <motion.div variants={fadeUp} className="flex justify-center">
-            <ReportCompletionRing completionPercent={completionPercent} totalSections={57} />
+          <motion.div variants={fadeUp}>
+            <div className="bg-card border border-border rounded px-5 py-4">
+              <div className="flex items-baseline justify-between mb-2">
+                <p className="font-display text-base text-foreground">Report progress</p>
+                <p className="font-sans text-[11px] uppercase tracking-[0.16em] text-accent font-semibold">
+                  {completionPercent}% Complete
+                </p>
+              </div>
+              <div className="h-[3px] w-full bg-border/70 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-accent transition-[width] duration-500"
+                  style={{ width: `${Math.max(4, Math.min(100, completionPercent))}%` }}
+                />
+              </div>
+            </div>
           </motion.div>
         )}
 
@@ -265,10 +276,9 @@ const HomeTab = ({
         <Collapsible>
           <CollapsibleTrigger className="group w-full flex items-center justify-between text-left bg-card rounded-lg border border-border px-5 py-4 hover:border-accent/40 transition-colors [&[data-state=open]>svg]:rotate-180">
             <div className="flex items-center gap-3">
-              <Monogram code="ES" size="sm" />
               <div>
                 <p className="font-display text-lg text-foreground">Explore more</p>
-                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">
+                <p className="font-sans text-[10px] uppercase tracking-[0.15em] text-muted-foreground mt-0.5">
                   Goals · Seasonal checklist · Value · Referrals · Story
                 </p>
               </div>

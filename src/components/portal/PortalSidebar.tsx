@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import HCRLogo from "@/components/brand/HCRLogo";
 
 interface NavItem {
   key: string;
@@ -66,8 +67,10 @@ interface PortalSidebarProps {
   onMobileOpenChange?: (open: boolean) => void;
 }
 
-const GOLD = "#C4A265";
-const NAVY = "#1B2B4D";
+// HCR tokens — bound to CSS vars so the sidebar matches the rest of the portal
+// instead of drifting to one-off hex values.
+const GOLD = "hsl(var(--accent))";
+const NAVY = "hsl(var(--primary))";
 
 const SidebarContent = ({
   activeTab,
@@ -86,11 +89,7 @@ const SidebarContent = ({
       className="flex items-center justify-between px-3 py-4 shrink-0"
       style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
     >
-      {!collapsed && (
-        <span className="text-white font-sans text-xs font-bold tracking-widest uppercase opacity-70">
-          HBC
-        </span>
-      )}
+      {!collapsed && <HCRLogo variant="light" size="sm" />}
       {onClose ? (
         <button
           onClick={onClose}
@@ -145,7 +144,7 @@ const SidebarContent = ({
                 {isActive && (
                   <div
                     className="absolute inset-0 pointer-events-none"
-                    style={{ background: "rgba(196,162,101,0.08)" }}
+                    style={{ background: "hsl(var(--accent) / 0.08)" }}
                   />
                 )}
                 {/* lucide icons accept className but not `style`; use a wrapper span for the color. */}
