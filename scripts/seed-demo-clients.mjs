@@ -149,7 +149,19 @@ async function seedReportPages(home, reportId) {
       env.pat,
       `SELECT id FROM report_pages WHERE report_id = '${reportId}' AND page_key = ${sqlStr(p.page_key)} LIMIT 1`,
     );
-    if (existing.length) continue; // Already seeded — skip to preserve edits.
+    if (existing.length) {
+      // Row already exists — preserve hand-edits by the advisor, but resync
+      // the demo image slots to the current data file. Prior to this, every
+      // update to the approved photo set (see workspace/alderwood_image_page_map.md)
+      // was dead on arrival because the seed would no-op on existing rows
+      // and the DB kept serving stale Unsplash placeholders to the portal.
+      await mgmtQuery(
+        env.pat,
+        `UPDATE report_pages SET images = ${sqlJsonb(p.images || [])}
+         WHERE id = '${existing[0].id}'`,
+      );
+      continue;
+    }
     await mgmtQuery(
       env.pat,
       `INSERT INTO report_pages (
