@@ -3,7 +3,22 @@
 // Family heirloom needing system modernization. Beautiful bones,
 // deferred maintenance catching up, multiple high-ticket vision projects.
 
-import { photosFor } from "./photos.mjs";
+// Approved 2026-04-23 — see workspace/alderwood_image_page_map.md.
+// Served from /public/demo/alderwood/ as /demo/alderwood/<file>.
+const IMG_BASE = "/demo/alderwood";
+const ALDERWOOD_IMG = {
+  exterior_front:       `${IMG_BASE}/ChatGPT-Image-Apr-23-2026-07_47_16-AM.jpg`, // cover / hero
+  roof_slate:           `${IMG_BASE}/ChatGPT-Image-Apr-23-2026-07_50_55-AM.jpg`,
+  siding_trim:          `${IMG_BASE}/ChatGPT-Image-Apr-23-2026-07_54_18-AM.jpg`,
+  kitchen:              `${IMG_BASE}/ChatGPT-Image-Apr-23-2026-07_55_19-AM.jpg`,
+  primary_suite:        `${IMG_BASE}/ChatGPT-Image-Apr-23-2026-07_57_22-AM.jpg`,
+  exterior_detail:      `${IMG_BASE}/ChatGPT-Image-Apr-23-2026-07_58_28-AM.jpg`,
+  mechanical_room:      `${IMG_BASE}/ChatGPT-Image-Apr-23-2026-08_00_44-AM.jpg`, // HVAC / plumbing fallback
+  electrical_attic:     `${IMG_BASE}/ChatGPT-Image-Apr-23-2026-08_02_07-AM.jpg`,
+  basement_foundation:  `${IMG_BASE}/ChatGPT-Image-Apr-23-2026-08_04_11-AM.jpg`,
+  exterior_golden_hour: `${IMG_BASE}/ChatGPT-Image-Apr-23-2026-08_04_54-AM.jpg`, // alt hero / roadmap fallback
+  interior_transition:  `${IMG_BASE}/ChatGPT-Image-Apr-23-2026-08_08_08-AM.jpg`, // windows / safety fallback
+};
 
 export const ALDERWOOD = {
   slug: "alderwood",
@@ -55,7 +70,7 @@ export const ALDERWOOD = {
         "Define kitchen program scope this year — specification alone takes 60–90 days",
         "Budget $35k in 2026 for discretionary preservation (slate re-pointing, storm windows)",
       ],
-      images: photosFor("colonial_exterior", 3),
+      images: [ALDERWOOD_IMG.exterior_front, ALDERWOOD_IMG.exterior_golden_hour, ALDERWOOD_IMG.exterior_detail],
     },
 
     // ─── 2. Roof System ────────────────────────────────────────────
@@ -90,7 +105,7 @@ export const ALDERWOOD = {
         "Source reclaimed Buckingham slate from a restoration yard for the mismatched patches",
         "Install snow guards above the entry porch as part of the flashing work",
       ],
-      images: photosFor("slate_roof", 2),
+      images: [ALDERWOOD_IMG.roof_slate],
     },
 
     // ─── 3. Exterior Siding ────────────────────────────────────────
@@ -125,7 +140,7 @@ export const ALDERWOOD = {
         "Have rot areas repaired before October 2026 — winter moisture expands the damage",
         "Plan full repaint to coincide with roof flashing work so scaffolding is shared",
       ],
-      images: photosFor("wood_clapboard", 2),
+      images: [ALDERWOOD_IMG.siding_trim, ALDERWOOD_IMG.exterior_detail],
     },
 
     // ─── 4. Windows ────────────────────────────────────────────────
@@ -157,7 +172,8 @@ export const ALDERWOOD = {
         "Install interior storms this fall — $4,500 investment cuts $1,200/yr in heating",
         "If proceeding with sash restoration, use a period-correct restorer not a general window shop",
       ],
-      images: photosFor("historic_windows", 2),
+      // Fallback: no dedicated windows-only shot — use trim/window detail, then interior transition.
+      images: [ALDERWOOD_IMG.siding_trim, ALDERWOOD_IMG.interior_transition],
     },
 
     // ─── 5. Kitchen ────────────────────────────────────────────────
@@ -192,7 +208,7 @@ export const ALDERWOOD = {
         "Keep the original 1912 soapstone apron sink — it is irreplaceable and its patina is a focal point",
         "If choosing Signature tier, commit design by July 2026 to lock fabricator slots",
       ],
-      images: photosFor("kitchen_dated", 3),
+      images: [ALDERWOOD_IMG.kitchen],
     },
 
     // ─── 6. Primary Suite ──────────────────────────────────────────
@@ -225,7 +241,7 @@ export const ALDERWOOD = {
         "Add a whole-house water softener (see Plumbing page) before refinishing shower glass — otherwise the hardness re-etches within 18 months",
         "Before Signature-tier commitment, review structural feasibility of merging with corner bedroom — wall is load-bearing",
       ],
-      images: photosFor("primary_bedroom_luxury", 2),
+      images: [ALDERWOOD_IMG.primary_suite],
     },
 
     // ─── 7. HVAC ───────────────────────────────────────────────────
@@ -261,7 +277,7 @@ export const ALDERWOOD = {
         "Whatever tier you choose, specify a battery-backup thermostat so a power outage doesn't drop the system",
         "Request the AHJ (City of Hudson) sign off on the boiler decommissioning permit — they have been restrictive about removing historic systems",
       ],
-      images: photosFor("boiler_old", 2),
+      images: [ALDERWOOD_IMG.mechanical_room],
     },
 
     // ─── 8. Electrical ─────────────────────────────────────────────
@@ -296,7 +312,7 @@ export const ALDERWOOD = {
         "Hardwire and interconnect smoke/CO detectors this year regardless of other scope",
         "When adding AC capacity for primary-suite or kitchen, confirm panel has capacity (current load factor ~65%)",
       ],
-      images: photosFor("electrical_panel", 2),
+      images: [ALDERWOOD_IMG.electrical_attic],
     },
 
     // ─── 9. Plumbing ───────────────────────────────────────────────
@@ -331,7 +347,8 @@ export const ALDERWOOD = {
         "Install softener within 60 days — the longer hard water runs, the more damage accumulates",
         "If going tankless, confirm gas line upsize first (3/4\" required for RU199iN)",
       ],
-      images: photosFor("plumbing_pipes", 2),
+      // Fallback: no dedicated plumbing image — mechanical room shows visible piping.
+      images: [ALDERWOOD_IMG.mechanical_room],
     },
 
     // ─── 10. Basement / Foundation ────────────────────────────────
@@ -365,7 +382,7 @@ export const ALDERWOOD = {
         "Add a battery sump backup this summer — $1,800 buys peace of mind on the one system that matters in a storm",
         "If pursuing finish work, address the ceiling-height constraint first — finish cost without ceiling raise is significantly compromised",
       ],
-      images: photosFor("basement_unfinished", 2),
+      images: [ALDERWOOD_IMG.basement_foundation],
     },
 
     // ─── 11. Strategic Roadmap ────────────────────────────────────
@@ -394,7 +411,8 @@ export const ALDERWOOD = {
         "Revisit this roadmap every Q4 — projects shift, priorities change, scope evolves",
         "Consider bundling 2026 HVAC + 2027 kitchen contractor selection to negotiate larger-project discount",
       ],
-      images: photosFor("colonial_exterior", 1),
+      // Fallback: no dedicated roadmap graphic — use elegant golden-hour exterior.
+      images: [ALDERWOOD_IMG.exterior_golden_hour],
     },
 
     // ─── 12. Safety ────────────────────────────────────────────────
@@ -428,7 +446,8 @@ export const ALDERWOOD = {
         "Radon mitigation is the highest-leverage safety investment — do this first",
         "Hardwire smoke/CO detectors during the knob-and-tube electrical work (same electrician, same trip, much cheaper)",
       ],
-      images: photosFor("home_interior", 2),
+      // Fallback: no dedicated safety/life-systems image in this set.
+      images: [ALDERWOOD_IMG.interior_transition],
     },
   ],
 
