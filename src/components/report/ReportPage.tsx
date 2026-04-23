@@ -8,6 +8,8 @@ import QACoachPanel from "@/components/admin/QACoachPanel";
 import AdminAIAssistant from "@/components/admin/AdminAIAssistant";
 import { PageAIChat } from "./PageAIChat";
 import BlockRenderer from "./BlockRenderer";
+import NavyHeader from "@/components/portal/NavyHeader";
+import PageImageSlot from "./PageImageSlot";
 import { useEditMode } from "@/contexts/EditModeContext";
 import { useReportPage } from "@/hooks/useReportPage";
 import type { PageContent } from "@/lib/templateUtils";
@@ -208,17 +210,17 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
       )}
 
       {/* ── Navy section header ──────────────────────────────────────── */}
-      <div className="bg-primary px-7 pt-8 pb-7 no-print">
-        <div className="text-[10px] font-semibold tracking-[0.14em] uppercase text-primary-foreground/35 mb-[22px]">
-          ← {chapterLabelFromGroup(page.group)}
-        </div>
-        <div className="w-7 h-[1.5px] bg-accent rounded-[1px] mb-3.5" />
-        <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-primary-foreground/35 mb-2.5 font-sans">
-          {chapterLabelFromGroup(page.group)} · {page.title}
-        </p>
-        <h1 className="font-display text-[34px] text-primary-foreground font-semibold leading-[1.08]">
-          {page.title}
-        </h1>
+      <div className="no-print">
+        <NavyHeader
+          backLabel={chapterLabelFromGroup(page.group)}
+          eyebrow={`${chapterLabelFromGroup(page.group)} · ${page.title}`}
+          title={page.title}
+        />
+      </div>
+
+      {/* ── Page image slot (placeholder-ready) ──────────────────────── */}
+      <div className="max-w-[1040px] mx-auto px-6 md:px-10 pt-8 no-print">
+        <PageImageSlot images={resolvedImages} caption="Property photos" />
       </div>
 
       <div ref={contentRef} className="max-w-[800px] mx-auto px-6 md:px-20 py-10 md:py-16 report-page">

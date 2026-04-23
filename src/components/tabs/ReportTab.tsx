@@ -176,7 +176,7 @@ const ReportTab = ({
           onBackToHome={() => onNavigate?.("")}
         />
 
-        <div className="max-w-[800px] mx-auto px-6 md:px-20 pt-8">
+        <div className="max-w-[1040px] mx-auto px-6 md:px-10 pt-8">
           {/* Breadcrumb */}
           <Breadcrumb>
             <BreadcrumbList>
@@ -224,7 +224,7 @@ const ReportTab = ({
 
         {/* Lifespan bar (before main content) */}
         {expectedLifespan && currentAge && (
-          <div className="max-w-[800px] mx-auto px-6 md:px-20 mb-6">
+          <div className="max-w-[1040px] mx-auto px-6 md:px-10 mb-6">
             <LifespanBar
               currentAge={currentAge}
               expectedLifespan={expectedLifespan}
@@ -253,14 +253,14 @@ const ReportTab = ({
 
         {/* Findings Table */}
         {findings.length > 0 && (
-          <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-8">
+          <div className="max-w-[1040px] mx-auto px-6 md:px-10 pb-8">
             <FindingsTable findings={findings} />
           </div>
         )}
 
         {/* Photos gallery */}
         {images.length > 0 && (
-          <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-8">
+          <div className="max-w-[1040px] mx-auto px-6 md:px-10 pb-8">
             <h3 className="font-display text-2xl text-foreground mb-6">Photos</h3>
             <ImageGrid images={images} />
           </div>
@@ -268,7 +268,7 @@ const ReportTab = ({
 
         {/* Investment Summary */}
         {replacementCost && (
-          <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-8">
+          <div className="max-w-[1040px] mx-auto px-6 md:px-10 pb-8">
             <InvestmentSummary
               replacementCostToday={replacementCost}
               expectedLifespan={expectedLifespan}
@@ -279,7 +279,7 @@ const ReportTab = ({
         )}
 
         {/* Action buttons */}
-        <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-8 flex flex-wrap gap-3">
+        <div className="max-w-[1040px] mx-auto px-6 md:px-10 pb-8 flex flex-wrap gap-3">
           <Button
             variant="outline"
             size="sm"
@@ -318,7 +318,7 @@ const ReportTab = ({
         </div>
 
         {/* Prev / Next Navigation */}
-        <div className="max-w-[800px] mx-auto px-6 md:px-20 pb-16">
+        <div className="max-w-[1040px] mx-auto px-6 md:px-10 pb-16">
           <div className="border-t border-border pt-8 grid grid-cols-2 gap-3">
             {/* Prev */}
             {prevPage ? (
