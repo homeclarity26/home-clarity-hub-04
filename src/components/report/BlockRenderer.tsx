@@ -499,7 +499,7 @@ const BlockRenderer = ({
       )}
 
       {/* ── System Cliff Gauge (enhanced HealthBar) ───────────────────── */}
-      {shouldRender("health_bar") && healthBarData && (
+      {false && shouldRender("health_bar") && healthBarData && (
         <>
           {/* New System Cliff Gauge when currentAge + lifespan available */}
           {(healthBarData.currentAge !== undefined || healthBarData.current !== undefined) &&

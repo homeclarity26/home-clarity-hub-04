@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ChevronDown, List, X, Home } from "lucide-react";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
-import { Monogram, chapterToMonogram } from "@/components/ui/Monogram";
 
 export interface ChapterDef {
   id: string;
@@ -115,13 +114,6 @@ const ReportChapterNav = ({
                         : "text-hbc-text-muted hover:text-foreground border-transparent"
                     }`}
                   >
-                    {active && (
-                      <Monogram
-                        code={chapterToMonogram(ch.id)}
-                        size="xs"
-                        variant="navy-on-gold"
-                      />
-                    )}
                     {ch.label}
                   </button>
                 );
