@@ -10,7 +10,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check:supabase-ref": "bun scripts/check-supabase-project-ref.ts",
+    "prebuild": "bun scripts/check-supabase-project-ref.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
