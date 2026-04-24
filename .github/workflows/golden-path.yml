@@ -16,10 +16,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # --- 0. Project-ref drift guard. Runs before anything else so a bot that
+  # silently repoints .env, supabase/config.toml, or the client at a different
+  # Supabase project turns red immediately, before we ever build or deploy.
+  # See src/integrations/supabase/project-ref.ts for the approved ref. ---
+  supabase-ref-guard:
+    name: Supabase project-ref guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run check:supabase-ref
+      - name: Run project-ref unit tests
+        run: bun run test -- src/integrations/supabase/project-ref.test.ts
+
   # --- 1. Build is the cheapest layer; fail fast if tsc/vite is broken. ---
   build:
     name: Build
     runs-on: ubuntu-latest
+    needs: supabase-ref-guard
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4

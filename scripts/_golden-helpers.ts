@@ -1,6 +1,8 @@
 // Shared helpers for Golden Path scripts.
 // Keeps each flow-specific script short + focused.
 
+import { assertSupabaseConfig } from "../src/integrations/supabase/project-ref";
+
 export interface StepResult {
   name: string;
   status: "PASS" | "FAIL";
@@ -22,6 +24,11 @@ export function loadEnv(): GoldenContext {
   if (!supabaseUrl) throw new Error("SUPABASE_URL not set");
   if (!serviceRoleKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY not set");
   if (!anonKey) throw new Error("SUPABASE_ANON_KEY not set");
+  // Project-ref drift guard: refuse to run Golden Path against the wrong
+  // Supabase project. Validates both the anon key and the service-role key
+  // (both are JWTs that embed the project ref).
+  assertSupabaseConfig({ url: supabaseUrl, key: anonKey });
+  assertSupabaseConfig({ url: supabaseUrl, key: serviceRoleKey });
   return { supabaseUrl, serviceRoleKey, anonKey, cleanups: [] };
 }
 
