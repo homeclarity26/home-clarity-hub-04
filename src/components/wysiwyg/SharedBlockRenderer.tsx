@@ -14,6 +14,7 @@ import DividerBlock from "./blocks/DividerBlock";
 import StrategicPlanBlock from "./blocks/StrategicPlanBlock";
 import ChapterHeaderBlock from "./blocks/ChapterHeaderBlock";
 import AINarrativeBlock from "./blocks/AINarrativeBlock";
+import ConditionRatingBlock from "./blocks/ConditionRatingBlock";
 
 interface SharedBlockRendererProps {
   block: ReportBlock;
@@ -93,6 +94,8 @@ const SharedBlockRenderer = ({
       return <ChapterHeaderBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     case "ai_narrative":
       return <AINarrativeBlock content={c as any} editable={editable} onChange={handleChange as any} propertyAddress={propertyAddress} pageSlug={c.pageSlug as string} />;
+    case "condition_rating":
+      return <ConditionRatingBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     default:
       return <div className="bg-muted rounded p-4 text-xs text-muted-foreground">Unknown block: {block.type}</div>;
   }
