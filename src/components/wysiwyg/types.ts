@@ -14,7 +14,14 @@ export type BlockType =
   | "divider"
   | "strategic_plan"
   | "chapter_header"
-  | "ai_narrative";
+  | "ai_narrative"
+  | "condition_rating";
+
+// Word-only condition ratings — replaces the numeric Health Score system
+// being deleted in Phase 6. Values are user-facing strings (rendered as-is)
+// so changing them requires a data migration. New entries here must also be
+// added to RATING_COLORS in ConditionRatingBlock.tsx.
+export type ConditionRating = "Excellent" | "Good" | "Fair" | "Poor" | "Critical";
 
 export type ColSpan = 1 | 2 | 3 | 4 | 6 | 12;
 
@@ -107,6 +114,15 @@ export interface AINarrativeContent {
   html: string;
   fieldNotes?: string;
   isGenerating?: boolean;
+}
+
+export interface ConditionRatingContent {
+  // Optional eyebrow above the rating (e.g. "Overall Condition", "Wall Paint").
+  // Leave blank when the surrounding context already names what's being rated.
+  label?: string;
+  rating: ConditionRating;
+  // Optional one-line note rendered below the rating (e.g. "Recoat in 2-3 yrs").
+  notes?: string;
 }
 
 // ─── Block templates for the "Add Block" picker ──────────────────
@@ -232,6 +248,14 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
     icon: "Target",
     defaultColSpan: 6,
     defaultContent: { title: "", description: "", timeframe: "", urgency: "future" },
+  },
+  {
+    type: "condition_rating",
+    label: "Condition Rating",
+    description: "Word-based condition (Excellent / Good / Fair / Poor / Critical)",
+    icon: "Gauge",
+    defaultColSpan: 4,
+    defaultContent: { label: "Condition", rating: "Good", notes: "" },
   },
 ];
 
