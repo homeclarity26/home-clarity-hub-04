@@ -15,7 +15,8 @@ export type BlockType =
   | "strategic_plan"
   | "chapter_header"
   | "ai_narrative"
-  | "condition_rating";
+  | "condition_rating"
+  | "room_record";
 
 // Word-only condition ratings — replaces the numeric Health Score system
 // being deleted in Phase 6. Values are user-facing strings (rendered as-is)
@@ -123,6 +124,52 @@ export interface ConditionRatingContent {
   rating: ConditionRating;
   // Optional one-line note rendered below the rating (e.g. "Recoat in 2-3 yrs").
   notes?: string;
+}
+
+// One row in the linked-vision-projects sidebar of a room. Lightweight by
+// design — full vision detail lives in the linked vision_project block (B5).
+export interface RoomLinkedVisionProject {
+  id?: string;
+  title: string;
+  priority?: string;  // e.g. "Year 1-2", "Year 2-3"
+}
+
+// Evolving record per room. Every field except roomName is optional;
+// blank string ("" or undefined) renders as muted "Not yet documented" in
+// non-editable view. The renderer handles the three display states (filled
+// / fillable in editable mode / muted-empty in viewer mode) per [v2.7] and
+// the room-record evolving-fields pattern.
+export interface RoomRecordContent {
+  // Identity
+  roomName: string;
+  roomGroup?: string;          // e.g. "Bedrooms & Suites"
+  floorLabel?: string;         // "Lower Level" / "Main Floor" / "Upper Floor"
+  imageUrl?: string;
+
+  // Construction
+  dimensions?: string;         // "14 x 16"
+  floorSqft?: number;
+  ceiling?: string;            // "10ft" or "10ft tray"
+
+  // Finishes (evolving fields)
+  wallPaint?: string;
+  trimPaint?: string;
+  ceilingPaint?: string;
+  flooring?: string;
+
+  // Power, light, openings
+  lightFixtures?: string;
+  outlets?: string;
+  switches?: string;
+  windows?: string;
+  doors?: string;
+
+  // Condition + observations
+  conditionRating?: ConditionRating;
+  observationsHtml?: string;
+
+  // Linked vision project chips (small references, not full vision content)
+  linkedVisionProjects?: RoomLinkedVisionProject[];
 }
 
 // ─── Block templates for the "Add Block" picker ──────────────────
@@ -256,6 +303,18 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
     icon: "Gauge",
     defaultColSpan: 4,
     defaultContent: { label: "Condition", rating: "Good", notes: "" },
+  },
+  {
+    type: "room_record",
+    label: "Room Record",
+    description: "Full evolving record for a single room (paint, finishes, fixtures, condition, vision links)",
+    icon: "DoorOpen",
+    defaultColSpan: 12,
+    defaultContent: {
+      roomName: "New Room",
+      conditionRating: "Good",
+      linkedVisionProjects: [],
+    },
   },
 ];
 
