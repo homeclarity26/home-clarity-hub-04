@@ -664,6 +664,57 @@ export type Database = {
           },
         ]
       }
+      annual_review_notes: {
+        Row: {
+          created_at: string
+          created_by_user_id: string
+          id: string
+          notes_html: string
+          page_key: string | null
+          property_id: string
+          report_page_id: string | null
+          updated_at: string
+          visit_year: number
+        }
+        Insert: {
+          created_at?: string
+          created_by_user_id: string
+          id?: string
+          notes_html: string
+          page_key?: string | null
+          property_id: string
+          report_page_id?: string | null
+          updated_at?: string
+          visit_year: number
+        }
+        Update: {
+          created_at?: string
+          created_by_user_id?: string
+          id?: string
+          notes_html?: string
+          page_key?: string | null
+          property_id?: string
+          report_page_id?: string | null
+          updated_at?: string
+          visit_year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "annual_review_notes_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "annual_review_notes_report_page_id_fkey"
+            columns: ["report_page_id"]
+            isOneToOne: false
+            referencedRelation: "report_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       annual_reviews: {
         Row: {
           admin_notes: Json | null
@@ -912,6 +963,82 @@ export type Database = {
           trigger_count?: number
         }
         Relationships: []
+      }
+      capital_plan_items: {
+        Row: {
+          cost_high: number | null
+          cost_low: number | null
+          created_at: string
+          display_order: number
+          id: string
+          notes_html: string | null
+          phase: string
+          project_name: string
+          property_id: string
+          report_id: string
+          selected_tier: string | null
+          source_page_id: string | null
+          updated_at: string
+          year_end: number
+          year_start: number
+        }
+        Insert: {
+          cost_high?: number | null
+          cost_low?: number | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          notes_html?: string | null
+          phase: string
+          project_name: string
+          property_id: string
+          report_id: string
+          selected_tier?: string | null
+          source_page_id?: string | null
+          updated_at?: string
+          year_end: number
+          year_start: number
+        }
+        Update: {
+          cost_high?: number | null
+          cost_low?: number | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          notes_html?: string | null
+          phase?: string
+          project_name?: string
+          property_id?: string
+          report_id?: string
+          selected_tier?: string | null
+          source_page_id?: string | null
+          updated_at?: string
+          year_end?: number
+          year_start?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capital_plan_items_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capital_plan_items_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capital_plan_items_source_page_id_fkey"
+            columns: ["source_page_id"]
+            isOneToOne: false
+            referencedRelation: "report_pages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       central_vendors: {
         Row: {
@@ -1661,6 +1788,53 @@ export type Database = {
           last_updated?: string
         }
         Relationships: []
+      }
+      daily_briefs: {
+        Row: {
+          ai_model: string
+          brief_date: string
+          brief_html: string
+          client_user_id: string
+          created_at: string
+          generated_at: string
+          id: string
+          property_id: string
+          source_signals: Json
+          why_it_matters_html: string | null
+        }
+        Insert: {
+          ai_model: string
+          brief_date: string
+          brief_html: string
+          client_user_id: string
+          created_at?: string
+          generated_at?: string
+          id?: string
+          property_id: string
+          source_signals?: Json
+          why_it_matters_html?: string | null
+        }
+        Update: {
+          ai_model?: string
+          brief_date?: string
+          brief_html?: string
+          client_user_id?: string
+          created_at?: string
+          generated_at?: string
+          id?: string
+          property_id?: string
+          source_signals?: Json
+          why_it_matters_html?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_briefs_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dashboard_widget_configs: {
         Row: {
@@ -4830,6 +5004,7 @@ export type Database = {
       properties: {
         Row: {
           address: string
+          anything_else_html: string | null
           city: string | null
           client_intelligence_summary: string | null
           client_user_id: string
@@ -4838,6 +5013,8 @@ export type Database = {
           digital_assets_status: string | null
           discovery_notes: string | null
           estimated_value: number | null
+          floor_plan_url: string | null
+          hbc_concierge_tier: string | null
           hero_image_url: string | null
           hover_pdf_url: string | null
           hover_url: string | null
@@ -4851,13 +5028,16 @@ export type Database = {
           neighborhood_median_value: number | null
           property_name: string | null
           property_type: string | null
+          qa_acknowledgments: Json
           relationship_type: string | null
           state: string | null
           updated_at: string
+          welcome_video_url: string | null
           zip: string | null
         }
         Insert: {
           address: string
+          anything_else_html?: string | null
           city?: string | null
           client_intelligence_summary?: string | null
           client_user_id: string
@@ -4866,6 +5046,8 @@ export type Database = {
           digital_assets_status?: string | null
           discovery_notes?: string | null
           estimated_value?: number | null
+          floor_plan_url?: string | null
+          hbc_concierge_tier?: string | null
           hero_image_url?: string | null
           hover_pdf_url?: string | null
           hover_url?: string | null
@@ -4879,13 +5061,16 @@ export type Database = {
           neighborhood_median_value?: number | null
           property_name?: string | null
           property_type?: string | null
+          qa_acknowledgments?: Json
           relationship_type?: string | null
           state?: string | null
           updated_at?: string
+          welcome_video_url?: string | null
           zip?: string | null
         }
         Update: {
           address?: string
+          anything_else_html?: string | null
           city?: string | null
           client_intelligence_summary?: string | null
           client_user_id?: string
@@ -4894,6 +5079,8 @@ export type Database = {
           digital_assets_status?: string | null
           discovery_notes?: string | null
           estimated_value?: number | null
+          floor_plan_url?: string | null
+          hbc_concierge_tier?: string | null
           hero_image_url?: string | null
           hover_pdf_url?: string | null
           hover_url?: string | null
@@ -4907,9 +5094,11 @@ export type Database = {
           neighborhood_median_value?: number | null
           property_name?: string | null
           property_type?: string | null
+          qa_acknowledgments?: Json
           relationship_type?: string | null
           state?: string | null
           updated_at?: string
+          welcome_video_url?: string | null
           zip?: string | null
         }
         Relationships: []
@@ -5269,6 +5458,84 @@ export type Database = {
           },
         ]
       }
+      recurring_services: {
+        Row: {
+          annual_cost: number | null
+          category: string
+          cost_per_visit: number | null
+          created_at: string
+          display_order: number
+          frequency: string
+          frequency_months: number | null
+          hbc_managed: boolean
+          id: string
+          last_service_date: string | null
+          next_due_date: string | null
+          notes_html: string | null
+          property_id: string
+          service_name: string
+          status: string
+          updated_at: string
+          vendor_id: string | null
+          vendor_name: string | null
+        }
+        Insert: {
+          annual_cost?: number | null
+          category: string
+          cost_per_visit?: number | null
+          created_at?: string
+          display_order?: number
+          frequency: string
+          frequency_months?: number | null
+          hbc_managed?: boolean
+          id?: string
+          last_service_date?: string | null
+          next_due_date?: string | null
+          notes_html?: string | null
+          property_id: string
+          service_name: string
+          status?: string
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_name?: string | null
+        }
+        Update: {
+          annual_cost?: number | null
+          category?: string
+          cost_per_visit?: number | null
+          created_at?: string
+          display_order?: number
+          frequency?: string
+          frequency_months?: number | null
+          hbc_managed?: boolean
+          id?: string
+          last_service_date?: string | null
+          next_due_date?: string | null
+          notes_html?: string | null
+          property_id?: string
+          service_name?: string
+          status?: string
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_services_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_services_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referral_credits: {
         Row: {
           amount_cents: number
@@ -5475,6 +5742,84 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      replacement_briefings: {
+        Row: {
+          ai_model: string | null
+          created_at: string
+          ctas: Json
+          expected_eol_year: number | null
+          generated_at: string | null
+          how_replacement_happens_html: string | null
+          id: string
+          install_year: number | null
+          photos: Json
+          property_id: string
+          report_page_id: string
+          system_type: string
+          tiers: Json
+          timeline: Json
+          unit_make: string | null
+          unit_model: string | null
+          unit_serial: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_model?: string | null
+          created_at?: string
+          ctas?: Json
+          expected_eol_year?: number | null
+          generated_at?: string | null
+          how_replacement_happens_html?: string | null
+          id?: string
+          install_year?: number | null
+          photos?: Json
+          property_id: string
+          report_page_id: string
+          system_type: string
+          tiers?: Json
+          timeline?: Json
+          unit_make?: string | null
+          unit_model?: string | null
+          unit_serial?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_model?: string | null
+          created_at?: string
+          ctas?: Json
+          expected_eol_year?: number | null
+          generated_at?: string | null
+          how_replacement_happens_html?: string | null
+          id?: string
+          install_year?: number | null
+          photos?: Json
+          property_id?: string
+          report_page_id?: string
+          system_type?: string
+          tiers?: Json
+          timeline?: Json
+          unit_make?: string | null
+          unit_model?: string | null
+          unit_serial?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "replacement_briefings_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "replacement_briefings_report_page_id_fkey"
+            columns: ["report_page_id"]
+            isOneToOne: true
+            referencedRelation: "report_pages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       report_comments: {
         Row: {
@@ -6890,6 +7235,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_user_assigned_to_project: {
+        Args: { _project_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
