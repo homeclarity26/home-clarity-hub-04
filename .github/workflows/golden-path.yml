@@ -43,9 +43,7 @@ jobs:
           - proposal
           - equipment-schedule
           - rls
-          - content-ops
           - quality-controls
-          - static-integrity
           - mobile
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -83,6 +81,10 @@ jobs:
             script: scripts/golden-path-photos.ts
           - flow: wizard        # tests 48-50 all call AI (seed-report-from-notes, daily-brief, ai-edit)
             script: scripts/golden-path-wizard.ts
+          - flow: content-ops   # test 51 calls ai-edit — needs retry tolerance
+            script: scripts/golden-path-content-ops.ts
+          - flow: static-integrity  # test 57 calls hbc-agent — needs retry tolerance
+            script: scripts/golden-path-static-integrity.ts
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
