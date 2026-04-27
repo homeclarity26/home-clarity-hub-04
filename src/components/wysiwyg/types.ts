@@ -19,7 +19,8 @@ export type BlockType =
   | "room_record"
   | "system_record"
   | "replacement_briefing"
-  | "vision_project";
+  | "vision_project"
+  | "recurring_services_register";
 
 // Word-only condition ratings — replaces the numeric Health Score system
 // being deleted in Phase 6. Values are user-facing strings (rendered as-is)
@@ -282,6 +283,54 @@ export interface VisionProjectContent {
   conciergeActionPrompt?: string;
 }
 
+// ── Recurring Services Register (B6) ────────────────────────────────────
+// Mirrors recurring_services DB row from M3 + adds block-level config
+// (concierge tier, view toggle, locked pitch text). The wizard seeds
+// services from intake parsing (E4); this block renders + edits them.
+
+export interface RecurringServiceRow {
+  id?: string;                  // matches recurring_services.id when persisted
+  category: string;             // M3 enum: lawn_landscaping, hvac, plumbing, etc.
+  serviceName: string;
+  vendorName?: string;
+  vendorId?: string;
+  frequency: string;            // M3 enum: weekly, biweekly, monthly, quarterly, biannual, annual, as_needed
+  frequencyMonths?: number;
+  costPerVisit?: number;
+  annualCost?: number;
+  monthlyCost?: number;         // pre-computed for renderer ergonomics
+  lastServiceDate?: string;
+  nextDueDate?: string;
+  status?: "current" | "overdue" | "lapsed" | "paused";
+  hbcManaged?: boolean;
+  notesHtml?: string;
+}
+
+export type ConciergeTier = "none" | "tier_200" | "tier_400" | "tier_600";
+
+export interface RecurringServicesRegisterContent {
+  // Header
+  title?: string;               // default "Recurring Services Register"
+
+  // Services data — usually mirrors recurring_services rows for the property
+  services: RecurringServiceRow[];
+
+  // Auto-detected from properties.hbc_concierge_tier when block is seeded
+  // by the wizard. Drives the "If HBC Managed" stat card monthly add-on
+  // and the locked Concierge pitch dollar figure.
+  conciergeTier?: ConciergeTier;
+
+  // Time-spent estimate for the third stat card ([v2.39])
+  estimatedHoursMonthly?: number;
+
+  // View toggle persisted on block ([v2.36])
+  showIfManagedColumn?: boolean;
+
+  // Override for the Concierge pitch — defaults to locked HONEST framing
+  // (saves time/frustration, NOT money) per [v2.38]
+  conciergePitchHtml?: string;
+}
+
 // Evolving record per room. Every field except roomName is optional;
 // blank string ("" or undefined) renders as muted "Not yet documented" in
 // non-editable view. The renderer handles the three display states (filled
@@ -517,6 +566,20 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
       ],
       executionPathHtml: "When you are ready to start, this can be executed through <strong>AK Renovations</strong>, our in-house remodeling division. AK Renovations is openly owned by Adam and is a transparent partner in the HBC ecosystem. If you would prefer a different contractor, we will connect you with a vetted HBC trade partner. The choice is always yours. Either way, you stay in the same conversation with HBC.",
       akrDisclosed: true,
+    },
+  },
+  {
+    type: "recurring_services_register",
+    label: "Recurring Services Register",
+    description: "Full register of standing services with HBC concierge consolidation pitch",
+    icon: "ListChecks",
+    defaultColSpan: 12,
+    defaultContent: {
+      title: "Recurring Services Register",
+      services: [],
+      conciergeTier: "none",
+      showIfManagedColumn: true,
+      estimatedHoursMonthly: 0,
     },
   },
 ];
