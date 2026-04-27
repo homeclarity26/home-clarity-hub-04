@@ -95,6 +95,7 @@ const ReportTab = ({
   const hasBlocks = blocksJson && Array.isArray(blocksJson) && blocksJson.length > 0;
   const reportGroups = groups || staticGroups;
   const reportPages = pages || staticPages;
+  const hasRealPages = !!pages && Object.keys(pages).length > 0;
   const [activeChapter, setActiveChapter] = useState("exterior");
   const { canEdit } = useEditMode();
 

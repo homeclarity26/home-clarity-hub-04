@@ -260,8 +260,9 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
         },
       });
       toast.success("ACH request sent. We'll respond shortly with bank transfer details.");
-    } catch {
-      toast.success("Request noted. We'll send ACH details to your email.");
+    } catch (err) {
+      console.error("ACH request failed:", err);
+      toast.error("Could not send ACH request. Please try again or message your advisor.");
     }
   };
 
