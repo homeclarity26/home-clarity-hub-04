@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, Circle, ChevronRight, CalendarPlus, ChevronDown } from "lucide-react";
 import { PropertyHero } from "@/components/portal/PropertyHero";
-import AICommandBar from "@/components/portal/AICommandBar";
 import SmartActionTiles, { trackSectionVisit } from "@/components/portal/SmartActionTiles";
 import AISuggestionsStrip from "@/components/portal/AISuggestionsStrip";
 import ActiveProjectCard from "@/components/portal/ActiveProjectCard";
@@ -33,10 +32,12 @@ import type { ReportPageData } from "@/data/reportContent";
  *   4. "This feels premium" — tight hierarchy, lots of air, restrained widgetry
  *
  * Above the fold we render:
- *   - PropertyHero (photo, name, address, score ring)
- *   - AI Command Bar (persistent entry point to the AI assistant)
+ *   - PropertyHero (photo, name, address)
  *   - SmartActionTiles (1-3 priority tiles chosen from actual data)
  *   - Live project + invoice strips (only render when there's data)
+ *
+ * The Concierge entry point lives at the portal-shell level (sticky
+ * bottom on every tab) and is not duplicated inline here.
  *
  * Everything else (goals, seasonal checklist, referrals, value widget, etc.)
  * lives behind an "Explore more" accordion. Same features, better hierarchy.
@@ -126,18 +127,6 @@ const HomeTab = ({
       customization?.welcome_message?.split(" ")[0] ||
       (propertyName && propertyName !== "Your Home" ? propertyName.split(" ")[0] : undefined);
 
-  const handleAskQuestion = (query?: string) => {
-    const q = (query || "").trim();
-    if (q) {
-      // Forward the typed question to the Home Assistant panel so it actually
-      // answers instead of just opening a blank sheet.
-      window.dispatchEvent(new CustomEvent("hbc:ask", { detail: { query: q } }));
-    } else {
-      // No text — just open the assistant.
-      window.dispatchEvent(new CustomEvent("hbc:ask", { detail: { query: "" } }));
-    }
-  };
-
   const handleNavigateTracked = (tab: string, pageId?: string) => {
     trackSectionVisit(tab);
     onNavigate(tab, pageId);
@@ -174,11 +163,6 @@ const HomeTab = ({
             propertyId={propertyId}
             onNavigate={(tab) => handleNavigateTracked(tab)}
           />
-        </motion.div>
-
-        {/* ─── 3. AI COMMAND BAR — primary entry point to the assistant ─── */}
-        <motion.div variants={fadeUp}>
-          <AICommandBar onSubmit={handleAskQuestion} />
         </motion.div>
 
         {/* ─── 4. SMART ACTION TILES — 1-3 curated tiles ─── */}
