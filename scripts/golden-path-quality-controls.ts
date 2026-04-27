@@ -111,18 +111,19 @@ async function main(): Promise<number> {
     // the column accepts the value.
     let tierAfter = (propAfter ?? {}).hbc_concierge_tier ?? null;
     if (tierAfter === tierBefore) {
-      // No automatic trigger; verify the column accepts a write
+      // No automatic trigger; verify the column accepts a write.
+      // Valid values per constraint: 'none', 'tier_200', 'tier_400', 'tier_600'.
       await restPatch(
         ctx,
         `/rest/v1/properties?id=eq.${TEST_PROPERTY_ID}`,
-        { hbc_concierge_tier: "managed" },
+        { hbc_concierge_tier: "tier_600" },
       );
       const patchedRows = await restGet<Array<{ hbc_concierge_tier: string | null }>>(
         ctx,
         `/rest/v1/properties?select=hbc_concierge_tier&id=eq.${TEST_PROPERTY_ID}`,
       );
       tierAfter = patchedRows[0]?.hbc_concierge_tier ?? null;
-      if (tierAfter !== "managed") {
+      if (tierAfter !== "tier_600") {
         throw new Error(`hbc_concierge_tier PATCH did not persist: got '${tierAfter}'`);
       }
     }
