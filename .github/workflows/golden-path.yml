@@ -44,6 +44,11 @@ jobs:
           - equipment-schedule
           - photos
           - rls
+          - wizard
+          - content-ops
+          - quality-controls
+          - static-integrity
+          - mobile
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
