@@ -1,5 +1,4 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import ClientAgentPanel from "@/components/agent/ClientAgentPanel";
 import ConciergeBar from "@/components/portal/concierge/ConciergeBar";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -170,35 +169,6 @@ const Index = () => {
   }, [handleTabChange, handleReportPageSelect]);
 
   const propertyName = portal.property?.property_name || "Your Home";
-
-  // Footer consumes a digest of the full report so its AI chat can answer
-  // with real context. Memoized because this was rebuilt every render,
-  // forcing every Footer re-render.
-  const footerReportContext = useMemo(
-    () => ({
-      propertyName,
-      propertyAddress: portal.property?.address || "Unknown address",
-      reportCompletionPercent: portal.completionPercent ?? 0,
-      invoiceBalance: portal.invoiceBalance,
-      pages: Object.values(portal.pages).map((p) => ({
-        title: p.title,
-        group: p.group,
-        conditionRating: p.conditionRating,
-        narrative: p.narrative,
-        specs: p.specs,
-        tiers: p.tiers,
-        timing: p.timing,
-        recommendations: p.recommendations,
-      })),
-    }),
-    [
-      propertyName,
-      portal.property?.address,
-      portal.completionPercent,
-      portal.invoiceBalance,
-      portal.pages,
-    ],
-  );
 
   const pdfData: PDFReportData | undefined = useMemo(() => {
     if (!portal.hasDbData && Object.keys(portal.pages).length === 0) return undefined;
@@ -511,17 +481,11 @@ const Index = () => {
         />
       )}
 
-      <Footer
-        activeTab={activeTab}
-        onNavigate={handleNavigate}
-        invoiceBalance={portal.invoiceBalance}
-        reportContext={footerReportContext}
-      />
-      <ClientAgentPanel />
+      <Footer />
 
-      {/* C1/C2: Consolidated Concierge entry point. Sticky-bottom on every
-          tab, opens ConciergePanel as a sheet. Replaces the inline
-          AICommandBar that used to live in HomeTab. */}
+      {/* C1/C2/C8: Consolidated Concierge entry point. Sticky-bottom on
+          every tab, opens ConciergePanel as a sheet. Replaces both the
+          inline AICommandBar (C2) and the ClientAgentPanel FAB (C8). */}
       {!isCreator && <ConciergeBar propertyId={portal.property?.id} />}
 
       {/* Mobile primary navigation. Replaces the hamburger-round-trip pattern. */}

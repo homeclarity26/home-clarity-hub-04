@@ -132,8 +132,6 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [aiQuestion, setAiQuestion] = useState("");
-  const [aiResponse, setAiResponse] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!propertyId) { setLoading(false); return; }
@@ -235,33 +233,17 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
     }
   };
 
-  const handleAiQuestion = async () => {
+  // C7 — Hand off invoice questions to the consolidated ConciergePanel
+  // (hbc-agent backend) instead of the legacy chat-assistant function.
+  // We prepend invoice context so the agent can answer specifically;
+  // the user can edit before sending.
+  const handleAskConcierge = () => {
     if (!aiQuestion.trim() || !nextPayment) return;
-    setAiLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("chat-assistant", {
-        body: {
-          message: aiQuestion,
-          context: {
-            type: "invoice_help",
-            invoiceTitle: nextPayment.title || nextPayment.description,
-            total: nextPayment.total,
-            balanceDue: nextPayment.balance_due,
-            dueDate: nextPayment.due_date,
-            status: nextPayment.status,
-          },
-        },
-      });
-      if (!error && data?.response) {
-        setAiResponse(data.response);
-      } else {
-        setAiResponse("I'm sorry, I couldn't process your question right now. Please contact us directly at (330) 203-1331.");
-      }
-    } catch {
-      setAiResponse("I'm sorry, I couldn't process your question right now. Please contact us directly.");
-    } finally {
-      setAiLoading(false);
-    }
+    const ctx = `Re: invoice "${nextPayment.title || nextPayment.description}" (balance ${fmt(Number(nextPayment.balance_due))}${nextPayment.due_date ? `, due ${format(new Date(nextPayment.due_date), "MMM d, yyyy")}` : ""}). ${aiQuestion.trim()}`;
+    window.dispatchEvent(
+      new CustomEvent("concierge:open", { detail: { prompt: ctx } })
+    );
+    setAiQuestion("");
   };
 
   const handleRequestACH = async () => {
@@ -752,33 +734,30 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
         )}
 
         {/* AI Payment Assistant */}
-        <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Questions about your invoice?</p>
-          <Card className="p-5 shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
-            <div className="flex gap-3">
-              <Input
-                value={aiQuestion}
-                onChange={e => setAiQuestion(e.target.value)}
-                placeholder="e.g. What does this payment cover?"
-                className="font-sans text-sm flex-1"
-                onKeyDown={e => e.key === "Enter" && handleAiQuestion()}
-              />
-              <Button
-                size="sm"
-                onClick={handleAiQuestion}
-                disabled={aiLoading || !aiQuestion.trim()}
-                className="bg-accent hover:bg-accent/90 text-white font-sans flex-shrink-0"
-              >
-                {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ask"}
-              </Button>
-            </div>
-            {aiResponse && (
-              <div className="mt-4 p-3 bg-[#F2EFEB] rounded-lg">
-                <p className="font-sans text-sm text-foreground leading-relaxed">{aiResponse}</p>
+        {nextPayment && (
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Questions about your invoice?</p>
+            <Card className="p-5 shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
+              <div className="flex gap-3">
+                <Input
+                  value={aiQuestion}
+                  onChange={e => setAiQuestion(e.target.value)}
+                  placeholder="e.g. What does this payment cover?"
+                  className="font-sans text-sm flex-1"
+                  onKeyDown={e => e.key === "Enter" && handleAskConcierge()}
+                />
+                <Button
+                  size="sm"
+                  onClick={handleAskConcierge}
+                  disabled={!aiQuestion.trim()}
+                  className="bg-accent hover:bg-accent/90 text-white font-sans flex-shrink-0"
+                >
+                  Ask Concierge
+                </Button>
               </div>
-            )}
-          </Card>
-        </div>
+            </Card>
+          </div>
+        )}
 
         {/* Quick Actions */}
         <div>

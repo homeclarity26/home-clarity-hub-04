@@ -9,14 +9,12 @@ import LiveInvoiceStrip from "@/components/portal/LiveInvoiceStrip";
 import SeasonalChecklist from "@/components/portal/SeasonalChecklist";
 import ClientGoalsWidget from "@/components/portal/ClientGoalsWidget";
 import NotificationNudges from "@/components/portal/NotificationNudges";
-import ConciergeRequestModal from "@/components/portal/ConciergeRequestModal";
 import DocumentExpirationTracker from "@/components/portal/DocumentExpirationTracker";
 import CostComparisonTool from "@/components/portal/CostComparisonTool";
 import MyHomeStory from "@/components/portal/MyHomeStory";
 import ClientReferralPortal from "@/components/portal/ClientReferralPortal";
 import PropertyValueWidget from "@/components/portal/PropertyValueWidget";
 import MembershipBanner from "@/components/MembershipBanner";
-import AppointmentRequestModal from "@/components/portal/AppointmentRequestModal";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,8 +89,6 @@ const HomeTab = ({
   clientFirstName,
 }: HomeTabProps) => {
   const { user } = useAuth();
-  const [showAppointment, setShowAppointment] = useState(false);
-  const [showConcierge, setShowConcierge] = useState(false);
   const [customization, setCustomization] = useState<{
     welcome_message?: string;
     tagline?: string;
@@ -290,7 +286,16 @@ const HomeTab = ({
             {propertyId && (
               <div className="grid grid-cols-1 gap-4">
                 <button
-                  onClick={() => setShowAppointment(true)}
+                  onClick={() =>
+                    window.dispatchEvent(
+                      new CustomEvent("concierge:open", {
+                        detail: {
+                          prompt:
+                            "I'd like to schedule a consultation with my advisor. Please find me 2-3 times that work in the next week.",
+                        },
+                      })
+                    )
+                  }
                   className={`${cardBase} w-full group p-6 hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4 text-left min-h-[72px]`}
                 >
                   <CalendarPlus className="w-5 h-5 text-accent" />
@@ -304,16 +309,6 @@ const HomeTab = ({
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors" />
                 </button>
-                <ConciergeRequestModal
-                  open={showConcierge}
-                  onOpenChange={setShowConcierge}
-                  propertyId={propertyId}
-                />
-                <AppointmentRequestModal
-                  open={showAppointment}
-                  onOpenChange={setShowAppointment}
-                  propertyId={propertyId}
-                />
               </div>
             )}
 
