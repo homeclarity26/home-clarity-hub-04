@@ -5,23 +5,18 @@ import { cn } from "@/lib/utils";
  * PropertyHero — the WOW moment.
  *
  * Full-bleed property photo (admin-uploaded, independent from Hover scan)
- * with a dark gradient overlay, property name in Playfair, address in Inter,
- * score ring pinned bottom-right.
+ * with a dark gradient overlay, property name in Playfair, address in Inter.
+ * The client's actual home dominates the first screen.
  *
- * The client's actual home dominates the first screen. Not a generic dashboard.
- *
- * If no photo is provided yet (new client, photo not yet uploaded), falls back
- * to a navy gradient so the UI never looks broken. The admin is reminded to
- * upload a photo via the intake wizard.
+ * Falls back to a navy gradient when no hero photo is set yet.
  */
 interface PropertyHeroProps {
   propertyName: string;
   propertyAddress?: string;
   heroImageUrl?: string | null;
-  healthScore?: number | null;
   yearBuilt?: number | null;
-  greeting?: string; // "Good morning" etc — optional eyebrow
-  firstName?: string; // "Adam" — optional personalization
+  greeting?: string;
+  firstName?: string;
   className?: string;
 }
 
@@ -36,7 +31,6 @@ export function PropertyHero({
   propertyName,
   propertyAddress,
   heroImageUrl,
-  healthScore,
   yearBuilt,
   greeting,
   firstName,
@@ -85,7 +79,6 @@ export function PropertyHero({
         >
           {displayGreeting}
           {firstName ? `, ${firstName}` : ""}
-          {healthScore != null && ` · Condition ${healthScore}`}
         </motion.p>
 
         {/* Property name */}
@@ -112,10 +105,6 @@ export function PropertyHero({
           </motion.p>
         )}
       </div>
-
-      {/* Score ring removed — the score still lives in the eyebrow ("Condition NN")
-          above, and the full HomeHealthScore widget is available in "Explore more".
-          Keeping the hero photo uncluttered makes the home feel like the hero. */}
 
       {/* Subtle placeholder nudge when admin hasn't uploaded a hero photo yet */}
       {!heroImageUrl && (

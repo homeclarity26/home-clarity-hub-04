@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, Circle, ChevronRight, CalendarPlus, ChevronDown } from "lucide-react";
 import { PropertyHero } from "@/components/portal/PropertyHero";
@@ -7,7 +7,6 @@ import SmartActionTiles, { trackSectionVisit } from "@/components/portal/SmartAc
 import AISuggestionsStrip from "@/components/portal/AISuggestionsStrip";
 import ActiveProjectCard from "@/components/portal/ActiveProjectCard";
 import LiveInvoiceStrip from "@/components/portal/LiveInvoiceStrip";
-import HomeHealthScore from "@/components/portal/HomeHealthScore";
 import SeasonalChecklist from "@/components/portal/SeasonalChecklist";
 import ClientGoalsWidget from "@/components/portal/ClientGoalsWidget";
 import NotificationNudges from "@/components/portal/NotificationNudges";
@@ -73,28 +72,6 @@ const stagger = {
 };
 
 const cardBase = "bg-card rounded-lg shadow-hbc-sm border border-border";
-
-// Same scoring logic used in ReportOverview so Home & Report always agree.
-const CONDITION_SCORE: Record<string, number> = {
-  Excellent: 100,
-  Good: 75,
-  Fair: 50,
-  Poor: 25,
-  Critical: 10,
-};
-
-function computeHealthScore(pages?: Record<string, ReportPageData>): number | null {
-  if (!pages) return null;
-  const rated = Object.values(pages).filter(
-    (p) => p.conditionRating && CONDITION_SCORE[p.conditionRating] != null,
-  );
-  if (rated.length === 0) return null;
-  const total = rated.reduce(
-    (sum, p) => sum + (CONDITION_SCORE[p.conditionRating!] || 0),
-    0,
-  );
-  return Math.round(total / rated.length);
-}
 
 const HomeTab = ({
   onNavigate,
@@ -167,17 +144,6 @@ const HomeTab = ({
   };
 
   const hasReportData = !!reportPages && Object.keys(reportPages).length > 0;
-  // Only surface a health score when there's an actual in-progress/published
-  // report. A brand-new client with no completed pages (or a stale stub with a
-  // leftover conditionRating) should not show "Condition NN" in the greeting —
-  // that misleads clients into thinking a full assessment has been done.
-  const healthScore = useMemo(
-    () =>
-      hasReportData && completionPercent > 0
-        ? computeHealthScore(reportPages)
-        : null,
-    [reportPages, hasReportData, completionPercent],
-  );
 
   // Custom hero override from portal_customizations (optional); otherwise use
   // the admin-uploaded hero from properties.hero_image_url.
@@ -191,7 +157,6 @@ const HomeTab = ({
         propertyName={propertyName}
         propertyAddress={propertyAddress}
         heroImageUrl={resolvedHeroUrl}
-        healthScore={healthScore}
         yearBuilt={yearBuilt ?? undefined}
         firstName={firstName}
       />
@@ -298,8 +263,6 @@ const HomeTab = ({
             )}
 
             <SeasonalChecklist propertyId={propertyId} />
-
-            <HomeHealthScore reportPages={reportPages} onNavigate={handleNavigateTracked} />
 
             {completionPercent < 100 && (
               <div>
