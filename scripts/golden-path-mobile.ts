@@ -10,7 +10,7 @@
  *     key portal API calls succeed (GET properties, GET report_pages,
  *     GET projects) for the test property as a client user. Documents
  *     that full Playwright is deferred.
- * 62. Mobile wizard on iPad — grep check: verify the /admin/clients/new-v2
+ * 62. Mobile wizard on iPad — grep check: verify the /admin/clients/new
  *     route exists in src/App.tsx. Documents that Playwright is deferred.
  *
  * Exits 0/1. Cleans up all test rows.
@@ -142,7 +142,7 @@ async function main(): Promise<number> {
       "grep",
       [
         "-n",
-        "new-v2",
+        "clients/new",
         appTsxPath,
       ],
       { encoding: "utf8" },
@@ -150,13 +150,13 @@ async function main(): Promise<number> {
 
     const matchLines = (grepResult.stdout || "").split("\n").filter(Boolean);
     if (matchLines.length === 0) {
-      throw new Error(`Route clients/new-v2 not found in src/App.tsx — wizard route may be missing`);
+      throw new Error(`Route clients/new not found in src/App.tsx — wizard route may be missing`);
     }
 
     results.push({
       name: "62. Mobile wizard on iPad (route check)",
       status: "PASS",
-      dataVisible: `clients/new-v2 route found in App.tsx (line ${matchLines[0].split(":")[0]}). (Full Playwright deferred.)`,
+      dataVisible: `clients/new route found in App.tsx (line ${matchLines[0].split(":")[0]}). (Full Playwright deferred.)`,
     });
   } catch (e) {
     results.push({ name: "62. Mobile wizard on iPad (route check)", status: "FAIL", dataVisible: "", note: String(e) });
