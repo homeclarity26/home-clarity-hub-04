@@ -1,5 +1,4 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import ClientAgentPanel from "@/components/agent/ClientAgentPanel";
 import ConciergeBar from "@/components/portal/concierge/ConciergeBar";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -515,13 +514,11 @@ const Index = () => {
         activeTab={activeTab}
         onNavigate={handleNavigate}
         invoiceBalance={portal.invoiceBalance}
-        reportContext={footerReportContext}
       />
-      <ClientAgentPanel />
 
-      {/* C1/C2: Consolidated Concierge entry point. Sticky-bottom on every
-          tab, opens ConciergePanel as a sheet. Replaces the inline
-          AICommandBar that used to live in HomeTab. */}
+      {/* C1/C2/C8: Consolidated Concierge entry point. Sticky-bottom on
+          every tab, opens ConciergePanel as a sheet. Replaces both the
+          inline AICommandBar (C2) and the ClientAgentPanel FAB (C8). */}
       {!isCreator && <ConciergeBar propertyId={portal.property?.id} />}
 
       {/* Mobile primary navigation. Replaces the hamburger-round-trip pattern. */}

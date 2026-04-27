@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import ConciergePanel from "./ConciergePanel";
 
@@ -16,6 +16,27 @@ const CREAM = "#EDE9E1";
 // Tap opens ConciergePanel as a sheet/drawer.
 const ConciergeBar = ({ propertyId }: ConciergeBarProps) => {
   const [open, setOpen] = useState(false);
+
+  // C8 — Other portal surfaces (HomeTab "Schedule a Consultation" card,
+  // PaymentsTab invoice Q&A) open the Concierge by dispatching
+  // window.dispatchEvent(new CustomEvent("concierge:open", { detail: { prompt } })).
+  // The optional `prompt` is forwarded to AgentChat via the
+  // `concierge:prefill` event after a tick so the panel mounts first.
+  useEffect(() => {
+    const onOpen = (e: Event) => {
+      const detail = (e as CustomEvent<{ prompt?: string }>).detail;
+      setOpen(true);
+      if (detail?.prompt) {
+        setTimeout(() => {
+          window.dispatchEvent(
+            new CustomEvent("concierge:prefill", { detail: { prompt: detail.prompt } })
+          );
+        }, 50);
+      }
+    };
+    window.addEventListener("concierge:open", onOpen as EventListener);
+    return () => window.removeEventListener("concierge:open", onOpen as EventListener);
+  }, []);
 
   return (
     <>

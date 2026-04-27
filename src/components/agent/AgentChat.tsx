@@ -149,6 +149,24 @@ const AgentChat = ({ contextOverride, quickChips, onNavigate, onboardingMessage,
     setTimeout(() => inputRef.current?.focus(), 100);
   }, []);
 
+  // C8 — Concierge consumers (HomeTab "Schedule a Consultation",
+  // PaymentsTab invoice Q&A, ConciergePanel demo chips) prefill the
+  // input by dispatching `concierge:prefill` after the panel is open.
+  // We don't auto-send so the user can edit before submitting; the
+  // master plan acceptance criteria says "prefilled prompt", not
+  // "auto-sent prompt".
+  useEffect(() => {
+    const onPrefill = (e: Event) => {
+      const detail = (e as CustomEvent<{ prompt?: string }>).detail;
+      const prompt = (detail?.prompt || "").trim();
+      if (!prompt) return;
+      setInput(prompt);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    };
+    window.addEventListener("concierge:prefill", onPrefill as EventListener);
+    return () => window.removeEventListener("concierge:prefill", onPrefill as EventListener);
+  }, []);
+
   const buildContext = useCallback(() => {
     if (contextOverride) {
       return {
