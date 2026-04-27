@@ -170,35 +170,6 @@ const Index = () => {
 
   const propertyName = portal.property?.property_name || "Your Home";
 
-  // Footer consumes a digest of the full report so its AI chat can answer
-  // with real context. Memoized because this was rebuilt every render,
-  // forcing every Footer re-render.
-  const footerReportContext = useMemo(
-    () => ({
-      propertyName,
-      propertyAddress: portal.property?.address || "Unknown address",
-      reportCompletionPercent: portal.completionPercent ?? 0,
-      invoiceBalance: portal.invoiceBalance,
-      pages: Object.values(portal.pages).map((p) => ({
-        title: p.title,
-        group: p.group,
-        conditionRating: p.conditionRating,
-        narrative: p.narrative,
-        specs: p.specs,
-        tiers: p.tiers,
-        timing: p.timing,
-        recommendations: p.recommendations,
-      })),
-    }),
-    [
-      propertyName,
-      portal.property?.address,
-      portal.completionPercent,
-      portal.invoiceBalance,
-      portal.pages,
-    ],
-  );
-
   const pdfData: PDFReportData | undefined = useMemo(() => {
     if (!portal.hasDbData && Object.keys(portal.pages).length === 0) return undefined;
     const now = new Date();
@@ -510,11 +481,7 @@ const Index = () => {
         />
       )}
 
-      <Footer
-        activeTab={activeTab}
-        onNavigate={handleNavigate}
-        invoiceBalance={portal.invoiceBalance}
-      />
+      <Footer />
 
       {/* C1/C2/C8: Consolidated Concierge entry point. Sticky-bottom on
           every tab, opens ConciergePanel as a sheet. Replaces both the
