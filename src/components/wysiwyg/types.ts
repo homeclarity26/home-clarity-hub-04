@@ -22,7 +22,8 @@ export type BlockType =
   | "vision_project"
   | "recurring_services_register"
   | "condition_pill"
-  | "concierge_action";
+  | "concierge_action"
+  | "maintenance_calendar";
 
 // Word-only condition ratings — replaces the numeric Health Score system
 // being deleted in Phase 6. Values are user-facing strings (rendered as-is)
@@ -333,6 +334,25 @@ export interface RecurringServicesRegisterContent {
   conciergePitchHtml?: string;
 }
 
+// ── Maintenance Calendar (B8) ───────────────────────────────────────────
+// 4-season grid (Spring/Summer/Fall/Winter) per [v1.20]. Stacks 2-up on
+// mobile. Each item can optionally link to a recurring_services row so
+// the renderer can deep-link from the calendar to the service detail.
+
+export interface MaintenanceCalendarItem {
+  description: string;
+  recurringServiceId?: string;   // optional link to recurring_services.id
+}
+
+export interface MaintenanceCalendarContent {
+  eyebrow?: string;              // default "The annual cadence"
+  title?: string;                // default "Maintenance Calendar"
+  spring: MaintenanceCalendarItem[];
+  summer: MaintenanceCalendarItem[];
+  fall: MaintenanceCalendarItem[];
+  winter: MaintenanceCalendarItem[];
+}
+
 // ── Concierge Action (B11) ──────────────────────────────────────────────
 // Tappable "do" prompt per [v1.24] — schedule / pay / log / retrieve.
 // Tap opens ConciergePanel (built later in C1) with the prefilled prompt.
@@ -628,6 +648,21 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
       label: "Schedule a service",
       prompt: "I want to schedule a service for my home.",
       style: "gold",
+    },
+  },
+  {
+    type: "maintenance_calendar",
+    label: "Maintenance Calendar",
+    description: "4-season grid of seasonal maintenance items (stacks 2-up on mobile)",
+    icon: "CalendarDays",
+    defaultColSpan: 12,
+    defaultContent: {
+      eyebrow: "The annual cadence",
+      title: "Maintenance Calendar",
+      spring: [],
+      summer: [],
+      fall: [],
+      winter: [],
     },
   },
 ];
