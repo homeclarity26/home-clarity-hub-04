@@ -74,7 +74,7 @@ const WorkspaceAgentRail = ({
           title="Open Bobby"
           className="fixed right-4 bottom-6 z-50 flex items-center gap-2 bg-foreground text-background rounded-full px-3 py-2 shadow-lg hover:opacity-90 transition-opacity text-xs font-sans font-semibold"
         >
-          <span className="w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center" style={{background:'#C4A265'}}>B</span>
+          <span className="w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center bg-[hsl(var(--hbc-gold))]">B</span>
           Bobby
         </button>
       )}
@@ -89,7 +89,7 @@ const WorkspaceAgentRail = ({
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-border shrink-0">
           <div className="flex items-center gap-1.5">
-            <span className="w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center" style={{background:'#C4A265'}}>B</span>
+            <span className="w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center bg-[hsl(var(--hbc-gold))]">B</span>
             <span className="text-xs font-sans font-semibold text-foreground">Bobby</span>
             <span className="text-[10px] font-sans text-muted-foreground">· {clientName}</span>
           </div>

@@ -200,7 +200,7 @@ const ReportBuildProgress = ({
                 <div
                   key={page.id}
                   className={`flex items-start gap-2 px-4 py-3 border-b border-border/50 transition-colors cursor-pointer hover:bg-muted/40 ${
-                    isCurrent ? "bg-accent/10 border-l-2 border-l-[#C4A265]" : ""
+                    isCurrent ? "bg-accent/10 border-l-2 border-l-accent" : ""
                   }`}
                   onClick={() => onNavigate?.(page.page_key || page.id)}
                 >

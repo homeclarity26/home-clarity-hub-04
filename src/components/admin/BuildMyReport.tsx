@@ -153,28 +153,19 @@ const BuildMyReport = ({
     : "Build This Report";
 
   return (
-    <div
-      className="w-full rounded-xl border border-border/40 shadow-sm overflow-hidden"
-      style={{ background: "#F8F6F2" }}
-    >
+    <div className="w-full rounded-xl border border-border/40 shadow-sm overflow-hidden bg-muted/30">
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="px-8 pt-10 pb-6 border-b border-border/30">
         <div className="flex items-center gap-3 mb-3">
-          <Sparkles className="w-5 h-5" style={{ color: "#C4A265" }} />
-          <span
-            className="font-mono text-[10px] uppercase tracking-[0.2em]"
-            style={{ color: "#8A8E99" }}
-          >
+          <Sparkles className="w-5 h-5 text-[hsl(var(--hbc-gold))]" />
+          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             Moment Zero
           </span>
         </div>
-        <h2
-          className="font-display text-3xl md:text-4xl mb-3"
-          style={{ color: "#1B2B4D" }}
-        >
+        <h2 className="font-display text-3xl md:text-4xl mb-3 text-primary">
           {heading}
         </h2>
-        <p className="font-sans text-base max-w-[55ch]" style={{ color: "#8A8E99" }}>
+        <p className="font-sans text-base max-w-[55ch] text-muted-foreground">
           Upload everything you have: voice memos, photos, notes, inspection findings.
           AI drafts all report pages simultaneously.
         </p>
@@ -220,19 +211,16 @@ const BuildMyReport = ({
         />
 
         {/* Notes / Text */}
-        <div
-          className="rounded-lg border border-dashed border-border/60 p-5 flex flex-col gap-2 hover:border-accent/60 transition-colors cursor-text"
-          style={{ background: "rgba(255,255,255,0.6)" }}
-        >
-          <div className="flex items-center gap-2" style={{ color: "#1B2B4D" }}>
-            <FileText className="w-6 h-6" style={{ color: "#C4A265" }} />
+        <div className="rounded-lg border border-dashed border-border/60 p-5 flex flex-col gap-2 hover:border-accent/60 transition-colors cursor-text bg-background/60">
+          <div className="flex items-center gap-2 text-primary">
+            <FileText className="w-6 h-6 text-[hsl(var(--hbc-gold))]" />
             <span className="font-mono text-[11px] uppercase tracking-[0.15em]">
               Notes / Text
             </span>
           </div>
           <textarea
-            className="w-full bg-transparent font-sans text-sm resize-none outline-none placeholder:text-muted-foreground/50"
-            style={{ color: "#1B2B4D", minHeight: "80px" }}
+            className="w-full bg-transparent font-sans text-sm resize-none outline-none placeholder:text-muted-foreground/50 text-primary"
+            style={{ minHeight: "80px" }}
             placeholder="Paste inspection notes, bullet points, or any text observations…"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -261,8 +249,7 @@ const BuildMyReport = ({
         {!isBuilding ? (
           <button
             onClick={handleBuild}
-            className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-lg font-mono text-sm uppercase tracking-[0.12em] transition-opacity hover:opacity-90 active:opacity-80"
-            style={{ background: "#C4A265", color: "#1B2B4D" }}
+            className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-lg font-mono text-sm uppercase tracking-[0.12em] transition-opacity hover:opacity-90 active:opacity-80 bg-[hsl(var(--hbc-gold))] text-primary"
           >
             <Sparkles className="w-4 h-4" />
             Build Report
@@ -270,17 +257,11 @@ const BuildMyReport = ({
         ) : (
           <div className="space-y-4">
             {/* Progress log */}
-            <div
-              className="rounded-lg border border-border/40 p-4 max-h-48 overflow-y-auto"
-              style={{ background: "rgba(255,255,255,0.7)" }}
-            >
+            <div className="rounded-lg border border-border/40 p-4 max-h-48 overflow-y-auto bg-background/70">
               {currentGroup && (
                 <div className="flex items-center gap-2 mb-3">
-                  <Loader2
-                    className="w-3.5 h-3.5 animate-spin flex-shrink-0"
-                    style={{ color: "#C4A265" }}
-                  />
-                  <span className="font-mono text-[11px] uppercase tracking-[0.1em]" style={{ color: "#1B2B4D" }}>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin flex-shrink-0 text-[hsl(var(--hbc-gold))]" />
+                  <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-primary">
                     {currentGroup}
                   </span>
                 </div>
@@ -289,8 +270,9 @@ const BuildMyReport = ({
                 {buildProgress.map((line, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <span
-                      className="font-mono text-[11px]"
-                      style={{ color: line.startsWith("✓") ? "#4CAF81" : "#8A8E99" }}
+                      className={`font-mono text-[11px] ${
+                        line.startsWith("✓") ? "text-emerald-600" : "text-muted-foreground"
+                      }`}
                     >
                       {line}
                     </span>
@@ -300,8 +282,8 @@ const BuildMyReport = ({
             </div>
 
             <div className="flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#C4A265" }} />
-              <span className="font-mono text-[11px] uppercase tracking-[0.12em]" style={{ color: "#8A8E99" }}>
+              <Loader2 className="w-4 h-4 animate-spin text-[hsl(var(--hbc-gold))]" />
+              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
                 Building pages…
               </span>
             </div>
@@ -325,20 +307,19 @@ const UploadZone = ({ icon, label, sublabel, active, onClick }: UploadZoneProps)
   <button
     type="button"
     onClick={onClick}
-    className="rounded-lg border border-dashed p-5 flex flex-col items-start gap-2 text-left transition-all hover:shadow-sm"
-    style={{
-      borderColor: active ? "#C4A265" : "rgba(27,43,77,0.15)",
-      background: active ? "rgba(196,162,101,0.08)" : "rgba(255,255,255,0.6)",
-      color: "#1B2B4D",
-    }}
+    className={`rounded-lg border border-dashed p-5 flex flex-col items-start gap-2 text-left transition-all hover:shadow-sm text-primary ${
+      active
+        ? "border-[hsl(var(--hbc-gold))] bg-[hsl(var(--hbc-gold))]/[0.08]"
+        : "border-border bg-background/60"
+    }`}
   >
-    <span style={{ color: active ? "#C4A265" : "#8A8E99" }}>{icon}</span>
-    <span className="font-mono text-[11px] uppercase tracking-[0.15em]" style={{ color: "#1B2B4D" }}>
+    <span className={active ? "text-[hsl(var(--hbc-gold))]" : "text-muted-foreground"}>
+      {icon}
+    </span>
+    <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-primary">
       {label}
     </span>
-    <span className="font-sans text-xs" style={{ color: "#8A8E99" }}>
-      {sublabel}
-    </span>
+    <span className="font-sans text-xs text-muted-foreground">{sublabel}</span>
   </button>
 );
 

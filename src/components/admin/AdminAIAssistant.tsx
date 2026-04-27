@@ -184,7 +184,7 @@ const AdminAIAssistant = ({ context, contextData, propertyId }: AdminAIAssistant
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask AI anything..."
               rows={2}
-              className="flex-1 resize-none bg-muted/40 rounded-lg px-3 py-2 text-sm font-sans text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-1 focus:ring-[#C4A265]/40"
+              className="flex-1 resize-none bg-muted/40 rounded-lg px-3 py-2 text-sm font-sans text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-1 focus:ring-ring/40"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();

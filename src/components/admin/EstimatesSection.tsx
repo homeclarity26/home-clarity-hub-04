@@ -640,9 +640,8 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
         </p>
         <Button
           size="sm"
-          className="gap-1.5 text-xs font-sans w-full"
+          className="gap-1.5 text-xs font-sans w-full bg-[hsl(var(--hbc-gold))] text-white hover:opacity-90"
           onClick={() => setInterviewOpen(true)}
-          style={{ background: "#C4A265", color: "#fff" }}
         >
           <Sparkles className="w-3.5 h-3.5" />
           Start AI Interview

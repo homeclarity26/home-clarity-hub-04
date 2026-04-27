@@ -86,7 +86,7 @@ const ProgressBar = ({ step, total }: { step: number; total: number }) => (
         className="h-full rounded-full transition-all duration-500"
         style={{
           width: `${(step / total) * 100}%`,
-          background: "linear-gradient(to right, #B87333, #B7410E)",
+          background: "linear-gradient(to right, hsl(var(--hbc-gold)), hsl(var(--hbc-rust)))",
         }}
       />
     </div>
@@ -435,7 +435,7 @@ const ProposalInterviewWizard = ({
                   HBC
                 </div>
                 <p className="font-semibold text-foreground text-sm">Hometown Builders Club</p>
-                <p className="text-xs text-muted-foreground mt-1">Gold, #B87333</p>
+                <p className="text-xs text-muted-foreground mt-1">Gold — #C4A265</p>
                 {answers.brand === "hbc" && (
                   <span className="mt-2 inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-accent text-white">
                     Selected
@@ -458,7 +458,7 @@ const ProposalInterviewWizard = ({
                   AKR
                 </div>
                 <p className="font-semibold text-foreground text-sm">AK Renovations</p>
-                <p className="text-xs text-muted-foreground mt-1">Rust, #B7410E</p>
+                <p className="text-xs text-muted-foreground mt-1">Rust — #B5450B</p>
                 {answers.brand === "akr" && (
                   <span className="mt-2 inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-destructive text-white">
                     Selected
@@ -833,7 +833,7 @@ const ProposalInterviewWizard = ({
               onClick={() => setStep((s) => s + 1)}
               disabled={!canAdvance()}
               className="gap-1.5 font-sans"
-              style={{ background: canAdvance() ? "hsl(var(--hbc-gold))" : undefined, color: canAdvance() ? "hsl(var(--hbc-white))" : undefined }}
+              style={{ background: canAdvance() ? "hsl(var(--hbc-gold))" : undefined, color: canAdvance() ? "#fff" : undefined }}
             >
               Next <ArrowRight className="w-4 h-4" />
             </Button>
@@ -843,7 +843,7 @@ const ProposalInterviewWizard = ({
               onClick={handleGenerate}
               disabled={loading}
               className="gap-1.5 font-sans px-6"
-              style={{ background: "hsl(var(--hbc-gold))", color: "hsl(var(--hbc-white))" }}
+              style={{ background: "hsl(var(--hbc-gold))", color: "#fff" }}
             >
               {loading ? (
                 <>

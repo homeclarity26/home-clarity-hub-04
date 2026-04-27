@@ -432,7 +432,7 @@ export default function RecurringPlanManager({ propertyId, clientName }: Recurri
             </div>
 
             {vendorAmount > 0 && (
-              <div className="bg-[#F2EFEB] rounded p-4 space-y-2 text-sm font-sans">
+              <div className="bg-muted/50 rounded p-4 space-y-2 text-sm font-sans">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Vendor amount</span>
                   <span>{fmt(vendorAmount)}</span>

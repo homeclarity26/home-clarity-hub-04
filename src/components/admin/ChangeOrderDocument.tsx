@@ -26,19 +26,20 @@ export interface ChangeOrderDocumentProps {
 
 const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 
+// eslint-disable-next-line hcr/no-inline-hex -- brand identity hex values used in print HTML template (CSS vars not available in window.open documents)
 const BRAND_CONFIG = {
   hbc: {
     name: "Hometown Builders Club LLC",
     email: "adam@hometownbuildersclub.com",
     phone: "(330) 203-1331",
-    color: "#B87333",
+    color: "#C4A265",
     tagline: "Craftsmanship you can trust. Communication you deserve.",
   },
   akr: {
     name: "AK Renovations",
     email: "akrenovations01@gmail.com",
     phone: "(330) 203-1331",
-    color: "#B7410E",
+    color: "#B5450B",
     tagline: "Craftsmanship you can trust. Communication you deserve.",
   },
 };
@@ -61,6 +62,7 @@ export default function ChangeOrderDocument({
   const handlePrint = () => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
+    /* eslint-disable hcr/no-inline-hex -- print HTML template: CSS vars unavailable in window.open documents */
     printWindow.document.write(`<!DOCTYPE html>
 <html>
 <head>
@@ -149,6 +151,7 @@ export default function ChangeOrderDocument({
   </div>
 </body>
 </html>`);
+    /* eslint-enable hcr/no-inline-hex */
     printWindow.document.close();
     setTimeout(() => { printWindow.print(); }, 300);
   };

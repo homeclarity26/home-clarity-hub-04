@@ -153,7 +153,7 @@ export default function InvoiceApprovalQueue({
 
               {/* Line Items Preview */}
               {previewItems.length > 0 && (
-                <div className="mb-5 bg-[#F2EFEB] rounded p-3">
+                <div className="mb-5 bg-muted/50 rounded p-3">
                   <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Line Items</p>
                   <div className="space-y-1">
                     {previewItems.map(li => (
