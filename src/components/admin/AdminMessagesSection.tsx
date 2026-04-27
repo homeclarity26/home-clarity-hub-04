@@ -199,7 +199,7 @@ const AdminMessagesSection = ({ propertyId, clientName, propertyAddress }: Admin
             <Video className="w-4 h-4" />
           </Button>
           <Button variant="outline" size="sm" onClick={handleAIReply} disabled={loadingReplies || messages.length === 0} className="gap-1.5 text-xs font-sans shrink-0">
-            {loadingReplies ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span style={{background:'#C4A265',color:'#1B2B4D'}} className="w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center shrink-0">B</span>}Ask Bobby
+            {loadingReplies ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span className="w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center shrink-0 bg-[hsl(var(--hbc-gold))] text-primary">B</span>}Ask Bobby
           </Button>
           <textarea
             value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleKeyDown}

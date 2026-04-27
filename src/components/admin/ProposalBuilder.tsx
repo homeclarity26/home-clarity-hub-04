@@ -20,15 +20,15 @@ type PricingType = "labor_only" | "lump_sum" | "three_tier" | "allowance" | "tim
 type BrandType = "hbc" | "akr";
 
 // ── Brand Config ──────────────────────────────────────────────────────────────
-
+// eslint-disable-next-line hcr/no-inline-hex -- brand identity hex values used in live style= props for dynamic brand previewing (CSS vars not interpolatable in style objects)
 const BRAND_CONFIG: Record<
   BrandType,
   { label: string; hero: string; accent: string; company: string; email: string; phone: string; tagline: string }
 > = {
   hbc: {
     label: "HBC — Hometown Builders Club",
-    hero: "#0A1628",
-    accent: "#B87333",
+    hero: "#1B2B4D",
+    accent: "#C4A265",
     company: "Hometown Builders Club LLC",
     email: "adam@hometownbuildersclub.com",
     phone: "(330) 203-1331",
@@ -36,8 +36,8 @@ const BRAND_CONFIG: Record<
   },
   akr: {
     label: "AKR — AK Renovations",
-    hero: "#B7410E",
-    accent: "#B87333",
+    hero: "#B5450B",
+    accent: "#C4A265",
     company: "AK Renovations",
     email: "akrenovations01@gmail.com",
     phone: "(330) 203-1331",

@@ -30,7 +30,8 @@ interface PropertyMarker {
 }
 
 // Custom marker icon using accent color
-const createCustomIcon = (color: string = "#b49a6a") =>
+// eslint-disable-next-line hcr/no-inline-hex -- Leaflet divIcon HTML: CSS vars unavailable in L.divIcon html strings
+const createCustomIcon = (color: string = "#C4A265") =>
   L.divIcon({
     className: "custom-marker",
     html: `<div style="
@@ -47,10 +48,11 @@ const createCustomIcon = (color: string = "#b49a6a") =>
     popupAnchor: [0, -28],
   });
 
+// eslint-disable-next-line hcr/no-inline-hex -- Leaflet marker colors: CSS vars unavailable in L.divIcon html strings
 const CONDITION_COLORS: Record<string, string> = {
   excellent: "#22c55e",
   good: "#4a7c59",
-  fair: "#b49a6a",
+  fair: "#C4A265",
   poor: "#e88c30",
   critical: "#dc2626",
 };

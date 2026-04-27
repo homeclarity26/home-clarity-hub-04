@@ -26,7 +26,8 @@ const MembershipTierManager = () => {
   const [desc, setDesc] = useState("");
   const [monthly, setMonthly] = useState(0);
   const [annually, setAnnually] = useState(0);
-  const [color, setColor] = useState("#C9A84C");
+  // eslint-disable-next-line hcr/no-inline-hex -- color picker default; <input type="color"> requires hex
+  const [color, setColor] = useState("#C4A265");
   const [priceType, setPriceType] = useState("annual");
   const [isFeatured, setIsFeatured] = useState(false);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
@@ -64,7 +65,8 @@ const MembershipTierManager = () => {
 
   const openCreate = () => {
     setEditId(null); setName(""); setDesc(""); setMonthly(0); setAnnually(0);
-    setColor("#C9A84C"); setPriceType("annual"); setIsFeatured(false); setSelectedServiceIds([]);
+    // eslint-disable-next-line hcr/no-inline-hex -- color picker default
+    setColor("#C4A265"); setPriceType("annual"); setIsFeatured(false); setSelectedServiceIds([]);
     setStripePriceMonthly(""); setStripePriceAnnual("");
     setDialogOpen(true);
   };
@@ -72,7 +74,8 @@ const MembershipTierManager = () => {
   const openEdit = async (tier: any) => {
     setEditId(tier.id); setName(tier.name); setDesc(tier.description || "");
     setMonthly(tier.price_monthly || 0); setAnnually(tier.price_annually || 0);
-    setColor(tier.color_hex || "#C9A84C"); setPriceType(tier.price_type || "annual");
+    // eslint-disable-next-line hcr/no-inline-hex -- color picker default fallback
+    setColor(tier.color_hex || "#C4A265"); setPriceType(tier.price_type || "annual");
     setIsFeatured(tier.is_featured || false);
     setStripePriceMonthly(tier.stripe_price_monthly || "");
     setStripePriceAnnual(tier.stripe_price_annual || "");
