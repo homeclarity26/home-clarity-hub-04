@@ -138,9 +138,6 @@ verify_jwt = false
 [functions.categorize-document]
 verify_jwt = false
 
-[functions.chat-assistant]
-verify_jwt = false
-
 [functions.convert-referral]
 verify_jwt = false
 
