@@ -252,6 +252,9 @@ interface WizardContextValue {
   setTocSections: (next: TocSection[]) => void;
   setTocReasoning: (next: string | null) => void;
   togglePage: (page_key: string) => void;
+  toggleFeatured: (page_key: string) => void;
+  addCustomPage: (sectionKey: string, page: TocPage) => void;
+  addCustomSection: (section: TocSection) => void;
   upsertAuthoring: (page_key: string, patch: Partial<PageAuthoring>) => void;
   setActivePageKey: (next: string | null) => void;
   setStrategy: (patch: Partial<StrategyState>) => void;
@@ -268,28 +271,29 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [state, setState] = useState<WizardState>(initialState);
 
-  // Persists the lightweight wizard envelope to the reports row whenever
-  // we move between steps. Heavy step-specific writes (report_pages,
-  // recurring_services, etc.) live in their own step components — this
-  // helper just keeps the enclosing draft fresh.
+  // Persists the lightweight wizard envelope on each step transition.
+  // Heavy step-specific writes (report_pages, recurring_services, etc.)
+  // live in their own step components. The envelope rides on
+  // properties.client_intelligence_summary (TEXT) — JSON-serialized so a
+  // future resume can hydrate the full state.
   const persistEnvelope = useCallback(
     async (snapshot: WizardState) => {
-      if (!snapshot.reportId) return;
-      const intelligenceSummary = {
+      if (!snapshot.propertyId) return;
+      const envelope = {
         client: snapshot.client,
         anything_else: snapshot.anythingElse,
         clarifying_answers: snapshot.clarifyingAnswers,
         field_checklist: snapshot.fieldChecklist,
         findings: snapshot.intakeFindings,
         toc_sections: snapshot.tocSections,
-      } as const;
+      };
       await supabase
-        .from("reports")
+        .from("properties")
         .update({
-          client_intelligence_summary: intelligenceSummary as never,
+          client_intelligence_summary: JSON.stringify(envelope),
           updated_at: new Date().toISOString(),
         })
-        .eq("id", snapshot.reportId);
+        .eq("id", snapshot.propertyId);
     },
     [],
   );
@@ -351,6 +355,39 @@ export function WizardProvider({ children }: { children: ReactNode }) {
           p.page_key === page_key ? { ...p, selected: !p.selected } : p,
         ),
       })),
+    }));
+  }, []);
+
+  const toggleFeatured = useCallback((page_key: string) => {
+    setState((prev) => ({
+      ...prev,
+      tocSections: prev.tocSections.map((s) => ({
+        ...s,
+        pages: s.pages.map((p) =>
+          p.page_key === page_key
+            ? { ...p, is_featured: !p.is_featured }
+            : p,
+        ),
+      })),
+    }));
+  }, []);
+
+  const addCustomPage = useCallback(
+    (sectionKey: string, page: TocPage) => {
+      setState((prev) => ({
+        ...prev,
+        tocSections: prev.tocSections.map((s) =>
+          s.key === sectionKey ? { ...s, pages: [...s.pages, page] } : s,
+        ),
+      }));
+    },
+    [],
+  );
+
+  const addCustomSection = useCallback((section: TocSection) => {
+    setState((prev) => ({
+      ...prev,
+      tocSections: [...prev.tocSections, section],
     }));
   }, []);
 
@@ -423,35 +460,48 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await supabase
         .from("reports")
-        .select("id, property_id, client_intelligence_summary, status")
+        .select("id, property_id, status")
         .eq("id", reportId)
         .maybeSingle();
       if (error || !data) return;
-      const summary =
-        (data.client_intelligence_summary as Record<string, unknown> | null) ??
-        null;
+      let envelope: Record<string, unknown> | null = null;
+      if (data.property_id) {
+        const { data: propRow } = await supabase
+          .from("properties")
+          .select("client_intelligence_summary")
+          .eq("id", data.property_id)
+          .maybeSingle();
+        const summaryText = propRow?.client_intelligence_summary;
+        if (summaryText && typeof summaryText === "string") {
+          try {
+            envelope = JSON.parse(summaryText) as Record<string, unknown>;
+          } catch {
+            envelope = null;
+          }
+        }
+      }
       setState((prev) => {
         const next: WizardState = { ...prev, reportId: data.id };
         if (data.property_id) next.propertyId = data.property_id;
-        if (summary) {
-          if (summary.client) next.client = summary.client as ClientFormData;
-          if (typeof summary.anything_else === "string") {
-            next.anythingElse = summary.anything_else;
+        if (envelope) {
+          if (envelope.client) next.client = envelope.client as ClientFormData;
+          if (typeof envelope.anything_else === "string") {
+            next.anythingElse = envelope.anything_else;
           }
-          if (summary.clarifying_answers) {
-            next.clarifyingAnswers = summary.clarifying_answers as Record<
+          if (envelope.clarifying_answers) {
+            next.clarifyingAnswers = envelope.clarifying_answers as Record<
               string,
               string
             >;
           }
-          if (Array.isArray(summary.field_checklist)) {
-            next.fieldChecklist = summary.field_checklist as ChecklistItem[];
+          if (Array.isArray(envelope.field_checklist)) {
+            next.fieldChecklist = envelope.field_checklist as ChecklistItem[];
           }
-          if (Array.isArray(summary.findings)) {
-            next.intakeFindings = summary.findings as IntakeFinding[];
+          if (Array.isArray(envelope.findings)) {
+            next.intakeFindings = envelope.findings as IntakeFinding[];
           }
-          if (Array.isArray(summary.toc_sections)) {
-            next.tocSections = summary.toc_sections as TocSection[];
+          if (Array.isArray(envelope.toc_sections)) {
+            next.tocSections = envelope.toc_sections as TocSection[];
           }
         }
         return next;
@@ -481,6 +531,9 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       setTocSections,
       setTocReasoning,
       togglePage,
+      toggleFeatured,
+      addCustomPage,
+      addCustomSection,
       upsertAuthoring,
       setActivePageKey,
       setStrategy,
@@ -502,6 +555,9 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       setTocSections,
       setTocReasoning,
       togglePage,
+      toggleFeatured,
+      addCustomPage,
+      addCustomSection,
       upsertAuthoring,
       setActivePageKey,
       setStrategy,
