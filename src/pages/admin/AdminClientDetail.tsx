@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Loader2, Pencil, Trash2, Plus } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import ClientOverview from "@/components/admin/ClientOverview";
-import ReportPageManager from "@/components/admin/ReportPageManager";
 import FileManager from "@/components/admin/FileManager";
 import CommentsManager from "@/components/admin/CommentsManager";
 import VendorManager from "@/components/admin/VendorManager";
@@ -136,7 +135,6 @@ const ReportTabContent = ({ client, reportPages, pdfData }: { client: any; repor
           <ReportAITools reportId={client.reportId || ""} propertyId={client.propertyId} propertyContext={{ propertyAddress: client.address, yearBuilt: client.yearBuilt, sqft: client.sqft, bedrooms: client.bedrooms, bathrooms: client.bathrooms, propertyType: client.propertyType }} />
           <InternalReportComments reportId={client.reportId} />
           {reportPages && reportPages.length > 0 && <DragReportReorder pages={reportPages.map((p: any) => ({ id: p.id, title: p.title, group_name: p.group_name, sort_order: p.sort_order, status: p.status, condition_rating: p.condition_rating }))} reportId={client.reportId!} />}
-          <ReportPageManager propertyId={client.propertyId} reportId={client.reportId} propertyContext={{ propertyAddress: client.address, yearBuilt: client.yearBuilt, sqft: client.sqft, bedrooms: client.bedrooms, bathrooms: client.bathrooms, propertyType: client.propertyType, relationshipType: client.relationshipType, clientIntelligenceSummary: client.clientIntelligenceSummary }} />
         </>
       )}
     </div>

@@ -31,7 +31,6 @@ const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminClients = lazy(() => import("./pages/admin/AdminClients"));
 const AdminClientDetail = lazy(() => import("./pages/admin/AdminClientDetail"));
-const AdminNewReport = lazy(() => import("./pages/admin/AdminNewReport"));
 const AdminNewReportV2 = lazy(() => import("./pages/admin/AdminNewReportV2"));
 const AdminKnowledgeBase = lazy(() => import("./pages/admin/AdminKnowledgeBase"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
@@ -200,8 +199,6 @@ const AppRoutes = () => {
           <Route path="inbox" element={<AdminInbox />} />
           <Route path="clients" element={<AdminClients />} />
           <Route path="clients/new" element={<AdminNewReportV2 />} />
-          <Route path="clients/new-v2" element={<AdminNewReportV2 />} />
-          <Route path="clients/new-legacy" element={<AdminNewReport />} />
           <Route path="clients/:clientId" element={<AdminClientDetail />} />
           <Route path="inspect/:propertyId" element={<AdminFieldInspection />} />
           <Route path="tasks" element={<AdminTaskBoard />} />

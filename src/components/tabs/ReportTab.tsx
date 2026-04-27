@@ -1,6 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import BuildMyReport from "@/components/admin/BuildMyReport";
 import { useEditMode } from "@/contexts/EditModeContext";
 import PortalBlockViewer from "@/components/wysiwyg/PortalBlockViewer";
 import type { ReportBlock } from "@/components/wysiwyg/types";
@@ -352,20 +351,6 @@ const ReportTab = ({
             )}
           </div>
         </div>
-      </div>
-    );
-  }
-
-  // --- Build My Report (creator only, when no pages are populated yet) ---
-  const hasRealPages = !!(pages && Object.keys(pages).length > 0);
-  if (canEdit && !hasRealPages && reportId && propertyId && !activePageId) {
-    return (
-      <div className="max-w-3xl mx-auto px-6 md:px-20 py-16">
-        <BuildMyReport
-          propertyId={propertyId}
-          reportId={reportId}
-          onComplete={() => toast.success("Report drafted. Review each section and publish when ready.")}
-        />
       </div>
     );
   }
