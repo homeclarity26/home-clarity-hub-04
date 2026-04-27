@@ -7,22 +7,14 @@ interface ClientHealthCardProps {
   client: AdminClient;
 }
 
-// H4 refactor: render word-rating + color dot only. Per Master Plan H4
-// spec, "No numerical score in any output". The numeric breakdown is
-// no longer surfaced — we bucket the composite total into the 5 word
-// ratings and show only that.
-//
-// Bucketing matches the H1 data-migration thresholds (Master Spec 5.7):
+// Render word-rating + color dot only. Per the v2 spec, no numerical
+// score is surfaced — we bucket the internal composite total into the
+// 5 word ratings (Master Spec 5.7 thresholds):
 //   >= 90  Excellent
 //   75-89  Good
 //   60-74  Fair
 //   40-59  Poor
 //   < 40   Critical
-//
-// computeClientHealthScore() lives in clientHealthScore.ts. That lib
-// itself gets deleted in a later H-batch sub-batch (after the other
-// consumers — ClientHealthBadge, PortfolioHealthDashboard — also stop
-// importing it).
 
 type Rating = "Excellent" | "Good" | "Fair" | "Poor" | "Critical";
 

@@ -66,154 +66,6 @@ const conditionColors: Record<string, string> = {
   "N/A": "text-muted-foreground",
 };
 
-// ── System Cliff Gauge ───────────────────────────────────────────────────────
-interface SystemCliffGaugeProps {
-  label: string;
-  currentAge: number;
-  lifespan: number;
-  equipmentName?: string;
-  replacementHorizon?: string;
-}
-
-const SystemCliffGauge = ({
-  label,
-  currentAge,
-  lifespan,
-  equipmentName,
-  replacementHorizon,
-}: SystemCliffGaugeProps) => {
-  const pct = Math.min((currentAge / lifespan) * 100, 100);
-  const isOverdue = currentAge > lifespan;
-  const yearsLeft = lifespan - currentAge;
-
-  // Zone color for the fill bar
-  const fillColor =
-    pct <= 50 ? "#4CAF81" : pct <= 75 ? "#C4A265" : "#B5450B";
-
-  return (
-    <div
-      className="rounded-lg border border-border/60 shadow-sm overflow-hidden mb-8"
-      style={{ background: "#F8F6F2" }}
-    >
-      {/* Header */}
-      <div className="px-6 pt-5 pb-3">
-        {equipmentName && (
-          <p
-            className="font-mono text-[10px] uppercase tracking-[0.15em] mb-1"
-            style={{ color: "#8A8E99" }}
-          >
-            {equipmentName}
-          </p>
-        )}
-        <h4
-          className="font-display text-xl"
-          style={{ color: "#1B2B4D" }}
-        >
-          {label} — Service Life
-        </h4>
-      </div>
-
-      {/* Age / lifespan labels */}
-      <div className="px-6 pb-1 flex justify-between">
-        <span
-          className="font-mono text-[11px] uppercase tracking-[0.12em]"
-          style={{ color: "#1B2B4D" }}
-        >
-          Install: yr {currentAge}
-        </span>
-        <span
-          className="font-mono text-[11px] uppercase tracking-[0.12em]"
-          style={{ color: "#1B2B4D" }}
-        >
-          Expected: {lifespan} yrs
-        </span>
-      </div>
-
-      {/* Track */}
-      <div className="px-6 pb-2">
-        <div
-          className="relative w-full h-7 rounded-full overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(90deg, #4CAF81 0%, #4CAF81 50%, #C4A265 50%, #C4A265 75%, #B5450B 75%, #B5450B 100%)",
-          }}
-        >
-          {/* Marker line */}
-          <div
-            className="absolute top-0 bottom-0 w-0.5 z-10"
-            style={{
-              left: `${Math.min(pct, 100)}%`,
-              background: "#1B2B4D",
-              boxShadow: "0 0 0 2px rgba(255,255,255,0.6)",
-            }}
-          />
-          {isOverdue && (
-            <div
-              className="absolute top-0 bottom-0 right-0"
-              style={{
-                width: `${Math.min(((currentAge - lifespan) / lifespan) * 100, 20)}%`,
-                background:
-                  "repeating-linear-gradient(90deg, #B5450B 0px, #B5450B 6px, #8a2c06 6px, #8a2c06 12px)",
-                borderLeft: "2px dashed rgba(255,255,255,0.5)",
-              }}
-            />
-          )}
-        </div>
-
-        {/* Zone labels */}
-        <div className="flex mt-1">
-          <span
-            className="font-mono text-[9px] uppercase tracking-[0.1em]"
-            style={{ width: "50%", color: "#4CAF81" }}
-          >
-            Good
-          </span>
-          <span
-            className="font-mono text-[9px] uppercase tracking-[0.1em]"
-            style={{ width: "25%", color: "#C4A265" }}
-          >
-            Watch
-          </span>
-          <span
-            className="font-mono text-[9px] uppercase tracking-[0.1em]"
-            style={{ width: "25%", color: "#B5450B" }}
-          >
-            Replace
-          </span>
-        </div>
-      </div>
-
-      {/* Callout */}
-      <div className="px-6 pb-5">
-        <div
-          className="rounded-lg px-5 py-3 flex flex-wrap items-center justify-center gap-6"
-          style={{ background: isOverdue ? "#B5450B" : fillColor }}
-        >
-          <span
-            className="font-mono text-[11px] uppercase tracking-[0.1em] text-white"
-          >
-            Age: {currentAge} / {lifespan} yrs
-          </span>
-          {isOverdue ? (
-            <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white">
-              ⚠ Past Expected Life
-            </span>
-          ) : (
-            <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white">
-              {yearsLeft} yr{yearsLeft !== 1 ? "s" : ""} remaining
-            </span>
-          )}
-          {replacementHorizon && (
-            <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white">
-              Replace by: {replacementHorizon}
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // ── Condition Badge Pill ─────────────────────────────────────────────────────
 const ConditionBadge = ({ rating }: { rating: string }) => (
   <span
@@ -423,11 +275,6 @@ const BlockRenderer = ({
     }
   };
 
-  // ── Derive healthBar data from pageData ──────────────────────────────────
-  const healthBarData = (pageData as unknown as Record<string, unknown>).healthBar as
-    | { label?: string; current?: number; total?: number; unit?: string; currentAge?: number; lifespan?: number; equipmentName?: string; replacementHorizon?: string }
-    | undefined;
-
   return (
     <div className="space-y-8">
       {/* ── Page Header Block ─────────────────────────────────────────── */}
@@ -496,41 +343,6 @@ const BlockRenderer = ({
             onSave={(observations) => onUpdate({ key_observations: observations })}
           />
         </div>
-      )}
-
-      {/* ── System Cliff Gauge (enhanced HealthBar) ───────────────────── */}
-      {false && shouldRender("health_bar") && healthBarData && (
-        <>
-          {/* New System Cliff Gauge when currentAge + lifespan available */}
-          {(healthBarData.currentAge !== undefined || healthBarData.current !== undefined) &&
-          (healthBarData.lifespan !== undefined || healthBarData.total !== undefined) ? (
-            <SystemCliffGauge
-              label={healthBarData.label || pageData.title || "System"}
-              currentAge={healthBarData.currentAge ?? healthBarData.current ?? 0}
-              lifespan={healthBarData.lifespan ?? healthBarData.total ?? 20}
-              equipmentName={healthBarData.equipmentName}
-              replacementHorizon={healthBarData.replacementHorizon}
-            />
-          ) : (
-            /* Fallback: original HealthBar minimal render */
-            <div className="my-8">
-              <div className="w-full h-1 bg-border relative">
-                <div
-                  className="h-full bg-accent"
-                  style={{
-                    width: `${Math.min(
-                      ((healthBarData.current ?? 0) / (healthBarData.total ?? 1)) * 100,
-                      100
-                    )}%`,
-                  }}
-                />
-              </div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground mt-3">
-                {healthBarData.label}: {healthBarData.current} / {healthBarData.total} {healthBarData.unit}
-              </p>
-            </div>
-          )}
-        </>
       )}
 
       {/* ── Specs Block ───────────────────────────────────────────────── */}
