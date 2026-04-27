@@ -95,7 +95,7 @@ const AIMeetingPrep = ({ clientId, clientName, propertyAddress }: AIMeetingPrepP
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-accent" />
-          <h3 className="text-sm font-sans font-semibold text-foreground">Meeting Prep — {clientName}</h3>
+          <h3 className="text-sm font-sans font-semibold text-foreground">Meeting Prep: {clientName}</h3>
         </div>
         <div className="flex gap-2">
           <Button variant="ghost" size="sm" className="gap-1 text-xs font-sans" onClick={copyToClipboard}>

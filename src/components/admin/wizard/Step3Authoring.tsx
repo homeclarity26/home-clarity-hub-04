@@ -140,7 +140,7 @@ export function Step3Authoring() {
       <div className="space-y-4">
         <Card className="p-6">
           <h3 className="text-base font-sans font-semibold text-foreground">
-            Step 3 — Authoring
+            Step 3: Authoring
           </h3>
           <p className="text-xs font-sans text-muted-foreground mt-1">
             No pages selected yet. Go back to Step 2 and pick at least one page.

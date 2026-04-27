@@ -234,7 +234,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
       {/* Header */}
       <div>
         <h2 className="font-display text-2xl text-foreground">
-          {propertyName || "Project"} — Financial Ledger
+          {propertyName || "Project"}: Financial Ledger
         </h2>
         {clientName && (
           <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground mt-1">{clientName}</p>
@@ -433,7 +433,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
                           {ps.map(p => (
                             <div key={p.id} className="flex items-center justify-between bg-white rounded p-3 border border-border">
                               <div>
-                                <p className="font-sans text-sm">{format(new Date(p.payment_date), "MMM d, yyyy")} — <span className="capitalize">{p.method}</span></p>
+                                <p className="font-sans text-sm">{format(new Date(p.payment_date), "MMM d, yyyy")}, <span className="capitalize">{p.method}</span></p>
                                 {p.notes && <p className="font-sans text-xs text-muted-foreground">{p.notes}</p>}
                               </div>
                               <span className="font-sans text-sm font-medium text-green-600">{fmt(Number(p.amount))}</span>

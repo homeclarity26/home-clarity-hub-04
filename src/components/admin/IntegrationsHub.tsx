@@ -533,7 +533,7 @@ const IntegrationsHub = () => {
 
             {generatedKey && (
               <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
-                <p className="text-xs font-sans text-foreground font-medium mb-1">Your new API key (copy now — it won't be shown again):</p>
+                <p className="text-xs font-sans text-foreground font-medium mb-1">Your new API key (copy now, it won't be shown again):</p>
                 <code className="text-sm font-mono text-foreground bg-muted p-2 rounded block break-all">{generatedKey}</code>
                 <Button size="sm" variant="outline" className="mt-2 text-xs font-sans" onClick={() => { copyToClipboard(generatedKey, "API key"); }}>Copy Key</Button>
               </div>

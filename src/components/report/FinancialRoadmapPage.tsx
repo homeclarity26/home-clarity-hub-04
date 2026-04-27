@@ -211,7 +211,7 @@ const FinancialRoadmapPage = ({ reportId }: FinancialRoadmapPageProps) => {
         <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-2">Strategic Overview</p>
         <h1 className="font-display text-3xl text-foreground mb-3">Financial Roadmap</h1>
         <p className="font-sans text-base text-muted-foreground">
-          A prioritized investment plan across all assessed home systems — organized by urgency and timeline.
+          A prioritized investment plan across all assessed home systems, organized by urgency and timeline.
         </p>
       </div>
 

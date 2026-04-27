@@ -316,7 +316,7 @@ const Index = () => {
             Admin Preview
           </span>
           <span>
-            You're viewing <strong>{propertyName || "this client's portal"}</strong> as yourself — not as the client. Client-only UI may differ.
+            You're viewing <strong>{propertyName || "this client's portal"}</strong> as yourself, not as the client. Client-only UI may differ.
           </span>
           <button
             type="button"

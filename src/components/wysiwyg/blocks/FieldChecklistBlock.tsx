@@ -44,7 +44,7 @@ const FieldChecklistBlock = ({ content, editable, onChange }: FieldChecklistBloc
       {/* Admin-only banner */}
       <div className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3 flex items-center gap-2" style={{ color: GOLD }}>
         <span>Admin-only</span>
-        <span className="text-muted-foreground normal-case tracking-normal text-[10px]">— never visible to client</span>
+        <span className="text-muted-foreground normal-case tracking-normal text-[10px]">(never visible to client)</span>
       </div>
 
       <input

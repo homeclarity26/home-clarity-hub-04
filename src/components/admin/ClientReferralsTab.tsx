@@ -190,7 +190,7 @@ const ClientReferralsTab = ({ propertyId, clientId }: Props) => {
             {credits.map(c => (
               <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                 <div>
-                  <p className="text-sm font-sans text-foreground">${(c.amount_cents / 100).toFixed(0)} — {c.reason}</p>
+                  <p className="text-sm font-sans text-foreground">${(c.amount_cents / 100).toFixed(0)}: {c.reason}</p>
                   <p className="text-[10px] text-muted-foreground">
                     {format(new Date(c.created_at), "MMM d, yyyy")}
                     {c.expires_at && ` · Expires ${format(new Date(c.expires_at), "MMM d, yyyy")}`}
@@ -235,7 +235,7 @@ const ClientReferralsTab = ({ propertyId, clientId }: Props) => {
                 <SelectContent>
                   {availableCredits.map(c => (
                     <SelectItem key={c.id} value={c.id}>
-                      ${(c.amount_cents / 100).toFixed(0)} — {c.reason}
+                      ${(c.amount_cents / 100).toFixed(0)}: {c.reason}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -248,7 +248,7 @@ const ClientReferralsTab = ({ propertyId, clientId }: Props) => {
                 <SelectContent>
                   {invoices.map(i => (
                     <SelectItem key={i.id} value={i.id}>
-                      {i.title} — ${i.amount}
+                      {i.title}: ${i.amount}
                     </SelectItem>
                   ))}
                 </SelectContent>

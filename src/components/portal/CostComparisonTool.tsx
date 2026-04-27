@@ -49,7 +49,7 @@ const CostComparisonTool = ({ pages }: CostComparisonToolProps) => {
 
   return (
     <div className="max-w-[1400px] mx-auto px-6 md:px-20">
-      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Cost Comparison — Act Now vs. Defer</p>
+      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Cost Comparison: Act Now vs. Defer</p>
       <div className="bg-card rounded-lg border border-border shadow-hbc-sm p-6">
         <div className="flex items-center justify-between mb-6">
           <div>

@@ -11,24 +11,24 @@ const stats = [
 ];
 
 const features = [
-  { icon: ClipboardCheck, title: "Whole-Home Assessment", desc: "Every system inspected and rated — roof to foundation, HVAC to electrical — with clear condition scores." },
+  { icon: ClipboardCheck, title: "Whole-Home Assessment", desc: "Every system inspected and rated, roof to foundation, HVAC to electrical, with clear condition scores." },
   { icon: TrendingUp, title: "Financial Roadmap", desc: "Know exactly what to spend and when. Tiered pricing options so you control the investment." },
   { icon: Home, title: "Digital Home Registry", desc: "Every appliance, warranty, and service date in one place. Never lose track of equipment again." },
   { icon: Calendar, title: "Maintenance Schedule", desc: "Seasonal reminders and service tracking so nothing falls through the cracks." },
   { icon: FileText, title: "Action Plan", desc: "Prioritized recommendations ranked by urgency so you always know what matters most." },
-  { icon: Shield, title: "Ongoing Stewardship", desc: "A dedicated advisor who knows your home inside and out — year after year." },
+  { icon: Shield, title: "Ongoing Stewardship", desc: "A dedicated advisor who knows your home inside and out, year after year." },
 ];
 
 const steps = [
-  { num: "01", title: "Book Your Assessment", desc: "We visit your home and inspect every major system — inside and out." },
+  { num: "01", title: "Book Your Assessment", desc: "We visit your home and inspect every major system, inside and out." },
   { num: "02", title: "Receive Your Report", desc: "Get a detailed digital report with condition ratings, photos, and recommendations." },
   { num: "03", title: "Access Your Portal", desc: "Log into your private portal to view your report, track projects, and message your advisor." },
-  { num: "04", title: "Stay Ahead", desc: "We help you prioritize, budget, and coordinate — so your home stays healthy." },
+  { num: "04", title: "Stay Ahead", desc: "We help you prioritize, budget, and coordinate so your home stays healthy." },
 ];
 
 const testimonials = [
   { quote: "I had no idea my HVAC was 2 years past its service date. This saved me from a $6,000 emergency repair.", author: "Sarah M.", role: "Homeowner, Akron" },
-  { quote: "Finally, someone who looks at the whole picture — not just one system. The financial roadmap changed how we budget for our home.", author: "James & Linda R.", role: "Homeowners, Hudson" },
+  { quote: "Finally, someone who looks at the whole picture, not just one system. The financial roadmap changed how we budget for our home.", author: "James & Linda R.", role: "Homeowners, Hudson" },
   { quote: "The portal is incredible. I can see everything about my home in one place and know exactly what's coming next.", author: "Michael T.", role: "Homeowner, Cuyahoga Falls" },
 ];
 
@@ -68,10 +68,10 @@ const Landing = () => {
               Home Stewardship for Summit County
             </p>
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-primary-foreground leading-[1.1] mb-6">
-              Your home deserves a plan — not just repairs.
+              Your home deserves a plan, not just repairs.
             </h1>
             <p className="text-primary-foreground/80 text-lg leading-relaxed mb-8 max-w-md">
-              Most homeowners react to problems. We help you get ahead of them — with a comprehensive assessment, a clear financial roadmap, and an advisor who knows your home.
+              Most homeowners react to problems. We help you get ahead of them with a comprehensive assessment, a clear financial roadmap, and an advisor who knows your home.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <a href="#book">
@@ -109,7 +109,7 @@ const Landing = () => {
           <div className="text-center mb-16">
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-3">What You Get</p>
             <h2 className="font-display text-3xl sm:text-4xl text-foreground">
-              Everything your home needs — in one place
+              Everything your home needs, in one place
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -183,10 +183,10 @@ const Landing = () => {
         <div className="max-w-6xl mx-auto px-6 text-center">
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-3">Your Private Portal</p>
           <h2 className="font-display text-3xl sm:text-4xl text-foreground mb-4">
-            Everything about your home — at your fingertips
+            Everything about your home, at your fingertips
           </h2>
           <p className="text-muted-foreground max-w-lg mx-auto mb-12">
-            Access your detailed report, track maintenance, manage projects, view invoices, and message your advisor — anytime, from any device.
+            Access your detailed report, track maintenance, manage projects, view invoices, and message your advisor anytime, from any device.
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
             {["Condition Ratings", "Equipment Registry", "Financial Roadmap", "Action Plan", "Project Tracking", "Document Vault", "Advisor Chat", "Maintenance Schedule"].map(f => (

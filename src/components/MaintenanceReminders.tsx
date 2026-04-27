@@ -69,7 +69,7 @@ const MaintenanceReminders = ({ propertyId }: MaintenanceRemindersProps) => {
         <Card className="p-5">
           <div className="flex items-center gap-2 mb-3">
             <Calendar className="w-4 h-4 text-accent" />
-            <h3 className="text-sm font-sans font-semibold text-foreground">This Month — {MONTH_NAMES[currentMonth - 1]}</h3>
+            <h3 className="text-sm font-sans font-semibold text-foreground">This Month: {MONTH_NAMES[currentMonth - 1]}</h3>
             <Badge variant="secondary" className="text-[10px]">{thisMonth.length} items</Badge>
           </div>
           <div className="space-y-3">

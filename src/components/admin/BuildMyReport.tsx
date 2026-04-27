@@ -175,7 +175,7 @@ const BuildMyReport = ({
           {heading}
         </h2>
         <p className="font-sans text-base max-w-[55ch]" style={{ color: "#8A8E99" }}>
-          Upload everything you have — voice memos, photos, notes, inspection findings.
+          Upload everything you have: voice memos, photos, notes, inspection findings.
           AI drafts all report pages simultaneously.
         </p>
       </div>

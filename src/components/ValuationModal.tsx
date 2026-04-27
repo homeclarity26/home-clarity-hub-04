@@ -200,7 +200,7 @@ const ValuationModal = ({
               <p className="font-sans text-sm text-muted-foreground leading-relaxed">
                 This estimate is based on {sortedComps.length} comparable home sale{sortedComps.length !== 1 ? "s" : ""} near your property, weighted by similarity in size, age, condition, and proximity.
                 {sp.bedrooms && sp.squareFootage && sp.yearBuilt && (
-                  <> Your home's unique characteristics — including {sp.bedrooms} bedroom{sp.bedrooms !== 1 ? "s" : ""}, {sp.squareFootage.toLocaleString()} sq ft, and a {sp.yearBuilt} build year — were used to fine-tune the estimate against these comps.</>
+                  <> Your home's unique characteristics (including {sp.bedrooms} bedroom{sp.bedrooms !== 1 ? "s" : ""}, {sp.squareFootage.toLocaleString()} sq ft, and a {sp.yearBuilt} build year) were used to fine-tune the estimate against these comps.</>
                 )}
               </p>
             </section>

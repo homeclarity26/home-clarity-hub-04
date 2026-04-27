@@ -58,7 +58,7 @@ const AdminSetupChecklist = () => {
         <X className="w-4 h-4" />
       </button>
 
-      <h3 className="font-display text-base text-foreground mb-1">Welcome to HBC Creator — Let's get you set up.</h3>
+      <h3 className="font-display text-base text-foreground mb-1">Welcome to HBC Creator. Let's get you set up.</h3>
       <p className="text-xs font-sans text-muted-foreground mb-3">Complete these steps to get your admin account fully configured.</p>
 
       <div className="flex items-center gap-2 mb-4">

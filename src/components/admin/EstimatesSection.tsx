@@ -636,7 +636,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
           <p className="text-sm font-sans font-medium text-foreground">AI Proposal Builder</p>
         </div>
         <p className="text-xs font-sans text-muted-foreground">
-          Answer 12 targeted questions — the AI will generate a complete proposal with scope, pricing, timeline, and terms.
+          Answer 12 targeted questions. The AI will generate a complete proposal with scope, pricing, timeline, and terms.
         </p>
         <Button
           size="sm"
@@ -728,7 +728,7 @@ const EstimatesSection = ({ propertyId, clientName, propertyAddress, sqft, prope
                       <SelectContent>
                         <SelectItem value="custom" className="font-sans text-xs">Custom Item</SelectItem>
                         {services.map((s: any) => (
-                          <SelectItem key={s.id} value={s.id} className="font-sans text-xs">{s.name} — {fmt(s.price)}</SelectItem>
+                          <SelectItem key={s.id} value={s.id} className="font-sans text-xs">{s.name}: {fmt(s.price)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

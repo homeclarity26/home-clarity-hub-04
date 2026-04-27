@@ -554,7 +554,7 @@ const ProposalInterviewWizard = ({
               Describe the full scope of work in your own words
             </h2>
             <p className="text-sm text-muted-foreground">
-              This is the core AI input — be as detailed as possible.
+              This is the core AI input. Be as detailed as possible.
             </p>
             <Textarea
               placeholder="e.g. Full master bathroom gut-to-studs remodel: demo existing tile and fixtures, install new 3/4-inch plywood subfloor, 12x24 porcelain tile floor with radiant heat mat, custom niche shower with glass door..."

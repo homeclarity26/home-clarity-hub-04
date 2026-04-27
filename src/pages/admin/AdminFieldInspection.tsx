@@ -374,7 +374,7 @@ const AdminFieldInspection = () => {
                   <p>Lat: {gpsCoords.lat.toFixed(6)}</p>
                   <p>Lng: {gpsCoords.lng.toFixed(6)}</p>
                   {distance !== null && <p>Distance: {distance}m from property</p>}
-                  {!property?.latitude && <p className="text-destructive mt-1">⚠ No property coordinates stored — location recorded but not verified</p>}
+                  {!property?.latitude && <p className="text-destructive mt-1">⚠ No property coordinates stored. Location recorded but not verified.</p>}
                 </div>
               )}
               <Button

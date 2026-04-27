@@ -121,7 +121,7 @@ const ClientTable = ({ clients, compact }: ClientTableProps) => {
                         <span className="text-sm font-sans font-medium">{client.unreadComments}</span>
                       </span>
                     ) : (
-                      <span className="text-sm font-sans text-muted-foreground">—</span>
+                      <span className="text-sm font-sans text-muted-foreground">--</span>
                     )}
                   </TableCell>
                 )}
@@ -133,7 +133,7 @@ const ClientTable = ({ clients, compact }: ClientTableProps) => {
                         <span className="text-sm font-sans font-medium">{client.unreadMessages}</span>
                       </span>
                     ) : (
-                      <span className="text-sm font-sans text-muted-foreground">—</span>
+                      <span className="text-sm font-sans text-muted-foreground">--</span>
                     )}
                   </TableCell>
                 )}

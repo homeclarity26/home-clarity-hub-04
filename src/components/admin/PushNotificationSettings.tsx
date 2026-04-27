@@ -39,7 +39,7 @@ const PushNotificationSettings = () => {
 
       <p className="text-sm font-sans text-muted-foreground">
         Receive browser notifications for new messages, paid invoices, and
-        important updates — even when you don't have the app open.
+        important updates, even when you don't have the app open.
       </p>
 
       {permissionState === "unsupported" ? (

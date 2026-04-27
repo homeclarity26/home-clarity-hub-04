@@ -393,7 +393,7 @@ const VisionProjectBlock = ({ content, editable, onChange }: VisionProjectBlockP
                   checked={content.akrDisclosed}
                   onChange={(e) => update({ akrDisclosed: e.target.checked })}
                 />
-                AKR disclosed (required — non-optional per locked decision [v1.13])
+                AKR disclosed (required: non-optional per locked decision [v1.13])
               </label>
             </>
           ) : (

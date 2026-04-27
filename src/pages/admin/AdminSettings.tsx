@@ -328,10 +328,10 @@ const AdminSettings = () => {
               <p className="text-sm font-sans text-muted-foreground">Automated actions when invoices go past due.</p>
               <div className="space-y-3">
                 {[
-                  { label: "Day 1 — Gentle reminder email", default: true },
-                  { label: "Day 7 — Firm follow-up email", default: true },
-                  { label: "Day 14 — Final notice + admin flag", default: true },
-                  { label: "Day 30 — Collections risk + urgent task", default: true },
+                  { label: "Day 1: Gentle reminder email", default: true },
+                  { label: "Day 7: Firm follow-up email", default: true },
+                  { label: "Day 14: Final notice + admin flag", default: true },
+                  { label: "Day 30: Collections risk + urgent task", default: true },
                 ].map((rule) => (
                   <div key={rule.label} className="flex items-center justify-between">
                     <Label className="text-sm font-sans text-foreground">{rule.label}</Label>

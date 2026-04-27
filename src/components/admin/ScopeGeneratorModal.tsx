@@ -128,7 +128,7 @@ const ScopeGeneratorModal = ({ open, onOpenChange, projectId, projectTitle }: Sc
         <DialogHeader>
           <DialogTitle className="font-sans flex items-center gap-2">
             <FileText className="w-5 h-5 text-primary" />
-            Scope of Work — {projectTitle}
+            Scope of Work: {projectTitle}
             {currentScope && (
               <Badge variant="secondary" className="text-[10px] font-sans">v{currentScope.version_number}</Badge>
             )}

@@ -32,7 +32,7 @@ const AISuggestionsStrip = ({ onNavigate, reportPages }: AISuggestionsStripProps
         items.push({
           id: `condition-${page.id}`,
           icon: <AlertTriangle className="w-5 h-5 text-accent" />,
-          headline: `${page.title} rated ${page.conditionRating?.toLowerCase()} — review recommendations`,
+          headline: `${page.title} rated ${page.conditionRating?.toLowerCase()}: review recommendations`,
           action: "View",
           tab: "report",
           pageId: page.id,

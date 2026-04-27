@@ -63,7 +63,7 @@ const DailyBrief = () => {
             {allClear ? (
               <div className="flex items-center gap-2 text-primary-foreground/80">
                 <Sparkles className="w-4 h-4 text-accent" />
-                <span className="text-sm font-sans">All clear today — nothing urgent needs your attention.</span>
+                <span className="text-sm font-sans">All clear today. Nothing urgent needs your attention.</span>
               </div>
             ) : (
               items.map((item, i) => (

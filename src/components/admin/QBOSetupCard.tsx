@@ -114,7 +114,7 @@ const QBOSetupCard = ({ propertyId }: QBOSetupCardProps) => {
             </div>
             <div className="flex items-start gap-2">
               <span className="text-accent mt-0.5">→</span>
-              <span>Portal is source of truth — changes flow one way (portal → QBO)</span>
+              <span>Portal is source of truth: changes flow one way (portal to QBO)</span>
             </div>
           </div>
 

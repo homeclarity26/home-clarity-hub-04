@@ -59,7 +59,7 @@ class ErrorBoundary extends Component<Props, State> {
             </h1>
             <p className="font-sans text-sm text-muted-foreground">
               {chunkDrift
-                ? "Reload to get the latest version — your browser has the old one cached."
+                ? "Reload to get the latest version: your browser has the old one cached."
                 : (this.state.error?.message || "An unexpected error occurred.")}
             </p>
             <Button onClick={() => { this.setState({ hasError: false, error: null }); sessionStorage.removeItem("hbc:chunk-reload"); window.location.reload(); }}>

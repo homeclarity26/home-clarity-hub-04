@@ -5,6 +5,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 import noInlineHex from "./eslint-rules/no-inline-hex.js";
 import noFixedHeightOnProse from "./eslint-rules/no-fixed-height-on-prose.js";
+import noEmDashesInJsx from "./eslint-rules/no-em-dashes-in-jsx.js";
 
 export default tseslint.config(
   { ignores: ["dist"] },
@@ -22,6 +23,7 @@ export default tseslint.config(
         rules: {
           "no-inline-hex": noInlineHex,
           "no-fixed-height-on-prose": noFixedHeightOnProse,
+          "no-em-dashes-in-jsx": noEmDashesInJsx,
         },
       },
     },
@@ -33,6 +35,8 @@ export default tseslint.config(
       // expanding-container sweep land. Follow-up PRs flip these to error.
       "hcr/no-inline-hex": "warn",
       "hcr/no-fixed-height-on-prose": "warn",
+      // D1 — flip to error after sweep confirms clean
+      "hcr/no-em-dashes-in-jsx": "warn",
     },
   },
 );

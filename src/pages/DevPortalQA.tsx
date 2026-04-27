@@ -30,7 +30,7 @@ const DevPortalQA = () => {
           </p>
         </div>
 
-        <Section title="HCR Logo — sizes">
+        <Section title="HCR Logo: sizes">
           <div className="flex items-start gap-10 p-8 bg-card">
             <HCRLogo size="sm" />
             <HCRLogo size="md" />
@@ -49,13 +49,13 @@ const DevPortalQA = () => {
           />
         </Section>
 
-        <Section title="Page image slot — empty placeholder">
+        <Section title="Page image slot: empty placeholder">
           <div className="p-8 bg-card">
             <PageImageSlot caption="Property photos" />
           </div>
         </Section>
 
-        <Section title="Page image slot — with gallery">
+        <Section title="Page image slot: with gallery">
           <div className="p-8 bg-card">
             <PageImageSlot
               images={[

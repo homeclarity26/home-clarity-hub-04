@@ -164,7 +164,7 @@ const RecurringServicesRegisterBlock = ({
       {/* HBC Concierge pitch — full-width navy card directly above table */}
       <div className="rounded-lg p-5" style={{ background: NAVY, color: "#EDE9E1" }}>
         <div className="font-mono text-[10px] uppercase tracking-[0.15em] mb-1.5" style={{ color: GOLD }}>
-          HBC Concierge — honest pricing
+          HBC Concierge: honest pricing
         </div>
         <div className="font-display text-xl sm:text-2xl mb-3">
           One bill. One number. One conversation.
