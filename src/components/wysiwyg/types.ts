@@ -27,7 +27,8 @@ export type BlockType =
   | "todays_brief"
   | "hover_embed"
   | "iguide_embed"
-  | "floor_plan_embed";
+  | "floor_plan_embed"
+  | "field_checklist";
 
 // Word-only condition ratings — replaces the numeric Health Score system
 // being deleted in Phase 6. Values are user-facing strings (rendered as-is)
@@ -336,6 +337,22 @@ export interface RecurringServicesRegisterContent {
   // Override for the Concierge pitch — defaults to locked HONEST framing
   // (saves time/frustration, NOT money) per [v2.38]
   conciergePitchHtml?: string;
+}
+
+// ── Field Checklist (B12) ───────────────────────────────────────────────
+// Admin-only walkthrough checklist per [v2.4]. RENDERS NOTHING when
+// editable=false (i.e. on the client portal). Mobile-first design (393px
+// iPhone viewport in particular — Adam's mid-walkthrough check device).
+
+export interface FieldChecklistItem {
+  id: string;
+  description: string;
+  checked: boolean;
+}
+
+export interface FieldChecklistContent {
+  title?: string;            // default "Field Walkthrough Checklist"
+  items: FieldChecklistItem[];
 }
 
 // ── Embed Blocks (B10) ──────────────────────────────────────────────────
@@ -741,6 +758,17 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
     icon: "Map",
     defaultColSpan: 6,
     defaultContent: { url: "", title: "Floor Plans" },
+  },
+  {
+    type: "field_checklist",
+    label: "Field Checklist (admin-only)",
+    description: "Mobile-first walkthrough checklist; never visible to client",
+    icon: "CheckSquare",
+    defaultColSpan: 12,
+    defaultContent: {
+      title: "Field Walkthrough Checklist",
+      items: [],
+    },
   },
 ];
 
