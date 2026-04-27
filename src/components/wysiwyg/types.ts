@@ -17,7 +17,8 @@ export type BlockType =
   | "ai_narrative"
   | "condition_rating"
   | "room_record"
-  | "system_record";
+  | "system_record"
+  | "replacement_briefing";
 
 // Word-only condition ratings — replaces the numeric Health Score system
 // being deleted in Phase 6. Values are user-facing strings (rendered as-is)
@@ -194,6 +195,47 @@ export interface SystemRecordContent {
 
   // Photos by role — slots are always rendered; URLs fill them when present.
   photos?: SystemPhotoSlots;
+}
+
+// ── Replacement Briefing (B4) — the killer feature ──────────────────────
+// Schema mirrors the replacement_briefings DB row created in M2 (Master
+// Spec 5.1.2). The block stores the full payload in its content so the
+// renderer is pure presentation — no runtime fetch.
+
+export interface ReplacementBriefingTier {
+  id: string;                     // 'essential' | 'enhanced' | 'signature'
+  label: string;                  // 'Essential' | 'Enhanced' | 'Signature'
+  priceLow?: number;              // dollars
+  priceHigh?: number;             // dollars
+  scopeHtml?: string;             // optional longer description
+  inclusions?: string[];
+  exclusions?: string[];
+  warranty?: string;              // '5 years parts, 2 years labor'
+  recommended?: boolean;          // true gets gold border + badge
+}
+
+export interface ReplacementBriefingPhoto {
+  role: "unit" | "serial_plate" | "install_location" | "failure_signal";
+  url: string;
+  caption?: string;
+}
+
+export interface ReplacementBriefingCta {
+  id: string;                     // 'emergency' | 'plan'
+  label: string;                  // 'Help, this isn't working' / 'Plan my replacement'
+  style: "rust" | "gold" | "navy"; // visual variant
+  action: string;                 // 'open_concierge' for now (only handler post-C1)
+  prompt?: string;                // text to prefill into Concierge
+}
+
+export interface ReplacementBriefingContent {
+  systemType?: string;            // 'Furnace', 'AC Condenser', 'Water Heater'
+  headline?: string;              // default 'Pre-scoped, pre-priced, ready when you are'
+  intro?: string;                 // default explainer paragraph
+  tiers: ReplacementBriefingTier[];
+  photos?: ReplacementBriefingPhoto[];
+  ctas?: ReplacementBriefingCta[];
+  howReplacementHappensHtml?: string;
 }
 
 // Evolving record per room. Every field except roomName is optional;
@@ -392,6 +434,28 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
       maintenanceLog: [],
       routineCareItems: [],
       photos: {},
+    },
+  },
+  {
+    type: "replacement_briefing",
+    label: "Replacement Briefing",
+    description: "Pre-scoped, pre-priced replacement package with tiers, photos, and CTAs",
+    icon: "Package",
+    defaultColSpan: 12,
+    defaultContent: {
+      systemType: "System",
+      headline: "Pre-scoped, pre-priced, ready when you are",
+      intro: "When you are ready to replace this system, tap below. We send our trade partner a complete briefing so they arrive with everything they need. No site visit. No re-measuring. No surprise change orders.",
+      tiers: [
+        { id: "essential", label: "Essential", recommended: false },
+        { id: "enhanced", label: "Enhanced", recommended: true },
+        { id: "signature", label: "Signature", recommended: false },
+      ],
+      photos: [],
+      ctas: [
+        { id: "emergency", label: "Help, this isn't working", style: "rust", action: "open_concierge", prompt: "My {systemType} just stopped working. I need help today." },
+        { id: "plan", label: "Plan my replacement", style: "gold", action: "open_concierge", prompt: "I want to start planning the replacement for my {systemType}." },
+      ],
     },
   },
 ];
