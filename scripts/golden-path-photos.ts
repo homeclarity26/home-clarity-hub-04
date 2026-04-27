@@ -27,8 +27,8 @@ import {
 const PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkAAIAAAoAAv/lxKUAAAAASUVORK5CYII=";
 
 // Retry helper for Gemini transient overload (503 / IDLE_TIMEOUT).
-// analyze-photo and categorize-photo return ok:false wrapping the Gemini error;
-// up to 2 retries with 15s delay handles typical spike-and-recover load patterns.
+// Handles both ok:false wrapped Gemini errors and thrown HTTP 504 (IDLE_TIMEOUT)
+// where invokeFn throws on non-2xx status — up to 2 retries with 15s delay.
 async function retryOnOverload<T extends Record<string, unknown>>(
   fn: () => Promise<T>,
   maxAttempts = 3,
@@ -36,13 +36,25 @@ async function retryOnOverload<T extends Record<string, unknown>>(
 ): Promise<T> {
   let last!: T;
   for (let i = 0; i < maxAttempts; i++) {
-    last = await fn();
-    const isOverload =
-      (last as { ok?: boolean }).ok === false &&
-      (String(last.error ?? "").includes("503") ||
-        String(last.error ?? "").includes("high demand") ||
-        String(last.error ?? "").includes("IDLE_TIMEOUT"));
-    if (!isOverload || i === maxAttempts - 1) return last;
+    let threw = false;
+    try {
+      last = await fn();
+    } catch (e) {
+      threw = true;
+      const msg = String(e);
+      const isTransient =
+        msg.includes("504") || msg.includes("503") ||
+        msg.includes("IDLE_TIMEOUT") || msg.includes("high demand");
+      if (!isTransient || i === maxAttempts - 1) throw e;
+    }
+    if (!threw) {
+      const isOverload =
+        (last as { ok?: boolean }).ok === false &&
+        (String(last.error ?? "").includes("503") ||
+          String(last.error ?? "").includes("high demand") ||
+          String(last.error ?? "").includes("IDLE_TIMEOUT"));
+      if (!isOverload || i === maxAttempts - 1) return last;
+    }
     await new Promise((r) => setTimeout(r, delayMs));
   }
   return last;
