@@ -49,11 +49,14 @@ async function main(): Promise<number> {
   const insertedServiceIds: string[] = [];
   try {
     // Snapshot the current hbc_concierge_tier so we can restore it
-    const [propBefore] = await restGet<Array<{ hbc_concierge_tier: string | null }>>(
+    const propRows = await restGet<Array<{ hbc_concierge_tier: string | null }>>(
       ctx,
       `/rest/v1/properties?select=hbc_concierge_tier&id=eq.${TEST_PROPERTY_ID}`,
     );
-    const tierBefore = propBefore.hbc_concierge_tier;
+    if (propRows.length === 0) {
+      throw new Error(`TEST_PROPERTY_ID ${TEST_PROPERTY_ID} not found in properties table`);
+    }
+    const tierBefore = propRows[0].hbc_concierge_tier;
 
     // Insert 6 recurring_services rows with hbc_managed=true
     const serviceNames = [
@@ -98,14 +101,15 @@ async function main(): Promise<number> {
     // automatically, great. If not, we PATCH it directly to verify the column
     // accepts values (the spec says "verify it updates" but does not require
     // a specific trigger mechanism).
-    const [propAfter] = await restGet<Array<{ hbc_concierge_tier: string | null }>>(
+    const propAfterRows = await restGet<Array<{ hbc_concierge_tier: string | null }>>(
       ctx,
       `/rest/v1/properties?select=hbc_concierge_tier&id=eq.${TEST_PROPERTY_ID}`,
     );
+    const propAfter = propAfterRows[0];
 
     // If a trigger updated it, great. If not, PATCH it ourselves and verify
     // the column accepts the value.
-    let tierAfter = propAfter.hbc_concierge_tier;
+    let tierAfter = (propAfter ?? {}).hbc_concierge_tier ?? null;
     if (tierAfter === tierBefore) {
       // No automatic trigger; verify the column accepts a write
       await restPatch(
@@ -113,11 +117,11 @@ async function main(): Promise<number> {
         `/rest/v1/properties?id=eq.${TEST_PROPERTY_ID}`,
         { hbc_concierge_tier: "managed" },
       );
-      const [patched] = await restGet<Array<{ hbc_concierge_tier: string | null }>>(
+      const patchedRows = await restGet<Array<{ hbc_concierge_tier: string | null }>>(
         ctx,
         `/rest/v1/properties?select=hbc_concierge_tier&id=eq.${TEST_PROPERTY_ID}`,
       );
-      tierAfter = patched.hbc_concierge_tier;
+      tierAfter = patchedRows[0]?.hbc_concierge_tier ?? null;
       if (tierAfter !== "managed") {
         throw new Error(`hbc_concierge_tier PATCH did not persist: got '${tierAfter}'`);
       }
@@ -165,6 +169,7 @@ async function main(): Promise<number> {
       pages: incompletePages,
     };
 
+    // consistency-check expects { pages: PageInput[] } at the top level (E5 spec)
     const incompleteResp = await invokeFn<{
       pre_publish_questions?: Array<{ question?: string; severity?: string }>;
       questions?: Array<unknown>;
@@ -174,7 +179,7 @@ async function main(): Promise<number> {
       ctx,
       "consistency-check",
       creatorJWT,
-      { report: incompleteReport },
+      { pages: incompleteReport.pages },
       120_000,
     );
 
@@ -223,7 +228,7 @@ async function main(): Promise<number> {
       ctx,
       "consistency-check",
       creatorJWT,
-      { report: completeReport },
+      { pages: completeReport.pages },
       120_000,
     );
 

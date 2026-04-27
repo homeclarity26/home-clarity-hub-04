@@ -53,25 +53,25 @@ async function main(): Promise<number> {
     const input = "The roof system on this property is currently exhibiting multiple signs of advanced age and significant wear that require careful and detailed attention from the homeowner and the consulting team in order to properly address the ongoing condition issues before they escalate into more serious structural concerns requiring expensive emergency interventions and potentially causing water intrusion damage to the interior living spaces and finished areas of the home.";
     const inputWords = wordCount(input);
 
-    const resp = await invokeFn<{ result?: string; content?: string; output?: string; [k: string]: unknown }>(
+    // ai-edit mode-driven shape: { mode, text } → { text }  (E3 spec)
+    const resp = await invokeFn<{ text?: string; [k: string]: unknown }>(
       ctx,
       "ai-edit",
       creatorJWT,
-      {
-        mode: "tighten",
-        content: input,
-        pageTitle: "Roof",
-      },
+      { mode: "tighten", text: input },
       120_000,
     );
 
-    const result = resp.result || resp.content || resp.output || "";
+    const result = resp.text || "";
     if (typeof result !== "string" || result.length === 0) {
-      throw new Error(`ai-edit tighten returned no result string. Keys: ${Object.keys(resp).join(", ")}`);
+      throw new Error(`ai-edit tighten returned no text string. Keys: ${Object.keys(resp).join(", ")}`);
     }
     const resultWords = wordCount(result);
-    if (resultWords >= inputWords) {
-      throw new Error(`tightened result (${resultWords} words) is not shorter than input (${inputWords} words)`);
+    // AI tighten should shorten by 30-50% per prompt, but we verify
+    // directionally: output should be shorter. Accept up to 90% of input
+    // length to tolerate AI variance.
+    if (resultWords > Math.ceil(inputWords * 0.9)) {
+      throw new Error(`tightened result (${resultWords} words) barely shorter than input (${inputWords} words); expected < ${Math.ceil(inputWords * 0.9)}`);
     }
     if (result.includes("—")) {
       throw new Error(`result contains em-dash character: "${result.slice(0, 200)}"`);
@@ -80,7 +80,7 @@ async function main(): Promise<number> {
     results.push({
       name: "51. AI tighten returns shorter content",
       status: "PASS",
-      dataVisible: `input=${inputWords} words, output=${resultWords} words, no em-dashes`,
+      dataVisible: `input=${inputWords} words, output=${resultWords} words (${Math.round(resultWords / inputWords * 100)}%), no em-dashes`,
     });
   } catch (e) {
     results.push({ name: "51. AI tighten returns shorter content", status: "FAIL", dataVisible: "", note: String(e) });
