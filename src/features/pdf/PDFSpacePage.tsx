@@ -1,7 +1,6 @@
 import { Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import { colors, s } from "./pdfStyles";
 import PDFFooter from "./PDFFooter";
-import PDFHealthBar from "./PDFHealthBar";
 import PDFTierCards from "./PDFTierCards";
 import type { ReportPageData } from "@/data/reportContent";
 
@@ -126,11 +125,6 @@ const PDFSpacePage = ({ page, groupName, images = [] }: PDFSpacePageProps) => (
     {page.narrative.map((para, i) => (
       <Text key={i} style={sp.paragraph}>{para}</Text>
     ))}
-
-    {/* Health Bar */}
-    {page.healthBar && (
-      <PDFHealthBar {...page.healthBar} />
-    )}
 
     {/* Specs Table */}
     {page.specs && page.specs.length > 0 && (
