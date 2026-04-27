@@ -833,7 +833,7 @@ const ProposalInterviewWizard = ({
               onClick={() => setStep((s) => s + 1)}
               disabled={!canAdvance()}
               className="gap-1.5 font-sans"
-              style={{ background: canAdvance() ? "hsl(var(--hbc-gold))" : undefined, color: canAdvance() ? "#fff" : undefined }}
+              style={{ background: canAdvance() ? "hsl(var(--hbc-gold))" : undefined, color: canAdvance() ? "white" : undefined }}
             >
               Next <ArrowRight className="w-4 h-4" />
             </Button>
@@ -843,7 +843,7 @@ const ProposalInterviewWizard = ({
               onClick={handleGenerate}
               disabled={loading}
               className="gap-1.5 font-sans px-6"
-              style={{ background: "hsl(var(--hbc-gold))", color: "#fff" }}
+              style={{ background: "hsl(var(--hbc-gold))", color: "white" }}
             >
               {loading ? (
                 <>
