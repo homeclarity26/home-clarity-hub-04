@@ -31,14 +31,14 @@ const BRAND_CONFIG = {
     name: "Hometown Builders Club LLC",
     email: "adam@hometownbuildersclub.com",
     phone: "(330) 203-1331",
-    color: "#C4A265",
+    color: "#B87333",
     tagline: "Craftsmanship you can trust. Communication you deserve.",
   },
   akr: {
     name: "AK Renovations",
     email: "akrenovations01@gmail.com",
     phone: "(330) 203-1331",
-    color: "#B5450B",
+    color: "#B7410E",
     tagline: "Craftsmanship you can trust. Communication you deserve.",
   },
 };
@@ -67,7 +67,7 @@ export default function ChangeOrderDocument({
   <title>Change Order — ${changeOrder.title}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Georgia', serif; margin: 48px; color: #1B2B4D; background: white; }
+    body { font-family: 'Georgia', serif; margin: 48px; color: #0A1628; background: white; }
     .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid ${brandConfig.color}; padding-bottom: 24px; margin-bottom: 32px; }
     .company-name { font-size: 22px; font-weight: bold; color: ${brandConfig.color}; }
     .doc-title { font-size: 28px; font-weight: bold; text-align: right; }
@@ -80,7 +80,7 @@ export default function ChangeOrderDocument({
     .cost-table .total-row td { font-weight: bold; font-size: 16px; background: #F8F6F2; }
     .terms { background: #F8F6F2; border-left: 3px solid ${brandConfig.color}; padding: 16px; font-size: 13px; color: #555; font-style: italic; }
     .signature-block { margin-top: 32px; border-top: 2px solid #e5e7eb; padding-top: 24px; }
-    .sig-line { border-bottom: 1px solid #1B2B4D; margin-top: 40px; margin-bottom: 4px; }
+    .sig-line { border-bottom: 1px solid #0A1628; margin-top: 40px; margin-bottom: 4px; }
     .sig-label { font-size: 11px; color: #888; }
     .approval-notice { background: ${brandConfig.color}22; border: 1px solid ${brandConfig.color}55; padding: 12px; border-radius: 4px; font-size: 13px; margin-bottom: 16px; }
     @media print { body { margin: 20px; } }
@@ -212,9 +212,9 @@ export default function ChangeOrderDocument({
                   <td className="py-3 font-sans text-foreground">Original Contract Total</td>
                   <td className="py-3 font-sans text-right font-medium">{fmt(originalContractTotal)}</td>
                 </tr>
-                <tr className="border-b border-border/50 bg-[#F2EFEB]">
+                <tr className="border-b border-border/50 bg-muted">
                   <td className="py-3 font-sans text-foreground">This Change Order</td>
-                  <td className={`py-3 font-sans text-right font-medium ${changeOrder.amount >= 0 ? "text-green-600" : "text-[#B5450B]"}`}>
+                  <td className={`py-3 font-sans text-right font-medium ${changeOrder.amount >= 0 ? "text-green-600" : "text-destructive"}`}>
                     {changeOrder.amount >= 0 ? "+" : ""}{fmt(changeOrder.amount)}
                   </td>
                 </tr>
@@ -249,7 +249,7 @@ export default function ChangeOrderDocument({
                   type="checkbox"
                   checked={clientApprovalChecked}
                   onChange={e => setClientApprovalChecked(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 accent-[#C4A265]"
+                  className="mt-0.5 w-4 h-4 accent-accent"
                 />
                 <span className="font-sans text-sm text-foreground">
                   I approve this change order and authorize work to proceed.

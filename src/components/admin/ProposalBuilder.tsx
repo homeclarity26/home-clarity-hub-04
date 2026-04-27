@@ -27,8 +27,8 @@ const BRAND_CONFIG: Record<
 > = {
   hbc: {
     label: "HBC — Hometown Builders Club",
-    hero: "#1B2B4D",
-    accent: "#C4A265",
+    hero: "#0A1628",
+    accent: "#B87333",
     company: "Hometown Builders Club LLC",
     email: "adam@hometownbuildersclub.com",
     phone: "(330) 203-1331",
@@ -36,8 +36,8 @@ const BRAND_CONFIG: Record<
   },
   akr: {
     label: "AKR — AK Renovations",
-    hero: "#B5450B",
-    accent: "#C4A265",
+    hero: "#B7410E",
+    accent: "#B87333",
     company: "AK Renovations",
     email: "akrenovations01@gmail.com",
     phone: "(330) 203-1331",
@@ -384,7 +384,7 @@ const ProposalBuilder = ({ estimate, lineItems, clientName, propertyAddress, onU
           {docxLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
           Download .docx
         </Button>
-        <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={save} disabled={saving} style={{ background: brand.accent, color: "#fff" }}>
+        <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={save} disabled={saving} style={{ background: brand.accent, color: "hsl(var(--hbc-white))" }}>
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
           Save Proposal
         </Button>

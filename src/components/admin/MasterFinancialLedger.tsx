@@ -153,7 +153,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
   const getBalanceColor = () => {
     if (balanceDue === 0) return "text-green-600";
     const overdueInv = invoices.find(i => i.due_date && isPast(new Date(i.due_date)) && Number(i.balance_due) > 0);
-    if (overdueInv) return "text-[#B5450B]"; // rust
+    if (overdueInv) return "text-destructive"; // rust
     return "text-amber-600";
   };
 
@@ -245,7 +245,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-5 shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#F2EFEB] flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
               <FileIcon className="w-4 h-4 text-muted-foreground" />
             </div>
             <div>
@@ -256,7 +256,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
         </Card>
         <Card className="p-5 shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#F2EFEB] flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
               <TrendingUp className="w-4 h-4 text-muted-foreground" />
             </div>
             <div>
@@ -278,7 +278,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
         </Card>
         <Card className="p-5 shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#F2EFEB] flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
               <AlertCircle className="w-4 h-4 text-muted-foreground" />
             </div>
             <div>
@@ -343,7 +343,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
               <Card key={inv.id} className="overflow-hidden shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
                 {/* Collapsed Row */}
                 <div
-                  className="flex items-center gap-4 p-4 cursor-pointer hover:bg-[#F2EFEB]/50 transition-colors"
+                  className="flex items-center gap-4 p-4 cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => toggleInvoice(inv.id)}
                 >
                   <button className="text-muted-foreground flex-shrink-0">
@@ -392,7 +392,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
                           </thead>
                           <tbody>
                             {lis.map((li, i) => (
-                              <tr key={li.id} className={i % 2 === 0 ? "bg-white" : "bg-[#F2EFEB]"}>
+                              <tr key={li.id} className={i % 2 === 0 ? "bg-white" : "bg-muted"}>
                                 <td className="py-2 font-sans">{li.description}</td>
                                 <td className="py-2 font-sans text-right text-muted-foreground">{li.quantity}</td>
                                 <td className="py-2 font-sans text-right text-muted-foreground">{fmt(Number(li.unit_price))}</td>
@@ -464,7 +464,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
                         )}
                         <div className="flex justify-between border-t border-border pt-2 font-display text-base">
                           <span>Balance Due</span>
-                          <span className={Number(inv.balance_due) === 0 ? "text-green-600" : "text-[#B5450B]"}>
+                          <span className={Number(inv.balance_due) === 0 ? "text-green-600" : "text-destructive"}>
                             {fmt(Number(inv.balance_due))}
                           </span>
                         </div>
@@ -501,7 +501,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
           <Card className="overflow-hidden shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-border bg-[#F2EFEB]">
+                <tr className="border-b border-border bg-muted">
                   <th className="text-left font-mono text-[10px] uppercase tracking-wider text-muted-foreground p-4">Title</th>
                   <th className="text-left font-mono text-[10px] uppercase tracking-wider text-muted-foreground p-4 hidden sm:table-cell">Invoice</th>
                   <th className="text-right font-mono text-[10px] uppercase tracking-wider text-muted-foreground p-4">Amount</th>
@@ -512,7 +512,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
                 {changeOrders.map((co, i) => {
                   const linkedInvoice = invoices.find(inv => inv.id === co.invoice_id);
                   return (
-                    <tr key={co.id} className={i % 2 === 0 ? "bg-white" : "bg-[#F2EFEB]/50"}>
+                    <tr key={co.id} className={i % 2 === 0 ? "bg-white" : "bg-muted/50"}>
                       <td className="p-4">
                         <p className="font-sans text-sm font-medium">{co.title}</p>
                         {co.description && <p className="font-sans text-xs text-muted-foreground">{co.description}</p>}
@@ -542,7 +542,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
           <Card className="overflow-hidden shadow-[0_2px_8px_rgba(27,43,77,0.04)]">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-border bg-[#F2EFEB]">
+                <tr className="border-b border-border bg-muted">
                   <th className="text-left font-mono text-[10px] uppercase tracking-wider text-muted-foreground p-4">Date</th>
                   <th className="text-left font-mono text-[10px] uppercase tracking-wider text-muted-foreground p-4">Method</th>
                   <th className="text-right font-mono text-[10px] uppercase tracking-wider text-muted-foreground p-4">Amount</th>
@@ -554,7 +554,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
                 {[...payments].sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()).map((p, i) => {
                   const linkedInvoice = invoices.find(inv => inv.id === p.invoice_id);
                   return (
-                    <tr key={p.id} className={i % 2 === 0 ? "bg-white" : "bg-[#F2EFEB]/50"}>
+                    <tr key={p.id} className={i % 2 === 0 ? "bg-white" : "bg-muted/50"}>
                       <td className="p-4 font-sans text-sm">{format(new Date(p.payment_date), "MMM d, yyyy")}</td>
                       <td className="p-4 font-sans text-sm capitalize">{p.method}</td>
                       <td className="p-4 font-sans text-sm text-right font-medium text-green-600">{fmt(Number(p.amount))}</td>
@@ -567,7 +567,7 @@ export default function MasterFinancialLedger({ propertyId, propertyName, client
                 })}
               </tbody>
               <tfoot>
-                <tr className="border-t border-border bg-[#F2EFEB]">
+                <tr className="border-t border-border bg-muted">
                   <td colSpan={2} className="p-4 font-sans text-sm font-semibold">Total Received</td>
                   <td className="p-4 font-sans text-sm font-semibold text-right text-green-600">{fmt(paidToDate)}</td>
                   <td colSpan={2} />
