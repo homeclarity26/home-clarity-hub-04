@@ -23,7 +23,8 @@ export type BlockType =
   | "recurring_services_register"
   | "condition_pill"
   | "concierge_action"
-  | "maintenance_calendar";
+  | "maintenance_calendar"
+  | "todays_brief";
 
 // Word-only condition ratings — replaces the numeric Health Score system
 // being deleted in Phase 6. Values are user-facing strings (rendered as-is)
@@ -332,6 +333,29 @@ export interface RecurringServicesRegisterContent {
   // Override for the Concierge pitch — defaults to locked HONEST framing
   // (saves time/frustration, NOT money) per [v2.38]
   conciergePitchHtml?: string;
+}
+
+// ── Today's Brief (B9) ──────────────────────────────────────────────────
+// Daily-brief card per [v1.22]. Cream-light bg, gold left border, eyebrow
+// "From your Concierge", display title, brief html, expandable
+// "Why this matters now" section, action buttons (gold = confirm).
+// Sources data from daily_briefs DB row (M1) — block stores the rendered
+// payload in content; the daily-brief-cron edge function (E1) seeds it.
+
+export interface TodaysBriefAction {
+  id?: string;
+  label: string;                // gold button text e.g. "Schedule pest control"
+  prompt?: string;              // prefilled Concierge prompt on tap
+  style?: "gold" | "ghost";     // gold = confirm, ghost = secondary
+}
+
+export interface TodaysBriefContent {
+  eyebrow?: string;             // default "From your Concierge · generated this morning"
+  title?: string;               // default "Today's Brief"
+  briefDate?: string;           // ISO date or human "April 26"
+  briefHtml: string;            // headline + body (allow <strong>, <br/>)
+  whyItMattersHtml?: string;    // expanded explainer
+  actions?: TodaysBriefAction[];
 }
 
 // ── Maintenance Calendar (B8) ───────────────────────────────────────────
@@ -663,6 +687,19 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
       summer: [],
       fall: [],
       winter: [],
+    },
+  },
+  {
+    type: "todays_brief",
+    label: "Today's Brief",
+    description: "Daily brief card with expandable why-it-matters and action buttons",
+    icon: "Sun",
+    defaultColSpan: 12,
+    defaultContent: {
+      eyebrow: "From your Concierge · generated this morning",
+      title: "Today's Brief",
+      briefHtml: "<strong>Welcome.</strong> Today is a calm day. Nothing is overdue. Your home is in good standing.",
+      actions: [],
     },
   },
 ];
