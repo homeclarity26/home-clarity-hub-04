@@ -42,7 +42,6 @@ jobs:
           - messaging
           - proposal
           - equipment-schedule
-          - photos
           - rls
           - wizard
           - content-ops
@@ -81,6 +80,8 @@ jobs:
             script: scripts/golden-path-ai-writing.ts
           - flow: learning
             script: scripts/golden-path-learning.ts
+          - flow: photos        # Gemini vision — allow up to 3 attempts for model load spikes
+            script: scripts/golden-path-photos.ts
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
