@@ -5,12 +5,39 @@ import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
  * categorize-photo — auto-classify an uploaded photo by area/category/
  * tags so the admin doesn't have to tag every upload manually.
  *
- * Previous implementation: downloaded the image but never passed it to
- * the AI, then parsed OpenAI-shape tool_calls on a Gemini response that
- * never produced them. Silent fallback to `{category:"other"}` on
- * every call. Rewritten 2026-04-18 to pass the image bytes to Gemini
- * Pro vision (same pattern as enhance-photo / analyze-photo).
+ * Model: gemini-flash-latest (2.5 Flash, vision-capable). Pro was
+ * dropped 2026-04-27 after CI showed chronic 503 "high demand" and
+ * 504 idle-timeouts on every photos-suite run. Flash is fully
+ * multimodal and easily handles a one-shot category + tag classification.
  */
+const GEMINI_TIMEOUT_MS = 90_000;
+const VISION_MODEL = "gemini-flash-latest";
+
+async function fetchGeminiWithRetry(url: string, body: string): Promise<Response> {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), GEMINI_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        signal: ac.signal,
+      });
+      clearTimeout(timer);
+      if (res.status === 503 && attempt === 1) {
+        await new Promise((r) => setTimeout(r, 2000));
+        continue;
+      }
+      return res;
+    } catch (e) {
+      clearTimeout(timer);
+      if (attempt === 2) throw e;
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  }
+  throw new Error("unreachable");
+}
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -62,27 +89,23 @@ Given the photo, return JSON:
 
 If the image is blank, corrupted, or not a home/property photo, use category "other", confidence "low", and say so in the description.`;
 
-    const geminiResp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemInstruction }] },
-          contents: [{
-            role: "user",
-            parts: [
-              { inlineData: { mimeType, data: base64 } },
-              { text: "Categorize this photo and return the JSON." },
-            ],
-          }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.2,
-            maxOutputTokens: 1024,
-          },
-        }),
-      },
+    const geminiResp = await fetchGeminiWithRetry(
+      `https://generativelanguage.googleapis.com/v1beta/models/${VISION_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+      JSON.stringify({
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        contents: [{
+          role: "user",
+          parts: [
+            { inlineData: { mimeType, data: base64 } },
+            { text: "Categorize this photo and return the JSON." },
+          ],
+        }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.2,
+          maxOutputTokens: 1024,
+        },
+      }),
     );
 
     if (!geminiResp.ok) {

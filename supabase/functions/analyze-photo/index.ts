@@ -6,12 +6,47 @@ import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
  * a single photo. Returns a JSON structure with condition rating,
  * identified defects, and recommended actions.
  *
- * Previous implementation downloaded the image bytes but never included
- * them in the AI call, then parsed response in OpenAI-shape that callAI
- * never produced. Result: silent fallback to a generic "Fair" condition
- * every time. Rewritten 2026-04-18 to actually send the image to Gemini
- * 2.5 Pro's vision API (same pattern as enhance-photo).
+ * Model: gemini-flash-latest (2.5 Flash, vision-capable). Previously hit
+ * gemini-pro-latest but Pro is chronically overloaded for vision calls —
+ * golden-path-photos failed in CI with HTTP 503 "high demand" or 504
+ * idle-timeout (150s) on every attempt. Flash is multimodal-capable,
+ * 5-10x faster, and doesn't get rate-limited the way Pro does. Quality
+ * is more than sufficient for inspector-style structured-JSON output.
+ *
+ * Wraps the Gemini call in an AbortController with a 90s budget — well
+ * under Supabase's 150s function idle timeout — so a hung upstream gets
+ * a clean error instead of being killed mid-response. One retry on 503.
  */
+const GEMINI_TIMEOUT_MS = 90_000;
+const VISION_MODEL = "gemini-flash-latest";
+
+async function fetchGeminiWithRetry(url: string, body: string): Promise<Response> {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), GEMINI_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        signal: ac.signal,
+      });
+      clearTimeout(timer);
+      // Retry once on transient overload; otherwise return.
+      if (res.status === 503 && attempt === 1) {
+        await new Promise((r) => setTimeout(r, 2000));
+        continue;
+      }
+      return res;
+    } catch (e) {
+      clearTimeout(timer);
+      if (attempt === 2) throw e;
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  }
+  throw new Error("unreachable");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -71,27 +106,23 @@ Respond in JSON exactly matching:
   "raw_observations": [string]
 }`;
 
-    const geminiResp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemInstruction }] },
-          contents: [{
-            role: "user",
-            parts: [
-              { inlineData: { mimeType, data: base64 } },
-              { text: `Analyze this ${section_type || "home component"} photo and return the structured JSON.` },
-            ],
-          }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.3,
-            maxOutputTokens: 2048,
-          },
-        }),
-      },
+    const geminiResp = await fetchGeminiWithRetry(
+      `https://generativelanguage.googleapis.com/v1beta/models/${VISION_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+      JSON.stringify({
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        contents: [{
+          role: "user",
+          parts: [
+            { inlineData: { mimeType, data: base64 } },
+            { text: `Analyze this ${section_type || "home component"} photo and return the structured JSON.` },
+          ],
+        }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.3,
+          maxOutputTokens: 2048,
+        },
+      }),
     );
 
     if (!geminiResp.ok) {
