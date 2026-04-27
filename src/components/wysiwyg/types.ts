@@ -20,7 +20,8 @@ export type BlockType =
   | "system_record"
   | "replacement_briefing"
   | "vision_project"
-  | "recurring_services_register";
+  | "recurring_services_register"
+  | "condition_pill";
 
 // Word-only condition ratings — replaces the numeric Health Score system
 // being deleted in Phase 6. Values are user-facing strings (rendered as-is)
@@ -331,6 +332,15 @@ export interface RecurringServicesRegisterContent {
   conciergePitchHtml?: string;
 }
 
+// ── Condition Pill (B13) ────────────────────────────────────────────────
+// Inline-pill variant of ConditionRatingBlock (B1). Same 5-color palette;
+// used inline in narrative text or compact list views where the full card
+// would be visually heavy. Just rating + tiny dot, no eyebrow no notes.
+
+export interface ConditionPillContent {
+  rating: ConditionRating;
+}
+
 // Evolving record per room. Every field except roomName is optional;
 // blank string ("" or undefined) renders as muted "Not yet documented" in
 // non-editable view. The renderer handles the three display states (filled
@@ -581,6 +591,14 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
       showIfManagedColumn: true,
       estimatedHoursMonthly: 0,
     },
+  },
+  {
+    type: "condition_pill",
+    label: "Condition Pill (inline)",
+    description: "Tiny inline rating pill (use in narrative or compact lists)",
+    icon: "Circle",
+    defaultColSpan: 3,
+    defaultContent: { rating: "Good" },
   },
 ];
 
