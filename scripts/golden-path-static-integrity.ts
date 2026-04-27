@@ -64,30 +64,35 @@ async function main(): Promise<number> {
     let toolResponse: Record<string, unknown> | null = null;
     let toolUsed = "";
 
-    try {
-      toolResponse = await invokeFn<Record<string, unknown>>(
-        ctx,
-        "hbc-agent",
-        clientJWT,
-        {
-          message: "I would like to schedule a consultation for my annual review on May 15th.",
-          history: [],
-          context: {
-            role: "client",
-            propertyId: TEST_PROPERTY_ID,
-            currentEntityType: "property",
-            activeTab: "home",
-            sessionId: `gp-static-${stamp}`,
+    let hbcAgentError: Error | undefined;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        toolResponse = await invokeFn<Record<string, unknown>>(
+          ctx,
+          "hbc-agent",
+          clientJWT,
+          {
+            message: "I would like to schedule a consultation for my annual review on May 15th.",
+            history: [],
+            context: {
+              role: "client",
+              propertyId: TEST_PROPERTY_ID,
+              currentEntityType: "property",
+              activeTab: "home",
+              sessionId: `gp-static-${stamp}`,
+            },
           },
-        },
-        90_000,
-      );
-      toolUsed = "schedule_consultation (via message)";
-    } catch {
-      // hbc-agent responds conversationally — the HTTP call itself should succeed
-      // even if the tool is not triggered. If it throws, the agent itself errored.
-      throw new Error("hbc-agent returned an error response for client message");
+          90_000,
+        );
+        toolUsed = "schedule_consultation (via message)";
+        hbcAgentError = undefined;
+        break;
+      } catch (e) {
+        hbcAgentError = e instanceof Error ? e : new Error(String(e));
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 15_000));
+      }
     }
+    if (hbcAgentError) throw new Error(`hbc-agent returned an error response for client message: ${hbcAgentError.message}`);
 
     // The agent always returns a reply (message or reply field). Verify it.
     const reply = (toolResponse as { message?: string; reply?: string }).message
