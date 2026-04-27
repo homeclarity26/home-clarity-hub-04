@@ -20,7 +20,7 @@ type PricingType = "labor_only" | "lump_sum" | "three_tier" | "allowance" | "tim
 type BrandType = "hbc" | "akr";
 
 // ── Brand Config ──────────────────────────────────────────────────────────────
-// eslint-disable-next-line hcr/no-inline-hex -- brand identity hex values used in live style= props for dynamic brand previewing (CSS vars not interpolatable in style objects)
+/* eslint-disable hcr/no-inline-hex -- brand identity hex values used in live style= props for dynamic brand previewing (CSS vars not interpolatable in style objects) */
 const BRAND_CONFIG: Record<
   BrandType,
   { label: string; hero: string; accent: string; company: string; email: string; phone: string; tagline: string }
@@ -44,6 +44,7 @@ const BRAND_CONFIG: Record<
     tagline: "Craftsmanship you can trust. Communication you deserve.",
   },
 };
+/* eslint-enable hcr/no-inline-hex */
 
 // ── Pricing Type labels ───────────────────────────────────────────────────────
 

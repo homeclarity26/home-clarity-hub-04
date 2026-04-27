@@ -26,7 +26,7 @@ export interface ChangeOrderDocumentProps {
 
 const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 
-// eslint-disable-next-line hcr/no-inline-hex -- brand identity hex values used in print HTML template (CSS vars not available in window.open documents)
+/* eslint-disable hcr/no-inline-hex -- brand identity hex values used in print HTML template (CSS vars not available in window.open documents) */
 const BRAND_CONFIG = {
   hbc: {
     name: "Hometown Builders Club LLC",
@@ -43,6 +43,7 @@ const BRAND_CONFIG = {
     tagline: "Craftsmanship you can trust. Communication you deserve.",
   },
 };
+/* eslint-enable hcr/no-inline-hex */
 
 export default function ChangeOrderDocument({
   changeOrder,
