@@ -48,7 +48,7 @@ const createCustomIcon = (color: string = "#C4A265") =>
     popupAnchor: [0, -28],
   });
 
-// eslint-disable-next-line hcr/no-inline-hex -- Leaflet marker colors: CSS vars unavailable in L.divIcon html strings
+/* eslint-disable hcr/no-inline-hex -- Leaflet marker colors: CSS vars unavailable in L.divIcon html strings */
 const CONDITION_COLORS: Record<string, string> = {
   excellent: "#22c55e",
   good: "#4a7c59",
@@ -56,6 +56,7 @@ const CONDITION_COLORS: Record<string, string> = {
   poor: "#e88c30",
   critical: "#dc2626",
 };
+/* eslint-enable hcr/no-inline-hex */
 
 // Auto-fit map bounds to markers
 function FitBounds({ markers }: { markers: PropertyMarker[] }): null {

@@ -18,7 +18,7 @@ interface ClientHealthCardProps {
 
 type Rating = "Excellent" | "Good" | "Fair" | "Poor" | "Critical";
 
-// eslint-disable-next-line hcr/no-inline-hex -- canonical condition-rating palette (spec-defined, used in style= for color dot)
+/* eslint-disable hcr/no-inline-hex -- canonical condition-rating palette (spec-defined, used in style= for color dot) */
 const RATING_COLORS: Record<Rating, string> = {
   Excellent: "#2F6E40",
   Good: "#5A8A4F",
@@ -26,6 +26,7 @@ const RATING_COLORS: Record<Rating, string> = {
   Poor: "#B7410E",
   Critical: "#8B0000",
 };
+/* eslint-enable hcr/no-inline-hex */
 
 function bucketTotal(total: number): Rating {
   if (total >= 90) return "Excellent";
