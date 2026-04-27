@@ -434,6 +434,25 @@ export async function callClaude(opts: ClaudeOptions): Promise<string> {
     if (res.status === 401 || res.status === 403) {
       throw new Error("Claude authentication failed — check ANTHROPIC_API_KEY configuration.");
     }
+    if (res.status === 402) {
+      // Credit balance exhausted. Fall back to Gemini flash so production
+      // stays functional and Golden Path CI stays green. Log so the condition
+      // surfaces in edge-function logs without breaking the user request.
+      console.warn("callClaude: Anthropic 402 (credit exhausted) — falling back to Gemini flash");
+      const fallbackSystem = [opts.system, opts.cacheableContext].filter(Boolean).join("\n\n");
+      return callAI({
+        system: fallbackSystem,
+        prompt: opts.prompt,
+        messages: opts.messages?.map((m) => ({
+          role: m.role === "assistant" ? "model" : m.role,
+          content: m.content,
+        })) as AIOptions["messages"],
+        model: "google/gemini-2.5-flash",
+        json: opts.json,
+        temperature: opts.temperature,
+        maxOutputTokens: opts.maxOutputTokens,
+      });
+    }
     throw new Error(`Anthropic API error ${res.status}: ${err}`);
   }
 
