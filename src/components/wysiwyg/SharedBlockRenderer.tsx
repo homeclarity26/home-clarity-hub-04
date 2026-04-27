@@ -25,6 +25,7 @@ import MaintenanceCalendarBlock from "./blocks/MaintenanceCalendarBlock";
 import TodaysBriefBlock from "./blocks/TodaysBriefBlock";
 import { HoverEmbedBlock, IGuideEmbedBlock, FloorPlanEmbedBlock } from "./blocks/EmbedBlocks";
 import FieldChecklistBlock from "./blocks/FieldChecklistBlock";
+import CapitalPlanBlock from "./blocks/CapitalPlanBlock";
 
 interface SharedBlockRendererProps {
   block: ReportBlock;
@@ -130,6 +131,16 @@ const SharedBlockRenderer = ({
       return <FloorPlanEmbedBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     case "field_checklist":
       return <FieldChecklistBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "capital_plan":
+      return (
+        <CapitalPlanBlock
+          content={c as any}
+          editable={editable}
+          onChange={handleChange as any}
+          reportId={reportId}
+          propertyId={propertyId}
+        />
+      );
     default:
       return <div className="bg-muted rounded p-4 text-xs text-muted-foreground">Unknown block: {block.type}</div>;
   }

@@ -27,7 +27,8 @@ export type BlockType =
   | "hover_embed"
   | "iguide_embed"
   | "floor_plan_embed"
-  | "field_checklist";
+  | "field_checklist"
+  | "capital_plan";
 
 // Word-only condition ratings — replaces the numeric Health Score system
 // being deleted in Phase 6. Values are user-facing strings (rendered as-is)
@@ -472,6 +473,53 @@ export interface RoomRecordContent {
   linkedVisionProjects?: RoomLinkedVisionProject[];
 }
 
+// ── Capital Plan (B7) ───────────────────────────────────────────────────
+// 10-Year strategic project roadmap per [v2.11] / Master Spec 6.3.2.
+// Mirrors capital_plan_items DB row from M4. Each project is a row with
+// a year span (year_start..year_end), a phase (defense/offense/expansion),
+// and a cost range. Renderer is a Gantt-style horizontal timeline on
+// desktop and a stacked vertical list on mobile. @dnd-kit drag-drop
+// reorders projects across years and persists year_start, year_end,
+// display_order back to the DB. NEVER show a summed total at the top
+// (per [v1.17]) — the bottom "Annual cash flow" row is the only roll-up.
+//
+// Phase categorization ([v1.16]):
+//   defense   = protect what's there now (replacements, maintenance, repairs)
+//   offense   = upgrade existing (kitchen refresh, bath remodel)
+//   expansion = add new footprint (addition, finished basement, ADU)
+
+export type CapitalPlanPhase = "defense" | "offense" | "expansion";
+
+export interface CapitalPlanItem {
+  // Mirrors capital_plan_items.id when persisted to DB. Kept optional so
+  // the renderer can show in-memory items before they're saved.
+  id?: string;
+  projectName: string;
+  phase: CapitalPlanPhase;
+  yearStart: number;
+  yearEnd: number;
+  costLow?: number;       // dollars
+  costHigh?: number;      // dollars
+  selectedTier?: string;  // optional, mirrors capital_plan_items.selected_tier
+  notesHtml?: string;
+  displayOrder?: number;  // ordering within a year column
+  sourcePageId?: string;  // optional backlink to source vision/replacement page
+}
+
+export interface CapitalPlanContent {
+  // Optional eyebrow + title (renderer falls back to defaults)
+  eyebrow?: string;             // default "Strategic Roadmap"
+  title?: string;               // default "10-Year Capital Plan"
+
+  // Anchor year for the 10-year horizon. Defaults to current calendar year.
+  startYear?: number;
+
+  // The projects themselves. Renderer groups by year_start and sorts within
+  // each year by displayOrder. Drag-drop mutates year_start/year_end and/or
+  // displayOrder and persists back to capital_plan_items.
+  items: CapitalPlanItem[];
+}
+
 // ─── Block templates for the "Add Block" picker ──────────────────
 
 export interface BlockTemplate {
@@ -758,6 +806,18 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
     defaultColSpan: 12,
     defaultContent: {
       title: "Field Walkthrough Checklist",
+      items: [],
+    },
+  },
+  {
+    type: "capital_plan",
+    label: "Capital Plan (10-year)",
+    description: "Drag-drop Gantt of strategic projects across a 10-year horizon (Defense / Offense / Expansion)",
+    icon: "CalendarRange",
+    defaultColSpan: 12,
+    defaultContent: {
+      eyebrow: "Strategic Roadmap",
+      title: "10-Year Capital Plan",
       items: [],
     },
   },
