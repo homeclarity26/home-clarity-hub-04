@@ -63,7 +63,7 @@ async function main(): Promise<number> {
       "HVAC Filter", "Gutter Cleaning", "Chimney Sweep",
       "Pest Control", "Dryer Vent", "Water Treatment",
     ];
-    const categories = ["hvac", "exterior", "fireplace", "pest", "safety", "plumbing"];
+    const categories = ["hvac", "roof_gutters", "other", "pest_control", "cleaning", "plumbing"];
 
     for (let i = 0; i < 6; i++) {
       const [svc] = await restPost<Array<{ id: string }>>(
@@ -75,7 +75,7 @@ async function main(): Promise<number> {
           category: categories[i],
           frequency: "annual",
           hbc_managed: true,
-          status: "active",
+          status: "current",
           display_order: i + 100,
         },
       );
@@ -257,8 +257,9 @@ async function main(): Promise<number> {
       {
         property_id: TEST_PROPERTY_ID,
         created_by_user_id: creatorId,
-        notes_html: `<p>GP test note ${stamp} — creator-only</p>`,
+        notes_html: `<p>GP test note ${stamp} - creator-only</p>`,
         visit_year: new Date().getFullYear(),
+        page_key: "roof",
       },
     );
     ctx.cleanups.push(async () => {

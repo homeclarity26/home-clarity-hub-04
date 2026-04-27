@@ -118,7 +118,7 @@ async function main(): Promise<number> {
         property_id: TEST_PROPERTY_ID,
         report_id: capitalPlanReportId,
         project_name: `GP Roof Replacement ${stamp}`,
-        phase: "short_term",
+        phase: "defense",
         year_start: 1,
         year_end: 2,
         cost_low: 12000,
