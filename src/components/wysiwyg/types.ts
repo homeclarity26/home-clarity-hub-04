@@ -18,7 +18,8 @@ export type BlockType =
   | "condition_rating"
   | "room_record"
   | "system_record"
-  | "replacement_briefing";
+  | "replacement_briefing"
+  | "vision_project";
 
 // Word-only condition ratings — replaces the numeric Health Score system
 // being deleted in Phase 6. Values are user-facing strings (rendered as-is)
@@ -236,6 +237,49 @@ export interface ReplacementBriefingContent {
   photos?: ReplacementBriefingPhoto[];
   ctas?: ReplacementBriefingCta[];
   howReplacementHappensHtml?: string;
+}
+
+// ── Vision Project (B5) ─────────────────────────────────────────────────
+// Full scope + design-fee education + 3-tier investment + REQUIRED AKR
+// disclosure per [v1.13]. Reuses ReplacementBriefingTier shape since the
+// 3-tier pattern is identical across briefings and vision projects.
+
+export interface VisionProjectContent {
+  // Identity
+  projectTitle: string;
+  category?: string;              // "Lifestyle", "Critical", "Comfort"
+  priority?: string;              // "Year 1-2", "Year 4-5"
+  imageUrl?: string;
+
+  // Vision narrative (warm, aspirational)
+  visionNarrativeHtml?: string;
+
+  // Why design matters first — per [v1.18] / Master Spec Section 3
+  designFeeEducationHtml?: string;
+  designFeeLow?: number;          // dollars
+  designFeeHigh?: number;
+
+  // Scope of work (beautifully written, hedged)
+  scopeOfWorkHtml?: string;
+
+  // 3-tier investment (Essential / Enhanced [recommended] / Signature)
+  tiers: ReplacementBriefingTier[];
+
+  // Execution path — AKR transparently disclosed (REQUIRED per [v1.13]).
+  // executionPathHtml defaults to the locked AKR-disclosure language.
+  // akrDisclosed must be true; renderer shows a warning chip otherwise.
+  executionPathHtml?: string;
+  akrDisclosed: boolean;
+
+  // Disruption forecast (e.g. "kitchen = 8 weeks of takeout")
+  disruptionSummary?: string;
+
+  // Sequencing dependencies (e.g. "electrical before chef's kitchen")
+  dependenciesHtml?: string;
+
+  // Optional bottom-of-block Concierge CTA
+  conciergeActionLabel?: string;
+  conciergeActionPrompt?: string;
 }
 
 // Evolving record per room. Every field except roomName is optional;
@@ -456,6 +500,23 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
         { id: "emergency", label: "Help, this isn't working", style: "rust", action: "open_concierge", prompt: "My {systemType} just stopped working. I need help today." },
         { id: "plan", label: "Plan my replacement", style: "gold", action: "open_concierge", prompt: "I want to start planning the replacement for my {systemType}." },
       ],
+    },
+  },
+  {
+    type: "vision_project",
+    label: "Vision Project",
+    description: "Full scoped vision page with narrative, design-fee education, 3 tiers, and AKR disclosure",
+    icon: "Sparkles",
+    defaultColSpan: 12,
+    defaultContent: {
+      projectTitle: "New Vision Project",
+      tiers: [
+        { id: "essential", label: "Essential", recommended: false },
+        { id: "enhanced", label: "Enhanced", recommended: true },
+        { id: "signature", label: "Signature", recommended: false },
+      ],
+      executionPathHtml: "When you are ready to start, this can be executed through <strong>AK Renovations</strong>, our in-house remodeling division. AK Renovations is openly owned by Adam and is a transparent partner in the HBC ecosystem. If you would prefer a different contractor, we will connect you with a vetted HBC trade partner. The choice is always yours. Either way, you stay in the same conversation with HBC.",
+      akrDisclosed: true,
     },
   },
 ];

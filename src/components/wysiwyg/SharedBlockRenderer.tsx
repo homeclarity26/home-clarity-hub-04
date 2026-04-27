@@ -18,6 +18,7 @@ import ConditionRatingBlock from "./blocks/ConditionRatingBlock";
 import RoomRecordBlock from "./blocks/RoomRecordBlock";
 import SystemRecordBlock from "./blocks/SystemRecordBlock";
 import ReplacementBriefingBlock from "./blocks/ReplacementBriefingBlock";
+import VisionProjectBlock from "./blocks/VisionProjectBlock";
 
 interface SharedBlockRendererProps {
   block: ReportBlock;
@@ -105,6 +106,8 @@ const SharedBlockRenderer = ({
       return <SystemRecordBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     case "replacement_briefing":
       return <ReplacementBriefingBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "vision_project":
+      return <VisionProjectBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     default:
       return <div className="bg-muted rounded p-4 text-xs text-muted-foreground">Unknown block: {block.type}</div>;
   }
