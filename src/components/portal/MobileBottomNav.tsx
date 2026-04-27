@@ -1,4 +1,4 @@
-import { Home, FileText, Hammer, MessageSquare, Menu as More } from "lucide-react";
+import { Home, FileText, Hammer, CreditCard, Menu as More } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -16,11 +16,13 @@ interface MobileBottomNavProps {
   className?: string;
 }
 
+// C12: Messages folded into the Concierge bar — Payments takes its slot in the
+// 4 primary mobile tabs. The "More" button reveals Schedule + Contacts.
 const PRIMARY = [
   { id: "home", label: "Home", icon: Home },
   { id: "report", label: "Report", icon: FileText },
   { id: "projects", label: "Projects", icon: Hammer },
-  { id: "messages", label: "Messages", icon: MessageSquare },
+  { id: "payments", label: "Payments", icon: CreditCard },
 ] as const;
 
 export function MobileBottomNav({

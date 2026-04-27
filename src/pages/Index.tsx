@@ -4,27 +4,14 @@ import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import HomeTab from "@/components/tabs/HomeTab";
+import PortalHome from "@/components/portal/home/PortalHome";
 import ReportTab from "@/components/tabs/ReportTab";
 import ProjectsTab from "@/components/tabs/ProjectsTab";
 import PaymentsTab from "@/components/tabs/PaymentsTab";
 import ContactsTab from "@/components/tabs/ContactsTab";
 import ScheduleTab from "@/components/tabs/ScheduleTab";
-import DocumentsTab from "@/components/tabs/DocumentsTab";
-import MessagesTab from "@/components/tabs/MessagesTab";
-import PhotosTab from "@/components/tabs/PhotosTab";
-import BillingTab from "@/components/portal/BillingTab";
-import EquipmentTab from "@/components/tabs/EquipmentTab";
-import ServicesMenu from "@/components/portal/ServicesMenu";
-import EstimatesPortal from "@/components/portal/EstimatesPortal";
 // OnboardingOverlay removed — consolidated into ClientOnboardingModal
-import MembershipBanner from "@/components/MembershipBanner";
-import NotificationPreferences from "@/components/NotificationPreferences";
-import ClientReferralPortal from "@/components/portal/ClientReferralPortal";
-import AnnouncementBanner from "@/components/AnnouncementBanner";
 import PushNotificationBanner from "@/components/PushNotificationBanner";
-import NPSSurveyCard from "@/components/NPSSurveyCard";
-import PropertySelector from "@/components/PropertySelector";
 import HelpCenterPanel from "@/components/help/HelpCenterPanel";
 import ClientOnboardingModal from "@/components/help/ClientOnboardingModal";
 import { useClientPortal } from "@/hooks/useClientPortal";
@@ -37,11 +24,25 @@ import { useTutorialProgress } from "@/hooks/useTutorialProgress";
 import { supabase } from "@/integrations/supabase/client";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 
+// C12 — 6 visible tabs in the navigation surface.
+// Photos → projects, Documents/Equipment → report, Estimates/Billing → payments,
+// Services → schedule, Messages → concierge bar, Refer → quick link on Home,
+// Notifications → concierge bar indicator. Old URLs are redirected below.
 const VALID_TABS = new Set([
-  "home", "report", "photos", "projects", "payments", "contacts",
-  "documents", "messages", "equipment", "services", "estimates",
-  "schedule", "billing", "notifications", "refer",
+  "home", "report", "projects", "payments", "contacts", "schedule",
 ]);
+
+const FOLDED_TAB_REDIRECTS: Record<string, string> = {
+  photos: "projects",
+  documents: "report",
+  equipment: "report",
+  services: "schedule",
+  estimates: "payments",
+  billing: "payments",
+  messages: "home",
+  notifications: "home",
+  refer: "home",
+};
 
 const Index = () => {
   const { propertyId, tab: urlTab } = useParams<{ propertyId?: string; tab?: string }>();
@@ -51,11 +52,26 @@ const Index = () => {
   const isAdminPreview = searchParams.get("preview") === "admin";
   const { user, isCreator, isLoading: authLoading, signOut } = useAuth();
 
-  // Derive active tab from URL — fall back to "home"
-  const activeTab = urlTab && VALID_TABS.has(urlTab) ? urlTab : "home";
+  // Derive active tab from URL. Folded URLs (photos/documents/equipment/etc.)
+  // resolve to their parent tab so deep links keep working after C12 collapse.
+  const activeTab = urlTab && VALID_TABS.has(urlTab)
+    ? urlTab
+    : urlTab && FOLDED_TAB_REDIRECTS[urlTab]
+      ? FOLDED_TAB_REDIRECTS[urlTab]
+      : "home";
+
+  // If the URL points to a folded tab, rewrite the URL once so refreshes and
+  // shared links land on the canonical parent tab.
+  useEffect(() => {
+    if (urlTab && !VALID_TABS.has(urlTab) && FOLDED_TAB_REDIRECTS[urlTab]) {
+      const target = FOLDED_TAB_REDIRECTS[urlTab];
+      const base = propertyId ? `/portal/${propertyId}` : "/portal";
+      navigate(target === "home" ? base : `${base}/${target}`, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlTab, propertyId]);
 
   const [reportPageId, setReportPageId] = useState<string | null>(null);
-  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   // showOnboarding removed — consolidated into tutorial modal
   const [helpOpen, setHelpOpen] = useState(false);
@@ -103,9 +119,6 @@ const Index = () => {
       report: "view_report",
       home: "check_health",
       projects: "explore_projects",
-      equipment: "view_equipment",
-      documents: "view_document",
-      messages: "send_message",
       schedule: "check_schedule",
     };
     const key = tabToKey[activeTab];
@@ -145,15 +158,15 @@ const Index = () => {
 
   const handleTabChange = useCallback((tab: string) => {
     setReportPageId(null);
-    if (tab !== "messages") setPendingMessage(null);
     navigateToTab(tab);
   }, [navigateToTab]);
 
+  // C12: Messages tab folded into the Concierge bar. Sending a message now
+  // opens the Concierge sheet with the prompt prefilled.
   const handleSendMessage = useCallback((msg: string) => {
-    setPendingMessage(msg);
     setReportPageId(null);
-    navigateToTab("messages");
-  }, [navigateToTab]);
+    window.dispatchEvent(new CustomEvent("concierge:open", { detail: { prompt: msg } }));
+  }, []);
 
   const handleReportPageSelect = useCallback((pageId: string) => {
     setReportPageId(pageId);
@@ -365,25 +378,26 @@ const Index = () => {
       <main className={`${isEditLink && canEdit ? "pt-[calc(2rem+36px)]" : "pt-20"} md:pl-[188px] pb-24 md:pb-16`}>
         <div className={`transition-opacity duration-300 ${activeTab === "home" ? "opacity-100" : "opacity-0 hidden"}`}>
           {activeTab === "home" && (
-          <HomeTab
+            <PortalHome
               onNavigate={handleNavigate}
               onTabChange={handleTabChange}
               propertyName={propertyName}
               propertyAddress={portal.property?.address || ""}
               heroImageUrl={portal.property?.hero_image_url}
               yearBuilt={portal.property?.year_built}
-              completionPercent={portal.completionPercent}
-              creatorName={portal.creatorName}
-              estimatedValue={portal.property?.estimated_value}
               propertyId={propertyId || ""}
-              reportPages={portal.pages}
+              hoverUrl={portal.property?.hover_url}
+              hoverPdfUrl={portal.property?.hover_pdf_url}
+              iguideUrl={portal.property?.iguide_url}
+              floorPlanUrl={portal.property?.floor_plan_url}
+              estimatedValue={portal.property?.estimated_value}
               isAdminPreview={isAdminPreview || isCreator}
               clientFirstName={portal.clientFirstName}
             />
           )}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "report" ? "opacity-100" : "opacity-0 hidden"}`}>
-        {activeTab === "report" && (
+          {activeTab === "report" && (
             <ReportTab
               activePageId={reportPageId}
               onNavigate={handleReportPageSelect}
@@ -418,52 +432,38 @@ const Index = () => {
             />
           )}
         </div>
-        <div className={`transition-opacity duration-300 ${activeTab === "photos" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "photos" && <PhotosTab propertyId={portal.property?.id} />}
-        </div>
         <div className={`transition-opacity duration-300 ${activeTab === "projects" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "projects" && <ProjectsTab onNavigate={handleNavigate} onTabChange={handleTabChange} propertyId={portal.property?.id} pages={portal.pages} onSendMessage={handleSendMessage} />}
-        </div>
-        <div className={`transition-opacity duration-300 ${activeTab === "payments" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "payments" && <PaymentsTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}
-        </div>
-        <div className={`transition-opacity duration-300 ${activeTab === "contacts" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "contacts" && <ContactsTab creator={portal.creatorProfile} onTabChange={handleTabChange} propertyId={portal.property?.id} />}
-        </div>
-        <div className={`transition-opacity duration-300 ${activeTab === "documents" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "documents" && <DocumentsTab propertyId={portal.property?.id} />}
-        </div>
-        <div className={`transition-opacity duration-300 ${activeTab === "messages" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "messages" && (
-            <MessagesTab
+          {activeTab === "projects" && (
+            <ProjectsTab
+              onNavigate={handleNavigate}
+              onTabChange={handleTabChange}
               propertyId={portal.property?.id}
-              creatorName={portal.creatorName}
-              creatorInitials={portal.creatorProfile?.initials}
-              initialMessage={pendingMessage || undefined}
+              pages={portal.pages}
+              onSendMessage={handleSendMessage}
             />
           )}
         </div>
-        <div className={`transition-opacity duration-300 ${activeTab === "equipment" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "equipment" && <EquipmentTab propertyId={portal.property?.id} onTabChange={handleTabChange} onSendMessage={handleSendMessage} />}
+        <div className={`transition-opacity duration-300 ${activeTab === "payments" ? "opacity-100" : "opacity-0 hidden"}`}>
+          {activeTab === "payments" && (
+            <PaymentsTab propertyId={portal.property?.id} onTabChange={handleTabChange} />
+          )}
         </div>
-        <div className={`transition-opacity duration-300 ${activeTab === "services" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "services" && <ServicesMenu propertyId={portal.property?.id} />}
-        </div>
-        <div className={`transition-opacity duration-300 ${activeTab === "estimates" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "estimates" && <EstimatesPortal propertyId={portal.property?.id} />}
+        <div className={`transition-opacity duration-300 ${activeTab === "contacts" ? "opacity-100" : "opacity-0 hidden"}`}>
+          {activeTab === "contacts" && (
+            <ContactsTab
+              creator={portal.creatorProfile}
+              onTabChange={handleTabChange}
+              propertyId={portal.property?.id}
+            />
+          )}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "schedule" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "schedule" && <ScheduleTab propertyId={portal.property?.id} onTabChange={handleTabChange} />}
+          {activeTab === "schedule" && (
+            <ScheduleTab propertyId={portal.property?.id} onTabChange={handleTabChange} />
+          )}
         </div>
-        <div className={`transition-opacity duration-300 ${activeTab === "billing" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "billing" && <BillingTab propertyId={portal.property?.id} />}
-        </div>
-        <div className={`transition-opacity duration-300 ${activeTab === "notifications" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "notifications" && <NotificationPreferences />}
-        </div>
-        <div className={`transition-opacity duration-300 ${activeTab === "refer" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "refer" && <ClientReferralPortal propertyId={portal.property?.id} />}
-        </div>
+        {/* Messages folded into the Concierge bar in C12 — see handleSendMessage
+            below, which dispatches concierge:open instead of routing to a tab. */}
       </main>
 
       {/* NPS Survey — disabled
