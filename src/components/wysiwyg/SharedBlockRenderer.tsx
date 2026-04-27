@@ -22,6 +22,7 @@ import VisionProjectBlock from "./blocks/VisionProjectBlock";
 import RecurringServicesRegisterBlock from "./blocks/RecurringServicesRegisterBlock";
 import ConditionPillBlock from "./blocks/ConditionPillBlock";
 import ConciergeActionBlock from "./blocks/ConciergeActionBlock";
+import MaintenanceCalendarBlock from "./blocks/MaintenanceCalendarBlock";
 
 interface SharedBlockRendererProps {
   block: ReportBlock;
@@ -117,6 +118,8 @@ const SharedBlockRenderer = ({
       return <ConditionPillBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     case "concierge_action":
       return <ConciergeActionBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "maintenance_calendar":
+      return <MaintenanceCalendarBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     default:
       return <div className="bg-muted rounded p-4 text-xs text-muted-foreground">Unknown block: {block.type}</div>;
   }
