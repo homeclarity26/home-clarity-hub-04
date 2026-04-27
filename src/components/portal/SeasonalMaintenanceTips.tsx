@@ -10,7 +10,7 @@ const SEASONS = [
     tips: [
       { task: "Inspect roof for winter damage", system: "Roof" },
       { task: "Clean gutters and downspouts", system: "Exterior" },
-      { task: "Service HVAC — switch to cooling mode", system: "HVAC" },
+      { task: "Service HVAC: switch to cooling mode", system: "HVAC" },
       { task: "Check exterior paint and caulking", system: "Exterior" },
       { task: "Test sump pump operation", system: "Plumbing" },
     ],

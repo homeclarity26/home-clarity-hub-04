@@ -32,7 +32,7 @@ const AIPriorityCard = ({ propertyId, reportPages }: AIPriorityCardProps) => {
     if (!user || propertyId.startsWith("mock-")) {
       setPriorities([
         { title: "Schedule your furnace inspection", description: "Your furnace was last serviced over 12 months ago. Schedule a tune-up before heating season to ensure safe operation.", category: "maintenance" },
-        { title: "Review your roof assessment", description: "Your roof was rated 'Fair' — consider getting quotes for repairs within the next 12 months to prevent water damage.", category: "safety" },
+        { title: "Review your roof assessment", description: "Your roof was rated 'Fair'. Consider getting quotes for repairs within the next 12 months to prevent water damage.", category: "safety" },
         { title: "Pay outstanding invoice HBC-0001", description: "You have a $2,500 invoice due within 14 days. Staying current helps us keep your projects on track.", category: "financial" },
       ]);
       setLoading(false);

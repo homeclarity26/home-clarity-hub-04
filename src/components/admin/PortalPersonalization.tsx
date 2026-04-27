@@ -83,7 +83,7 @@ const PortalPersonalization = ({ propertyId }: PortalPersonalizationProps) => {
         </div>
         <div>
           <Label className="font-sans text-xs text-muted-foreground">Advisor Signature</Label>
-          <Textarea value={form.advisor_signature} onChange={(e) => setForm({ ...form, advisor_signature: e.target.value })} placeholder="It's our privilege to be your home advisor. — Adam" rows={2} />
+          <Textarea value={form.advisor_signature} onChange={(e) => setForm({ ...form, advisor_signature: e.target.value })} placeholder="It's our privilege to be your home advisor. - Adam" rows={2} />
         </div>
         <Button onClick={handleSave} disabled={saving} className="gap-1.5 font-sans">
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}

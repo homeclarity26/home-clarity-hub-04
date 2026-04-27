@@ -40,7 +40,7 @@ const MOCK_MESSAGES: Message[] = [
   },
   {
     id: "m2", property_id: "mock", sender_id: "client",
-    message: "Thanks! Quick question — the roof section says Fair condition. Does that mean we need to replace it soon?",
+    message: "Thanks! Quick question: the roof section says Fair condition. Does that mean we need to replace it soon?",
     is_read: true, created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
     senderName: "You", senderInitials: "JR",
   },

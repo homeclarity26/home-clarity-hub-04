@@ -304,7 +304,7 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
               rows={5}
               value={content.observationsHtml ?? ""}
               onChange={(e) => update({ observationsHtml: e.target.value })}
-              placeholder="What did you notice during the walkthrough? Universal expanding container — write as much as the page needs; no truncation, no inner scroll."
+              placeholder="What did you notice during the walkthrough? Universal expanding container: write as much as the page needs; no truncation, no inner scroll."
             />
           ) : content.observationsHtml ? (
             <div

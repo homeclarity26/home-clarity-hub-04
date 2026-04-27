@@ -122,7 +122,7 @@ const ContractorBidsSection = ({ projectId, projectTitle, isAdmin = false }: Con
               <Button size="sm" className="gap-1.5 text-xs font-sans"><Plus className="w-3.5 h-3.5" />Add Bid</Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg">
-              <DialogHeader><DialogTitle className="font-sans">Add Contractor Bid — {projectTitle}</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle className="font-sans">Add Contractor Bid: {projectTitle}</DialogTitle></DialogHeader>
               <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label className="font-sans text-xs">Contractor Name *</Label><Input value={form.contractor_name} onChange={(e) => setForm({ ...form, contractor_name: e.target.value })} /></div>

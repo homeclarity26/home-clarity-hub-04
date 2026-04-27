@@ -167,7 +167,7 @@ const ReportTemplateManager = () => {
       {/* Preview Dialog */}
       <Dialog open={!!previewOpen} onOpenChange={() => setPreviewOpen(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle className="font-sans">{previewOpen?.name} — Preview</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-sans">{previewOpen?.name}: Preview</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="bg-primary rounded-lg p-8 text-center">
               <p className="font-display text-2xl text-primary-foreground">Home Clarity Report</p>

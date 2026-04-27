@@ -65,7 +65,7 @@ const TodaysBriefBlock = ({ content, editable, onChange }: TodaysBriefBlockProps
             rows={5}
             value={content.briefHtml}
             onChange={(e) => update({ briefHtml: e.target.value })}
-            placeholder="Brief HTML — headline (bold) + body. Allow <strong>, <br/>."
+            placeholder="Brief HTML: headline (bold) + body. Allow <strong>, <br/>."
           />
         ) : (
           <div

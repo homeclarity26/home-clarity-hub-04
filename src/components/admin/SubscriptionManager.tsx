@@ -236,7 +236,7 @@ const SubscriptionManager = ({ propertyId, clientUserId, clientEmail, clientName
                 <SelectContent>
                   {tiers.map((t: any) => (
                     <SelectItem key={t.id} value={t.id} className="font-sans">
-                      {t.name} — {fmt(t.price_annually)}/yr
+                      {t.name}: {fmt(t.price_annually)}/yr
                     </SelectItem>
                   ))}
                 </SelectContent>

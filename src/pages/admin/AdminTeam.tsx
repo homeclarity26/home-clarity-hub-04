@@ -4,8 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 const ROLES = [
-  { role: "Creator", desc: "Full access — billing, settings, all clients", you: true },
-  { role: "Sub-Admin", desc: "All clients, scheduling, invoicing — no billing settings", you: false },
+  { role: "Creator", desc: "Full access: billing, settings, all clients", you: true },
+  { role: "Sub-Admin", desc: "All clients, scheduling, invoicing. No billing settings.", you: false },
   { role: "Field Employee", desc: "Assigned jobs, photo upload, daily logs, change orders", you: false },
   { role: "Trade Partner", desc: "View assigned jobs and submit bids only", you: false },
 ];
@@ -14,7 +14,7 @@ const FIELD_FEATURES = [
   { icon: Smartphone, title: "Daily Schedule", desc: "See their jobs for today with address, scope, and contact info" },
   { icon: Camera, title: "Photo Upload", desc: "Upload site photos directly to the client's file manager" },
   { icon: FileText, title: "Daily Logs", desc: "Submit end-of-day notes tied to the project" },
-  { icon: DollarSign, title: "Change Orders", desc: "Request change orders — you approve before they're issued" },
+  { icon: DollarSign, title: "Change Orders", desc: "Request change orders; you approve before they're issued" },
   { icon: Sparkles, title: "Bobby AI", desc: "Bobby helps field staff write notes, draft messages, and log issues" },
 ];
 
@@ -60,7 +60,7 @@ const AdminTeam = () => (
         <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
           <Users className="w-8 h-8 text-muted-foreground/30" />
           <p className="text-sm font-sans text-muted-foreground">You're the only team member right now.</p>
-          <p className="text-xs font-sans text-muted-foreground max-w-sm">Sub-admin and field-employee invites are on the roadmap — the features preview below shows what's planned.</p>
+          <p className="text-xs font-sans text-muted-foreground max-w-sm">Sub-admin and field-employee invites are on the roadmap. The features preview below shows what's planned.</p>
         </div>
       </Card>
 

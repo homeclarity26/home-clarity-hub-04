@@ -272,7 +272,7 @@ const ProposalBuilder = ({ estimate, lineItems, clientName, propertyAddress, onU
         {/* Pricing-type specific UI */}
         {form.pricing_type === "labor_only" && (
           <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
-            <span className="font-semibold">Labor Only</span> — Column header will read "Labor Description". No materials column shown. Note: "Materials supplied by client or included in allowances."
+            <span className="font-semibold">Labor Only</span>: Column header will read "Labor Description". No materials column shown. Note: "Materials supplied by client or included in allowances."
           </div>
         )}
 
@@ -309,7 +309,7 @@ const ProposalBuilder = ({ estimate, lineItems, clientName, propertyAddress, onU
         {form.pricing_type === "allowance" && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 space-y-1">
             <p className="font-semibold">Allowance-Based Pricing</p>
-            <p>Line items are split into fixed Labor + Installation and Material Allowances. Client view shows: <span className="font-mono">"Starting at {fmt(baseTotal)} — final price depends on selections."</span></p>
+            <p>Line items are split into fixed Labor + Installation and Material Allowances. Client view shows: <span className="font-mono">"Starting at {fmt(baseTotal)}; final price depends on selections."</span></p>
           </div>
         )}
 
@@ -463,7 +463,7 @@ const ProposalBuilder = ({ estimate, lineItems, clientName, propertyAddress, onU
           <AccordionContent className="space-y-4 pb-4">
             <p className="text-[11px] text-muted-foreground">
               {lineItems.length} line items from estimate.
-              {form.pricing_type === "labor_only" && " (Labor Only — materials column hidden on proposal)"}
+              {form.pricing_type === "labor_only" && " (Labor Only: materials column hidden on proposal)"}
             </p>
             <ScopeSectionBuilder
               sections={form.proposal_scope_sections as ScopeSection[]}

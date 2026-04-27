@@ -364,7 +364,7 @@ const ReportTab = ({
         <BuildMyReport
           propertyId={propertyId}
           reportId={reportId}
-          onComplete={() => toast.success("Report drafted — review each section and publish when ready.")}
+          onComplete={() => toast.success("Report drafted. Review each section and publish when ready.")}
         />
       </div>
     );

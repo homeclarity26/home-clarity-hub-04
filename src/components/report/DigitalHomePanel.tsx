@@ -211,7 +211,7 @@ const DigitalHomePanel = ({
               <iframe
                 src={hoverUrl}
                 className="w-full h-full border-0"
-                title="Hover.to 3D Model — Fullscreen"
+                title="Hover.to 3D Model: Fullscreen"
                 allow="fullscreen"
               />
             )}
@@ -233,7 +233,7 @@ const DigitalHomePanel = ({
               <iframe
                 src={iguideUrl}
                 className="w-full h-full border-0"
-                title="iGuide 360° Tour — Fullscreen"
+                title="iGuide 360° Tour: Fullscreen"
                 allow="fullscreen"
               />
             )}

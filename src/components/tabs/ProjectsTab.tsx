@@ -622,7 +622,7 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
             <button onClick={() => { if (onTabChange) onTabChange("contacts"); else onNavigate("contacts"); }} className={`${cardBase} group p-6 text-left hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200`}>
               <Phone className="w-5 h-5 text-accent mb-3" />
               <h2 className="font-display text-xl text-foreground mb-1">Contact Your Advisor</h2>
-              <p className="font-sans text-sm text-muted-foreground">Adam Kilgore — Founder & Lead Advisor</p>
+              <p className="font-sans text-sm text-muted-foreground">Adam Kilgore, Founder &amp; Lead Advisor</p>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent self-end transition-colors mt-2" />
             </button>
           </div>

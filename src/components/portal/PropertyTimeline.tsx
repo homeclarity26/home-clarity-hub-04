@@ -42,7 +42,7 @@ const PropertyTimeline = ({ propertyId }: { propertyId?: string }) => {
     if (!propertyId || propertyId.startsWith("mock-")) {
       setEvents([
         { id: "1", action_type: "publish", message: "Home Clarity Report published", created_at: new Date(Date.now() - 86400000 * 2).toISOString() },
-        { id: "2", action_type: "payment", message: "Invoice HBC-0001 marked as paid — $2,500", created_at: new Date(Date.now() - 86400000 * 5).toISOString() },
+        { id: "2", action_type: "payment", message: "Invoice HBC-0001 marked as paid: $2,500", created_at: new Date(Date.now() - 86400000 * 5).toISOString() },
         { id: "3", action_type: "equipment", message: "Furnace added to Equipment Registry", created_at: new Date(Date.now() - 86400000 * 10).toISOString() },
         { id: "4", action_type: "project", message: "Furnace Replacement project created", created_at: new Date(Date.now() - 86400000 * 14).toISOString() },
         { id: "5", action_type: "milestone", message: "Vendor selected for Furnace Replacement", created_at: new Date(Date.now() - 86400000 * 20).toISOString() },

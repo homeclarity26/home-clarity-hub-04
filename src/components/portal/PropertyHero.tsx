@@ -49,7 +49,7 @@ export function PropertyHero({
       {heroImageUrl ? (
         <img
           src={heroImageUrl}
-          alt={propertyAddress ? `${propertyName} — ${propertyAddress}` : propertyName}
+          alt={propertyAddress ? `${propertyName}, ${propertyAddress}` : propertyName}
           className="absolute inset-0 w-full h-full object-cover"
           loading="eager"
           // @ts-expect-error - fetchpriority is a valid HTML attr, React types lag

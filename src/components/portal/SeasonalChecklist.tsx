@@ -22,7 +22,7 @@ const SEASONAL_TASKS: Record<Season, { title: string; description: string; categ
   spring: [
     { title: "Inspect roof for winter damage", description: "Look for missing shingles, flashing damage", category: "exterior" },
     { title: "Clean gutters and downspouts", description: "Clear debris and check for proper drainage", category: "exterior" },
-    { title: "Service HVAC — switch to cooling", description: "Change filters, schedule professional tune-up", category: "hvac" },
+    { title: "Service HVAC: switch to cooling", description: "Change filters, schedule professional tune-up", category: "hvac" },
     { title: "Test irrigation system", description: "Check sprinkler heads, adjust timers", category: "exterior" },
     { title: "Check window and door seals", description: "Replace weatherstripping if worn", category: "structure" },
   ],

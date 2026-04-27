@@ -103,7 +103,7 @@ const ServicesMenu = ({ propertyId }: ServicesMenuProps) => {
         {cart.length > 0 && (
           <Button className="gap-2 font-sans" onClick={() => setConfirmOpen(true)}>
             <ShoppingCart className="w-4 h-4" />
-            Review Request ({cart.length}) — {fmt(cartTotal)}
+            Review Request ({cart.length}): {fmt(cartTotal)}
           </Button>
         )}
       </div>

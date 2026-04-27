@@ -93,7 +93,7 @@ const BobbyScheduleBar = () => {
           <span className="text-white font-display text-xs font-bold">B</span>
         </div>
         <div className="flex-1">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-accent">Bobby — Schedule Assistant</p>
+          <p className="font-mono text-[10px] uppercase tracking-wider text-accent">Bobby: Schedule Assistant</p>
           <p className="font-sans text-xs text-muted-foreground">Type any scheduling command in plain English</p>
         </div>
         {messages.length > 0 && (

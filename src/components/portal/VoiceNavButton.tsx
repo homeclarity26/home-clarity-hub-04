@@ -241,7 +241,7 @@ const VoiceNavButton = ({ propertyId, currentPage, onNavigate }: VoiceNavButtonP
           state === "listening" && "bg-destructive/10 text-destructive",
           state === "processing" && "bg-primary/10 text-primary pointer-events-none",
         )}
-        title="Voice Navigation — Press Space to activate"
+        title="Voice Navigation: Press Space to activate"
         disabled={state === "processing"}
       >
         {state === "processing" ? (

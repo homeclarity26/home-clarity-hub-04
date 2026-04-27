@@ -103,7 +103,7 @@ export function PageAIChat({
       <div className="flex items-center gap-2 mb-3">
         <Sparkles className="w-4 h-4 text-accent" />
         <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-          AI Edit — {pageTitle}
+          AI Edit: {pageTitle}
         </p>
       </div>
 
@@ -136,7 +136,7 @@ export function PageAIChat({
                 handleSubmit(input);
               }
             }}
-            placeholder={`Tell the AI how to edit this page — e.g., "Add details about the water staining near the chimney flashing"`}
+            placeholder={`Tell the AI how to edit this page, e.g., "Add details about the water staining near the chimney flashing"`}
             rows={2}
             disabled={isLoading}
             className="flex-1 resize-none bg-muted/50 border border-border rounded-lg px-3 py-2.5 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent min-h-[44px]"

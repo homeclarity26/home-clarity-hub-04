@@ -135,7 +135,7 @@ const AdminAnnouncements = () => {
                       </div>
                       <p className="text-xs font-sans text-muted-foreground line-clamp-2">{a.body}</p>
                       <div className="flex items-center gap-4 mt-2 text-[10px] font-sans text-muted-foreground">
-                        <span>{format(new Date(a.start_date), "MMM d, yyyy")}{a.end_date ? ` — ${format(new Date(a.end_date), "MMM d, yyyy")}` : ""}</span>
+                        <span>{format(new Date(a.start_date), "MMM d, yyyy")}{a.end_date ? ` to ${format(new Date(a.end_date), "MMM d, yyyy")}` : ""}</span>
                         <span className="flex items-center gap-1">
                           <Eye className="w-3 h-3" />Seen by {dismissalCounts[a.id] || 0} clients
                         </span>

@@ -139,7 +139,7 @@ const MyHomeStory = ({ propertyId, propertyName = "Your Home" }: Props) => {
           </div>
         </div>
         <p className="text-sm text-muted-foreground font-sans">
-          Your home has a story — every repair, upgrade, and maintenance event is part of it. 
+          Your home has a story. Every repair, upgrade, and maintenance event is part of it.
           The more complete your home's record, the more valuable it becomes.
         </p>
       </Card>
@@ -219,7 +219,7 @@ const MyHomeStory = ({ propertyId, propertyName = "Your Home" }: Props) => {
         <Upload className="w-8 h-8 text-primary/40 mx-auto mb-3" />
         <h4 className="text-sm font-sans font-semibold text-foreground mb-1">Add to Your Home's Story</h4>
         <p className="text-xs text-muted-foreground font-sans mb-4 max-w-md mx-auto">
-          Upload old inspection reports, appliance manuals, receipts, warranty cards, permits — 
+          Upload old inspection reports, appliance manuals, receipts, warranty cards, permits, or
           any document about your home. We'll read it automatically and add the details to your permanent record.
         </p>
         <Button className="gap-2 text-xs font-sans" onClick={() => fileRef.current?.click()} disabled={uploading}>

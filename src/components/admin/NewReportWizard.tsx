@@ -791,7 +791,7 @@ const NewReportWizard = () => {
             <div className="space-y-1.5">
               <Label className="text-xs font-sans">Email *</Label>
               <Input type="email" placeholder="client@email.com" className="font-sans" value={form.email} onChange={(e) => updateForm("email", e.target.value)} />
-              <p className="text-[10px] font-sans text-muted-foreground">Required — used to create client login</p>
+              <p className="text-[10px] font-sans text-muted-foreground">Required: used to create client login</p>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-sans">Phone</Label>
@@ -907,7 +907,7 @@ const NewReportWizard = () => {
           <div className="space-y-1.5">
             <Label className="text-xs font-sans">Discovery Call Notes</Label>
             <p className="text-[10px] font-sans text-muted-foreground">
-              Paste everything from the discovery call — goals, concerns, wish list, budget, family context, timeline
+              Paste everything from the discovery call: goals, concerns, wish list, budget, family context, timeline
             </p>
             <textarea
               placeholder="Client wants to address water damage in the basement, plan for a kitchen renovation in the next 2 years, and understand the remaining life of their roof. Budget is flexible but wants to prioritize safety issues first..."
@@ -1135,7 +1135,7 @@ const NewReportWizard = () => {
                       />
                     </div>
                     <p className="text-[10px] font-sans text-muted-foreground text-center">
-                      This may take a minute — each page is drafted individually.
+                      This may take a minute. Each page is drafted individually.
                     </p>
                   </div>
                 )}
@@ -1207,7 +1207,7 @@ const NewReportWizard = () => {
                     {qaIssues.length === 0 ? (
                       <div className="px-4 py-5 flex items-center gap-3">
                         <CheckCircle className="w-5 h-5 text-accent shrink-0" />
-                        <p className="text-sm font-sans text-foreground font-medium">All checks passed — report is ready to publish!</p>
+                        <p className="text-sm font-sans text-foreground font-medium">All checks passed. Report is ready to publish!</p>
                       </div>
                     ) : (
                       qaIssues.map((issue, i) => (

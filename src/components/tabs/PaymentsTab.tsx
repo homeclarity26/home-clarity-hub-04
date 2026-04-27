@@ -138,8 +138,8 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
 
     if (propertyId.startsWith("mock-")) {
       setInvoices([
-        { id: "inv-1", invoice_number: "HBC-0001", title: "Home Clarity Report — Johnson Residence", type: "invoice", description: "Home Clarity Report", amount: 2500, status: "paid", due_date: "2026-01-15", paid_date: "2026-01-12", subtotal: 2500, tax: 0, total: 2500, balance_due: 0, notes: null, ai_summary: null, issue_date: "2026-01-01", created_at: "2026-01-01T00:00:00Z" },
-        { id: "inv-2", invoice_number: "HBC-0002", title: "Annual Membership — Year 1", type: "invoice", description: "Annual Membership", amount: 750, status: "paid", due_date: "2026-02-01", paid_date: "2026-01-28", subtotal: 750, tax: 0, total: 750, balance_due: 0, notes: null, ai_summary: null, issue_date: "2026-01-20", created_at: "2026-01-20T00:00:00Z" },
+        { id: "inv-1", invoice_number: "HBC-0001", title: "Home Clarity Report: Johnson Residence", type: "invoice", description: "Home Clarity Report", amount: 2500, status: "paid", due_date: "2026-01-15", paid_date: "2026-01-12", subtotal: 2500, tax: 0, total: 2500, balance_due: 0, notes: null, ai_summary: null, issue_date: "2026-01-01", created_at: "2026-01-01T00:00:00Z" },
+        { id: "inv-2", invoice_number: "HBC-0002", title: "Annual Membership: Year 1", type: "invoice", description: "Annual Membership", amount: 750, status: "paid", due_date: "2026-02-01", paid_date: "2026-01-28", subtotal: 750, tax: 0, total: 750, balance_due: 0, notes: null, ai_summary: null, issue_date: "2026-01-20", created_at: "2026-01-20T00:00:00Z" },
         { id: "inv-3", invoice_number: "HBC-0003", title: "Furnace Consultation & Vendor Coordination", type: "invoice", description: "Furnace Consultation", amount: 350, status: "sent", due_date: "2026-04-01", paid_date: null, subtotal: 350, tax: 0, total: 350, balance_due: 350, notes: null, ai_summary: null, issue_date: "2026-03-10", created_at: "2026-03-10T00:00:00Z" },
       ]);
       setLoading(false);
@@ -248,7 +248,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
 
   const handleRequestACH = async () => {
     if (!propertyId || propertyId.startsWith("mock-")) {
-      toast.success("ACH request sent — we'll be in touch with bank transfer details.");
+      toast.success("ACH request sent. We'll be in touch with bank transfer details.");
       return;
     }
     try {
@@ -259,7 +259,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
           message: "Client requested ACH payment details for invoice.",
         },
       });
-      toast.success("ACH request sent — we'll respond shortly with bank transfer details.");
+      toast.success("ACH request sent. We'll respond shortly with bank transfer details.");
     } catch {
       toast.success("Request noted. We'll send ACH details to your email.");
     }
@@ -405,7 +405,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                 {ps.map(p => (
                   <div key={p.id} className={`${cardBase} cursor-default flex-row items-center justify-between`}>
                     <div>
-                      <p className="font-sans text-sm">{format(new Date(p.payment_date), "MMM d, yyyy")} — {p.method}</p>
+                      <p className="font-sans text-sm">{format(new Date(p.payment_date), "MMM d, yyyy")}, {p.method}</p>
                       {p.notes && <p className="font-sans text-sm text-muted-foreground">{p.notes}</p>}
                     </div>
                     <span className="font-sans text-sm font-medium text-green-700">-{fmt(Number(p.amount))}</span>
@@ -494,10 +494,10 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                   <p className="font-sans text-sm text-muted-foreground">
                     Due {format(new Date(nextPayment.due_date), "MMMM d, yyyy")}
                     {nextDueDays !== null && nextDueDays < 7 && nextDueDays >= 0 && (
-                      <span className="ml-2 text-amber-600 font-medium">— {nextDueDays === 0 ? "due today" : `in ${nextDueDays} days`}</span>
+                      <span className="ml-2 text-amber-600 font-medium">({nextDueDays === 0 ? "due today" : `in ${nextDueDays} days`})</span>
                     )}
                     {nextDueDays !== null && nextDueDays < 0 && (
-                      <span className="ml-2 text-[#B5450B] font-medium">— overdue</span>
+                      <span className="ml-2 text-[#B5450B] font-medium">(overdue)</span>
                     )}
                   </p>
                 )}
@@ -596,7 +596,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                           key={inv.id}
                           className={`${bg} ${textColor} flex items-center justify-center text-[10px] font-mono font-medium transition-all`}
                           style={{ width: `${pct}%` }}
-                          title={`${inv.title || inv.invoice_number || "Invoice"}: ${fmt(Number(inv.total))} — ${inv.status}`}
+                          title={`${inv.title || inv.invoice_number || "Invoice"}: ${fmt(Number(inv.total))} (${inv.status})`}
                         >
                           {pct > 15 ? fmt(Number(inv.total)) : ""}
                         </div>
@@ -684,7 +684,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                         return (
                           <tr key={p.id}>
                             <td className="text-sm font-sans py-4 border-b border-border text-muted-foreground">{format(new Date(p.payment_date), "MMM d, yyyy")}</td>
-                            <td className="text-sm font-sans py-4 border-b border-border">Payment — {inv?.title || inv?.description || "Invoice"}</td>
+                            <td className="text-sm font-sans py-4 border-b border-border">Payment: {inv?.title || inv?.description || "Invoice"}</td>
                             <td className="text-sm font-sans py-4 border-b border-border text-muted-foreground hidden sm:table-cell capitalize">{p.method}</td>
                             <td className="text-sm font-sans py-4 border-b border-border text-right font-medium text-green-700">{fmt(Number(p.amount))}</td>
                           </tr>
@@ -721,7 +721,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                         <div key={p.id} className="flex items-center justify-between py-2 border-b border-border/50">
                           <div>
                             <p className="font-sans text-sm">{format(new Date(p.payment_date), "MMMM d, yyyy")}</p>
-                            <p className="font-sans text-sm text-muted-foreground capitalize">{p.method} — {inv?.title || "Invoice"}</p>
+                            <p className="font-sans text-sm text-muted-foreground capitalize">{p.method}, {inv?.title || "Invoice"}</p>
                           </div>
                           <span className="font-sans text-sm font-medium text-green-600">{fmt(Number(p.amount))}</span>
                         </div>
@@ -786,7 +786,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
               <div className={`${cardBase} cursor-default`}>
                 <CreditCard className="w-5 h-5 text-accent" />
                 <h2 className="font-display text-xl text-foreground mb-1">Make a Payment</h2>
-                <p className="font-sans text-sm text-muted-foreground">No outstanding invoices — you're all set!</p>
+                <p className="font-sans text-sm text-muted-foreground">No outstanding invoices. You're all set!</p>
               </div>
             )}
           </div>

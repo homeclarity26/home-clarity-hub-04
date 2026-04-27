@@ -21,7 +21,7 @@ const HCRLogo = ({ variant = "default", size = "md", className = "" }: HCRLogoPr
     <div className={`flex flex-col items-start leading-none ${className}`}>
       <span
         className={`font-display font-bold tracking-tight ${text} ${s.wordmark}`}
-        aria-label="HCR — Home Clarity Report"
+        aria-label="HCR: Home Clarity Report"
       >
         HCR
       </span>

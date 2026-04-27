@@ -102,7 +102,7 @@ const ClientReferralPortal = ({ propertyId }: Props) => {
           <Gift className="w-8 h-8 text-accent" />
         </div>
         <h1 className="font-display text-3xl md:text-[36px] text-foreground mb-3">
-          Share HBC with a Friend — Earn ${creditPerReferral} Credit
+          Share HBC with a Friend, Earn ${creditPerReferral} Credit
         </h1>
         <p className="font-sans text-base text-muted-foreground max-w-lg mx-auto">
           Know a homeowner who could benefit from professional home stewardship? Share your referral link and earn credit when they join.
@@ -189,10 +189,10 @@ const ClientReferralPortal = ({ propertyId }: Props) => {
           <p className="text-xs font-sans text-muted-foreground">Copy and send this message to friends:</p>
           <div className="bg-muted rounded-lg p-4">
             <p className="text-sm font-sans text-foreground mb-3">
-              "Hey! I use Home Clarity Hub to keep my home in great shape — it's like having a personal advisor for my house. Check it out using my link: {link?.referral_url || ""}"
+              "Hey! I use Home Clarity Hub to keep my home in great shape. It's like having a personal advisor for my house. Check it out using my link: {link?.referral_url || ""}"
             </p>
             <Button variant="outline" size="sm" className="gap-1.5 font-sans text-xs" onClick={() => {
-              navigator.clipboard.writeText(`Hey! I use Home Clarity Hub to keep my home in great shape — it's like having a personal advisor for my house. Check it out using my link: ${link?.referral_url || ""}`);
+              navigator.clipboard.writeText(`Hey! I use Home Clarity Hub to keep my home in great shape. It's like having a personal advisor for my house. Check it out using my link: ${link?.referral_url || ""}`);
               toast.success("Message copied!");
             }}>
               <Copy className="w-3 h-3" /> Copy Message

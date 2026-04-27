@@ -97,7 +97,7 @@ const BidRequestFlow = ({ open, onOpenChange, projectId, projectTitle }: BidRequ
       <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-sans flex items-center gap-2">
-            <Send className="w-5 h-5 text-primary" />Send for Bids — {projectTitle}
+            <Send className="w-5 h-5 text-primary" />Send for Bids: {projectTitle}
           </DialogTitle>
         </DialogHeader>
 

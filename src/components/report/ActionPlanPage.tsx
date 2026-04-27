@@ -186,7 +186,7 @@ const ActionPlanPage = ({ reportId }: ActionPlanPageProps) => {
         <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-2">Prioritized Next Steps</p>
         <h1 className="font-display text-3xl text-foreground mb-3">Action Plan</h1>
         <p className="font-sans text-base text-muted-foreground">
-          {totalActions} recommended action{totalActions !== 1 ? "s" : ""} across {actions.length} area{actions.length !== 1 ? "s" : ""} of your home — organized by urgency and sequenced for maximum impact.
+          {totalActions} recommended action{totalActions !== 1 ? "s" : ""} across {actions.length} area{actions.length !== 1 ? "s" : ""} of your home, organized by urgency and sequenced for maximum impact.
         </p>
       </div>
 

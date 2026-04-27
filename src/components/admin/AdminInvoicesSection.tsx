@@ -598,7 +598,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
           </Button>
           <div className="flex-1">
             <h3 className="text-lg font-sans font-bold text-foreground flex items-center gap-2">
-              {inv.invoice_number || "Draft"} — {inv.title || inv.description}
+              {inv.invoice_number || "Draft"}: {inv.title || inv.description}
               <Badge className={`text-[10px] ${statusColors[inv.status] || "bg-muted"}`}>
                 {inv.status.replace("_", " ").toUpperCase()}
               </Badge>
@@ -700,7 +700,7 @@ const AdminInvoicesSection = ({ propertyId, propertyContext }: AdminInvoicesSect
                     <div className="grid grid-cols-3 gap-2">
                       {([
                         { mode: "verbal" as const, icon: <MessageSquare className="w-4 h-4" />, label: "Verbal / Informal", sub: "Add to next invoice", detail: "No signature needed" },
-                        { mode: "formal" as const, icon: <FileSignature className="w-4 h-4" />, label: "Formal — Client Signs", sub: "Send for approval", detail: "Client must sign" },
+                        { mode: "formal" as const, icon: <FileSignature className="w-4 h-4" />, label: "Formal: Client Signs", sub: "Send for approval", detail: "Client must sign" },
                         { mode: "interim" as const, icon: <Receipt className="w-4 h-4" />, label: "Interim Invoice", sub: "Create new invoice", detail: "Separate document" },
                       ] as const).map(({ mode, icon, label, sub, detail }) => (
                         <button

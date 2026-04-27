@@ -108,7 +108,7 @@ const ReportCloneDialog = ({ sourceReportId, sourcePropertyName }: ReportCloneDi
               <SelectContent>
                 {availableTargets.map((c) => (
                   <SelectItem key={c.propertyId} value={c.propertyId} className="text-sm font-sans">
-                    {c.propertyName} — {c.name}
+                    {c.propertyName}: {c.name}
                   </SelectItem>
                 ))}
               </SelectContent>

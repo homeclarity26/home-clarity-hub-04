@@ -48,7 +48,7 @@ const AdminHelpCenter = () => {
         <div className="mb-6">
           <h1 className="font-display text-2xl text-foreground mb-1">Help & Tutorials</h1>
           <p className="text-sm font-sans text-muted-foreground">
-            {allAdminTutorials.length} guides across {adminCategories.length} categories — everything you need to master your HBC workspace.
+            {allAdminTutorials.length} guides across {adminCategories.length} categories. Everything you need to master your HBC workspace.
           </p>
         </div>
 

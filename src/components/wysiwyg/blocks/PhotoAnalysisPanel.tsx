@@ -153,7 +153,7 @@ const PhotoAnalysisPanel = ({
           <AlertTriangle className="h-4 w-4 text-hbc-gold shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-xs text-foreground">
-              AI suggests <strong className={ratingColor[agg!.rating]}>{agg!.rating}</strong> — your current rating is{" "}
+              AI suggests <strong className={ratingColor[agg!.rating]}>{agg!.rating}</strong>; your current rating is{" "}
               <strong>{currentRating}</strong>.
             </p>
             <Button

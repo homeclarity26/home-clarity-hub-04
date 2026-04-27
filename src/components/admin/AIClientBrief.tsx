@@ -52,7 +52,7 @@ const AIClientBrief = ({ propertyId, propertyName }: AIClientBriefProps) => {
         <DialogHeader>
           <DialogTitle className="font-sans flex items-center gap-2">
             <Briefcase className="w-4 h-4" />
-            Meeting Prep — {propertyName}
+            Meeting Prep: {propertyName}
           </DialogTitle>
         </DialogHeader>
         {loading ? (

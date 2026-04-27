@@ -175,7 +175,7 @@ const HomeValueTracker = ({
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs">
                     <p className="font-semibold mb-1">How is this calculated?</p>
-                    <p>This estimate uses RentCast's Automated Valuation Model (AVM), which analyzes recent comparable sales, property characteristics, and local market trends. For informational purposes only — not an appraisal.</p>
+                    <p>This estimate uses RentCast's Automated Valuation Model (AVM), which analyzes recent comparable sales, property characteristics, and local market trends. For informational purposes only, not an appraisal.</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -347,7 +347,7 @@ const HomeValueTracker = ({
       </div>
 
       <p className="text-[9px] font-mono text-muted-foreground/60">
-        Estimated value powered by RentCast. For informational purposes only — not an appraisal.
+        Estimated value powered by RentCast. For informational purposes only, not an appraisal.
       </p>
     </div>
   );

@@ -174,7 +174,7 @@ const OverviewTab = ({ vendor, projects, reviews, tasks, insuranceWarning, insur
       {insuranceExpired && (
         <Card className="p-3 border-destructive/30 bg-destructive/5 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-destructive" />
-          <span className="text-sm font-sans text-destructive font-medium">Insurance has expired — action required</span>
+          <span className="text-sm font-sans text-destructive font-medium">Insurance has expired. Action required.</span>
         </Card>
       )}
       {insuranceWarning && !insuranceExpired && (

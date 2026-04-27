@@ -35,10 +35,10 @@ const CRMOverviewTab = ({ contact, client, projects, invoices, activities }: Pro
           <h3 className="font-sans font-semibold text-sm text-foreground">AI Insights</h3>
         </div>
         <div className="space-y-2 text-sm text-muted-foreground font-sans">
-          {!contact.last_contact_date && <p>⚠️ This client has never been contacted — schedule a touchpoint.</p>}
-          {balanceDue > 0 && <p>💰 ${balanceDue.toLocaleString()} outstanding — consider sending a reminder.</p>}
-          {activeProjects === 0 && totalPaid > 0 && <p>📋 No active projects — this may be a good time to propose new work.</p>}
-          {contact.tags?.length === 0 && <p>🏷️ No tags assigned — add tags for better organization.</p>}
+          {!contact.last_contact_date && <p>⚠️ This client has never been contacted. Schedule a touchpoint.</p>}
+          {balanceDue > 0 && <p>💰 ${balanceDue.toLocaleString()} outstanding. Consider sending a reminder.</p>}
+          {activeProjects === 0 && totalPaid > 0 && <p>📋 No active projects. This may be a good time to propose new work.</p>}
+          {contact.tags?.length === 0 && <p>🏷️ No tags assigned. Add tags for better organization.</p>}
           {!contact.last_contact_date && balanceDue === 0 && activeProjects === 0 && contact.tags?.length > 0 && <p>✅ This client looks good! Keep up the engagement.</p>}
         </div>
       </Card>
