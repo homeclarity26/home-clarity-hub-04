@@ -78,7 +78,7 @@ If a session has no UI changes, skip this step entirely.
    All 8 flows must pass. "It compiled" is not enough; a flow must
    prove your change survives a real read + write against live prod.
 10. **Let CI run.** Open a PR. The `.github/workflows/golden-path.yml`
-    workflow runs build + 5 deterministic + 3 AI-dependent flows with
+    workflow runs build + 5 deterministic + 6 AI-dependent flows with
     retries. Red CI = don't merge. Never bypass.
 
 ### What you do NOT do
@@ -102,18 +102,20 @@ If a session has no UI changes, skip this step entirely.
 
 ---
 
-## 🚦 Where the app stands (post-floor-rebuild, 2026-04-18)
+## 🚦 Where the app stands (post-HCR-rebuild, 2026-04-27)
 
-- Golden Path 8/8 green locally; CI 9/9 green on `main`.
+- Golden Path 62/62 green; CI 11/11 jobs green on `main` (PRs #101–#120 merged).
 - 149/149 tables accept UI-shaped writes (synthetic-insert smoke).
 - 89/89 tenant-scoped tables block anon read + write via RLS.
 - 52/70 edge functions auth-gated (18 intentionally open — see PR #66).
 - 70/70 edge functions smoke-ping clean (0 × 500, 0 × 503, 0 × BOOT_ERROR).
 - 0 TypeScript errors; 0 non-legit `as any` casts.
-- CI auto-runs Golden Path on every push + daily at 12:00 UTC.
+- CI auto-runs Golden Path on every push + daily at 12:00 UTC (11 jobs: build + 5 deterministic + 6 AI-dependent).
 - CI auto-deploys edge functions when `supabase/functions/**` changes
   (individual function deploys on per-function change; full-fleet
   redeploy on `_shared/**` change).
+- HCR rebuild complete through Phase 9. Old wizard (BuildMyReport, ReportPageManager, NewReportWizard) retired in PR #121.
+- Photo edge functions (analyze-photo, categorize-photo, enhance-photo) use `gemini-flash-latest` + 90s timeout (hotfix PR #117).
 
 If you make a change that breaks any of the above, it's a regression.
 Fix before merging.
@@ -126,7 +128,7 @@ Two-model hybrid with persistent semantic memory:
 
 - **Gemini (*-latest aliases)** — fast, cheap, vision-capable. Used for:
   chat agent (hbc-agent), photo analysis (analyze-photo, categorize-photo,
-  enhance-photo → `gemini-pro-latest`), embeddings (`gemini-embedding-001`,
+  enhance-photo → `gemini-flash-latest`), embeddings (`gemini-embedding-001`,
   768-dim via `outputDimensionality: 768`), and ~50 smaller background
   tasks. Model IDs in `MODEL_MAP` all resolve to `gemini-flash-latest` /
   `gemini-pro-latest` / `gemini-flash-lite-latest` — which Google auto-bumps
@@ -212,20 +214,32 @@ npx supabase functions deploy <function-name> --no-verify-jwt
 
 ---
 
-## Recently Shipped (PRs #2-11, 2026-04-15 to 2026-04-16)
+## Recently Shipped — HCR Rebuild (PRs #101–#122, 2026-04-27)
 
 | PR | Summary |
 |---|---|
-| #2 | Review-redesign pass: lazy routes, QueryClient defaults, Monogram/HealthScoreRing/PropertyHero/PublishBar/MobileBottomNav/SanitizedHtml components, HomeTab collapse, ReportOverview architectural cover, persistent AI command bar, auth on 3 edge functions, RLS tightening, DOMPurify wrapping |
-| #3 | Phase 1: expanded report to 65+ page templates (appliances, exterior structures, additional spaces/systems, safety) + "Add Custom Page" dialog in ReportPageManager |
-| #4 | Phase 4: invoice full lifecycle — send_invoice_reminder, explain_invoice, get_overdue_invoices, generate_draw_schedule tools + draw schedule visualization bar |
-| #5 | Phase 5: project tracker — ProjectPhaseTimeline, ProjectUpdateFeed, project_updates table, 4 new hbc-agent tools |
-| #6 | Phase 6: AI agent completeness — 20 new tools (KB, annual reviews, team, automations, settings, client-side) |
-| #7 | Phase 3: photo system — symmetrical grid layouts, @dnd-kit reorder, enhance-photo edge function, 4 agent tools |
-| #8 | Phase 2: AI-first report creation — seed-report-from-notes edge function + PageAIChat component + 6 agent tools |
-| #9 | Phase 7: motion + polish — Framer Motion animations, typography sweep (text-xs→text-sm), 44px touch targets |
-| #10 | Phase 8: auth sweep on 15 edge functions (18 total), noImplicitAny enabled, nested ErrorBoundaries |
-| #11 | Post-deployment review: fixed API 401 bug (AIEditPanel + useChat now use real JWT), 3 critical + 4 high-severity findings |
+| #101 | hcr-rebuild/h9+h10: drop health_bar column + health_score_history table, regen types |
+| #102 | hcr-rebuild/c-batch: collapse 5 fragmented Concierge entry points (C3–C9) |
+| #103 | hcr-rebuild/e3: ai-edit gains expand/tighten/match_brand_voice modes |
+| #104 | hcr-rebuild/e5: consistency-check returns pre_publish_questions |
+| #105 | hcr-rebuild/e7: seed-report-from-notes clarifying questions + sequence risk + briefing stubs |
+| #106 | hcr-rebuild/e8: recommend-report-pages four-section grouping + custom section suggestions |
+| #107 | hcr-rebuild/z1: delete chat-assistant edge function (replaced by hbc-agent) |
+| #108 | hcr-rebuild/d2+d8: IBM Plex Mono font loaded + CLAUDE.md surgical additions |
+| #109 | hcr-rebuild/w1-w6: 5-step wizard shell + Step 1 Intake at /admin/clients/new |
+| #110 | hcr-rebuild/c10-c12: PortalHome + ReportHome + 6-tab portal consolidation |
+| #111 | hcr-rebuild/d6+d7: ESLint rules for inline hex and fixed-height prose |
+| #112 | hcr-rebuild/d3+d4: HCR color sweep batch 1+2 (invoices, proposals, change orders, ledger) |
+| #113 | hcr-rebuild/w2-w5: full Step 2–5 wizard implementations |
+| #114 | hcr-rebuild/w7: cut over /admin/clients/new to 5-step wizard (W-series complete) |
+| #115 | hcr-rebuild/z3: Golden Path tests 48–62 (62/62 baseline established) |
+| #116 | hcr-rebuild/d1: em-dash ESLint rule + sweep across JSX text |
+| #117 | hotfix: photos edge functions to gemini-flash-latest + 90s timeout |
+| #118 | hcr-rebuild/z4: regenerate Supabase types |
+| #119 | hcr-rebuild/d5a: fix eslint-disable scope for condition-rating palette objects |
+| #120 | hcr-rebuild/d5b: fix eslint-disable scope for brand-config objects + #fff → white |
+| #121 | hcr-rebuild/r1-r5: retire old wizard (BuildMyReport, ReportPageManager, NewReportWizard) — 3,081 lines deleted |
+| #122 | hcr-rebuild/z3-fix: move content-ops + static-integrity to ai-dependent CI matrix |
 
 ---
 
@@ -259,7 +273,7 @@ npx supabase functions deploy <function-name> --no-verify-jwt
 - **Edit mode:** `useEditMode()` context — `canEdit` boolean gates inline editing UI
 - **Image storage:** `report-images` bucket for page photos, `property-photos` bucket for hero photos
 - **Monograms:** chapter/module badges (ES/EX/IN/SY/SP/SA) via `<Monogram>` component. Use `chapterToMonogram(groupId)` to map group IDs
-- **Health scores:** use `<HealthScoreRing>` — color-coded, animated, accessible (role="meter")
+- **Condition ratings:** word-based only (Excellent / Good / Fair / Poor / Critical). HealthScoreRing deleted as of PR #101. No numerical health scores anywhere.
 
 ---
 
@@ -327,8 +341,8 @@ src/
 ├── components/
 │   ├── ui/                       # Shared design primitives
 │   │   ├── Monogram.tsx          # ✨ NEW — ES/EX/IN/SY/SP/SA chapter badges
-│   │   ├── HealthScoreRing.tsx   # ✨ NEW — animated SVG meter
 │   │   └── SanitizedHtml.tsx     # ✨ NEW — DOMPurify wrapper for AI output
+│   │   # HealthScoreRing.tsx deleted in PR #101 — no health scores in HCR v2
 │   ├── portal/
 │   │   ├── PropertyHero.tsx      # ✨ NEW — full-bleed hero w/ photo
 │   │   ├── MobileBottomNav.tsx   # ✨ NEW — 4 tabs + More (replaces hamburger-only)
@@ -354,8 +368,9 @@ src/
 │   │   ├── PaymentsTab.tsx       # Draw schedule bar + Promise.allSettled
 │   │   └── ...
 │   └── admin/
-│       ├── ReportPageManager.tsx # "Add Custom Page" dialog
+│       ├── wizard/               # 5-step new client wizard (W1–W7)
 │       └── ... (existing)
+│       # ReportPageManager.tsx, BuildMyReport.tsx, NewReportWizard.tsx deleted in PR #121
 ├── data/
 │   └── reportContent.ts          # 65+ page templates (was 39) — appliances, safety, etc.
 ├── pages/
@@ -370,11 +385,10 @@ supabase/
 │   │   ├── ai-client.ts          # Gemini wrapper (callAI)
 │   │   └── rate-limit.ts
 │   ├── hbc-agent/                # ~200 tools — THE AI operating system
-│   ├── seed-report-from-notes/   # ✨ NEW — meeting notes → full report seed
-│   ├── enhance-photo/            # ✨ NEW — Gemini Vision photo analysis
-│   ├── chat-assistant/           # Auth-protected
-│   ├── ai-edit/                  # Auth-protected (creator-only)
-│   └── ... (67 total)
+│   ├── seed-report-from-notes/   # meeting notes → full report seed
+│   ├── enhance-photo/            # Gemini Vision photo analysis (gemini-flash-latest)
+│   ├── ai-edit/                  # expand/tighten/match_brand_voice (creator-only)
+│   └── ... (66 total — chat-assistant deleted in PR #107, replaced by hbc-agent)
 └── migrations/
     ├── 20260415000000_add_hero_image_url.sql
     ├── 20260415000001_tighten_leaky_rls.sql
