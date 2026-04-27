@@ -1,73 +1,83 @@
 import type { AdminClient } from "@/hooks/useAdminData";
 import { Card } from "@/components/ui/card";
-import { computeClientHealthScore, getHealthLevel, getHealthColor, getHealthLabel } from "@/lib/clientHealthScore";
+import { computeClientHealthScore } from "@/lib/clientHealthScore";
 import { Activity } from "lucide-react";
 
 interface ClientHealthCardProps {
   client: AdminClient;
 }
 
-function ScoreBar({ label, value, max, className }: { label: string; value: number; max: number; className?: string }) {
-  const pct = Math.round((value / max) * 100);
-  return (
-    <div className="space-y-1">
-      <div className="flex justify-between">
-        <span className="text-[11px] font-sans text-muted-foreground">{label}</span>
-        <span className="text-[11px] font-mono text-foreground">{value}/{max}</span>
-      </div>
-      <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all ${className || "bg-primary"}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
+// H4 refactor: render word-rating + color dot only. Per Master Plan H4
+// spec, "No numerical score in any output". The numeric breakdown is
+// no longer surfaced — we bucket the composite total into the 5 word
+// ratings and show only that.
+//
+// Bucketing matches the H1 data-migration thresholds (Master Spec 5.7):
+//   >= 90  Excellent
+//   75-89  Good
+//   60-74  Fair
+//   40-59  Poor
+//   < 40   Critical
+//
+// computeClientHealthScore() lives in clientHealthScore.ts. That lib
+// itself gets deleted in a later H-batch sub-batch (after the other
+// consumers — ClientHealthBadge, PortfolioHealthDashboard — also stop
+// importing it).
+
+type Rating = "Excellent" | "Good" | "Fair" | "Poor" | "Critical";
+
+const RATING_COLORS: Record<Rating, string> = {
+  Excellent: "#2F6E40",
+  Good: "#5A8A4F",
+  Fair: "#B58A1F",
+  Poor: "#B7410E",
+  Critical: "#8B0000",
+};
+
+function bucketTotal(total: number): Rating {
+  if (total >= 90) return "Excellent";
+  if (total >= 75) return "Good";
+  if (total >= 60) return "Fair";
+  if (total >= 40) return "Poor";
+  return "Critical";
 }
 
 const ClientHealthCard = ({ client }: ClientHealthCardProps) => {
   const breakdown = computeClientHealthScore(client);
-  const level = getHealthLevel(breakdown.total);
-  const color = getHealthColor(level);
-  const label = getHealthLabel(level);
+  const rating = bucketTotal(breakdown.total);
+  const color = RATING_COLORS[rating];
 
   return (
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-4">
         <Activity className="w-4 h-4 text-muted-foreground" />
-        <h3 className="text-sm font-sans font-semibold text-foreground">Client Health Score</h3>
+        <h3 className="text-sm font-sans font-semibold text-foreground">
+          Client Condition
+        </h3>
       </div>
 
-      <div className="flex items-center gap-4 mb-6">
-        <div className="relative w-16 h-16">
-          <svg viewBox="0 0 36 36" className="w-16 h-16 -rotate-90">
-            <circle cx="18" cy="18" r="15.5" fill="none" stroke="hsl(var(--secondary))" strokeWidth="3" />
-            <circle
-              cx="18" cy="18" r="15.5" fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeDasharray={`${(breakdown.total / 100) * 97.4} 97.4`}
-              strokeLinecap="round"
-              className={color}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className={`text-lg font-mono font-bold ${color}`}>{breakdown.total}</span>
-          </div>
-        </div>
-        <div>
-          <p className={`text-sm font-sans font-semibold ${color}`}>{label}</p>
-          <p className="text-[11px] font-sans text-muted-foreground">Composite score out of 100</p>
-        </div>
+      <div className="flex items-center gap-3">
+        <span
+          aria-hidden
+          style={{
+            width: 16,
+            height: 16,
+            borderRadius: 8,
+            background: color,
+            display: "inline-block",
+          }}
+        />
+        <span
+          className="font-mono text-sm uppercase tracking-[0.15em]"
+          style={{ color }}
+        >
+          {rating}
+        </span>
       </div>
 
-      <div className="space-y-3">
-        <ScoreBar label="Report Completion" value={breakdown.reportCompletion} max={30} className="bg-primary" />
-        <ScoreBar label="Report Status" value={breakdown.reportStatus} max={20} className="bg-accent" />
-        <ScoreBar label="Engagement" value={breakdown.messageEngagement} max={15} className="bg-emerald-500" />
-        <ScoreBar label="Issue Resolution" value={breakdown.issueFlags} max={20} className="bg-amber-500" />
-        <ScoreBar label="Onboarding" value={breakdown.onboarding} max={15} className="bg-primary" />
-      </div>
+      <p className="text-[11px] text-muted-foreground mt-3">
+        Word-based rating. Numerical scoring removed in the v2 rebuild.
+      </p>
     </Card>
   );
 };

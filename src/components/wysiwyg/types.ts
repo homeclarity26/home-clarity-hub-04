@@ -2,7 +2,6 @@
 
 export type BlockType =
   | "cover"
-  | "score"
   | "text"
   | "finding_card"
   | "finding_group"
@@ -500,14 +499,6 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
     icon: "Heading1",
     defaultColSpan: 12,
     defaultContent: { title: "New Chapter", score: 0 },
-  },
-  {
-    type: "score",
-    label: "Health Score",
-    description: "Overall and chapter health score circles",
-    icon: "Activity",
-    defaultColSpan: 12,
-    defaultContent: { overall: 0 },
   },
   {
     type: "text",
