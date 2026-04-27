@@ -24,6 +24,7 @@ import ConditionPillBlock from "./blocks/ConditionPillBlock";
 import ConciergeActionBlock from "./blocks/ConciergeActionBlock";
 import MaintenanceCalendarBlock from "./blocks/MaintenanceCalendarBlock";
 import TodaysBriefBlock from "./blocks/TodaysBriefBlock";
+import { HoverEmbedBlock, IGuideEmbedBlock, FloorPlanEmbedBlock } from "./blocks/EmbedBlocks";
 
 interface SharedBlockRendererProps {
   block: ReportBlock;
@@ -123,6 +124,12 @@ const SharedBlockRenderer = ({
       return <MaintenanceCalendarBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     case "todays_brief":
       return <TodaysBriefBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "hover_embed":
+      return <HoverEmbedBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "iguide_embed":
+      return <IGuideEmbedBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "floor_plan_embed":
+      return <FloorPlanEmbedBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     default:
       return <div className="bg-muted rounded p-4 text-xs text-muted-foreground">Unknown block: {block.type}</div>;
   }

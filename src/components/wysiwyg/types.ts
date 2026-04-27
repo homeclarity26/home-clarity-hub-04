@@ -24,7 +24,10 @@ export type BlockType =
   | "condition_pill"
   | "concierge_action"
   | "maintenance_calendar"
-  | "todays_brief";
+  | "todays_brief"
+  | "hover_embed"
+  | "iguide_embed"
+  | "floor_plan_embed";
 
 // Word-only condition ratings — replaces the numeric Health Score system
 // being deleted in Phase 6. Values are user-facing strings (rendered as-is)
@@ -333,6 +336,19 @@ export interface RecurringServicesRegisterContent {
   // Override for the Concierge pitch — defaults to locked HONEST framing
   // (saves time/frustration, NOT money) per [v2.38]
   conciergePitchHtml?: string;
+}
+
+// ── Embed Blocks (B10) ──────────────────────────────────────────────────
+// Three thin variants — hover_embed / iguide_embed / floor_plan_embed —
+// per [v1.21]. The wizard seeds the URL from properties.{hover_url |
+// iguide_url | floor_plan_url}. Mobile renders a thumbnail card with
+// click-to-open instead of the iframe (saves bandwidth, matches v2).
+// Same content shape across all three variants.
+
+export interface EmbedBlockContent {
+  url: string;
+  title?: string;            // optional caption above the embed
+  thumbnailUrl?: string;     // optional preview image when iframe is hidden
 }
 
 // ── Today's Brief (B9) ──────────────────────────────────────────────────
@@ -701,6 +717,30 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
       briefHtml: "<strong>Welcome.</strong> Today is a calm day. Nothing is overdue. Your home is in good standing.",
       actions: [],
     },
+  },
+  {
+    type: "hover_embed",
+    label: "Hover Embed",
+    description: "3D Hover scan iframe (mobile shows clickable thumbnail)",
+    icon: "Box",
+    defaultColSpan: 6,
+    defaultContent: { url: "", title: "Exterior 3D Scan (Hover)" },
+  },
+  {
+    type: "iguide_embed",
+    label: "iGUIDE Embed",
+    description: "iGUIDE 360 tour iframe (mobile shows clickable thumbnail)",
+    icon: "Compass",
+    defaultColSpan: 6,
+    defaultContent: { url: "", title: "Interior 360 Tour (iGUIDE)" },
+  },
+  {
+    type: "floor_plan_embed",
+    label: "Floor Plan Embed",
+    description: "Floor plan PDF / image iframe (mobile shows clickable thumbnail)",
+    icon: "Map",
+    defaultColSpan: 6,
+    defaultContent: { url: "", title: "Floor Plans" },
   },
 ];
 
