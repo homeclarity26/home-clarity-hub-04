@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { ExternalLink, MapPin, FileText, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ClientTags from "@/components/admin/ClientTags";
-import ClientHealthBadge from "@/components/admin/ClientHealthBadge";
 import type { AdminClient } from "@/hooks/useAdminData";
 
 interface WorkspaceContextCardProps {
@@ -35,10 +34,8 @@ const WorkspaceContextCard = ({ client, invoiceCount = 0, overdueCount = 0, proj
       {/* Tags */}
       <ClientTags propertyId={client.propertyId} />
 
-      {/* Health & Status */}
+      {/* Status */}
       <div className="space-y-2">
-        <ClientHealthBadge client={client} />
-
         <div className="grid grid-cols-2 gap-2">
           <Card className="p-2 text-center">
             <p className="text-lg font-sans font-bold text-foreground">{projectCount}</p>

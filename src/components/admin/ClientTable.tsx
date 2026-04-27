@@ -7,7 +7,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress";
 import { ExternalLink, MessageSquare } from "lucide-react";
 import type { AdminClient } from "@/hooks/useAdminData";
-import ClientHealthBadge from "./ClientHealthBadge";
 import BatchOperationsBar from "./BatchOperationsBar";
 
 const statusStyles: Record<string, string> = {
@@ -78,7 +77,6 @@ const ClientTable = ({ clients, compact }: ClientTableProps) => {
               </TableHead>
             )}
             <TableHead className="font-sans text-xs">Client</TableHead>
-            {!compact && <TableHead className="font-sans text-xs">Health</TableHead>}
             <TableHead className="font-sans text-xs">Address</TableHead>
             <TableHead className="font-sans text-xs">Status</TableHead>
             {!compact && <TableHead className="font-sans text-xs">Onboarding</TableHead>}
@@ -100,9 +98,6 @@ const ClientTable = ({ clients, compact }: ClientTableProps) => {
                   </TableCell>
                 )}
                 <TableCell className="font-sans text-sm font-medium">{client.name}</TableCell>
-                {!compact && (
-                  <TableCell><ClientHealthBadge client={client} /></TableCell>
-                )}
                 <TableCell className="font-sans text-sm text-muted-foreground">{client.address}</TableCell>
                 <TableCell>
                   <Badge className={`${statusStyles[client.reportStatus] || statusStyles.draft} text-[11px] font-sans font-medium border-none`}>
