@@ -86,7 +86,7 @@ const ProgressBar = ({ step, total }: { step: number; total: number }) => (
         className="h-full rounded-full transition-all duration-500"
         style={{
           width: `${(step / total) * 100}%`,
-          background: "linear-gradient(to right, #C4A265, #B5450B)",
+          background: "linear-gradient(to right, #B87333, #B7410E)",
         }}
       />
     </div>
@@ -430,12 +430,12 @@ const ProposalInterviewWizard = ({
               >
                 <div
                   className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-bold text-lg"
-                  style={{ background: "#1B2B4D" }}
+                  style={{ background: "hsl(var(--hbc-navy))" }}
                 >
                   HBC
                 </div>
                 <p className="font-semibold text-foreground text-sm">Hometown Builders Club</p>
-                <p className="text-xs text-muted-foreground mt-1">Gold — #C4A265</p>
+                <p className="text-xs text-muted-foreground mt-1">Gold, #B87333</p>
                 {answers.brand === "hbc" && (
                   <span className="mt-2 inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-accent text-white">
                     Selected
@@ -447,20 +447,20 @@ const ProposalInterviewWizard = ({
                 onClick={() => set("brand", "akr")}
                 className={`rounded-2xl border-2 p-6 text-center transition-all ${
                   answers.brand === "akr"
-                    ? "border-[#B5450B] bg-[#B5450B]/10 shadow-lg scale-[1.02]"
-                    : "border-border hover:border-[#B5450B]/50"
+                    ? "border-destructive bg-destructive/10 shadow-lg scale-[1.02]"
+                    : "border-border hover:border-destructive/50"
                 }`}
               >
                 <div
                   className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-bold text-lg"
-                  style={{ background: "#B5450B" }}
+                  style={{ background: "hsl(var(--hbc-rust))" }}
                 >
                   AKR
                 </div>
                 <p className="font-semibold text-foreground text-sm">AK Renovations</p>
-                <p className="text-xs text-muted-foreground mt-1">Rust — #B5450B</p>
+                <p className="text-xs text-muted-foreground mt-1">Rust, #B7410E</p>
                 {answers.brand === "akr" && (
-                  <span className="mt-2 inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#B5450B] text-white">
+                  <span className="mt-2 inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-destructive text-white">
                     Selected
                   </span>
                 )}
@@ -833,7 +833,7 @@ const ProposalInterviewWizard = ({
               onClick={() => setStep((s) => s + 1)}
               disabled={!canAdvance()}
               className="gap-1.5 font-sans"
-              style={{ background: canAdvance() ? "#C4A265" : undefined, color: canAdvance() ? "#fff" : undefined }}
+              style={{ background: canAdvance() ? "hsl(var(--hbc-gold))" : undefined, color: canAdvance() ? "hsl(var(--hbc-white))" : undefined }}
             >
               Next <ArrowRight className="w-4 h-4" />
             </Button>
@@ -843,7 +843,7 @@ const ProposalInterviewWizard = ({
               onClick={handleGenerate}
               disabled={loading}
               className="gap-1.5 font-sans px-6"
-              style={{ background: "#C4A265", color: "#fff" }}
+              style={{ background: "hsl(var(--hbc-gold))", color: "hsl(var(--hbc-white))" }}
             >
               {loading ? (
                 <>
