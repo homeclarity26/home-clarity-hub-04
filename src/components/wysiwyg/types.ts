@@ -16,7 +16,8 @@ export type BlockType =
   | "chapter_header"
   | "ai_narrative"
   | "condition_rating"
-  | "room_record";
+  | "room_record"
+  | "system_record";
 
 // Word-only condition ratings — replaces the numeric Health Score system
 // being deleted in Phase 6. Values are user-facing strings (rendered as-is)
@@ -132,6 +133,67 @@ export interface RoomLinkedVisionProject {
   id?: string;
   title: string;
   priority?: string;  // e.g. "Year 1-2", "Year 2-3"
+}
+
+// One row in the maintenance log (history of past service events on this
+// system). Append-only — admins add entries from the field; clients read.
+export interface SystemMaintenanceLogEntry {
+  date: string;          // ISO date "YYYY-MM-DD"
+  description: string;   // "Annual inspection — Verne & Ellsworth"
+  cost?: number;         // optional cost in dollars
+}
+
+// One routine-care item — recurring task on this system (filter changes,
+// inspections). Distinct from recurring_services rows because these are
+// *system-attached* tasks (HVAC filter), not standalone vendor services.
+export interface SystemRoutineCareItem {
+  description: string;          // "Replace filter (MERV 11 20×25×4)"
+  frequencyMonths?: number;     // 3 = quarterly
+  lastDoneDate?: string;        // ISO date
+}
+
+// Photo-slot URLs by role per Master Spec 5.1.2 photo schema. The
+// system_record block displays placeholder slots when a URL is unset so
+// the admin sees what photos are still needed during a walkthrough.
+export interface SystemPhotoSlots {
+  unit?: string;             // overall unit shot
+  serialPlate?: string;      // close-up of model/serial sticker
+  installLocation?: string;  // wider context, clearance/access
+  failureSignal?: string;    // optional — condensate stain, error code, etc.
+}
+
+export interface SystemRecordContent {
+  // Identity
+  systemName: string;             // "Furnace - Zone 1", "Sub-Zero Refrigerator"
+  category?: string;              // "HVAC", "Plumbing", "Electrical", "Appliance"
+  isAppliance?: boolean;          // true → eyebrow says "Appliance"; false → "System"
+  imageUrl?: string;              // hero image
+  status?: string;                // "Operational", "Approaching End-of-Life", etc.
+
+  // Identification
+  make?: string;
+  model?: string;
+  serial?: string;
+  installDate?: string;           // ISO "YYYY-MM-DD" or just year "2009"
+  installer?: string;
+  warrantyStatus?: string;
+
+  // Lifecycle math (current age and EOL year are derived in the renderer)
+  typicalLifespanYears?: number;  // 20 for furnace, 12 for water heater, etc.
+  expectedEolYear?: number;       // optional explicit override
+
+  // Open-ended specs (Capacity, Efficiency, Fuel, Filter MERV, etc.).
+  // Free-form to accommodate any system type without a schema migration
+  // every time we add a new appliance class.
+  specifications?: { label: string; value: string }[];
+
+  // Condition + history
+  conditionRating?: ConditionRating;
+  maintenanceLog?: SystemMaintenanceLogEntry[];
+  routineCareItems?: SystemRoutineCareItem[];
+
+  // Photos by role — slots are always rendered; URLs fill them when present.
+  photos?: SystemPhotoSlots;
 }
 
 // Evolving record per room. Every field except roomName is optional;
@@ -314,6 +376,22 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
       roomName: "New Room",
       conditionRating: "Good",
       linkedVisionProjects: [],
+    },
+  },
+  {
+    type: "system_record",
+    label: "System Record",
+    description: "System or appliance page with identification, lifecycle bar, photos, maintenance log",
+    icon: "Settings2",
+    defaultColSpan: 12,
+    defaultContent: {
+      systemName: "New System",
+      isAppliance: false,
+      conditionRating: "Good",
+      specifications: [],
+      maintenanceLog: [],
+      routineCareItems: [],
+      photos: {},
     },
   },
 ];

@@ -16,6 +16,7 @@ import ChapterHeaderBlock from "./blocks/ChapterHeaderBlock";
 import AINarrativeBlock from "./blocks/AINarrativeBlock";
 import ConditionRatingBlock from "./blocks/ConditionRatingBlock";
 import RoomRecordBlock from "./blocks/RoomRecordBlock";
+import SystemRecordBlock from "./blocks/SystemRecordBlock";
 
 interface SharedBlockRendererProps {
   block: ReportBlock;
@@ -99,6 +100,8 @@ const SharedBlockRenderer = ({
       return <ConditionRatingBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     case "room_record":
       return <RoomRecordBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "system_record":
+      return <SystemRecordBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     default:
       return <div className="bg-muted rounded p-4 text-xs text-muted-foreground">Unknown block: {block.type}</div>;
   }
