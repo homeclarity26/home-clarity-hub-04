@@ -1,7 +1,6 @@
 // Shared Block Renderer — used in both WYSIWYG editor and client portal
 import type { ReportBlock } from "./types";
 import CoverBlock from "./blocks/CoverBlock";
-import ScoreBlock from "./blocks/ScoreBlock";
 import TextBlock from "./blocks/TextBlock";
 import FindingCardBlock from "./blocks/FindingCardBlock";
 import FindingGroupBlock from "./blocks/FindingGroupBlock";
@@ -57,8 +56,6 @@ const SharedBlockRenderer = ({
   switch (block.type) {
     case "cover":
       return <CoverBlock content={c as any} editable={editable} onChange={handleChange as any} />;
-    case "score":
-      return <ScoreBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     case "text":
       return <TextBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     case "finding_card":
