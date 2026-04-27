@@ -107,6 +107,31 @@ export function Step3Authoring() {
     upsertAuthoring(state.activePageKey, patch);
   };
 
+  const activeBlocks = useMemo(
+    () => (activeAuthoring?.content ?? []) as Array<Record<string, unknown>>,
+    [activeAuthoring],
+  );
+  const activeNarrative = useMemo(() => {
+    const block = activeBlocks.find(
+      (b) => typeof b.type === "string" && b.type === "narrative",
+    );
+    return (block?.value as string | undefined) ?? "";
+  }, [activeBlocks]);
+  const activeObservations = useMemo(() => {
+    const block = activeBlocks.find(
+      (b) => typeof b.type === "string" && b.type === "observations",
+    );
+    return (block?.value as string | undefined) ?? "";
+  }, [activeBlocks]);
+
+  const updateActiveBlock = (type: string, value: string) => {
+    const next = activeBlocks.filter(
+      (b) => !(typeof b.type === "string" && b.type === type),
+    );
+    next.push({ type, value });
+    updateAuthoring({ content: next });
+  };
+
   const persistNotesForNextVisit = async (notes: string) => {
     if (!state.propertyId || !state.activePageKey || !user) return;
     setSavingNotes(true);
@@ -224,8 +249,13 @@ export function Step3Authoring() {
                 admin={
                   <PageAdminEditor
                     pageType={pageType}
-                    authoring={activeAuthoring}
-                    onChange={updateAuthoring}
+                    narrative={activeNarrative}
+                    observations={activeObservations}
+                    onUpdateBlock={updateActiveBlock}
+                    notesForNextVisit={activeAuthoring?.notes_for_next_visit ?? ""}
+                    onChangeNotes={(v) =>
+                      updateAuthoring({ notes_for_next_visit: v })
+                    }
                     onPersistNotes={persistNotesForNextVisit}
                     savingNotes={savingNotes}
                   />
@@ -239,7 +269,14 @@ export function Step3Authoring() {
                 }
               />
 
-              <AICoPilotPanel pageType={pageType} pageTitle={activePage.title} />
+              <AICoPilotPanel
+                pageType={pageType}
+                pageTitle={activePage.title}
+                narrative={activeNarrative}
+                observations={activeObservations}
+                onUpdateNarrative={(next) => updateActiveBlock("narrative", next)}
+                propertyId={state.propertyId}
+              />
             </>
           ) : (
             <Card className="p-6 text-xs font-sans text-muted-foreground">
@@ -291,47 +328,35 @@ function StatusToggle({ current, onChange }: StatusToggleProps) {
 
 interface PageAdminEditorProps {
   pageType: PageType;
-  authoring: PageAuthoring | undefined;
-  onChange: (patch: Partial<PageAuthoring>) => void;
+  narrative: string;
+  observations: string;
+  onUpdateBlock: (type: string, value: string) => void;
+  notesForNextVisit: string;
+  onChangeNotes: (value: string) => void;
   onPersistNotes: (notes: string) => Promise<void>;
   savingNotes: boolean;
 }
 
 // Generic admin editor. Renders the same scaffold for every page type;
 // page-type-specific fields plug in here in a follow-up. Auto-save lives
-// at the WizardContext level — content updates flow through onChange.
+// at the WizardContext level — content updates flow through onUpdateBlock.
 function PageAdminEditor({
   pageType,
-  authoring,
-  onChange,
+  narrative,
+  observations,
+  onUpdateBlock,
+  notesForNextVisit,
+  onChangeNotes,
   onPersistNotes,
   savingNotes,
 }: PageAdminEditorProps) {
-  const blocks = (authoring?.content ?? []) as Array<Record<string, unknown>>;
-  const narrativeBlock = blocks.find(
-    (b) => typeof b.type === "string" && b.type === "narrative",
-  );
-  const narrative = (narrativeBlock?.value as string | undefined) ?? "";
-  const observationsBlock = blocks.find(
-    (b) => typeof b.type === "string" && b.type === "observations",
-  );
-  const observations = (observationsBlock?.value as string | undefined) ?? "";
-
-  const updateBlock = (type: string, value: string) => {
-    const next = blocks.filter(
-      (b) => !(typeof b.type === "string" && b.type === type),
-    );
-    next.push({ type, value });
-    onChange({ content: next });
-  };
-
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
         <Label className="text-xs font-sans">Page narrative</Label>
         <Textarea
           value={narrative}
-          onChange={(e) => updateBlock("narrative", e.target.value)}
+          onChange={(e) => onUpdateBlock("narrative", e.target.value)}
           rows={6}
           placeholder="The big-picture summary the client reads first."
           className="text-xs"
@@ -343,7 +368,7 @@ function PageAdminEditor({
           <Label className="text-xs font-sans">Observations</Label>
           <Textarea
             value={observations}
-            onChange={(e) => updateBlock("observations", e.target.value)}
+            onChange={(e) => onUpdateBlock("observations", e.target.value)}
             rows={5}
             placeholder="What you saw on the walkthrough. Bullets are fine."
             className="text-xs"
@@ -363,8 +388,8 @@ function PageAdminEditor({
           )}
         </div>
         <Textarea
-          value={authoring?.notes_for_next_visit ?? ""}
-          onChange={(e) => onChange({ notes_for_next_visit: e.target.value })}
+          value={notesForNextVisit}
+          onChange={(e) => onChangeNotes(e.target.value)}
           onBlur={(e) => {
             const v = e.target.value;
             void onPersistNotes(v);
