@@ -197,3 +197,15 @@ verify_jwt = false
 
 [functions.verify-email-code]
 verify_jwt = false
+
+[functions.daily-brief-cron]
+verify_jwt = false
+
+[functions.generate-replacement-briefing]
+verify_jwt = false
+
+[functions.generate-recurring-services-register]
+verify_jwt = false
+
+[functions.generate-design-fee-education]
+verify_jwt = false
