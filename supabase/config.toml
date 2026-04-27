@@ -203,3 +203,6 @@ verify_jwt = false
 
 [functions.generate-replacement-briefing]
 verify_jwt = false
+
+[functions.generate-recurring-services-register]
+verify_jwt = false
