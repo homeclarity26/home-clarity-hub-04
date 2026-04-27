@@ -28,6 +28,11 @@ const scripts = [
   { name: "ai-writing", path: resolve(SCRIPTS_DIR, "golden-path-ai-writing.ts") },
   { name: "learning",   path: resolve(SCRIPTS_DIR, "golden-path-learning.ts") },
   { name: "rls",        path: resolve(SCRIPTS_DIR, "golden-path-rls.ts") },
+  { name: "wizard",      path: resolve(SCRIPTS_DIR, "golden-path-wizard.ts") },
+  { name: "content-ops", path: resolve(SCRIPTS_DIR, "golden-path-content-ops.ts") },
+  { name: "quality",     path: resolve(SCRIPTS_DIR, "golden-path-quality-controls.ts") },
+  { name: "static",      path: resolve(SCRIPTS_DIR, "golden-path-static-integrity.ts") },
+  { name: "mobile",      path: resolve(SCRIPTS_DIR, "golden-path-mobile.ts") },
 ];
 
 interface Run {

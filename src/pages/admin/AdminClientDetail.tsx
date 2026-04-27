@@ -195,7 +195,7 @@ const AdminClientDetail = () => {
       groupMap.get(p.group_name)!.pages.push({ key: p.page_key, order: p.sort_order });
       pagesMap[p.page_key] = {
         id: p.page_key, title: p.title, group: p.group_name, conditionRating: p.condition_rating as ReportPageData["conditionRating"],
-        narrative: (p.narrative as string[]) || [], healthBar: p.health_bar as ReportPageData["healthBar"],
+        narrative: (p.narrative as string[]) || [],
         specs: (p.specs as { label: string; value: string }[]) || undefined, tiers: p.tiers as unknown as ReportPageData["tiers"],
         timing: p.timing || undefined, recommendations: (p.recommendations as string[]) || undefined,
       } as ReportPageData;
