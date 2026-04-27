@@ -9,7 +9,6 @@ import LiveInvoiceStrip from "@/components/portal/LiveInvoiceStrip";
 import SeasonalChecklist from "@/components/portal/SeasonalChecklist";
 import ClientGoalsWidget from "@/components/portal/ClientGoalsWidget";
 import NotificationNudges from "@/components/portal/NotificationNudges";
-import ConciergeRequestModal from "@/components/portal/ConciergeRequestModal";
 import DocumentExpirationTracker from "@/components/portal/DocumentExpirationTracker";
 import CostComparisonTool from "@/components/portal/CostComparisonTool";
 import MyHomeStory from "@/components/portal/MyHomeStory";
@@ -92,7 +91,6 @@ const HomeTab = ({
 }: HomeTabProps) => {
   const { user } = useAuth();
   const [showAppointment, setShowAppointment] = useState(false);
-  const [showConcierge, setShowConcierge] = useState(false);
   const [customization, setCustomization] = useState<{
     welcome_message?: string;
     tagline?: string;
@@ -304,11 +302,6 @@ const HomeTab = ({
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors" />
                 </button>
-                <ConciergeRequestModal
-                  open={showConcierge}
-                  onOpenChange={setShowConcierge}
-                  propertyId={propertyId}
-                />
                 <AppointmentRequestModal
                   open={showAppointment}
                   onOpenChange={setShowAppointment}
