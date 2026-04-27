@@ -203,7 +203,13 @@ const HomeTab = ({
           <motion.div variants={fadeUp}>
             <MembershipBanner
               membershipEndDate={membershipEndDate}
-              onSendMessage={() => onNavigate("messages")}
+              onSendMessage={() =>
+                window.dispatchEvent(
+                  new CustomEvent("concierge:open", {
+                    detail: { prompt: "I'd like to ask about my membership." },
+                  })
+                )
+              }
             />
           </motion.div>
         )}
@@ -256,9 +262,15 @@ const HomeTab = ({
                   <div className="space-y-2.5">
                     {[
                       { label: "Review your Home Clarity Report", done: completionPercent > 0, action: () => handleNavigateTracked("report") },
-                      { label: "Explore your equipment registry", done: false, action: () => handleNavigateTracked("equipment") },
+                      { label: "Explore your equipment registry", done: false, action: () => handleNavigateTracked("report") },
                       { label: "Check your upcoming schedule", done: false, action: () => handleNavigateTracked("schedule") },
-                      { label: "Send a message to your advisor", done: false, action: () => handleNavigateTracked("messages") },
+                      { label: "Send a message to your advisor", done: false, action: () =>
+                        window.dispatchEvent(
+                          new CustomEvent("concierge:open", {
+                            detail: { prompt: "I'd like to ask my advisor a question." },
+                          })
+                        )
+                      },
                     ].map((step) => (
                       <button
                         key={step.label}

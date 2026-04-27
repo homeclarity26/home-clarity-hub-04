@@ -90,7 +90,7 @@ const MessagesTab = ({ propertyId, creatorName = "Your HBC Advisor", creatorInit
 
       const unreadIds = rawMsgs.filter((m) => !m.is_read && m.sender_id !== user?.id).map((m) => m.id);
       if (unreadIds.length > 0) {
-        await supabase.from("property_messages" as "properties").update({ is_read: true } as Record<string, unknown>).in("id", unreadIds);
+        await supabase.from("property_messages").update({ is_read: true }).in("id", unreadIds);
       }
     } catch (err) { console.error("Error loading messages:", err); }
     finally { setIsLoading(false); }
