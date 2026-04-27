@@ -2464,39 +2464,6 @@ export type Database = {
         }
         Relationships: []
       }
-      health_score_history: {
-        Row: {
-          client_id: string
-          exterior_score: number | null
-          id: string
-          interior_score: number | null
-          overall_score: number | null
-          recorded_at: string
-          report_id: string | null
-          systems_score: number | null
-        }
-        Insert: {
-          client_id: string
-          exterior_score?: number | null
-          id?: string
-          interior_score?: number | null
-          overall_score?: number | null
-          recorded_at?: string
-          report_id?: string | null
-          systems_score?: number | null
-        }
-        Update: {
-          client_id?: string
-          exterior_score?: number | null
-          id?: string
-          interior_score?: number | null
-          overall_score?: number | null
-          recorded_at?: string
-          report_id?: string | null
-          systems_score?: number | null
-        }
-        Relationships: []
-      }
       home_goals: {
         Row: {
           client_id: string
@@ -5918,7 +5885,6 @@ export type Database = {
           expected_lifespan_years: number | null
           findings: Json | null
           group_name: string
-          health_bar: Json | null
           id: string
           images: Json | null
           is_complete: boolean | null
@@ -5952,7 +5918,6 @@ export type Database = {
           expected_lifespan_years?: number | null
           findings?: Json | null
           group_name: string
-          health_bar?: Json | null
           id?: string
           images?: Json | null
           is_complete?: boolean | null
@@ -5986,7 +5951,6 @@ export type Database = {
           expected_lifespan_years?: number | null
           findings?: Json | null
           group_name?: string
-          health_bar?: Json | null
           id?: string
           images?: Json | null
           is_complete?: boolean | null
@@ -7494,3 +7458,5 @@ export const Constants = {
     },
   },
 } as const
+A new version of Supabase CLI is available: v2.95.4 (currently installed v2.90.0)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli

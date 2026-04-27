@@ -4,7 +4,6 @@ export interface BlockConfig {
   page_header?: { active: boolean; required: boolean };
   narrative?: { active: boolean; required: boolean };
   key_observations?: { active: boolean; required: boolean };
-  health_bar?: { active: boolean; required: boolean; default_label?: string };
   specs?: { active: boolean; required: boolean };
   tiers?: { active: boolean; required: boolean };
   timing?: { active: boolean; required: boolean };
@@ -21,7 +20,6 @@ export interface PageContent {
   conditionRating?: string;
   narrative?: string[];
   key_observations?: string[];
-  health_bar?: { label: string; current: number; total: number; unit: string };
   specs?: { label: string; value: string }[];
   tiers?: {
     essential?: { price: string; description: string };
@@ -61,8 +59,6 @@ const blockHasContent = (blockName: keyof BlockConfig, content: PageContent): bo
       return !!content.narrative && content.narrative.length > 0 && !isPlaceholder(content.narrative);
     case "key_observations":
       return !!content.key_observations && content.key_observations.length > 0 && !isPlaceholder(content.key_observations);
-    case "health_bar":
-      return !!content.health_bar && content.health_bar.current > 0;
     case "specs":
       return !!content.specs && content.specs.length > 0 && content.specs.some((s) => !isPlaceholder(s.value));
     case "tiers":
@@ -133,7 +129,6 @@ export function getDefaultBlockConfig(templateType: "interior" | "exterior" | "s
     page_header: { active: true, required: true },
     narrative: { active: true, required: true },
     key_observations: { active: true, required: false },
-    health_bar: { active: false, required: false },
     specs: { active: false, required: false },
     tiers: { active: true, required: false },
     timing: { active: true, required: false },
@@ -149,7 +144,6 @@ export function getDefaultBlockConfig(templateType: "interior" | "exterior" | "s
     case "systems":
       return {
         ...baseConfig,
-        health_bar: { active: true, required: true },
         specs: { active: true, required: true },
         maintenance: { active: true, required: true },
         risks: { active: true, required: false },
@@ -157,7 +151,6 @@ export function getDefaultBlockConfig(templateType: "interior" | "exterior" | "s
     case "exterior":
       return {
         ...baseConfig,
-        health_bar: { active: true, required: false },
         maintenance: { active: true, required: false },
       };
     case "interior":
@@ -177,7 +170,6 @@ export function getDefaultBlockConfig(templateType: "interior" | "exterior" | "s
       return {
         ...baseConfig,
         key_observations: { active: false, required: false },
-        health_bar: { active: false, required: false },
         specs: { active: false, required: false },
         photos: { active: false, required: false },
       };

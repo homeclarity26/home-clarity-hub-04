@@ -62,7 +62,6 @@ const ReportCloneDialog = ({ sourceReportId, sourcePropertyName }: ReportCloneDi
           risks: p.risks,
           dependencies: p.dependencies,
           maintenance: p.maintenance,
-          health_bar: p.health_bar,
           status: "draft" as const,
           condition_rating: null as string | null,
           creator_notes: null as string | null,

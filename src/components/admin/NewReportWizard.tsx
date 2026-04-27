@@ -570,7 +570,6 @@ const NewReportWizard = () => {
           title: template.name,
           narrative: (defaultContent.narrative ? [defaultContent.narrative as string] : []),
           condition_rating: (defaultContent.condition_rating as string) || null,
-          health_bar: (defaultContent.health_bar || null) as Json,
           specs: (defaultContent.specs || null) as Json,
           tiers: (defaultContent.tiers || null) as Json,
           timing: (defaultContent.timing as string) || null,

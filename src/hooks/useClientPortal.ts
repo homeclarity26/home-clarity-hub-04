@@ -43,7 +43,6 @@ interface DbPage {
   group_name: string;
   condition_rating: string | null;
   narrative: unknown;
-  health_bar: unknown;
   specs: unknown;
   tiers: unknown;
   timing: string | null;
@@ -266,7 +265,6 @@ export function useClientPortal(propertyId?: string) {
         group: p.group_name,
         conditionRating: p.condition_rating as ReportPageData["conditionRating"],
         narrative: (p.narrative as string[]) || [],
-        healthBar: p.health_bar as ReportPageData["healthBar"],
         specs: (p.specs as { label: string; value: string }[]) || undefined,
         tiers: p.tiers as ReportPageData["tiers"],
         timing: p.timing || undefined,
