@@ -1,11 +1,8 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import {
-  Home, FileText, Calendar, FolderOpen, Image, File, Wrench,
-  CreditCard, FileCheck, Receipt, MessageSquare, Briefcase,
-  Users, Gift, Bell, ChevronLeft, ChevronRight, Menu, X
+  Home, FileText, Calendar, FolderOpen,
+  CreditCard, Users, ChevronLeft, ChevronRight, X,
 } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
 import HCRLogo from "@/components/brand/HCRLogo";
 
 interface NavItem {
@@ -20,6 +17,10 @@ interface NavSection {
   items: NavItem[];
 }
 
+// C12: 6 visible tabs — Photos folds into Projects, Documents/Equipment fold
+// into Report, Estimates/Billing fold into Payments, Services folds into
+// Schedule, Messages folds into the Concierge bar, Refer is a quick link on
+// Home, Notifications surface as a Concierge indicator.
 const NAV_SECTIONS: NavSection[] = [
   {
     title: "YOUR HOME",
@@ -30,29 +31,16 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    title: "PROJECTS",
+    title: "WORK",
     items: [
       { key: "projects", label: "Projects", icon: FolderOpen },
-      { key: "photos", label: "Photos", icon: Image },
-      { key: "documents", label: "Documents", icon: File },
-      { key: "equipment", label: "Equipment", icon: Wrench },
-    ],
-  },
-  {
-    title: "FINANCES",
-    items: [
       { key: "payments", label: "Payments", icon: CreditCard },
-      { key: "estimates", label: "Estimates", icon: FileCheck },
-      { key: "billing", label: "Billing", icon: Receipt },
     ],
   },
   {
     title: "CONNECT",
     items: [
-      { key: "messages", label: "Messages", icon: MessageSquare },
-      { key: "services", label: "Services", icon: Briefcase },
       { key: "contacts", label: "Contacts", icon: Users },
-      { key: "refer", label: "Refer", icon: Gift },
     ],
   },
 ];

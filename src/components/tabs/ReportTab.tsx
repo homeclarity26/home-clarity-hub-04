@@ -9,7 +9,7 @@ import ReportPage from "@/components/report/ReportPage";
 import FinancialRoadmapPage from "@/components/report/FinancialRoadmapPage";
 import ActionPlanPage from "@/components/report/ActionPlanPage";
 import ReportChapterNav, { CHAPTERS } from "@/components/report/ReportChapterNav";
-import ReportOverview from "@/components/report/ReportOverview";
+import ReportHome from "@/components/portal/report/ReportHome";
 import FindingsTable, { type Finding } from "@/components/report/FindingsTable";
 import LifespanBar from "@/components/report/LifespanBar";
 import InvestmentSummary from "@/components/report/InvestmentSummary";
@@ -372,7 +372,7 @@ const ReportTab = ({
 
   // --- Overview / Landing Page ---
   return (
-    <ReportOverview
+    <ReportHome
       groups={reportGroups}
       pages={reportPages}
       propertyName={propertyName}
@@ -382,6 +382,7 @@ const ReportTab = ({
       onChapterSelect={handleChapterChange}
       onPageSelect={handlePageSelect}
       onSendMessage={onSendMessage}
+      onTabChange={onTabChange}
       hoverUrl={hoverUrl}
       hoverPdfUrl={hoverPdfUrl}
       iguideUrl={iguideUrl}
