@@ -21,6 +21,7 @@ import ReplacementBriefingBlock from "./blocks/ReplacementBriefingBlock";
 import VisionProjectBlock from "./blocks/VisionProjectBlock";
 import RecurringServicesRegisterBlock from "./blocks/RecurringServicesRegisterBlock";
 import ConditionPillBlock from "./blocks/ConditionPillBlock";
+import ConciergeActionBlock from "./blocks/ConciergeActionBlock";
 
 interface SharedBlockRendererProps {
   block: ReportBlock;
@@ -114,6 +115,8 @@ const SharedBlockRenderer = ({
       return <RecurringServicesRegisterBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     case "condition_pill":
       return <ConditionPillBlock content={c as any} editable={editable} onChange={handleChange as any} />;
+    case "concierge_action":
+      return <ConciergeActionBlock content={c as any} editable={editable} onChange={handleChange as any} />;
     default:
       return <div className="bg-muted rounded p-4 text-xs text-muted-foreground">Unknown block: {block.type}</div>;
   }

@@ -21,7 +21,8 @@ export type BlockType =
   | "replacement_briefing"
   | "vision_project"
   | "recurring_services_register"
-  | "condition_pill";
+  | "condition_pill"
+  | "concierge_action";
 
 // Word-only condition ratings — replaces the numeric Health Score system
 // being deleted in Phase 6. Values are user-facing strings (rendered as-is)
@@ -332,6 +333,22 @@ export interface RecurringServicesRegisterContent {
   conciergePitchHtml?: string;
 }
 
+// ── Concierge Action (B11) ──────────────────────────────────────────────
+// Tappable "do" prompt per [v1.24] — schedule / pay / log / retrieve.
+// Tap opens ConciergePanel (built later in C1) with the prefilled prompt.
+// Until C1 lands, the click handler is a no-op visual; the button still
+// renders correctly so blocks containing it look right.
+
+export interface ConciergeActionContent {
+  label: string;                     // user-facing button text
+  prompt: string;                    // text fed into ConciergePanel on tap
+  // Visual variant — gold = primary action, rust = warning/emergency,
+  // navy = quiet alternative
+  style?: "gold" | "rust" | "navy";
+  // Optional eyebrow ("Concierge Action", "Quick Schedule", etc.)
+  eyebrow?: string;
+}
+
 // ── Condition Pill (B13) ────────────────────────────────────────────────
 // Inline-pill variant of ConditionRatingBlock (B1). Same 5-color palette;
 // used inline in narrative text or compact list views where the full card
@@ -599,6 +616,19 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
     icon: "Circle",
     defaultColSpan: 3,
     defaultContent: { rating: "Good" },
+  },
+  {
+    type: "concierge_action",
+    label: "Concierge Action",
+    description: "Tappable do-prompt that opens the Concierge with prefilled text",
+    icon: "MessageSquarePlus",
+    defaultColSpan: 6,
+    defaultContent: {
+      eyebrow: "Concierge Action",
+      label: "Schedule a service",
+      prompt: "I want to schedule a service for my home.",
+      style: "gold",
+    },
   },
 ];
 
