@@ -199,8 +199,9 @@ const AppRoutes = () => {
           <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="inbox" element={<AdminInbox />} />
           <Route path="clients" element={<AdminClients />} />
-          <Route path="clients/new" element={<AdminNewReport />} />
+          <Route path="clients/new" element={<AdminNewReportV2 />} />
           <Route path="clients/new-v2" element={<AdminNewReportV2 />} />
+          <Route path="clients/new-legacy" element={<AdminNewReport />} />
           <Route path="clients/:clientId" element={<AdminClientDetail />} />
           <Route path="inspect/:propertyId" element={<AdminFieldInspection />} />
           <Route path="tasks" element={<AdminTaskBoard />} />
