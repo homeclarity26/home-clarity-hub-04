@@ -58,6 +58,7 @@ If a session has no UI changes, skip this step entirely.
    SUPABASE_ACCESS_TOKEN=$PAT npx --yes supabase gen types typescript \
      --project-id vvwojahsianpmwjvkunn > src/integrations/supabase/types.ts
    ```
+   - After every Supabase migration that changes schema, type regeneration runs as its own one-file ticket. Do not bundle type regen with feature work. The migration ticket and the regen ticket are separate PRs.
 6. **Every new edge function starts from the template** in
    `#### Edge function template` below. Auth is on by default — if the
    function needs to be open (cron/webhook/public), write a one-line
@@ -94,6 +95,10 @@ If a session has no UI changes, skip this step entirely.
     isn't ready, don't show it. If the data isn't there, show an honest
     empty state with specifics ("Not yet uploaded", "No services
     published yet"), not a future promise.
+15. **Never add fixed heights or `overflow-y: auto` or `line-clamp-*`
+    to any element wrapping AI-authored or admin-authored prose.**
+    Universal expanding containers are the rule. See HCR Rebuild Locked
+    Principles for full pattern.
 
 ---
 
@@ -630,3 +635,283 @@ rebuild.
 ---
 
 *This file is the source of truth. If you ship a PR that changes the architecture, conventions, or schema — update this file in the same PR.*
+
+---
+
+## HCR Rebuild Locked Principles
+
+These principles emerged from the v2 prototype lock and the four-pass codebase audit completed 2026-04-26. They apply to every ticket in MASTER_IMPLEMENTATION_PLAN.md and to any future HCR work. They do not replace the existing principles in this file. They extend them.
+
+### No Health Score, anywhere
+
+The Health Score concept is removed system-wide. Word-based condition ratings are the only acceptable surface: Excellent, Good, Fair, Poor, Critical. Each rating has a color (success / success / accent / destructive / destructive). No numerical score appears in any UI, in any DB column, in any edge function output, in any block content, in any printed PDF, or in any client-facing copy.
+
+If a ticket touches a Health Score artifact (file, column, function, block type), the ticket either deletes the artifact or migrates its data to the word-rating model per the sequence in Master Spec Section 5.7. Tickets that "preserve Health Score for backward compatibility" or "leave the column for safety" are non-compliant. Drop the column, delete the file, ship the migration.
+
+### Universal expanding containers
+
+Every container that holds AI-authored or admin-authored prose expands to fit content. No fixed heights. No max-height. No inner scroll on prose containers. No line-clamp on multi-line prose. No text-overflow ellipsis on prose.
+
+Exceptions are narrow: single-line metadata in lists (truncate allowed), photo captions in grid view (2-line clamp acceptable because full caption shows on photo open), vendor names in tight table columns (truncate at column boundary with full name on hover/tap). Everything else expands.
+
+The pattern is enforced by ESLint rule `no-fixed-height-on-prose` (added in Phase 9). The rule flags max-h-*, overflow-y-auto, and line-clamp-* Tailwind utilities on elements with dangerouslySetInnerHTML or known prose-bearing component children.
+
+### AI Expand and Tighten — universal pattern
+
+Every prose field (admin or client side) is wrapped by the AIExpandTightenField component. The component renders the field plus three buttons: Expand, Tighten, optionally Match brand voice. Each button calls the ai-edit edge function with the matching mode.
+
+When you build any new prose-bearing component, use AIExpandTightenField. Do not roll your own textarea. Do not add a "smart edit" button that calls anything other than ai-edit. The component is the universal pattern. No exceptions for "small" or "internal" fields.
+
+### Visual diff acceptance criterion
+
+Every ticket that changes UI ships with a visual diff verification. Acceptance criteria for any UI ticket includes "matches screen N in v2 PDF" with the specific screen number, OR "produces a clean visual diff against the locked prototype" if the change is small enough to inspect inline.
+
+The v2 PDF is the visual source of truth. caldwell_prototype_v2.html is the interactive source of truth. Both are stored in Adam's Drive at 03 HOMETOWN BUILDERS CLUB > HCR > Prototype v2. If a ticket's visual outcome is ambiguous, the prototype wins.
+
+### One-to-three file rule
+
+Every ticket touches a maximum of 3 files. Tickets that need to touch more get split. The rule is non-negotiable for two reasons: it forces clean dependency boundaries, and it makes Adam's PR review tractable.
+
+If a ticket appears to require touching more than 3 files, the right move is to break it into a sequence with explicit depends_on. Example: "Add condition_rating block type" looks like 1 file (types.ts) until you realize it also needs a renderer (blocks/ConditionRatingBlock.tsx) and a switch update (BlockRenderer.tsx). That's 3 files exactly. If a fourth file would be needed (like a migration), that's the next ticket.
+
+The rule applies to test files too. If adding a feature requires updating 5 test files, split the ticket. The exception is when a single new test file is added alongside the feature — that counts as one of the 3.
+
+### Golden Path 47 baseline becomes 62
+
+The existing 47/47 Golden Path test baseline grows to 62/62 across the rebuild. Master Spec Section 6.10 enumerates the 15 new tests. The invariant during the rebuild is:
+
+- After Phase 1 (foundation): 47/47 still passes (no functional change yet)
+- After Phase 2-3 (new blocks + wizard): 47/47 plus new tests as they ship
+- After Phase 10 (cleanup): 62/62 holds
+
+A ticket that breaks any green test does not merge. A ticket that adds a new test and the test fails on first run is fine — that's the test catching its target. A ticket that "skips" a test to ship faster is non-compliant.
+
+### Em-dashes are never permitted in client copy
+
+Adam's preference is locked. No em-dashes in any text that reaches a user. ESLint rule no-em-dashes-in-jsx (added in Phase 9) flags them in JSX text, JSX attribute strings, and template literals. Comment em-dashes don't count. The rule auto-suggests replacement with comma + space or semicolon + space, but final replacement requires manual review because the right replacement varies by context.
+
+This rule applies to AI-generated content as well. The match_brand_voice mode of ai-edit explicitly forbids em-dashes. The frontend runs a final check after match_brand_voice returns: if the output contains an em-dash, the field is not auto-replaced and a toast prompts the user to retry or edit manually.
+
+### HCR colors are canonical everywhere
+
+The HCR brand palette applies system-wide, including AKR-branded admin documents (proposals, invoices, change orders, the Master Financial Ledger). There is no dual brand system. The canonical hex values are in Master Spec Section 6.9.
+
+Inline hex codes outside the design token file (src/index.css) are flagged by ESLint rule no-inline-hex (added in Phase 9). Future work uses CSS variables and shadcn tokens exclusively.
+
+### IBM Plex Mono must load
+
+The brand specifies three fonts: Cormorant Garamond (display), Inter (body), IBM Plex Mono (data labels and uppercase mono captions). The audit found Plex Mono is currently NOT loaded; font-mono renders Inter as a fallback. The fix is one ticket touching index.html.
+
+After the fix ships, every font-mono usage in the app inherits Plex Mono. No component changes required.
+
+### Caldwell residence is pure 1998 build
+
+The fictional sample home is a pure 1998 Colonial. Not "1998 over 1920s bones." Not "rebuilt in 1998 on an older foundation." Pure 1998. Six photos from earlier batches that depicted older structures (stone basement, knob-and-tube, old boiler) are NOT for Caldwell content and have been set aside for future sample homes.
+
+Any AI content generation for Caldwell that drifts toward older-construction tropes is a regression. The systems are 1998 originals or post-1998 replacements. The framing is conventional 2x6. The electrical is 200-amp Square D QO from 1998.
+
+### AKR is openly disclosed as Adam's company
+
+Vision projects on the report disclose that AK Renovations is Adam Kilgore's general contracting business. Transparency is the brand position. The disclosure is not buried, not euphemistic, and not optional.
+
+The Vision page renderer (Section 3 ticket B5) includes an "Execution Path" section that names AKR explicitly when AKR is the recommended trade partner for the project. When AKR is not the recommended trade partner (because scope or specialty is outside AKR's range), the Execution Path names the recommended trade partner instead. Either way, the path is named.
+
+### HBC Concierge pricing is honest
+
+The pricing tiers are $200/month for up to 5 services managed, $400/month for up to 10, $600/month for over 10. The value proposition is time savings and frustration reduction, not cost reduction. Concierge subscription does not save the family money on the underlying services. It saves them the coordination overhead of managing those services themselves.
+
+Any AI-generated copy that frames Concierge as "saving you money" is non-compliant. The honest framing template is: "You'd be on our $X/month plan plus your current $Y in services equals $Z total. What you stop doing: scheduling, chasing receipts, remembering due dates, vetting vendors."
+
+### Prototype-first methodology is permanent
+
+The working pattern that produced v2: build interactive prototype as self-contained HTML in pieces, iterate until Adam approves, lock prototype as visual specification, derive written spec from locked prototype, hand prototype + spec to Claude Code.
+
+This pattern applies to any future major UX decision. Specs are not written before the prototype is locked. The prototype IS the specification for visual decisions. Written specs translate the prototype into engineering deliverables, not the other way around.
+
+---
+
+## HCR Rebuild — Forbidden Patterns
+
+In addition to the existing forbidden patterns above, the following patterns are forbidden during HCR rebuild work. They are tripwires that have caused real damage in this codebase.
+
+### Suggesting a fresh approach to anything in v2
+
+The v2 prototype is locked. "Fresh approach" suggestions are non-compliant. If a v2 pattern seems suboptimal, the response is either to flag it as an open question for Adam (do not proceed) or to implement it as specified (proceed). Never silently substitute your preferred pattern.
+
+### Adding features that aren't in the prototype
+
+Features absent from the prototype are absent from the spec. A ticket that introduces UI not present in v2 is out of scope. If you find a gap that the prototype clearly missed (say, a confirmation dialog for a destructive action), flag it as an open question and stop. Do not add it.
+
+### Generating placeholder content when the Mock Report has the real content
+
+The Mock Report (deliverable 3) is the canonical content for every Caldwell page. Tickets that need Caldwell sample content reference the Mock Report directly. Tickets that generate "placeholder" Caldwell content are non-compliant — the placeholder will drift from the Mock Report and create a parallel reality.
+
+### Changing colors, fonts, spacing, or component patterns
+
+The brand system is locked. Cormorant Garamond, Inter, IBM Plex Mono. Navy #0A1628, Gold #B87333, Cream #EDE9E1, Rust #B7410E. The shadcn/ui component patterns. Tailwind spacing scale. Tickets that introduce new fonts, new spacing units, or new component primitives are non-compliant.
+
+### Touching the existing CLAUDE.md beyond additive surgical changes
+
+CLAUDE.md is battle-tested. The HCR rebuild adds to it. The HCR rebuild does NOT rewrite it. Tickets that modify existing sections (other than the explicit single-line insertions noted in this addition document) are non-compliant.
+
+### Touching more than 3 files in a single ticket
+
+Stated above as a principle, repeated here as a forbidden pattern because it's the most common violation. If your ticket needs to touch 4+ files, split it. There is always a clean split.
+
+### Skipping Golden Path tests
+
+The 62/62 baseline must hold. Skipping a test "temporarily" or marking it `.skip` to ship faster is non-compliant. If a test catches a real regression in your ticket, the right move is to fix the regression, not skip the test.
+
+### Improvising on missing spec
+
+If a ticket appears to need information not in the spec, the right response is to stop and ask Adam. Do not improvise. Do not "interpret what Adam probably wanted." Do not fill the gap with your own design judgment. The spec is the source of truth; gaps in the spec are work for Adam, not for you.
+
+---
+
+## HCR Rebuild — Ticket Discipline
+
+Every ticket in MASTER_IMPLEMENTATION_PLAN.md follows this structure. Tickets that don't follow it are non-compliant and should be rejected before work begins.
+
+### Required ticket fields
+
+Every ticket has:
+
+1. **ID** — unique identifier (e.g., A1, B7, C12, D3, M2)
+2. **Title** — one-line summary
+3. **Phase** — Phase 1 through Phase 10 per Master Spec Section 6.6
+4. **Files touched** — explicit file paths, max 3
+5. **Time estimate** — in hours, integer
+6. **Acceptance criteria** — bulleted list, each item testable
+7. **Visual diff reference** — screen number from v2 PDF, OR explicit "no UI change"
+8. **Depends on** — list of ticket IDs that must merge first, OR "none"
+9. **Golden Path test** — the test number this ticket affects, plus a one-line description of how to verify
+10. **Notes** — anything Adam should know before merging
+
+### Acceptance criteria specificity
+
+"Implement the foo" is not an acceptance criterion. "When user clicks Save in Step 3, page row updates with status='complete'" is. Each criterion is a single observable behavior. If a criterion can't be tested by clicking through the app or running a script, rewrite it.
+
+### Visual diff workflow
+
+For UI tickets:
+1. Implement the change locally.
+2. Open the affected page on local dev.
+3. Open the v2 PDF to the referenced screen number.
+4. Compare side-by-side.
+5. Note any visual deltas in the PR description.
+6. If deltas exist that aren't justified by the ticket scope, fix them or split into a follow-up ticket.
+
+### Time estimate calibration
+
+- 1-2 hours: simple file deletion, single-component refactor, ESLint rule addition, type regen
+- 3-4 hours: new block type with renderer, new edge function with simple logic, table migration with backfill
+- 5-8 hours: complex new component (AIExpandTightenField, ConciergeBar), wizard step rebuild, multi-edge-function workflow
+
+Tickets estimated above 8 hours should be split. The 8-hour ceiling is empirically the point where context degrades and quality drops.
+
+### Dependency rules
+
+If ticket B depends on ticket A, B's depends_on field lists A. The punch list is sequenced so dependencies merge first. If you find yourself wanting to start B before A merges, the right move is to wait or to inline a short stub that lets B proceed independently — not to violate the sequence.
+
+### PR review
+
+Adam is the PR reviewer for every HCR rebuild ticket. Nothing merges without his verification. The PR description must include:
+- Ticket ID
+- Visual diff notes (or "no UI change")
+- Golden Path test status (which tests passed, which failed if any)
+- Any deviations from the spec, with rationale
+
+---
+
+## HCR Rebuild — File and Component Conventions
+
+### New components live in dedicated subdirectories
+
+- `src/components/admin/wizard/` — the 5-step wizard step components and shared sub-components (Step1Intake.tsx, Step2TOC.tsx, Step3Authoring.tsx, Step4Strategy.tsx, Step5Publish.tsx, AICoPilotPanel.tsx, SideBySideEditor.tsx, AIClarifyingQuestions.tsx, AIQualityGate.tsx, CustomPageDialog.tsx, FieldChecklist.tsx)
+- `src/components/portal/concierge/` — ConciergeBar.tsx, ConciergePanel.tsx, ConciergeAction.tsx, ConciergeTranscript.tsx
+- `src/components/portal/home/` — PortalHome.tsx, PortalHomeHero.tsx, TodaysBrief.tsx, HoverEmbed.tsx, IGuideEmbed.tsx, FloorPlanEmbed.tsx
+- `src/components/portal/report/` — ReportHome.tsx and supporting components
+- `src/components/wysiwyg/blocks/` — new block renderers (RoomRecordBlock.tsx, SystemRecordBlock.tsx, ReplacementBriefingBlock.tsx, VisionProjectBlock.tsx, RecurringServicesBlock.tsx, CapitalPlanBlock.tsx, MaintenanceCalendarBlock.tsx, TodaysBriefBlock.tsx, ConditionRatingBlock.tsx, ConditionPillBlock.tsx, FieldChecklistBlock.tsx, ConciergeActionBlock.tsx)
+- `src/components/editor/` — AIExpandTightenField.tsx (extends existing editor folder)
+
+Existing components stay in their current locations. No bulk relocation in this rebuild.
+
+### Edge functions live where they always have
+
+`supabase/functions/{function-name}/index.ts`. Each new function gets its own folder. Each function has an entry in `supabase/config.toml`.
+
+### Migration files follow Supabase convention
+
+`supabase/migrations/YYYYMMDDhhmmss_descriptive_name.sql`. Timestamps strictly ascending. No edits to past migrations. Past migrations are immutable history.
+
+### Block type registration
+
+A new block type requires three changes:
+1. Add the type literal to the BlockType union in `src/components/wysiwyg/types.ts`
+2. Add a default content shape and template entry to BLOCK_TEMPLATES
+3. Add a case to BlockRenderer.tsx switch statement that renders the block
+
+These three changes are 3 files exactly — at the limit of the 3-file rule. Any additional file (a migration, a new edge function, a separate test file) is a follow-up ticket.
+
+### Naming conventions
+
+- Components: PascalCase, descriptive. ReplacementBriefingBlock not RBBlock.
+- Hooks: camelCase starting with "use". useReplacementBriefing not getReplacementBriefing.
+- Types: PascalCase. ReplacementBriefingTier not replacement_briefing_tier.
+- DB columns: snake_case. hbc_concierge_tier not hbcConciergeTier.
+- File names: match the default export. ReplacementBriefingBlock.tsx exports ReplacementBriefingBlock.
+
+### State management
+
+The rebuild does not introduce a new state management library. Existing patterns continue:
+- React Query for server state (with the existing mobile-tuned defaults — staleTime, gcTime, no focus refetch)
+- React Context for cross-cutting client state (auth, edit mode, theme)
+- Local component state for UI ephemera
+
+Specifically: do not introduce Zustand, Redux, Jotai, or Recoil during this rebuild. If a new piece of cross-cutting state emerges that doesn't fit the existing patterns, flag it as an open question for Adam.
+
+### Type regeneration is its own ticket
+
+After any DB migration that changes schema, type regeneration runs as its own ticket touching one file (`src/integrations/supabase/types.ts`). The ticket is one PR, no logic changes. Bundling type regen with feature work creates messy diffs that obscure the actual code changes.
+
+---
+
+## HCR Rebuild Reference Documents
+
+When working on any HCR rebuild ticket, these are the source-of-truth documents. They live in Adam's Google Drive at `03 HOMETOWN BUILDERS CLUB > HCR > Audit + Spec` (and earlier folders for the prototype).
+
+### Required reads before starting any rebuild ticket
+
+1. **HCR_PROTOTYPE_DECISIONS_LOG.md** — every locked decision through [v2.44]. Non-negotiable inputs.
+2. **HCR_Master_Spec_Section_1_Foundation.md** — locked principles, two-surface model, brand system, removal sweep, four-tag system
+3. **HCR_Master_Spec_Section_2_Admin_Builder.md** — 5-step wizard tickets
+4. **HCR_Master_Spec_Section_3_Page_Renderers.md** — block types and page-type renderers tickets
+5. **HCR_Master_Spec_Section_4_Client_Portal.md** — 6-tab consolidation and Concierge tickets
+6. **HCR_Master_Spec_Section_5_Backend.md** — tables, columns, edge functions, migration sequence, RLS
+7. **HCR_Master_Spec_Section_6_Cross_Cutting.md** — universal patterns, mobile rules, photo handling, ESLint, Golden Path, retirement sequence
+8. **MASTER_IMPLEMENTATION_PLAN.md** — the punch list with all tickets
+9. **HCR Mock Report — The Caldwell Residence** — long-form Caldwell content used as AI seed and demo
+
+### Visual source of truth
+
+- `caldwell_prototype_v2.html` — interactive prototype, 3.4 MB version with embedded photos, viewing copy
+- `caldwell_prototype_v2_slim.html` — 214 KB slim version for project knowledge upload
+- `caldwell_prototype_v2_screens.pdf` — 55-page PDF of every screen (50 desktop + 5 mobile) for visual diff reference
+
+### Audit findings
+
+- `HCR_Audit_Pass_A_Edge_Functions.md` — 71 edge functions classified
+- `HCR_Audit_Pass_B_Portal_Surface.md` — 16 tabs and 40 portal components mapped to v2 6-tab structure
+- `HCR_Audit_Pass_C_Redundancy.md` — 11 cross-surface redundancies reconciled
+- `HCR_Audit_Pass_D_Brand_Copy.md` — em-dash, font, color, Health Score sweeps quantified
+
+### Project context
+
+- `HCR_REBUILD_CONTEXT.md` — strategic foundation
+- `HCR_PROTOTYPE_BRIEF.md` — prototype success criteria
+- `HCR_CODEBASE_GROUND_TRUTH.md` — repo state pre-rebuild
+- `HCR_SESSION_HANDOFF.md` — current session state
+
+### When in doubt
+
+If a ticket's correct behavior isn't clear from the documents above, stop and ask Adam. Do not improvise. The spec is comprehensive; gaps in the spec are work for Adam.
