@@ -9,6 +9,7 @@ import {
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import type { ReportBlock } from "@/components/wysiwyg/types";
 
 // ─── Wizard state shape (covers all 5 steps) ─────────────────────────────
 //
@@ -580,4 +581,92 @@ export function useWizard(): WizardContextValue {
     throw new Error("useWizard must be used inside <WizardProvider>");
   }
   return ctx;
+}
+
+// W2.5 — Wizard authoring → SharedBlockRenderer bridge.
+//
+// Step 3's textareas write content as a flat list of `{type, value}` rows
+// (`narrative`, `observations`). That shape is wizard-internal — neither
+// SharedBlockRenderer nor PortalBlockViewer know how to consume it. At
+// publish time we materialize that into the canonical ReportBlock array
+// shape so it can land in `report_pages.narrative` (per-page) and
+// `reports.blocks_json` (whole-report union) and render through the v2
+// surface end-to-end.
+export function pageAuthoringToBlocks(
+  authoring: PageAuthoring,
+  startOrder = 0,
+): ReportBlock[] {
+  const items =
+    (authoring.content as Array<{ type?: string; value?: string }> | undefined) ??
+    [];
+  const narrative =
+    items.find((b) => b.type === "narrative")?.value?.trim() ?? "";
+  const observations =
+    items.find((b) => b.type === "observations")?.value?.trim() ?? "";
+
+  const blocks: ReportBlock[] = [];
+  const now = new Date().toISOString();
+  let order = startOrder;
+
+  if (narrative) {
+    blocks.push({
+      id: makeBlockId(order),
+      type: "text",
+      content: { html: textareaToHtml(narrative) },
+      colSpan: 12,
+      order: order++,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+  if (observations) {
+    blocks.push({
+      id: makeBlockId(order),
+      type: "text",
+      content: { html: `<h3>Observations</h3>${textareaToHtml(observations)}` },
+      colSpan: 12,
+      order: order++,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+  return blocks;
+}
+
+// Newline-respecting plain-text → safe HTML. Mirrors what TextBlock expects
+// (an html string it pipes through SanitizedHtml). Double-newline = paragraph
+// break, single-newline = <br/>.
+function textareaToHtml(value: string): string {
+  const escaped = value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  const paragraphs = escaped.split(/\n{2,}/).map((p) => p.replace(/\n/g, "<br/>"));
+  return paragraphs
+    .filter((p) => p.length > 0)
+    .map((p) => `<p>${p}</p>`)
+    .join("");
+}
+
+function makeBlockId(order: number): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `b-${Date.now().toString(36)}-${order}`;
+}
+
+// Runtime detector for whether a `report_pages.narrative` jsonb cell is the
+// new ReportBlock array shape (W2.5+) vs the legacy `string[]` (pre-rebuild).
+// Used by ReportTab to decide between SharedBlockRenderer and ReportPage.
+export function isReportBlockArray(value: unknown): value is ReportBlock[] {
+  if (!Array.isArray(value) || value.length === 0) return false;
+  const first = value[0];
+  return (
+    typeof first === "object" &&
+    first !== null &&
+    typeof (first as { id?: unknown }).id === "string" &&
+    typeof (first as { type?: unknown }).type === "string" &&
+    typeof (first as { content?: unknown }).content === "object" &&
+    (first as { content: unknown }).content !== null
+  );
 }
