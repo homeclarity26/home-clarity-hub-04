@@ -2,7 +2,9 @@ import { useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { useEditMode } from "@/contexts/EditModeContext";
 import PortalBlockViewer from "@/components/wysiwyg/PortalBlockViewer";
+import SharedBlockRenderer from "@/components/wysiwyg/SharedBlockRenderer";
 import type { ReportBlock } from "@/components/wysiwyg/types";
+import { isReportBlockArray } from "@/contexts/WizardContext";
 import { reportPages as staticPages, reportGroups as staticGroups, type ReportPageData } from "@/data/reportContent";
 import ReportPage from "@/components/report/ReportPage";
 import FinancialRoadmapPage from "@/components/report/FinancialRoadmapPage";
@@ -142,6 +144,135 @@ const ReportTab = ({
 
   // --- Individual report page view ---
   if (page) {
+    // W2.5 — when the wizard publishes, `report_pages.narrative` lands as a
+    // ReportBlock[] (the v2 shape SharedBlockRenderer consumes). Legacy
+    // reports authored pre-rebuild still carry narrative as `string[]` and
+    // fall through to the legacy ReportPage renderer below.
+    const rawNarrative = (page as unknown as { narrative?: unknown }).narrative;
+    if (isReportBlockArray(rawNarrative)) {
+      const sortedBlocks = [...rawNarrative].sort((a, b) => a.order - b.order);
+      const group = reportGroups.find((g) => g.pages.includes(activePageId!));
+      const images = pageImages[activePageId!] || [];
+      const allPageIds = reportGroups.flatMap((g) => g.pages);
+      const currentIndex = allPageIds.indexOf(activePageId!);
+      const prevPageId = currentIndex > 0 ? allPageIds[currentIndex - 1] : null;
+      const nextPageId =
+        currentIndex < allPageIds.length - 1 ? allPageIds[currentIndex + 1] : null;
+      const prevPage = prevPageId ? reportPages[prevPageId] : null;
+      const nextPage = nextPageId ? reportPages[nextPageId] : null;
+      const spanClassFor = (cs: ReportBlock["colSpan"]): string => {
+        if (cs === 3) return "col-span-12 sm:col-span-3";
+        if (cs === 4) return "col-span-12 sm:col-span-4";
+        if (cs === 6) return "col-span-12 sm:col-span-6";
+        return "col-span-12";
+      };
+      return (
+        <div>
+          <ReportChapterNav
+            groups={reportGroups}
+            pages={reportPages}
+            activeChapter={resolvedChapter}
+            activePageId={activePageId}
+            onChapterChange={handleChapterChange}
+            onPageSelect={handlePageSelect}
+            onBackToHome={() => onNavigate?.("")}
+          />
+          <div className="max-w-[1040px] mx-auto px-6 md:px-10 py-8">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink
+                    className="cursor-pointer font-mono text-[11px] uppercase tracking-[0.15em]"
+                    onClick={() => onNavigate?.("")}
+                  >
+                    Report
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                {group && (
+                  <>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+                        {group.title}
+                      </span>
+                    </BreadcrumbItem>
+                  </>
+                )}
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="font-mono text-[11px] uppercase tracking-[0.15em]">
+                    {page.title}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <h1 className="font-display text-3xl md:text-4xl text-foreground mt-4 mb-8">
+              {page.title}
+            </h1>
+            <div className="grid grid-cols-12 gap-4">
+              {sortedBlocks.map((block) => (
+                <div key={block.id} className={spanClassFor(block.colSpan)}>
+                  <SharedBlockRenderer
+                    block={block}
+                    editable={false}
+                    propertyAddress={propertyAddress}
+                    propertyId={propertyId}
+                    reportId={reportId}
+                  />
+                </div>
+              ))}
+            </div>
+            {images.length > 0 && (
+              <div className="mt-10">
+                <h3 className="font-display text-2xl text-foreground mb-6">Photos</h3>
+                <ImageGrid images={images} />
+              </div>
+            )}
+            {(prevPage || nextPage) && (
+              <div className="mt-12 border-t border-border pt-8 grid grid-cols-2 gap-3">
+                {prevPage ? (
+                  <button
+                    onClick={() => onNavigate?.(prevPageId!)}
+                    className="group flex items-center gap-3 text-left bg-card border border-border rounded-xl px-4 py-4 hover:border-accent/40 hover:bg-accent/5 transition-all"
+                  >
+                    <ArrowLeft className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground mb-0.5">
+                        ← Previous
+                      </p>
+                      <p className="font-sans text-sm text-foreground group-hover:text-accent transition-colors truncate">
+                        {prevPage.title}
+                      </p>
+                    </div>
+                  </button>
+                ) : (
+                  <div />
+                )}
+                {nextPage ? (
+                  <button
+                    onClick={() => onNavigate?.(nextPageId!)}
+                    className="group flex items-center gap-3 text-right justify-end bg-card border border-border rounded-xl px-4 py-4 hover:border-accent/40 hover:bg-accent/5 transition-all"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground mb-0.5">
+                        Next →
+                      </p>
+                      <p className="font-sans text-sm text-foreground group-hover:text-accent transition-colors truncate">
+                        {nextPage.title}
+                      </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors flex-shrink-0" />
+                  </button>
+                ) : (
+                  <div />
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     const dbPageId = pageKeyToDbId[activePageId!];
     const images = pageImages[activePageId!] || [];
     const group = reportGroups.find((g) => g.pages.includes(activePageId!));

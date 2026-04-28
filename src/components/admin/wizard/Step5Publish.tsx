@@ -4,13 +4,28 @@ import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useWizard } from "@/contexts/WizardContext";
+import { pageAuthoringToBlocks, useWizard } from "@/contexts/WizardContext";
+import type { ReportBlock } from "@/components/wysiwyg/types";
 import { WizardNavigation } from "./WizardNavigation";
 import { AIQualityGate } from "./AIQualityGate";
 
 // Step 5 — Publish. Renders summary, the AI quality gate, and the publish
-// CTA. Publishing flips reports.status='published' and every authoring
-// page that is "complete" → report_pages.status='published'.
+// CTA.
+//
+// W2.5 publish sequence:
+//   1. Materialize each authored page's content into a ReportBlock[] and
+//      upsert it into `report_pages.narrative` (jsonb) along with title,
+//      group_name, sort_order, and the wizard's authoring status.
+//   2. Build the union of every page's blocks and write it to
+//      `reports.blocks_json` so PortalBlockViewer can render the full
+//      report through SharedBlockRenderer.
+//   3. Flip `reports.status='published'`.
+//   4. Promote any pages marked "complete" to `report_pages.status='published'`.
+//      This step runs AFTER step 1's upsert so the UPDATE actually matches
+//      rows.
+//
+// Pre-W2.5 the publish handler skipped step 1 entirely, which is why
+// brand-new wizard reports landed in the portal as empty.
 
 export function Step5Publish() {
   const { state, goToStep } = useWizard();
@@ -51,15 +66,99 @@ export function Step5Publish() {
     setPublishing(true);
     try {
       const now = new Date().toISOString();
-      // Flip the report row.
-      const { error: rErr } = await supabase
-        .from("reports")
-        .update({ status: "published", updated_at: now })
-        .eq("id", state.reportId);
-      if (rErr) throw rErr;
+      const reportBlocks: ReportBlock[] = [];
+      let blockOrder = 0;
 
-      // Flip every "complete" report_pages row to published. Pages that are
-      // still draft or reviewed stay where they are.
+      // Walk every selected page in TOC order. For each, build the per-page
+      // ReportBlock array, upsert the report_pages row, and append the
+      // page's blocks (with a heading break) to the whole-report union.
+      let sectionIndex = 0;
+      for (const section of state.tocSections) {
+        let pageIndex = 0;
+        const selectedInSection = section.pages.filter((p) => p.selected);
+        if (selectedInSection.length === 0) {
+          sectionIndex += 1;
+          continue;
+        }
+        for (const page of selectedInSection) {
+          const authoring =
+            state.authoring[page.page_key] ?? {
+              page_key: page.page_key,
+              status: "draft" as const,
+              is_featured: false,
+              content: [],
+            };
+          const pageBlocks = pageAuthoringToBlocks(authoring);
+
+          const sortOrder = sectionIndex * 100 + pageIndex;
+          // Step 1 — upsert the row. onConflict on (report_id, page_key)
+          // means re-publishing the same wizard run updates in place.
+          const { error: upErr } = await supabase
+            .from("report_pages")
+            .upsert(
+              {
+                report_id: state.reportId,
+                page_key: page.page_key,
+                title: page.title,
+                group_name: section.label,
+                narrative: pageBlocks as never,
+                status: authoring.status,
+                sort_order: sortOrder,
+                is_complete: authoring.status === "complete",
+                updated_at: now,
+              },
+              { onConflict: "report_id,page_key" },
+            );
+          if (upErr) throw upErr;
+
+          // Step 2 (running) — append a chapter_header + the page's blocks
+          // to the union for reports.blocks_json. The header gives the
+          // PortalBlockViewer all-in-one view visible page boundaries.
+          reportBlocks.push({
+            id:
+              typeof crypto !== "undefined" &&
+              typeof crypto.randomUUID === "function"
+                ? crypto.randomUUID()
+                : `h-${Date.now().toString(36)}-${blockOrder}`,
+            type: "chapter_header",
+            content: {
+              title: page.title,
+              chapterId: page.page_key,
+            } as never,
+            colSpan: 12,
+            order: blockOrder++,
+            createdAt: now,
+            updatedAt: now,
+          });
+          for (const b of pageBlocks) {
+            reportBlocks.push({ ...b, order: blockOrder++ });
+          }
+
+          pageIndex += 1;
+        }
+        sectionIndex += 1;
+      }
+
+      // Step 2 (commit) — write the whole-report blocks_json union.
+      {
+        const { error: rJsonErr } = await supabase
+          .from("reports")
+          .update({ blocks_json: reportBlocks as never, updated_at: now })
+          .eq("id", state.reportId);
+        if (rJsonErr) throw rJsonErr;
+      }
+
+      // Step 3 — flip the report row to published.
+      {
+        const { error: rErr } = await supabase
+          .from("reports")
+          .update({ status: "published", updated_at: now })
+          .eq("id", state.reportId);
+        if (rErr) throw rErr;
+      }
+
+      // Step 4 — promote complete pages to published. Runs AFTER the
+      // upserts above so the UPDATE actually matches rows.
       const completePageKeys = Object.values(state.authoring)
         .filter((a) => a.status === "complete")
         .map((a) => a.page_key);
@@ -75,7 +174,8 @@ export function Step5Publish() {
       setPublishedAt(now);
       toast({
         title: "Report published",
-        description: "Your client can see the report once they receive their invite.",
+        description:
+          "Your client can see the report once they receive their invite.",
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
