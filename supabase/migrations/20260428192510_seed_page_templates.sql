@@ -3,6 +3,13 @@
 -- Step 2 of the new wizard reads this table to build the available-pages list
 -- it sends to recommend-report-pages. Empty table = wizard fails at TOC stage.
 
+-- Schema gap discovered while applying the seed: page_templates.id was
+-- defined NOT NULL with no default, so any INSERT that omits id failed
+-- with 23502. Adding the default here so this seed (and CustomPageDialog
+-- in Step 2 which inserts new templates without specifying id) work.
+ALTER TABLE public.page_templates
+  ALTER COLUMN id SET DEFAULT gen_random_uuid();
+
 INSERT INTO public.page_templates (slug, name, group_name, sub_group, default_order, is_custom)
 VALUES
   ('executive-summary', 'Executive Summary', 'information', NULL, 0, false),
