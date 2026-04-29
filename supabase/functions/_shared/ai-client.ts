@@ -260,6 +260,24 @@ export function parseJSON<T = unknown>(text: string): T {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// Retryability check for Gemini errors.
+//
+// Returns true for transient failures where Claude is a useful fallback:
+//   429 (rate-limited), 503 (overloaded), 5xx server errors, network errors.
+// Returns false for client errors (400, 401, 403, 422) where Claude won't help.
+// ─────────────────────────────────────────────────────────────────────────
+
+export function isGeminiRetryable(err: unknown): boolean {
+  if (err instanceof TypeError) return true; // network-level fetch failure
+  const msg = err instanceof Error ? err.message : String(err);
+  return (
+    msg.includes("rate-limited") ||      // 429 from callAI / callAIAgent
+    msg.includes("temporarily busy") ||   // 503 from callAI / callAIAgent
+    /Gemini API error[:\s]*5\d\d/.test(msg) // 5xx from callAI or raw fetch
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // Gemini embeddings. 768-dim text-embedding-004 matches the pgvector columns
 // we added in 20260418000000_pgvector_memory_foundation.sql.
 // ─────────────────────────────────────────────────────────────────────────

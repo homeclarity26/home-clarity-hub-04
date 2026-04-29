@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callAI } from "../_shared/ai-client.ts";
+import { callAI, callClaude, isGeminiRetryable } from "../_shared/ai-client.ts";
 import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
 
 /**
@@ -62,6 +62,20 @@ const INPUT_CHAR_CAP = 20_000; // ~5000 tokens, per Master Spec 5.4.3
 const isMode = (v: unknown): v is Mode =>
   v === "expand" || v === "tighten" || v === "match_brand_voice";
 
+async function callWithFallback(geminiOpts: Parameters<typeof callAI>[0], claudeSystem: string, claudePrompt: string): Promise<string> {
+  try {
+    return await callAI(geminiOpts);
+  } catch (geminiErr) {
+    if (!isGeminiRetryable(geminiErr)) throw geminiErr;
+    console.warn("Gemini failed in ai-edit, falling back to Claude:", geminiErr instanceof Error ? geminiErr.message : geminiErr);
+    try {
+      return await callClaude({ system: claudeSystem, prompt: claudePrompt, geminiFallback: false });
+    } catch {
+      throw geminiErr;
+    }
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -78,13 +92,17 @@ serve(async (req) => {
       }
       const truncated = text.length > INPUT_CHAR_CAP ? text.slice(0, INPUT_CHAR_CAP) : text;
 
-      const aiText = await callAI({
-        messages: [
-          { role: "system", content: MODE_PROMPTS[body.mode] },
-          { role: "user", content: truncated },
-        ],
-        model: "google/gemini-3-flash-preview",
-      });
+      const aiText = await callWithFallback(
+        {
+          messages: [
+            { role: "system", content: MODE_PROMPTS[body.mode] },
+            { role: "user", content: truncated },
+          ],
+          model: "google/gemini-3-flash-preview",
+        },
+        MODE_PROMPTS[body.mode],
+        truncated,
+      );
 
       return json({ text: aiText });
     }
@@ -108,13 +126,17 @@ Rules:
 - If the content is HTML, preserve valid HTML structure
 - Content type: ${contentType || "narrative"}`;
 
-    const aiText = await callAI({
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Current content:\n\n${currentContent}\n\nInstruction: ${instruction}` },
-      ],
-      model: "google/gemini-3-flash-preview",
-    });
+    const aiText = await callWithFallback(
+      {
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Current content:\n\n${currentContent}\n\nInstruction: ${instruction}` },
+        ],
+        model: "google/gemini-3-flash-preview",
+      },
+      systemPrompt,
+      `Current content:\n\n${currentContent}\n\nInstruction: ${instruction}`,
+    );
 
     return json({ editedContent: aiText });
   } catch (e) {

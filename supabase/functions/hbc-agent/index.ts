@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callAIAgent, callGeminiEmbedding, type AIMessage } from "../_shared/ai-client.ts";
+import { callAIAgent, callClaude, callGeminiEmbedding, isGeminiRetryable, type AIMessage } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireAuth, corsHeaders } from "../_shared/auth.ts";
 
@@ -1829,6 +1829,23 @@ serve(async (req) => {
         const msg = aiErr instanceof Error ? aiErr.message : String(aiErr);
         if (msg.includes("429")) {
           finalReply = "I'm a bit busy right now — please try again in a moment.";
+          break;
+        }
+        // If Gemini fails with a transient error before any tools have been called,
+        // fall back to Claude for a plain text response. Tool calling must stay
+        // on Gemini — Claude does not have the tool context — so we only do this
+        // on the first turn where no tool results are in flight.
+        if (isGeminiRetryable(aiErr) && toolsCalled.length === 0) {
+          console.warn("Gemini failed in hbc-agent, falling back to Claude for text generation:", msg);
+          try {
+            finalReply = await callClaude({
+              system: systemPrompt,
+              prompt: message,
+              geminiFallback: false,
+            });
+          } catch {
+            throw aiErr;
+          }
           break;
         }
         throw aiErr;
