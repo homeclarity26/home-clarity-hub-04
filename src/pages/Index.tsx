@@ -78,7 +78,7 @@ const Index = () => {
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const { editMode, toggleEditMode, canEdit } = useEditMode();
 
-  // Auto-redirect to first property if none specified
+  // Auto-redirect to last-visited (or first) property if none specified
   useEffect(() => {
     if (propertyId || isCreator) return;
     const findProperty = async () => {
@@ -86,11 +86,11 @@ const Index = () => {
       const { data } = await supabase
         .from("properties")
         .select("id")
-        .eq("client_user_id", user.id)
-        .limit(1);
-      if (data && data.length > 0) {
-        navigate(`/portal/${data[0].id}`, { replace: true });
-      }
+        .eq("client_user_id", user.id);
+      if (!data || data.length === 0) return;
+      const savedId = localStorage.getItem("hcr_last_property_id");
+      const target = data.find((p) => p.id === savedId) ?? data[0];
+      navigate(`/portal/${target.id}`, { replace: true });
     };
     findProperty();
   }, [propertyId, user, isCreator, navigate]);

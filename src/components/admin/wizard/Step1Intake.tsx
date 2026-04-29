@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,6 +77,24 @@ export function Step1Intake() {
   } = useWizard();
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState(false);
+
+  // Debounced check: warn if a published report already exists at this address
+  useEffect(() => {
+    const address = state.client.address.trim();
+    if (address.length < 5) { setDuplicateWarning(false); return; }
+    const timer = setTimeout(async () => {
+      const { data } = await supabase
+        .from("properties")
+        .select("id, reports(id, status)")
+        .ilike("address", address);
+      const found = data?.some(
+        (p) => Array.isArray(p.reports) && p.reports.some((r: { id: string; status: string }) => r.status === "published")
+      );
+      setDuplicateWarning(Boolean(found));
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [state.client.address]);
 
   // Build a single block of "meeting notes" from all the freeform sources
   // we have in state. seed-report-from-notes (E7) takes a single string.
@@ -237,6 +255,12 @@ export function Step1Intake() {
               placeholder="123 Maple Lane, Hudson, OH 44236"
               className="text-xs"
             />
+            {duplicateWarning && (
+              <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span>A report already exists for this address. Starting a new one will create a separate record.</span>
+              </div>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs font-sans">Year built</Label>
