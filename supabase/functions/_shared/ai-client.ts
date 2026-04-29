@@ -432,7 +432,24 @@ export async function callClaude(opts: ClaudeOptions): Promise<string> {
       throw new Error("Claude is rate-limited right now — please wait a moment and retry.");
     }
     if (res.status === 401 || res.status === 403) {
-      throw new Error("Claude authentication failed — check ANTHROPIC_API_KEY configuration.");
+      // Auth failures can be transient (Anthropic infrastructure hiccup) or
+      // permanent (key revoked). Log at error level so key problems surface in
+      // edge-function logs, then fall back to Gemini so CI and production stay
+      // functional — same strategy as the 402 fallback shipped in PR #124.
+      console.error(`callClaude: Anthropic ${res.status} auth failure — falling back to Gemini flash. Raw: ${err.slice(0, 200)}`);
+      const fallbackSystem401 = [opts.system, opts.cacheableContext].filter(Boolean).join("\n\n");
+      return callAI({
+        system: fallbackSystem401,
+        prompt: opts.prompt,
+        messages: opts.messages?.map((m) => ({
+          role: m.role === "assistant" ? "model" : m.role,
+          content: m.content,
+        })) as AIOptions["messages"],
+        model: "google/gemini-2.5-flash",
+        json: opts.json,
+        temperature: opts.temperature,
+        maxOutputTokens: opts.maxOutputTokens,
+      });
     }
     if (res.status === 402) {
       // Credit balance exhausted. Fall back to Gemini flash so production
