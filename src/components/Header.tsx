@@ -174,6 +174,12 @@ const Header = ({ activeTab, onTabChange, propertyId }: HeaderProps) => {
                 ))}
               </div>
 
+              {!isCreator && (
+                <div className="px-4 pb-1 pt-3">
+                  <PropertySelector currentPropertyId={propertyId} />
+                </div>
+              )}
+
               <div className="p-4 border-t border-border flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full border border-foreground flex items-center justify-center font-display text-xs text-foreground">
@@ -195,7 +201,7 @@ const Header = ({ activeTab, onTabChange, propertyId }: HeaderProps) => {
 
       {/* User Section */}
       <div className="hidden md:flex items-center ml-6 flex-shrink-0 gap-3">
-        {!isCreator && <PropertySelector />}
+        {!isCreator && <PropertySelector currentPropertyId={propertyId} />}
         {!isCreator && propertyId && (
           <VoiceNavButton
             propertyId={propertyId}

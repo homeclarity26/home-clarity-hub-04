@@ -29,7 +29,13 @@ const PropertySelector = ({ currentPropertyId }: { currentPropertyId?: string })
   return (
     <div className="flex items-center gap-2">
       <Home className="w-4 h-4 text-muted-foreground" />
-      <Select value={currentPropertyId} onValueChange={(id) => navigate(`/portal/${id}`)}>
+      <Select
+        value={currentPropertyId}
+        onValueChange={(id) => {
+          localStorage.setItem("hcr_last_property_id", id);
+          navigate(`/portal/${id}`);
+        }}
+      >
         <SelectTrigger className="w-[200px] h-8 text-xs font-sans">
           <SelectValue placeholder="Select property" />
         </SelectTrigger>
