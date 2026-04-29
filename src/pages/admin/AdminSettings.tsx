@@ -19,6 +19,7 @@ import ServicesLibrary from "@/components/admin/ServicesLibrary";
 import PushNotificationSettings from "@/components/admin/PushNotificationSettings";
 import ReferralSettings from "@/components/admin/ReferralSettings";
 import RecurringPlanManager from "@/components/admin/RecurringPlanManager";
+import { ACCEPT_IMAGES } from "@/lib/upload-accept";
 import ApiWebhookSettings from "@/components/admin/ApiWebhookSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -217,7 +218,7 @@ const AdminSettings = () => {
                     )}
                     <Input
                       type="file"
-                      accept="image/*"
+                      accept={ACCEPT_IMAGES}
                       className="font-sans text-sm"
                       disabled={uploadingLogo}
                       onChange={handleLogoUpload}

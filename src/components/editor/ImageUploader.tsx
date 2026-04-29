@@ -3,6 +3,7 @@ import { Upload, Image as ImageIcon, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ACCEPT_IMAGES } from "@/lib/upload-accept";
 
 interface ImageUploaderProps {
   onUpload: (urls: string[]) => void;
@@ -117,7 +118,7 @@ const ImageUploader = ({ onUpload, multiple = true }: ImageUploaderProps) => {
     >
       <input
         type="file"
-        accept="image/*"
+        accept={ACCEPT_IMAGES}
         multiple={multiple}
         onChange={handleFileSelect}
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"

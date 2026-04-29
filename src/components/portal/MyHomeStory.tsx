@@ -125,7 +125,7 @@ const MyHomeStory = ({ propertyId, propertyName = "Your Home" }: Props) => {
 
   return (
     <div className="space-y-6">
-      <input type="file" ref={fileRef} className="hidden" onChange={handleUpload} accept="image/*,.pdf,.doc,.docx" />
+      <input type="file" ref={fileRef} className="hidden" onChange={handleUpload} />
 
       {/* Hero */}
       <Card className="p-6 bg-gradient-to-br from-[hsl(var(--primary)/0.08)] to-[hsl(var(--primary)/0.02)] border-primary/10">

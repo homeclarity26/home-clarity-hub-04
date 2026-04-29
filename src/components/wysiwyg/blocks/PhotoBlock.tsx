@@ -3,6 +3,7 @@ import { ImagePlus, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { ACCEPT_IMAGES } from "@/lib/upload-accept";
 import type { PhotoContent } from "../types";
 
 interface PhotoBlockProps {
@@ -47,7 +48,7 @@ const PhotoBlock = ({ content, editable, onChange, reportId, isAnalyzing, hasAna
       >
         <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
         <span className="text-xs font-mono text-muted-foreground">Click to upload</span>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+        <input ref={fileRef} type="file" accept={ACCEPT_IMAGES} className="hidden" onChange={handleUpload} />
       </div>
     ) : (
       <div className="bg-muted rounded-lg h-32 flex items-center justify-center">
@@ -83,7 +84,7 @@ const PhotoBlock = ({ content, editable, onChange, reportId, isAnalyzing, hasAna
             <span className="text-primary-foreground text-sm font-medium">Replace</span>
           </div>
         )}
-        {editable && <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />}
+        {editable && <input ref={fileRef} type="file" accept={ACCEPT_IMAGES} className="hidden" onChange={handleUpload} />}
       </div>
       {editable ? (
         <input
