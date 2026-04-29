@@ -1,6 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callAI } from "../_shared/ai-client.ts";
+import { callAI, callClaude } from "../_shared/ai-client.ts";
 import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
+
+const isTransient = (err: unknown): boolean => {
+  if (err instanceof TypeError) return true;
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.includes("rate-limited") || msg.includes("temporarily busy") || msg.includes("Gemini API error 5");
+};
 
 /**
  * ai-edit — Rewrites selected text.
@@ -78,15 +84,28 @@ serve(async (req) => {
       }
       const truncated = text.length > INPUT_CHAR_CAP ? text.slice(0, INPUT_CHAR_CAP) : text;
 
-      const aiText = await callAI({
-        messages: [
-          { role: "system", content: MODE_PROMPTS[body.mode] },
-          { role: "user", content: truncated },
-        ],
-        model: "google/gemini-3-flash-preview",
-      });
+      let aiText: string;
+      let geminiErr0: unknown;
+      try {
+        aiText = await callAI({
+          messages: [
+            { role: "system", content: MODE_PROMPTS[body.mode] },
+            { role: "user", content: truncated },
+          ],
+          model: "google/gemini-3-flash-preview",
+        });
+      } catch (e) {
+        if (!isTransient(e)) throw e;
+        geminiErr0 = e;
+        console.warn("Gemini failed, falling back to Claude");
+        try {
+          aiText = await callClaude({ system: MODE_PROMPTS[body.mode], prompt: truncated, geminiFallback: false });
+        } catch {
+          throw geminiErr0;
+        }
+      }
 
-      return json({ text: aiText });
+      return json({ text: aiText! });
     }
 
     // Legacy instruction-driven path.
@@ -108,15 +127,32 @@ Rules:
 - If the content is HTML, preserve valid HTML structure
 - Content type: ${contentType || "narrative"}`;
 
-    const aiText = await callAI({
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Current content:\n\n${currentContent}\n\nInstruction: ${instruction}` },
-      ],
-      model: "google/gemini-3-flash-preview",
-    });
+    let aiText: string;
+    let geminiErr1: unknown;
+    try {
+      aiText = await callAI({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Current content:\n\n${currentContent}\n\nInstruction: ${instruction}` },
+        ],
+        model: "google/gemini-3-flash-preview",
+      });
+    } catch (e) {
+      if (!isTransient(e)) throw e;
+      geminiErr1 = e;
+      console.warn("Gemini failed, falling back to Claude");
+      try {
+        aiText = await callClaude({
+          system: systemPrompt,
+          prompt: `Current content:\n\n${currentContent}\n\nInstruction: ${instruction}`,
+          geminiFallback: false,
+        });
+      } catch {
+        throw geminiErr1;
+      }
+    }
 
-    return json({ editedContent: aiText });
+    return json({ editedContent: aiText! });
   } catch (e) {
     console.error("ai-edit error:", e);
     return json(

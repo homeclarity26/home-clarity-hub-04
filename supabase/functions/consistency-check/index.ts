@@ -1,6 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callAI, parseJSON } from "../_shared/ai-client.ts";
+import { callAI, callClaude, parseJSON } from "../_shared/ai-client.ts";
 import { requireRole } from "../_shared/auth.ts";
+
+const isTransient = (err: unknown): boolean => {
+  if (err instanceof TypeError) return true;
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.includes("rate-limited") || msg.includes("temporarily busy") || msg.includes("Gemini API error 5");
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -201,8 +207,23 @@ Do not include any explanation outside the JSON.`;
         json: true,
       });
       analysis = parseJSON<Record<string, unknown>>(aiText);
-    } catch (e) {
-      console.error("consistency-check AI analysis failed (continuing with empty analysis):", e);
+    } catch (geminiErr) {
+      if (isTransient(geminiErr)) {
+        console.warn("Gemini failed, falling back to Claude");
+        try {
+          const claudeText = await callClaude({
+            system: systemPrompt,
+            prompt: `Review this report for quality and consistency:\n\n${allText}`,
+            json: true,
+            geminiFallback: false,
+          });
+          analysis = parseJSON<Record<string, unknown>>(claudeText);
+        } catch {
+          throw geminiErr;
+        }
+      } else {
+        console.error("consistency-check AI analysis failed (continuing with empty analysis):", geminiErr);
+      }
     }
 
     // ---- Deterministic pre_publish_questions (E5 / Master Spec 5.4.4)

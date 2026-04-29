@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callClaude } from "../_shared/ai-client.ts";
 import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
 
 interface AvailablePage {
@@ -137,7 +138,10 @@ Constraints: ${constraints.join(", ") || "none specified"}
 Available pages:
 ${pageList}`;
 
-    const response = await fetch(
+    let rawContent = "";
+    let geminiErr: unknown = null;
+
+    const geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
@@ -157,15 +161,34 @@ ${pageList}`;
           },
         }),
       },
-    );
+    ).catch((e: unknown) => { geminiErr = e; return null; });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+    if (geminiRes && geminiRes.ok) {
+      const aiResult = await geminiRes.json();
+      rawContent = aiResult.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    } else {
+      if (geminiRes) {
+        const errorText = await geminiRes.text();
+        geminiErr = new Error(`Gemini API error: ${geminiRes.status} - ${errorText}`);
+        if (geminiRes.status !== 429 && geminiRes.status !== 500 && geminiRes.status !== 503) {
+          throw geminiErr;
+        }
+      }
+      // geminiErr is set — try Claude as fallback for transient failures.
+      console.warn("Gemini failed, falling back to Claude");
+      try {
+        rawContent = await callClaude({
+          system: systemInstruction,
+          prompt: "Group the most relevant report pages into the four sections for this client.",
+          json: true,
+          temperature: 0.2,
+          maxOutputTokens: 2048,
+          geminiFallback: false,
+        });
+      } catch {
+        throw geminiErr;
+      }
     }
-
-    const aiResult = await response.json();
-    const rawContent: string = aiResult.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
     let parsed: RawRecommendations;
     try {

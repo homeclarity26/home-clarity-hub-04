@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callAIAgent, callGeminiEmbedding, type AIMessage } from "../_shared/ai-client.ts";
+import { callAIAgent, callClaude, callGeminiEmbedding, type AIMessage } from "../_shared/ai-client.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireAuth, corsHeaders } from "../_shared/auth.ts";
 
@@ -1827,11 +1827,29 @@ serve(async (req) => {
       } catch (aiErr) {
         console.error("Gemini call failed:", aiErr);
         const msg = aiErr instanceof Error ? aiErr.message : String(aiErr);
-        if (msg.includes("429")) {
-          finalReply = "I'm a bit busy right now — please try again in a moment.";
+        const transient = aiErr instanceof TypeError ||
+          msg.includes("rate-limited") || msg.includes("temporarily busy") || msg.includes("Gemini API error 5");
+        if (!transient) throw aiErr;
+        console.warn("Gemini failed, falling back to Claude for text synthesis");
+        try {
+          // Convert Gemini-shape contents to Claude messages (text parts only; drop tool call/response parts).
+          const claudeMsgs: Array<{ role: "user" | "assistant"; content: string }> = [];
+          for (const turn of contents) {
+            const text = (turn.parts as Array<{ text?: string }>)
+              .filter((p) => typeof p.text === "string" && p.text)
+              .map((p) => p.text as string)
+              .join("\n");
+            if (!text) continue;
+            claudeMsgs.push({ role: turn.role === "model" ? "assistant" : "user", content: text });
+          }
+          if (claudeMsgs.length === 0 || claudeMsgs[claudeMsgs.length - 1].role !== "user") {
+            claudeMsgs.push({ role: "user", content: message });
+          }
+          finalReply = await callClaude({ system: systemPrompt, messages: claudeMsgs, geminiFallback: false });
           break;
+        } catch {
+          throw aiErr;
         }
-        throw aiErr;
       }
 
       // No tool calls → model is done thinking, emit its reply.
