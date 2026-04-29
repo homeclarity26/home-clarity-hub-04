@@ -72,7 +72,7 @@ const AISuggestionsStrip = ({ onNavigate, reportPages }: AISuggestionsStripProps
             </button>
             <button
               onClick={() => setDismissed((prev) => new Set(prev).add(s.id))}
-              className="shrink-0 p-1 rounded-full bg-transparent hover:bg-muted text-muted-foreground/30 hover:text-foreground transition-colors cursor-pointer border-none opacity-0 group-hover:opacity-100"
+              className="shrink-0 p-1 rounded-full bg-transparent hover:bg-muted text-muted-foreground/30 hover:text-foreground transition-colors cursor-pointer border-none md:opacity-0 md:group-hover:opacity-100"
               aria-label="Dismiss"
             >
               <X className="w-3 h-3" />

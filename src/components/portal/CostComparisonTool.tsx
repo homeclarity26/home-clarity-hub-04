@@ -51,7 +51,7 @@ const CostComparisonTool = ({ pages }: CostComparisonToolProps) => {
     <div className="max-w-[1400px] mx-auto px-6 md:px-20">
       <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Cost Comparison: Act Now vs. Defer</p>
       <div className="bg-card rounded-lg border border-border shadow-hbc-sm p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div>
             <h3 className="font-display text-lg text-foreground">Deferred Maintenance Cost Analysis</h3>
             <p className="font-sans text-sm text-muted-foreground">See estimated cost increases from deferring maintenance</p>
