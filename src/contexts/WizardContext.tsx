@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -160,6 +161,7 @@ export interface QualityGateAck {
 }
 
 export interface WizardState {
+  draftId: string | null;
   reportId: string | null;
   propertyId: string | null;
   currentStep: WizardStepKey;
@@ -217,6 +219,7 @@ const emptyUploads: IntakeUploads = {
 };
 
 const initialState: WizardState = {
+  draftId: null,
   reportId: null,
   propertyId: null,
   currentStep: "intake",
@@ -241,6 +244,16 @@ const initialState: WizardState = {
   publishedAt: null,
 };
 
+// Lightweight summary returned to WizardShell so it can render a "resume?"
+// prompt without hydrating the whole envelope.
+export interface WizardDraftSummary {
+  id: string;
+  current_step: WizardStepKey;
+  client_full_name: string;
+  property_address: string;
+  updated_at: string;
+}
+
 interface WizardContextValue {
   state: WizardState;
   setClient: (next: Partial<ClientFormData>) => void;
@@ -264,6 +277,11 @@ interface WizardContextValue {
   setReportId: (next: string | null) => void;
   setPropertyId: (next: string | null) => void;
   resumeFromReportId: (reportId: string) => Promise<void>;
+  resumeFromDraftId: (draftId: string) => Promise<void>;
+  abandonDraft: (draftId: string) => Promise<void>;
+  findResumableDraft: () => Promise<WizardDraftSummary | null>;
+  markPublished: () => Promise<void>;
+  draftId: string | null;
 }
 
 const WizardContext = createContext<WizardContextValue | null>(null);
@@ -271,33 +289,110 @@ const WizardContext = createContext<WizardContextValue | null>(null);
 export function WizardProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [state, setState] = useState<WizardState>(initialState);
+  // Track the latest in-flight save so a fresh edit can supersede an
+  // earlier save's response without racing the local state.
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stateRef = useRef<WizardState>(initialState);
+  stateRef.current = state;
 
-  // Persists the lightweight wizard envelope on each step transition.
-  // Heavy step-specific writes (report_pages, recurring_services, etc.)
-  // live in their own step components. The envelope rides on
-  // properties.client_intelligence_summary (TEXT) — JSON-serialized so a
-  // future resume can hydrate the full state.
-  const persistEnvelope = useCallback(
-    async (snapshot: WizardState) => {
-      if (!snapshot.propertyId) return;
-      const envelope = {
-        client: snapshot.client,
-        anything_else: snapshot.anythingElse,
-        clarifying_answers: snapshot.clarifyingAnswers,
-        field_checklist: snapshot.fieldChecklist,
-        findings: snapshot.intakeFindings,
-        toc_sections: snapshot.tocSections,
-      };
-      await supabase
-        .from("properties")
-        .update({
-          client_intelligence_summary: JSON.stringify(envelope),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", snapshot.propertyId);
+  // Serializes only the parts of state we need to round-trip on resume.
+  // Heavy ephemeral things like clarifyingQuestions are excluded; the
+  // analyzer regenerates those on demand.
+  const buildEnvelope = useCallback((s: WizardState) => {
+    return {
+      client: s.client,
+      anything_else: s.anythingElse,
+      intake_uploads: s.intakeUploads,
+      clarifying_questions: s.clarifyingQuestions,
+      clarifying_answers: s.clarifyingAnswers,
+      field_checklist: s.fieldChecklist,
+      findings: s.intakeFindings,
+      toc_sections: s.tocSections,
+      toc_reasoning: s.tocReasoning,
+      authoring: s.authoring,
+      active_page_key: s.activePageKey,
+      strategy: s.strategy,
+      qa_acknowledgments: s.qaAcknowledgments,
+      published_at: s.publishedAt,
+    } as Record<string, unknown>;
+  }, []);
+
+  // Collapses every IntakeFileRef.storage_path into a flat string[] for
+  // wizard_drafts.uploaded_file_paths so abandoned drafts can be cleaned
+  // up later without re-walking the JSON envelope.
+  const collectUploadedPaths = useCallback((s: WizardState): string[] => {
+    const paths: string[] = [];
+    for (const refs of Object.values(s.intakeUploads)) {
+      for (const r of refs) {
+        if (r.storage_path) paths.push(r.storage_path);
+      }
+    }
+    return paths;
+  }, []);
+
+  // Upserts the draft row. Returns the draft id (creating one on first
+  // call). Best-effort: failures don't block navigation — we'll retry on
+  // the next transition.
+  const persistDraft = useCallback(
+    async (snapshot: WizardState): Promise<string | null> => {
+      if (!user?.id) return null;
+      const envelope = buildEnvelope(snapshot);
+      const uploadedPaths = collectUploadedPaths(snapshot);
+      try {
+        if (snapshot.draftId) {
+          const { error } = await supabase
+            .from("wizard_drafts")
+            .update({
+              property_id: snapshot.propertyId,
+              report_id: snapshot.reportId,
+              current_step: snapshot.currentStep,
+              step_data: envelope as never,
+              uploaded_file_paths: uploadedPaths,
+            })
+            .eq("id", snapshot.draftId);
+          if (error) throw error;
+          return snapshot.draftId;
+        }
+        const { data, error } = await supabase
+          .from("wizard_drafts")
+          .insert({
+            creator_id: user.id,
+            property_id: snapshot.propertyId,
+            report_id: snapshot.reportId,
+            current_step: snapshot.currentStep,
+            step_data: envelope as never,
+            uploaded_file_paths: uploadedPaths,
+            status: "in_progress",
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        const newId = data?.id ?? null;
+        if (newId) {
+          setState((prev) => ({ ...prev, draftId: newId }));
+        }
+        return newId;
+      } catch (err) {
+        console.warn("WizardContext persistDraft failed", err);
+        return snapshot.draftId;
+      }
     },
-    [],
+    [user?.id, buildEnvelope, collectUploadedPaths],
   );
+
+  // Debounced autosave on every state change. Fires 800ms after the last
+  // edit so rapid keystrokes don't hammer the DB but a step transition
+  // still flushes (goToStep awaits a fresh persistDraft).
+  useEffect(() => {
+    if (!user?.id) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      void persistDraft(stateRef.current);
+    }, 800);
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [state, user?.id, persistDraft]);
 
   const setClient = useCallback((next: Partial<ClientFormData>) => {
     setState((prev) => ({ ...prev, client: { ...prev.client, ...next } }));
@@ -446,16 +541,175 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         snapshot = { ...prev, currentStep: next };
         return snapshot;
       });
-      // Best-effort persist on transition. Failures don't block navigation
-      // — the user can keep working and we'll retry on the next transition.
+      // Flush the autosave debouncer immediately so the step transition
+      // commits before the user moves on.
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       try {
-        await persistEnvelope(snapshot);
+        await persistDraft(snapshot);
       } catch (err) {
-        console.warn("WizardContext persistEnvelope failed", err);
+        console.warn("WizardContext persistDraft on goToStep failed", err);
       }
     },
-    [state, persistEnvelope],
+    [state, persistDraft],
   );
+
+  const hydrateFromEnvelope = useCallback(
+    (
+      envelope: Record<string, unknown>,
+      base: Partial<WizardState> = {},
+    ): WizardState => {
+      const next: WizardState = { ...stateRef.current, ...base };
+      if (envelope.client) next.client = envelope.client as ClientFormData;
+      if (typeof envelope.anything_else === "string") {
+        next.anythingElse = envelope.anything_else;
+      }
+      if (envelope.intake_uploads && typeof envelope.intake_uploads === "object") {
+        next.intakeUploads = {
+          ...emptyUploads,
+          ...(envelope.intake_uploads as IntakeUploads),
+        };
+      }
+      if (Array.isArray(envelope.clarifying_questions)) {
+        next.clarifyingQuestions =
+          envelope.clarifying_questions as ClarifyingQuestion[];
+      }
+      if (envelope.clarifying_answers) {
+        next.clarifyingAnswers = envelope.clarifying_answers as Record<
+          string,
+          string
+        >;
+      }
+      if (Array.isArray(envelope.field_checklist)) {
+        next.fieldChecklist = envelope.field_checklist as ChecklistItem[];
+      }
+      if (Array.isArray(envelope.findings)) {
+        next.intakeFindings = envelope.findings as IntakeFinding[];
+      }
+      if (Array.isArray(envelope.toc_sections)) {
+        next.tocSections = envelope.toc_sections as TocSection[];
+      }
+      if (
+        typeof envelope.toc_reasoning === "string" ||
+        envelope.toc_reasoning === null
+      ) {
+        next.tocReasoning = envelope.toc_reasoning as string | null;
+      }
+      if (envelope.authoring && typeof envelope.authoring === "object") {
+        next.authoring = envelope.authoring as Record<string, PageAuthoring>;
+      }
+      if (
+        typeof envelope.active_page_key === "string" ||
+        envelope.active_page_key === null
+      ) {
+        next.activePageKey = envelope.active_page_key as string | null;
+      }
+      if (envelope.strategy && typeof envelope.strategy === "object") {
+        next.strategy = {
+          ...next.strategy,
+          ...(envelope.strategy as Partial<StrategyState>),
+        };
+      }
+      if (Array.isArray(envelope.qa_acknowledgments)) {
+        next.qaAcknowledgments =
+          envelope.qa_acknowledgments as QualityGateAck[];
+      }
+      if (
+        typeof envelope.published_at === "string" ||
+        envelope.published_at === null
+      ) {
+        next.publishedAt = envelope.published_at as string | null;
+      }
+      return next;
+    },
+    [],
+  );
+
+  const resumeFromDraftId = useCallback(
+    async (draftId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from("wizard_drafts")
+          .select(
+            "id, property_id, report_id, current_step, step_data, status",
+          )
+          .eq("id", draftId)
+          .maybeSingle();
+        if (error || !data) return;
+        if (data.status !== "in_progress") return;
+        const envelope =
+          data.step_data && typeof data.step_data === "object"
+            ? (data.step_data as Record<string, unknown>)
+            : {};
+        setState(() =>
+          hydrateFromEnvelope(envelope, {
+            draftId: data.id,
+            propertyId: data.property_id,
+            reportId: data.report_id,
+            currentStep: (data.current_step as WizardStepKey) ?? "intake",
+          }),
+        );
+      } catch (err) {
+        console.warn("WizardContext resumeFromDraftId failed", err);
+      }
+    },
+    [hydrateFromEnvelope],
+  );
+
+  const findResumableDraft = useCallback(async (): Promise<
+    WizardDraftSummary | null
+  > => {
+    if (!user?.id) return null;
+    try {
+      const { data, error } = await supabase
+        .from("wizard_drafts")
+        .select("id, current_step, step_data, updated_at")
+        .eq("creator_id", user.id)
+        .eq("status", "in_progress")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error || !data) return null;
+      const envelope =
+        data.step_data && typeof data.step_data === "object"
+          ? (data.step_data as Record<string, unknown>)
+          : {};
+      const client = (envelope.client as ClientFormData | undefined) ?? null;
+      return {
+        id: data.id,
+        current_step: (data.current_step as WizardStepKey) ?? "intake",
+        client_full_name: client?.fullName ?? "",
+        property_address: client?.address ?? "",
+        updated_at: data.updated_at,
+      };
+    } catch (err) {
+      console.warn("WizardContext findResumableDraft failed", err);
+      return null;
+    }
+  }, [user?.id]);
+
+  const abandonDraft = useCallback(async (draftId: string) => {
+    try {
+      await supabase
+        .from("wizard_drafts")
+        .update({ status: "abandoned" })
+        .eq("id", draftId);
+    } catch (err) {
+      console.warn("WizardContext abandonDraft failed", err);
+    }
+  }, []);
+
+  const markPublished = useCallback(async () => {
+    const id = stateRef.current.draftId;
+    if (!id) return;
+    try {
+      await supabase
+        .from("wizard_drafts")
+        .update({ status: "published" })
+        .eq("id", id);
+    } catch (err) {
+      console.warn("WizardContext markPublished failed", err);
+    }
+  }, []);
 
   const resumeFromReportId = useCallback(async (reportId: string) => {
     try {
@@ -543,6 +797,11 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       setReportId,
       setPropertyId,
       resumeFromReportId,
+      resumeFromDraftId,
+      abandonDraft,
+      findResumableDraft,
+      markPublished,
+      draftId: state.draftId,
     }),
     [
       state,
@@ -567,6 +826,10 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       setReportId,
       setPropertyId,
       resumeFromReportId,
+      resumeFromDraftId,
+      abandonDraft,
+      findResumableDraft,
+      markPublished,
     ],
   );
 

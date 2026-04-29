@@ -1,18 +1,38 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, X, FileText, Image as ImageIcon, FileAudio, FileVideo, File } from "lucide-react";
-import type { IntakeFileRef } from "@/contexts/WizardContext";
+import {
+  Upload,
+  X,
+  FileText,
+  Image as ImageIcon,
+  FileAudio,
+  FileVideo,
+  File,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useWizard, type IntakeFileRef } from "@/contexts/WizardContext";
+import { toast } from "@/hooks/use-toast";
 
-// One intake card. Accepts multiple files of multiple mime types. The
-// upload itself is local-only in this PR (we capture the File metadata into
-// state); a follow-up will wire each card to its destination Storage bucket.
-// The "auto-sort regardless of which bucket they dropped it in" behavior
-// per [v2.1] is best implemented at the bucket-write layer, not here.
+// Per-card intake control. Files are uploaded to the private
+// `wizard-uploads` bucket immediately on add — never held only in React
+// state — so a crash, refresh, or 500 from the analyzer doesn't lose the
+// recording the consultant just spent 90 minutes capturing.
+//
+// Path layout: {creator_id}/{draft_id}/{card_key}/{file_id}-{filename}.
+// The first segment matches storage RLS so creators only ever touch
+// their own files.
+
+const BUCKET = "wizard-uploads";
+const MAX_FILE_BYTES = 50 * 1024 * 1024;
 
 interface IntakeUploadCardProps {
   title: string;
   description: string;
+  cardKey: string;
   accept?: string;
   files: IntakeFileRef[];
   onChange: (next: IntakeFileRef[]) => void;
@@ -32,28 +52,101 @@ const fmtSize = (n: number): string => {
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+const sanitizeName = (name: string): string =>
+  name.replace(/[^a-zA-Z0-9._-]+/g, "_");
+
+const makeFileId = (): string => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
 export function IntakeUploadCard({
   title,
   description,
+  cardKey,
   accept,
   files,
   onChange,
 }: IntakeUploadCardProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
+  const { state } = useWizard();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleAdd = (newFiles: FileList | null) => {
+  const handleAdd = async (newFiles: FileList | null) => {
     if (!newFiles || newFiles.length === 0) return;
-    const refs: IntakeFileRef[] = Array.from(newFiles).map((f) => ({
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      name: f.name,
-      size: f.size,
-      mime: f.type || "application/octet-stream",
-    }));
-    onChange([...files, ...refs]);
+    if (!user?.id) {
+      toast({
+        title: "Not signed in",
+        description: "Sign in again to upload intake materials.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // We may not have a draft id yet on the very first interaction. Fall
+    // back to "pending"; the autosave will move files once a draft exists.
+    const draftId = state.draftId ?? "pending";
+
+    setBusy(true);
+    setError(null);
+    const oversize: string[] = [];
+    const uploaded: IntakeFileRef[] = [];
+    try {
+      for (const f of Array.from(newFiles)) {
+        if (f.size > MAX_FILE_BYTES) {
+          oversize.push(f.name);
+          continue;
+        }
+        const id = makeFileId();
+        const safeName = sanitizeName(f.name);
+        const path = `${user.id}/${draftId}/${cardKey}/${id}-${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from(BUCKET)
+          .upload(path, f, {
+            contentType: f.type || "application/octet-stream",
+            cacheControl: "3600",
+            upsert: false,
+          });
+        if (upErr) throw upErr;
+        uploaded.push({
+          id,
+          name: f.name,
+          size: f.size,
+          mime: f.type || "application/octet-stream",
+          storage_path: path,
+          bucket: BUCKET,
+        });
+      }
+      if (uploaded.length > 0) {
+        onChange([...files, ...uploaded]);
+      }
+      if (oversize.length > 0) {
+        const list = oversize.join(", ");
+        const msg = `Skipped (over 50 MB): ${list}`;
+        setError(msg);
+        toast({ title: "Some files skipped", description: msg, variant: "destructive" });
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Upload failed";
+      setError(message);
+      toast({ title: "Upload failed", description: message, variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleRemove = (id: string) => {
-    onChange(files.filter((f) => f.id !== id));
+  const handleRemove = async (file: IntakeFileRef) => {
+    if (file.storage_path && file.bucket) {
+      try {
+        await supabase.storage.from(file.bucket).remove([file.storage_path]);
+      } catch (err) {
+        console.warn("IntakeUploadCard remove failed", err);
+      }
+    }
+    onChange(files.filter((f) => f.id !== file.id));
   };
 
   return (
@@ -72,10 +165,15 @@ export function IntakeUploadCard({
           variant="outline"
           size="sm"
           onClick={() => inputRef.current?.click()}
+          disabled={busy}
           className="min-h-[44px] shrink-0"
         >
-          <Upload className="w-4 h-4 mr-1.5" aria-hidden />
-          Add files
+          {busy ? (
+            <Loader2 className="w-4 h-4 mr-1.5 animate-spin" aria-hidden />
+          ) : (
+            <Upload className="w-4 h-4 mr-1.5" aria-hidden />
+          )}
+          {busy ? "Uploading..." : "Add files"}
         </Button>
         <input
           ref={inputRef}
@@ -84,12 +182,19 @@ export function IntakeUploadCard({
           accept={accept}
           className="hidden"
           onChange={(e) => {
-            handleAdd(e.target.files);
+            void handleAdd(e.target.files);
             // Reset so re-adding the same filename works.
             if (inputRef.current) inputRef.current.value = "";
           }}
         />
       </div>
+
+      {error && (
+        <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs font-sans text-destructive">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden />
+          <span>{error}</span>
+        </div>
+      )}
 
       {files.length === 0 ? (
         <div
@@ -97,7 +202,7 @@ export function IntakeUploadCard({
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
-            handleAdd(e.dataTransfer?.files ?? null);
+            void handleAdd(e.dataTransfer?.files ?? null);
           }}
         >
           Drop files here, or click Add files
@@ -118,13 +223,14 @@ export function IntakeUploadCard({
                   </div>
                   <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
                     {fmtSize(f.size)}
+                    {f.storage_path ? " • saved" : " • pending"}
                   </div>
                 </div>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleRemove(f.id)}
+                  onClick={() => void handleRemove(f)}
                   className="min-h-[36px] min-w-[36px]"
                   aria-label={`Remove ${f.name}`}
                 >

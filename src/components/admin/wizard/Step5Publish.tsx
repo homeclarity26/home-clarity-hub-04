@@ -28,7 +28,7 @@ import { AIQualityGate } from "./AIQualityGate";
 // brand-new wizard reports landed in the portal as empty.
 
 export function Step5Publish() {
-  const { state, goToStep } = useWizard();
+  const { state, goToStep, markPublished } = useWizard();
   const [highsOk, setHighsOk] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishedAt, setPublishedAt] = useState<string | null>(state.publishedAt);
@@ -172,6 +172,9 @@ export function Step5Publish() {
       }
 
       setPublishedAt(now);
+      // Flip the wizard_drafts row to "published" so the next visit
+      // doesn't surface this draft as resumable.
+      void markPublished();
       toast({
         title: "Report published",
         description:

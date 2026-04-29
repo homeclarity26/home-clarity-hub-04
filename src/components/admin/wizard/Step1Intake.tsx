@@ -318,38 +318,38 @@ export function Step1Intake() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <IntakeUploadCard
             title="Transcript"
-            description="Walkthrough recording or transcription. Any audio, video, or text source works."
+            description="Walkthrough recording or transcription. Any audio, video, document, or text source works."
+            cardKey="transcript"
             files={state.intakeUploads.transcript}
             onChange={(files) => setIntakeUploads("transcript", files)}
-            accept="audio/*,video/*,text/*,application/pdf"
           />
           <IntakeUploadCard
             title="Site notes"
-            description="Field notes, scratch lists, voice memos."
+            description="Field notes, scratch lists, voice memos. PDF, DOCX, MD, images, audio."
+            cardKey="site_notes"
             files={state.intakeUploads.site_notes}
             onChange={(files) => setIntakeUploads("site_notes", files)}
-            accept="text/*,application/pdf,image/*,audio/*"
           />
           <IntakeUploadCard
             title="Photos"
-            description="Reference photos, condition shots, serial plates."
+            description="Reference photos, condition shots, serial plates. JPG, PNG, HEIC."
+            cardKey="photos"
             files={state.intakeUploads.photos}
             onChange={(files) => setIntakeUploads("photos", files)}
-            accept="image/*"
           />
           <IntakeUploadCard
             title="Hover"
             description="Hover capture exports and PDF reports."
+            cardKey="hover"
             files={state.intakeUploads.hover}
             onChange={(files) => setIntakeUploads("hover", files)}
-            accept="application/pdf,image/*"
           />
           <IntakeUploadCard
             title="iGUIDE"
             description="iGUIDE walkthrough exports, floor plans."
+            cardKey="iguide"
             files={state.intakeUploads.iguide}
             onChange={(files) => setIntakeUploads("iguide", files)}
-            accept="application/pdf,image/*"
           />
           <Card className="p-4 space-y-3">
             <div>

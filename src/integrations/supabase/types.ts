@@ -3602,7 +3602,7 @@ export type Database = {
           default_order?: number | null
           group_name: string
           icon?: string | null
-          id: string
+          id?: string
           is_custom?: boolean | null
           name: string
           slug: string
@@ -7193,6 +7193,60 @@ export type Database = {
           secret_token?: string
         }
         Relationships: []
+      }
+      wizard_drafts: {
+        Row: {
+          created_at: string
+          creator_id: string
+          current_step: string
+          id: string
+          property_id: string | null
+          report_id: string | null
+          status: string
+          step_data: Json
+          updated_at: string
+          uploaded_file_paths: string[]
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          current_step?: string
+          id?: string
+          property_id?: string | null
+          report_id?: string | null
+          status?: string
+          step_data?: Json
+          updated_at?: string
+          uploaded_file_paths?: string[]
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          current_step?: string
+          id?: string
+          property_id?: string | null
+          report_id?: string | null
+          status?: string
+          step_data?: Json
+          updated_at?: string
+          uploaded_file_paths?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wizard_drafts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wizard_drafts_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
