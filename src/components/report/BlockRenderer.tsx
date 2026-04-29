@@ -18,6 +18,7 @@ import RecommendedVendors from "./RecommendedVendors";
 import ImageGrid from "@/components/editor/ImageGrid";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { ACCEPT_IMAGES } from "@/lib/upload-accept";
 import { ScanLine, Loader2, Save, X, CheckCircle2 } from "lucide-react";
 
 interface ScanResult {
@@ -357,7 +358,7 @@ const BlockRenderer = ({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept={ACCEPT_IMAGES}
                   capture="environment"
                   className="hidden"
                   onChange={(e) => {

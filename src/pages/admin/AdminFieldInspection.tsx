@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { ACCEPT_IMAGES } from "@/lib/upload-accept";
 import {
   ArrowLeft, Camera, Mic, MicOff, MapPin, CheckCircle2, XCircle,
   Loader2, Upload, Clock, Navigation, Image as ImageIcon, FileText,
@@ -418,7 +419,7 @@ const AdminFieldInspection = () => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept={ACCEPT_IMAGES}
                 capture="environment"
                 onChange={handlePhotoCapture}
                 className="hidden"

@@ -10,6 +10,7 @@ import { Camera, Plus, X, Loader2, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
+import { ACCEPT_IMAGES } from "@/lib/upload-accept";
 
 interface ProjectPhoto {
   id: string;
@@ -130,7 +131,7 @@ const ProjectPhotoTimeline = ({ projectId, projectTitle, isAdmin = false }: Proj
               </div>
               <div>
                 <Label className="font-sans">Select Photos</Label>
-                <Input type="file" accept="image/*" multiple onChange={handleUpload} disabled={uploading} />
+                <Input type="file" accept={ACCEPT_IMAGES} multiple onChange={handleUpload} disabled={uploading} />
                 {uploading && <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground"><Loader2 className="w-3.5 h-3.5 animate-spin" />Uploading...</div>}
               </div>
             </div>

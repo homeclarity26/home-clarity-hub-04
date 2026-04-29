@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Loader2, Mic, MicOff, Image, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ACCEPT_IMAGES } from "@/lib/upload-accept";
 
 interface VoiceAndPhotoToolsProps {
   reportId: string;
@@ -96,7 +97,7 @@ const VoiceAndPhotoTools = ({ reportId, propertyId }: VoiceAndPhotoToolsProps) =
 
       {/* Photo Auto-Sort */}
       <div>
-        <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+        <input ref={photoInputRef} type="file" accept={ACCEPT_IMAGES} className="hidden" onChange={handlePhotoUpload} />
         <Button
           variant="outline"
           size="sm"

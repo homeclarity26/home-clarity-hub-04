@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { ACCEPT_IMAGES } from "@/lib/upload-accept";
 import { format } from "date-fns";
 
 interface PhotoManagerProps {
@@ -246,7 +247,7 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept={ACCEPT_IMAGES}
             multiple
             className="hidden"
             onChange={(e) => e.target.files && handleBulkUpload(e.target.files)}

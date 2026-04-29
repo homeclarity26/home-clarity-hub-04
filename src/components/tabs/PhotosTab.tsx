@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { ACCEPT_IMAGES } from "@/lib/upload-accept";
 
 interface PhotosTabProps {
   propertyId?: string;
@@ -170,7 +171,7 @@ const PhotosTab = ({ propertyId }: PhotosTabProps) => {
               {aiOrganizing ? "AI organizing..." : "Uploading..."}
             </Badge>
           )}
-          <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => e.target.files && handleUpload(e.target.files)} />
+          <input ref={fileInputRef} type="file" accept={ACCEPT_IMAGES} multiple className="hidden" onChange={(e) => e.target.files && handleUpload(e.target.files)} />
           <Button size="sm" className="gap-1.5 text-xs font-sans" onClick={() => fileInputRef.current?.click()} disabled={uploading || isMock}>
             <Upload className="w-3.5 h-3.5" /> Upload Photos
           </Button>
