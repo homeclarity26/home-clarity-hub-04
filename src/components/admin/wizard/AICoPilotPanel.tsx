@@ -12,12 +12,15 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { getDraftObservationsPrompt } from "./copilot-prompts";
 
 type AiMode = "expand" | "tighten" | "match_brand_voice";
 
 interface AICoPilotPanelProps {
   pageType: "room" | "system" | "vision" | "executive_summary" | "generic";
   pageTitle?: string;
+  /** Granular page key (e.g. "roof-system", "kitchen") for smart prompt selection. */
+  pageKey?: string;
   /** Current narrative text for the active page (sourced from authoring blocks). */
   narrative: string;
   /** Optional observations text for richer co-pilot context. */
@@ -39,6 +42,7 @@ const UNDO_WINDOW_MS = 10_000;
 export function AICoPilotPanel({
   pageType,
   pageTitle,
+  pageKey,
   narrative,
   observations,
   onUpdateNarrative,
@@ -270,6 +274,18 @@ export function AICoPilotPanel({
             {working === mode ? doingLabel : label}
           </Button>
         ))}
+        {pageType !== "executive_summary" && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setPrompt(getDraftObservationsPrompt(pageKey ?? ""))}
+            disabled={isWorking}
+            className="min-h-[44px]"
+          >
+            Draft observations
+          </Button>
+        )}
         {previousNarrative != null && !isWorking && (
           <Button
             type="button"
