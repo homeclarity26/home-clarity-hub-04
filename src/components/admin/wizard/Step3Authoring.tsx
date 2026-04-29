@@ -272,6 +272,7 @@ export function Step3Authoring() {
               <AICoPilotPanel
                 pageType={pageType}
                 pageTitle={activePage.title}
+                pageKey={activePage.page_key}
                 narrative={activeNarrative}
                 observations={activeObservations}
                 onUpdateNarrative={(next) => updateActiveBlock("narrative", next)}

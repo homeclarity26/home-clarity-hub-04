@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, RotateCcw, FilePlus } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import {
   useWizard,
   WIZARD_STEPS,
@@ -170,36 +170,56 @@ interface ProgressIndicatorProps {
 
 function ProgressIndicator({ currentStep }: ProgressIndicatorProps) {
   const currentIndex = WIZARD_STEPS.findIndex((s) => s.key === currentStep);
+  const { isSaving, lastSavedAt } = useWizard();
+
+  let saveLabel: string | null = null;
+  if (isSaving) {
+    saveLabel = "Saving...";
+  } else if (lastSavedAt) {
+    try {
+      saveLabel = `Saved ${format(lastSavedAt, "h:mm a")}`;
+    } catch {
+      saveLabel = "Saved";
+    }
+  }
+
   return (
     <Card className="p-4">
-      <ol className="flex items-center gap-2 overflow-x-auto" aria-label="Wizard progress">
-        {WIZARD_STEPS.map((step, i) => {
-          const isActive = i === currentIndex;
-          const isComplete = i < currentIndex;
-          return (
-            <li key={step.key} className="flex items-center gap-2 shrink-0">
-              <div
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-sans transition-colors min-h-[36px] ${
-                  isActive
-                    ? "bg-primary text-primary-foreground font-medium"
-                    : isComplete
-                      ? "bg-primary/10 text-foreground"
-                      : "bg-muted text-muted-foreground"
-                }`}
-                aria-current={isActive ? "step" : undefined}
-              >
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border border-current/20">
-                  {isComplete ? "✓" : i + 1}
-                </span>
-                <span className="hidden sm:inline">{step.label}</span>
-              </div>
-              {i < WIZARD_STEPS.length - 1 && (
-                <div className="w-8 h-px bg-border" aria-hidden />
-              )}
-            </li>
-          );
-        })}
-      </ol>
+      <div className="flex items-center justify-between gap-3">
+        <ol className="flex items-center gap-2 overflow-x-auto" aria-label="Wizard progress">
+          {WIZARD_STEPS.map((step, i) => {
+            const isActive = i === currentIndex;
+            const isComplete = i < currentIndex;
+            return (
+              <li key={step.key} className="flex items-center gap-2 shrink-0">
+                <div
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-sans transition-colors min-h-[36px] ${
+                    isActive
+                      ? "bg-primary text-primary-foreground font-medium"
+                      : isComplete
+                        ? "bg-primary/10 text-foreground"
+                        : "bg-muted text-muted-foreground"
+                  }`}
+                  aria-current={isActive ? "step" : undefined}
+                >
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border border-current/20">
+                    {isComplete ? "✓" : i + 1}
+                  </span>
+                  <span className="hidden sm:inline">{step.label}</span>
+                </div>
+                {i < WIZARD_STEPS.length - 1 && (
+                  <div className="w-8 h-px bg-border" aria-hidden />
+                )}
+              </li>
+            );
+          })}
+        </ol>
+        {saveLabel && (
+          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground shrink-0">
+            {saveLabel}
+          </span>
+        )}
+      </div>
     </Card>
   );
 }

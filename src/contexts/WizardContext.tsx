@@ -256,6 +256,8 @@ export interface WizardDraftSummary {
 
 interface WizardContextValue {
   state: WizardState;
+  isSaving: boolean;
+  lastSavedAt: Date | null;
   setClient: (next: Partial<ClientFormData>) => void;
   setIntakeUploads: (key: keyof IntakeUploads, files: IntakeFileRef[]) => void;
   setAnythingElse: (next: string) => void;
@@ -289,6 +291,8 @@ const WizardContext = createContext<WizardContextValue | null>(null);
 export function WizardProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [state, setState] = useState<WizardState>(initialState);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   // Track the latest in-flight save so a fresh edit can supersede an
   // earlier save's response without racing the local state.
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -338,6 +342,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       if (!user?.id) return null;
       const envelope = buildEnvelope(snapshot);
       const uploadedPaths = collectUploadedPaths(snapshot);
+      setIsSaving(true);
       try {
         if (snapshot.draftId) {
           const { error } = await supabase
@@ -351,6 +356,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
             })
             .eq("id", snapshot.draftId);
           if (error) throw error;
+          setLastSavedAt(new Date());
           return snapshot.draftId;
         }
         const { data, error } = await supabase
@@ -371,10 +377,13 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         if (newId) {
           setState((prev) => ({ ...prev, draftId: newId }));
         }
+        setLastSavedAt(new Date());
         return newId;
       } catch (err) {
         console.warn("WizardContext persistDraft failed", err);
         return snapshot.draftId;
+      } finally {
+        setIsSaving(false);
       }
     },
     [user?.id, buildEnvelope, collectUploadedPaths],
@@ -776,6 +785,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   const value = useMemo<WizardContextValue>(
     () => ({
       state,
+      isSaving,
+      lastSavedAt,
       setClient,
       setIntakeUploads,
       setAnythingElse,
@@ -805,6 +816,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     }),
     [
       state,
+      isSaving,
+      lastSavedAt,
       setClient,
       setIntakeUploads,
       setAnythingElse,
