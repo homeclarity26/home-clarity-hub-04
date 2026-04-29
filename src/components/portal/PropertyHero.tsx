@@ -42,7 +42,7 @@ export function PropertyHero({
     <section
       className={cn(
         "relative w-full overflow-hidden bg-primary",
-        "h-[60vh] min-h-[440px] md:min-h-[520px]",
+        "h-[45vh] min-h-[260px] md:h-[60vh] md:min-h-[440px]",
         className,
       )}
     >

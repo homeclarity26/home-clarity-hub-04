@@ -41,7 +41,7 @@ const ConciergeBar = ({ propertyId }: ConciergeBarProps) => {
   return (
     <>
       <div
-        className="sticky bottom-0 left-0 right-0 z-30 backdrop-blur"
+        className="sticky bottom-14 md:bottom-0 z-30 backdrop-blur"
         style={{
           background: NAVY + "ee",
           borderTop: `1px solid ${GOLD}33`,

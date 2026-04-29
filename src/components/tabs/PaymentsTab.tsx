@@ -106,7 +106,7 @@ const PayNowButton = ({ invoice, fullWidth = false }: { invoice: Invoice; fullWi
   );
 };
 
-const cardBase = "group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full";
+const cardBase = "group bg-card rounded-lg p-5 sm:p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full";
 const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 
 const statusColors: Record<string, string> = {
@@ -356,7 +356,8 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
             <div>
               <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-4">Line Items</p>
               <div className={`${cardBase} cursor-default`}>
-                <table className="w-full border-collapse">
+                <div className="overflow-x-auto">
+                <table className="w-full border-collapse min-w-[360px]">
                   <thead>
                     <tr>
                       <th className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-left pb-3 border-b border-border">Description</th>
@@ -376,6 +377,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           )}
@@ -617,7 +619,8 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                   description="Your invoices and estimates will appear here once your advisor creates them."
                 />
               ) : (
-                <table className="w-full border-collapse">
+                <div className="overflow-x-auto">
+                <table className="w-full border-collapse min-w-[320px]">
                   <thead>
                     <tr>
                       <th className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-left pb-4 border-b border-border">Invoice</th>
@@ -657,6 +660,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                     })}
                   </tbody>
                 </table>
+                </div>
               )}
             </div>
           </TabsContent>
@@ -668,7 +672,8 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
               ) : paymentsPosted.length === 0 && invoices.filter(i => i.status === "paid").length === 0 ? (
                 <EmptyState icon={List} title="No Transactions Yet" description="Your payment history will appear here." />
               ) : (
-                <table className="w-full border-collapse">
+                <div className="overflow-x-auto">
+                <table className="w-full border-collapse min-w-[280px]">
                   <thead>
                     <tr>
                       <th className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-left pb-4 border-b border-border">Date</th>
@@ -693,6 +698,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                       })}
                   </tbody>
                 </table>
+                </div>
               )}
             </div>
           </TabsContent>

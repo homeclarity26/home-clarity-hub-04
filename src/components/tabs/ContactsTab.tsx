@@ -25,7 +25,7 @@ interface ContactsTabProps {
   propertyId?: string;
 }
 
-const cardBase = "group bg-card rounded-lg p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full";
+const cardBase = "group bg-card rounded-lg p-5 sm:p-8 shadow-hbc-sm hover:shadow-hbc-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3 border border-border text-left w-full";
 
 const specialtyIcons: Record<string, typeof Hammer> = {
   "General Contractor": Hammer,

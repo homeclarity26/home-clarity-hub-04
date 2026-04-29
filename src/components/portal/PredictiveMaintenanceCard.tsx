@@ -185,7 +185,7 @@ export default function PredictiveMaintenanceCard({ propertyId, clientId }: { pr
       ) : (
         <div className="p-6 space-y-6">
           {/* Cost Summary */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { label: "1 Year", ...costSummary.year1 },
               { label: "3 Years", ...costSummary.year3 },
