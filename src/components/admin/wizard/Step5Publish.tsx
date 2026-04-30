@@ -175,6 +175,37 @@ export function Step5Publish() {
       // Flip the wizard_drafts row to "published" so the next visit
       // doesn't surface this draft as resumable.
       void markPublished();
+
+      if (state.propertyId) {
+        const { data: prop } = await supabase
+          .from("properties")
+          .select("client_user_id")
+          .eq("id", state.propertyId)
+          .maybeSingle();
+        const clientUserId = prop?.client_user_id;
+        if (clientUserId) {
+          const { data: clientProfile } = await supabase
+            .from("profiles")
+            .select("email, full_name")
+            .eq("id", clientUserId)
+            .maybeSingle();
+          const clientEmail = clientProfile?.email;
+          if (clientEmail) {
+            const portalUrl = `https://homeclarityhub.com/portal/${state.propertyId}`;
+            const greeting = clientProfile?.full_name ? `Hi ${clientProfile.full_name},` : "Hi,";
+            void supabase.functions.invoke("send-email", {
+              body: {
+                to: clientEmail,
+                subject: "Your Home Clarity Report is ready",
+                body: `${greeting}\n\nYour Home Clarity Report is ready: ${portalUrl}\n\nLog in to your portal to review the full report.\n\nLet me know if you have any questions.\n\nAdam`,
+              },
+            }).catch((err) => {
+              console.warn("[Step5Publish] auto-email failed", err);
+            });
+          }
+        }
+      }
+
       toast({
         title: "Report published",
         description:

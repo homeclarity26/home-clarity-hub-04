@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Loader2, Pencil, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, Pencil, Trash2, Plus, Mail } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import ClientOverview from "@/components/admin/ClientOverview";
 import FileManager from "@/components/admin/FileManager";
@@ -225,6 +225,45 @@ const AdminClientDetail = () => {
   const [eventOpen, setEventOpen] = useState(false);
   const [editScheduleEvent, setEditScheduleEvent] = useState<any>(null);
 
+  // Send Email dialog state
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailTo, setEmailTo] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
+
+  const openEmailDialog = () => {
+    setEmailTo(client?.email || "");
+    setEmailSubject("");
+    setEmailBody("");
+    setEmailOpen(true);
+  };
+
+  const sendManualEmail = async () => {
+    if (!emailTo.trim() || !emailSubject.trim() || !emailBody.trim()) {
+      toast.error("To, subject, and body are required");
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-email", {
+        body: { to: emailTo.trim(), subject: emailSubject.trim(), body: emailBody.trim() },
+      });
+      if (error) throw error;
+      const result = data as { sent?: boolean; reason?: string };
+      if (result?.sent === false) {
+        toast.warning(`Email queued, not sent (${result.reason || "delivery skipped"})`);
+      } else {
+        toast.success(`Email sent to ${emailTo}`);
+      }
+      setEmailOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to send email");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const deleteEvent = async (id: string) => {
     const { error } = await supabase.from("schedule_events").delete().eq("id", id);
     if (error) { toast.error("Failed to delete"); return; }
@@ -284,9 +323,42 @@ const AdminClientDetail = () => {
               <ClientQuickSwitch currentClientId={client.propertyId} />
             </div>
             <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs font-sans h-7" onClick={openEmailDialog}>
+                <Mail className="w-3.5 h-3.5" />
+                Send Email
+              </Button>
               <AIClientBrief propertyId={client.propertyId} propertyName={client.propertyName} />
             </div>
           </div>
+
+          <Dialog open={emailOpen} onOpenChange={setEmailOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="font-display">Send Email</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div>
+                  <Label className="font-sans text-xs">To</Label>
+                  <Input value={emailTo} onChange={(e) => setEmailTo(e.target.value)} placeholder="client@example.com" />
+                </div>
+                <div>
+                  <Label className="font-sans text-xs">Subject</Label>
+                  <Input value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)} placeholder="Quick note about your home" />
+                </div>
+                <div>
+                  <Label className="font-sans text-xs">Body</Label>
+                  <Textarea value={emailBody} onChange={(e) => setEmailBody(e.target.value)} rows={8} placeholder="Write your message here. Plain text or paragraphs separated by blank lines." />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" size="sm" className="font-sans" onClick={() => setEmailOpen(false)} disabled={sendingEmail}>Cancel</Button>
+                  <Button size="sm" className="font-sans" onClick={sendManualEmail} disabled={sendingEmail}>
+                    {sendingEmail ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Mail className="w-3.5 h-3.5 mr-1.5" />}
+                    Send
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <WorkspaceTabGroups
             activeTab={activeTab}
