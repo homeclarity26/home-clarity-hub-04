@@ -351,6 +351,23 @@ export async function callGeminiEmbedding(input: string | string[]): Promise<num
 // across multiple calls drops repeated-input cost to ~10%.
 // ─────────────────────────────────────────────────────────────────────────
 
+/**
+ * A document attached to a Claude `user` message. Anthropic accepts these
+ * inline as base64 — supports PDFs (most common use), plus images. Each
+ * document is one item in the user message's `content` array.
+ *
+ * Use case: pass uploaded intake PDFs straight to Claude so it reads the
+ * actual content rather than seeing only filenames.
+ */
+export interface ClaudeInlineDocument {
+  /** Base64-encoded file bytes (no data: prefix). */
+  data: string;
+  /** e.g. "application/pdf", "image/png", "image/jpeg". */
+  media_type: string;
+  /** Optional friendly title shown to the model. */
+  name?: string;
+}
+
 export interface ClaudeOptions {
   /** Always required. Short, cheap task-scoped instruction. */
   system: string;
@@ -360,6 +377,13 @@ export interface ClaudeOptions {
   prompt?: string;
   /** Multi-turn conversation (alternative to prompt). */
   messages?: Array<{ role: "user" | "assistant"; content: string }>;
+  /**
+   * Optional inline documents (PDFs, images) to attach to the first user
+   * message. Each becomes a `document` content block ahead of the prompt
+   * text so Claude reads the file natively. Ignored on Gemini fallback
+   * paths (Gemini fallback only sees the text prompt).
+   */
+  documents?: ClaudeInlineDocument[];
   model?: string;
   json?: boolean;
   temperature?: number;
@@ -413,14 +437,45 @@ export async function callClaude(opts: ClaudeOptions): Promise<string> {
   }
 
   // Build messages. Either a single user prompt or a multi-turn thread.
-  let msgs: Array<{ role: "user" | "assistant"; content: string }>;
+  // When documents are attached, the first user message is upgraded to a
+  // multipart `content` array (document blocks ahead of the text).
+  type AnthropicContentBlock =
+    | { type: "text"; text: string }
+    | { type: "document"; source: { type: "base64"; media_type: string; data: string }; title?: string }
+    | { type: "image"; source: { type: "base64"; media_type: string; data: string } };
+  type AnthropicMessage = { role: "user" | "assistant"; content: string | AnthropicContentBlock[] };
+
+  let msgs: AnthropicMessage[];
   if (opts.messages && opts.messages.length > 0) {
-    msgs = opts.messages;
+    msgs = opts.messages.map((m) => ({ role: m.role, content: m.content }));
   } else {
     const userText = opts.json
       ? `${opts.prompt ?? ""}\n\nRespond with valid JSON only. No markdown, no explanation.`
       : (opts.prompt ?? "");
     msgs = [{ role: "user", content: userText }];
+  }
+
+  if (opts.documents && opts.documents.length > 0) {
+    const firstUserIdx = msgs.findIndex((m) => m.role === "user");
+    if (firstUserIdx >= 0) {
+      const original = msgs[firstUserIdx];
+      const text = typeof original.content === "string" ? original.content : "";
+      const docBlocks: AnthropicContentBlock[] = opts.documents.map((d) => {
+        const isImage = d.media_type.startsWith("image/");
+        if (isImage) {
+          return { type: "image", source: { type: "base64", media_type: d.media_type, data: d.data } };
+        }
+        return {
+          type: "document",
+          source: { type: "base64", media_type: d.media_type, data: d.data },
+          ...(d.name ? { title: d.name } : {}),
+        };
+      });
+      msgs[firstUserIdx] = {
+        role: "user",
+        content: [...docBlocks, { type: "text", text }],
+      };
+    }
   }
 
   const body: Record<string, unknown> = {

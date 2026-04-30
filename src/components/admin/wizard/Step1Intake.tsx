@@ -97,7 +97,9 @@ export function Step1Intake() {
   }, [state.client.address]);
 
   // Build a single block of "meeting notes" from all the freeform sources
-  // we have in state. seed-report-from-notes (E7) takes a single string.
+  // we have in state. seed-report-from-notes (E7) takes a single string for
+  // free-form text plus an optional `intake_files` array of upload refs that
+  // the edge function downloads from storage so Claude reads them inline.
   const aggregatedNotes = useMemo(() => {
     const lines: string[] = [];
     if (state.client.discoveryNotes) {
@@ -106,16 +108,29 @@ export function Step1Intake() {
     if (state.anythingElse) {
       lines.push(`Anything else:\n${state.anythingElse}`);
     }
-    const transcripts = state.intakeUploads.transcript
-      .map((f) => `- ${f.name}`)
-      .join("\n");
-    if (transcripts) lines.push(`Transcript files:\n${transcripts}`);
-    const siteNotes = state.intakeUploads.site_notes
-      .map((f) => `- ${f.name}`)
-      .join("\n");
-    if (siteNotes) lines.push(`Site notes files:\n${siteNotes}`);
     return lines.join("\n\n");
-  }, [state.client.discoveryNotes, state.anythingElse, state.intakeUploads]);
+  }, [state.client.discoveryNotes, state.anythingElse]);
+
+  // Storage refs the edge function will fetch + base64 inline for Claude.
+  // Photos go in too — Claude can read condition observations off the
+  // images even before the human writes a transcript.
+  const intakeFilesPayload = useMemo(() => {
+    const refs = [
+      ...state.intakeUploads.transcript,
+      ...state.intakeUploads.site_notes,
+      ...state.intakeUploads.photos,
+    ];
+    return refs
+      .filter((f) => Boolean(f.storage_path) && Boolean(f.bucket))
+      .map((f) => ({
+        name: f.name,
+        storage_path: f.storage_path,
+        bucket: f.bucket,
+        mime: f.mime,
+      }));
+  }, [state.intakeUploads]);
+
+  const hasAnyIntake = aggregatedNotes.trim().length > 0 || intakeFilesPayload.length > 0;
 
   const allClarifyingAnswered =
     state.clarifyingQuestions.length === 0 ||
@@ -128,7 +143,7 @@ export function Step1Intake() {
     !analyzing;
 
   const runAIAnalysis = async () => {
-    if (!aggregatedNotes.trim()) {
+    if (!hasAnyIntake) {
       toast({
         title: "Add some intake first",
         description:
@@ -140,12 +155,21 @@ export function Step1Intake() {
     setAnalyzing(true);
     setAnalyzeError(null);
     try {
+      // The edge function takes a non-empty `meeting_notes` string. When a
+      // consultant uploads files only (no freeform notes), we still need to
+      // satisfy that contract — the actual content comes from intake_files.
+      const notesForAI =
+        aggregatedNotes.trim().length > 0
+          ? aggregatedNotes
+          : `Read the attached documents. They contain the discovery and walkthrough notes for this client.`;
+
       // Stage 1 — clarifying questions.
       const { data: qData, error: qErr } = await supabase.functions.invoke(
         "seed-report-from-notes",
         {
           body: {
-            meeting_notes: aggregatedNotes,
+            meeting_notes: notesForAI,
+            intake_files: intakeFilesPayload,
             request_clarifying_questions: true,
           },
         },
@@ -159,7 +183,8 @@ export function Step1Intake() {
         "seed-report-from-notes",
         {
           body: {
-            meeting_notes: aggregatedNotes,
+            meeting_notes: notesForAI,
+            intake_files: intakeFilesPayload,
             clarifying_answers: state.clarifyingAnswers,
           },
         },
