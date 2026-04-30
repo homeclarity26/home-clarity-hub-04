@@ -21,16 +21,15 @@
  */
 
 import {
-  loadEnv, restDelete,
-  adminCreateUser, signIn, invokeFn, randSuffix,
+  loadEnv,
+  invokeFn,
+  seedTestClient,
   printResults, runCleanups,
   type StepResult,
 } from "./_golden-helpers.ts";
 import { spawnSync } from "node:child_process";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-
-const TEST_PROPERTY_ID = process.env.GOLDEN_PATH_PROPERTY_ID || "b9d0db18-aeec-4298-bebe-534d9809d0b4";
 
 const ctx = loadEnv();
 const startedAt = Date.now();
@@ -43,14 +42,12 @@ const REPO_ROOT = resolve(SCRIPTS_DIR, "..");
 async function main(): Promise<number> {
   const stamp = new Date().toISOString().replace(/[:.]/g, "").slice(0, 15);
 
-  // Create a client user for test 57
-  let clientId = "", clientJWT = "";
+  // Provision a real client + property for test 57's hbc-agent call.
+  let clientJWT = "", testPropertyId = "";
   try {
-    const email = `gp-static-client-${stamp}-${randSuffix()}@clarityhub.test`;
-    const pw = `GP-${randSuffix()}`;
-    clientId = await adminCreateUser(ctx, email, pw, { role: "client", full_name: "GP Static Client" });
-    ctx.cleanups.push(async () => { await restDelete(ctx, `/auth/v1/admin/users/${clientId}`); });
-    clientJWT = await signIn(ctx, email, pw);
+    const seeded = await seedTestClient(ctx, "gp-static");
+    clientJWT = seeded.jwt;
+    testPropertyId = seeded.propertyId;
   } catch (e) {
     results.push({ name: "0. Setup client", status: "FAIL", dataVisible: "", note: String(e) });
     return finish();
@@ -76,7 +73,7 @@ async function main(): Promise<number> {
             history: [],
             context: {
               role: "client",
-              propertyId: TEST_PROPERTY_ID,
+              propertyId: testPropertyId,
               currentEntityType: "property",
               activeTab: "home",
               sessionId: `gp-static-${stamp}`,
