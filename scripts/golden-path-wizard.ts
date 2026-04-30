@@ -17,12 +17,10 @@
 import {
   loadEnv, restPost, restGet, restPatch, restDelete,
   adminCreateUser, signIn, invokeFn, randSuffix,
+  seedTestClient,
   printResults, runCleanups,
   type StepResult,
 } from "./_golden-helpers.ts";
-
-const TEST_PROPERTY_ID = process.env.GOLDEN_PATH_PROPERTY_ID || "b9d0db18-aeec-4298-bebe-534d9809d0b4";
-const SARAH_USER_ID = "10ed2749-39cc-4861-b1f8-fc9b53647f82";
 
 const ctx = loadEnv();
 const startedAt = Date.now();
@@ -32,6 +30,7 @@ async function main(): Promise<number> {
   const stamp = new Date().toISOString().replace(/[:.]/g, "").slice(0, 15);
 
   let creatorId = "", creatorJWT = "";
+  let testPropertyId = "", testClientUserId = "";
   let reportId = "";
 
   try {
@@ -40,6 +39,9 @@ async function main(): Promise<number> {
     creatorId = await adminCreateUser(ctx, email, pw, { role: "creator", full_name: "GP Wizard Creator" });
     ctx.cleanups.push(async () => { await restDelete(ctx, `/auth/v1/admin/users/${creatorId}`); });
     creatorJWT = await signIn(ctx, email, pw);
+    const seeded = await seedTestClient(ctx, "gp-wizard");
+    testClientUserId = seeded.userId;
+    testPropertyId = seeded.propertyId;
   } catch (e) {
     results.push({ name: "0. Setup", status: "FAIL", dataVisible: "", note: String(e) });
     return finish();
@@ -54,7 +56,7 @@ async function main(): Promise<number> {
       ctx,
       `/rest/v1/reports`,
       {
-        property_id: TEST_PROPERTY_ID,
+        property_id: testPropertyId,
         status: "draft",
         created_by: creatorId,
         title: `GP Wizard Test ${stamp}`,
@@ -135,12 +137,12 @@ async function main(): Promise<number> {
     // Delete any pre-existing brief for today to get a clean slate
     await restDelete(
       ctx,
-      `/rest/v1/daily_briefs?property_id=eq.${TEST_PROPERTY_ID}&client_user_id=eq.${SARAH_USER_ID}&brief_date=eq.${today}`,
+      `/rest/v1/daily_briefs?property_id=eq.${testPropertyId}&client_user_id=eq.${testClientUserId}&brief_date=eq.${today}`,
     );
     ctx.cleanups.push(async () => {
       await restDelete(
         ctx,
-        `/rest/v1/daily_briefs?property_id=eq.${TEST_PROPERTY_ID}&client_user_id=eq.${SARAH_USER_ID}&brief_date=eq.${today}`,
+        `/rest/v1/daily_briefs?property_id=eq.${testPropertyId}&client_user_id=eq.${testClientUserId}&brief_date=eq.${today}`,
       );
     });
 
@@ -154,8 +156,8 @@ async function main(): Promise<number> {
       ctx,
       `/rest/v1/daily_briefs`,
       {
-        property_id: TEST_PROPERTY_ID,
-        client_user_id: SARAH_USER_ID,
+        property_id: testPropertyId,
+        client_user_id: testClientUserId,
         brief_date: today,
         brief_html: briefHtml,
         ai_model: "gemini-flash-latest",
@@ -179,8 +181,8 @@ async function main(): Promise<number> {
         ctx,
         `/rest/v1/daily_briefs`,
         {
-          property_id: TEST_PROPERTY_ID,
-          client_user_id: SARAH_USER_ID,
+          property_id: testPropertyId,
+          client_user_id: testClientUserId,
           brief_date: today,
           brief_html: briefHtml,
           ai_model: "gemini-flash-latest",

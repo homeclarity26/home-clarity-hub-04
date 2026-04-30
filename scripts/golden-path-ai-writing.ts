@@ -27,11 +27,10 @@
 import {
   loadEnv, restPost, restGet, restPatch, restDelete,
   adminCreateUser, signIn, invokeFn, randSuffix,
+  seedTestClient,
   printResults, runCleanups,
   type StepResult,
 } from "./_golden-helpers.ts";
-
-const TEST_PROPERTY_ID = process.env.GOLDEN_PATH_PROPERTY_ID || "b9d0db18-aeec-4298-bebe-534d9809d0b4";
 
 const ctx = loadEnv();
 const startedAt = Date.now();
@@ -40,6 +39,7 @@ const results: StepResult[] = [];
 async function main(): Promise<number> {
   const stamp = new Date().toISOString().replace(/[:.]/g, "").slice(0, 15);
   let creatorId = "", creatorJWT = "";
+  let testPropertyId = "", testClientUserId = "";
   let projectId = "", reportId = "", pageId = "";
 
   try {
@@ -48,6 +48,9 @@ async function main(): Promise<number> {
     creatorId = await adminCreateUser(ctx, email, pw, { role: "creator", full_name: "GP AI Writing" });
     ctx.cleanups.push(async () => { await restDelete(ctx, `/auth/v1/admin/users/${creatorId}`); });
     creatorJWT = await signIn(ctx, email, pw);
+    const seeded = await seedTestClient(ctx, "gp-ai");
+    testClientUserId = seeded.userId;
+    testPropertyId = seeded.propertyId;
   } catch (e) {
     results.push({ name: "0. Setup", status: "FAIL", dataVisible: "", note: String(e) });
     return finish();
@@ -149,7 +152,7 @@ async function main(): Promise<number> {
       ctx,
       `/rest/v1/projects`,
       {
-        property_id: TEST_PROPERTY_ID,
+        property_id: testPropertyId,
         title: `GP Scope Test — ${stamp}`,
         description: "Test scope for Golden Path — kitchen backsplash with subway tile.",
         status: "planned",
@@ -192,15 +195,15 @@ async function main(): Promise<number> {
       "generate-annual-review",
       creatorJWT,
       {
-        client_id: "10ed2749-39cc-4861-b1f8-fc9b53647f82", // Sarah
+        client_id: testClientUserId,
         review_year: thisYear,
-        property_id: TEST_PROPERTY_ID,
+        property_id: testPropertyId,
       },
       240_000,
     );
     // Schedule cleanup of any annual_reviews row that got created for this year
     ctx.cleanups.push(async () => {
-      await restDelete(ctx, `/rest/v1/annual_reviews?client_id=eq.10ed2749-39cc-4861-b1f8-fc9b53647f82&review_year=eq.${thisYear}`);
+      await restDelete(ctx, `/rest/v1/annual_reviews?client_id=eq.${testClientUserId}&review_year=eq.${thisYear}`);
     });
     const hasBriefing = resp.briefing && typeof resp.briefing === "object" && Object.keys(resp.briefing as object).length > 0;
     if (!hasBriefing) throw new Error(`generate-annual-review returned empty briefing: ${JSON.stringify(resp).slice(0, 300)}`);
@@ -219,7 +222,7 @@ async function main(): Promise<number> {
     const [r] = await restPost<Array<{ id: string }>>(
       ctx,
       `/rest/v1/reports`,
-      { property_id: TEST_PROPERTY_ID, status: "draft", created_by: creatorId, title: `GP Narrative ${stamp}` },
+      { property_id: testPropertyId, status: "draft", created_by: creatorId, title: `GP Narrative ${stamp}` },
     );
     reportId = r.id;
     const [pg] = await restPost<Array<{ id: string }>>(
