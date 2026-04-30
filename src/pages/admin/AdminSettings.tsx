@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, Check, Palette } from "lucide-react";
+import { CreditCard, Check, Palette, BellRing, Loader2 } from "lucide-react";
 
 import AdminHeader from "@/components/admin/AdminHeader";
 import IntegrationsHub from "@/components/admin/IntegrationsHub";
@@ -58,6 +58,25 @@ const AdminSettings = () => {
   // Notifications
   const [notifPrefs, setNotifPrefs] = useState<Record<string, boolean>>({});
   const [savingNotifs, setSavingNotifs] = useState(false);
+  const [sendingReminders, setSendingReminders] = useState(false);
+
+  const handleSendReminders = async () => {
+    setSendingReminders(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-maintenance-reminders");
+      if (error) throw error;
+      const result = data as { sent?: number; processed?: number; properties?: number; reason?: string };
+      if (!result?.processed) {
+        toast.success(result?.reason || "No upcoming events in the next 7 days.");
+      } else {
+        toast.success(`Reminders sent: ${result.sent ?? 0} of ${result.processed} events across ${result.properties ?? 0} properties.`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send reminders");
+    } finally {
+      setSendingReminders(false);
+    }
+  };
 
   useEffect(() => {
     if (profile) {
@@ -289,6 +308,21 @@ const AdminSettings = () => {
               </div>
               <Button size="sm" className="font-sans" onClick={handleNotifSave} disabled={savingNotifs}>
                 {savingNotifs ? "Saving..." : "Save Preferences"}
+              </Button>
+            </Card>
+
+            {/* Maintenance Reminders */}
+            <Card className="p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <BellRing className="w-5 h-5 text-accent" />
+                <h3 className="text-base font-sans font-semibold text-foreground">Maintenance Reminders</h3>
+              </div>
+              <p className="text-sm font-sans text-muted-foreground">
+                Sweep all upcoming schedule events in the next 7 days and email each client a heads-up. Each event is emailed once; the cron job runs on a schedule, but you can also fire it manually here.
+              </p>
+              <Button size="sm" className="font-sans gap-1.5" onClick={handleSendReminders} disabled={sendingReminders}>
+                {sendingReminders ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BellRing className="w-3.5 h-3.5" />}
+                {sendingReminders ? "Sending..." : "Send Reminders Now"}
               </Button>
             </Card>
 
