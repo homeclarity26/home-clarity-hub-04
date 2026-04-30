@@ -245,6 +245,42 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
   const [requestSubmitting, setRequestSubmitting] = useState(false);
   const [selectedRecommendation, setSelectedRecommendation] = useState<{ pageTitle: string; recommendation: string } | null>(null);
+  const [connectingId, setConnectingId] = useState<string | null>(null);
+  const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set());
+
+  const requestHbcConnection = async (project: Project) => {
+    if (!propertyId || connectedIds.has(project.id) || connectingId === project.id) return;
+    setConnectingId(project.id);
+    const message = `I'm ready to move forward on: ${project.title}. Please connect me with the right trade partner.`;
+    try {
+      if (propertyId.startsWith("mock-")) {
+        await new Promise((r) => setTimeout(r, 400));
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          toast.error("Please log in again.");
+          return;
+        }
+        const { error } = await supabase.from("property_messages").insert({
+          property_id: propertyId,
+          sender_id: user.id,
+          message,
+        });
+        if (error) {
+          toast.error("Could not send your request. Please try again.");
+          return;
+        }
+      }
+      setConnectedIds((prev) => {
+        const next = new Set(prev);
+        next.add(project.id);
+        return next;
+      });
+      toast.success("Your request has been sent. HBC will be in touch within 1 business day.");
+    } finally {
+      setConnectingId(null);
+    }
+  };
 
   const loadData = useCallback(async () => {
     if (!propertyId) { setLoading(false); return; }
@@ -497,20 +533,38 @@ const ProjectsTab = ({ onNavigate, onTabChange, propertyId, pages, onSendMessage
                           {/* Photo Timeline */}
                           <ProjectPhotoTimeline projectId={project.id} projectTitle={project.title} />
 
-                          {/* Ask About This Project */}
+                          {/* Ask About This Project + Connect Me with HBC */}
                           {project.status !== "complete" && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1.5 text-xs font-sans mt-2 w-fit"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onSendMessage?.(`I have a question about my ${project.title} project.`);
-                              }}
-                            >
-                              <MessageSquare className="w-3.5 h-3.5" />
-                              Ask About This Project
-                            </Button>
+                            <div className="flex flex-wrap items-center gap-2 mt-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-1.5 text-xs font-sans w-fit"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onSendMessage?.(`I have a question about my ${project.title} project.`);
+                                }}
+                              >
+                                <MessageSquare className="w-3.5 h-3.5" />
+                                Ask About This Project
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="gap-1.5 text-xs font-sans w-fit"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  requestHbcConnection(project);
+                                }}
+                                disabled={connectedIds.has(project.id) || connectingId === project.id}
+                              >
+                                {connectingId === project.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Send className="w-3.5 h-3.5" />
+                                )}
+                                {connectedIds.has(project.id) ? "Request Sent" : "Connect Me with HBC"}
+                              </Button>
+                            </div>
                           )}
                         </div>
                       </CollapsibleContent>
