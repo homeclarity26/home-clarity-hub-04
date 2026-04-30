@@ -182,13 +182,46 @@ const AdminProjectsSection = ({ propertyId, projects, reportPages }: AdminProjec
   };
 
   const toggleMilestone = async (m: Milestone) => {
-    const { error } = await supabase.from("milestones").update({ completed: !m.completed }).eq("id", m.id);
+    const newCompleted = !m.completed;
+    const { error } = await supabase.from("milestones").update({ completed: newCompleted }).eq("id", m.id);
     if (error) { toast.error("Failed to update"); return; }
     setMilestones((prev) => {
       const updated = { ...prev };
-      updated[m.project_id] = (updated[m.project_id] || []).map((x) => x.id === m.id ? { ...x, completed: !x.completed } : x);
+      updated[m.project_id] = (updated[m.project_id] || []).map((x) => x.id === m.id ? { ...x, completed: newCompleted } : x);
       return updated;
     });
+
+    // Auto-email client when milestone marked complete (not when uncompleted).
+    if (newCompleted) {
+      void (async () => {
+        try {
+          const { data: prop } = await supabase
+            .from("properties")
+            .select("client_user_id")
+            .eq("id", propertyId)
+            .maybeSingle();
+          const clientUserId = prop?.client_user_id;
+          if (!clientUserId) return;
+          const { data: clientProfile } = await supabase
+            .from("profiles")
+            .select("email, full_name")
+            .eq("id", clientUserId)
+            .maybeSingle();
+          const clientEmail = clientProfile?.email;
+          if (!clientEmail) return;
+          const greeting = clientProfile?.full_name ? `Hi ${clientProfile.full_name},` : "Hi,";
+          await supabase.functions.invoke("send-email", {
+            body: {
+              to: clientEmail,
+              subject: `Milestone complete: ${m.title}`,
+              body: `${greeting}\n\nGood news. We just marked a milestone complete on your project:\n\n${m.title}\n\nLog in to your portal to see the latest update.\n\nAdam`,
+            },
+          });
+        } catch (err) {
+          console.warn("[AdminProjectsSection] milestone-complete email failed", err);
+        }
+      })();
+    }
   };
 
   const deleteMilestone = async (m: Milestone) => {
