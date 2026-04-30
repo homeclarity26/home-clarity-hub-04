@@ -1,7 +1,87 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
-import { callClaude, parseJSON } from "../_shared/ai-client.ts";
+import { callClaude, parseJSON, type ClaudeInlineDocument } from "../_shared/ai-client.ts";
 import { retrieveContext } from "../_shared/rag.ts";
+
+interface IntakeFile {
+  name?: string;
+  storage_path?: string;
+  bucket?: string;
+  mime?: string;
+}
+
+const INLINE_DOC_TYPES = new Set([
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+]);
+const TEXT_DOC_TYPES = new Set([
+  "text/plain",
+  "text/markdown",
+  "text/csv",
+]);
+
+// Hard cap so a runaway upload never balloons the Anthropic request body.
+// Claude accepts up to 32MB per document inline; we cap aggregate input
+// well below that to leave headroom for the prompt + cache headers.
+const MAX_INLINE_BYTES = 20 * 1024 * 1024;
+
+async function bytesToBase64(bytes: Uint8Array): Promise<string> {
+  // Deno doesn't ship a streaming base64 helper; chunk to avoid call-stack
+  // limits on multi-MB files. 0x8000 is the conservative safe slice size.
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+async function loadIntakeFiles(
+  storage: { from: (bucket: string) => { download: (path: string) => Promise<{ data: Blob | null; error: unknown }> } },
+  files: IntakeFile[],
+): Promise<{ docs: ClaudeInlineDocument[]; texts: string[]; skipped: string[] }> {
+  const docs: ClaudeInlineDocument[] = [];
+  const texts: string[] = [];
+  const skipped: string[] = [];
+  let bytesAccum = 0;
+
+  for (const f of files) {
+    if (!f.bucket || !f.storage_path) {
+      skipped.push(`${f.name ?? "unnamed"}: missing storage path`);
+      continue;
+    }
+    const mime = (f.mime || "").toLowerCase();
+    try {
+      const { data, error } = await storage.from(f.bucket).download(f.storage_path);
+      if (error || !data) {
+        skipped.push(`${f.name ?? f.storage_path}: download failed`);
+        continue;
+      }
+      const buf = new Uint8Array(await data.arrayBuffer());
+      if (bytesAccum + buf.byteLength > MAX_INLINE_BYTES) {
+        skipped.push(`${f.name ?? f.storage_path}: would exceed ${MAX_INLINE_BYTES} bytes cap`);
+        continue;
+      }
+      bytesAccum += buf.byteLength;
+
+      if (TEXT_DOC_TYPES.has(mime)) {
+        const text = new TextDecoder("utf-8").decode(buf);
+        texts.push(`--- ${f.name ?? f.storage_path} ---\n${text}`);
+      } else if (INLINE_DOC_TYPES.has(mime)) {
+        const b64 = await bytesToBase64(buf);
+        docs.push({ data: b64, media_type: mime, name: f.name });
+      } else {
+        skipped.push(`${f.name ?? f.storage_path}: unsupported mime ${mime || "(unknown)"}`);
+      }
+    } catch (e) {
+      skipped.push(`${f.name ?? f.storage_path}: ${e instanceof Error ? e.message : "unknown"}`);
+    }
+  }
+  return { docs, texts, skipped };
+}
 
 /**
  * seed-report-from-notes — The AI report creation entry point.
@@ -36,10 +116,37 @@ serve(async (req) => {
       property_context,
       request_clarifying_questions,
       clarifying_answers,
+      intake_files,
     } = await req.json();
     if (!meeting_notes || typeof meeting_notes !== "string") {
       return json({ error: "meeting_notes (string) is required" }, { status: 400 });
     }
+
+    // Pull uploaded files from storage so Claude reads contents, not names.
+    // Text files inline into the user message; PDFs/images attach as Claude
+    // document/image blocks. Skipped files are surfaced in the response so
+    // the wizard can show the consultant which uploads couldn't be read.
+    let intakeDocs: ClaudeInlineDocument[] = [];
+    let intakeTexts: string[] = [];
+    const intakeSkipped: string[] = [];
+    if (Array.isArray(intake_files) && intake_files.length > 0) {
+      const result = await loadIntakeFiles(
+        auth.adminSupabase.storage as unknown as Parameters<typeof loadIntakeFiles>[0],
+        intake_files as IntakeFile[],
+      );
+      intakeDocs = result.docs;
+      intakeTexts = result.texts;
+      intakeSkipped.push(...result.skipped);
+      if (intakeSkipped.length > 0) {
+        console.warn("seed-report-from-notes: skipped intake files:", intakeSkipped);
+      }
+    }
+    const inlineTextBlock = intakeTexts.length > 0
+      ? `\n\nUploaded text intake (verbatim):\n${intakeTexts.join("\n\n")}`
+      : "";
+    const docHint = intakeDocs.length > 0
+      ? `\n\n${intakeDocs.length} attached document${intakeDocs.length > 1 ? "s" : ""} (PDF/image): read each one in full and use its contents directly. Do NOT ask for transcript text — the documents ARE the transcript.`
+      : "";
 
     // ─── Stage 1: clarifying questions (E7) ────────────────────────────
     if (request_clarifying_questions === true) {
@@ -67,15 +174,18 @@ Return ONLY a JSON object with this exact shape (no preamble, no markdown):
   ]
 }
 
-Constraint: 3-5 questions total. Keep ids stable and snake_case so the caller can store answers reliably.`;
+Constraint: 3-5 questions total. Keep ids stable and snake_case so the caller can store answers reliably.
+
+Tone: never use em-dashes. Use commas, semicolons, or short sentences. Plain spoken English.`;
 
       const userMessage = `Meeting notes:\n${meeting_notes}${
         photo_descriptions ? `\n\nPhoto observations:\n${photo_descriptions}` : ""
-      }${property_context ? `\n\nProperty context: ${JSON.stringify(property_context)}` : ""}`;
+      }${property_context ? `\n\nProperty context: ${JSON.stringify(property_context)}` : ""}${inlineTextBlock}${docHint}`;
 
       const aiText = await callClaude({
         system: questionsSystemPrompt,
         prompt: userMessage,
+        documents: intakeDocs,
         json: true,
         temperature: 0.3,
         maxOutputTokens: 4096,
@@ -93,6 +203,11 @@ Constraint: 3-5 questions total. Keep ids stable and snake_case so the caller ca
       return json({
         stage: "clarifying_questions",
         questions: Array.isArray(parsed.questions) ? parsed.questions : [],
+        intake: {
+          documents_attached: intakeDocs.length,
+          texts_inlined: intakeTexts.length,
+          skipped: intakeSkipped,
+        },
       });
     }
 
@@ -159,7 +274,7 @@ Be focused — only include pages directly supported by the notes. When in doubt
 
     const userMessage = `Meeting notes:\n${meeting_notes}${
       photo_descriptions ? `\n\nPhoto observations:\n${photo_descriptions}` : ""
-    }${contextStr}${answersStr}`;
+    }${contextStr}${answersStr}${inlineTextBlock}${docHint}`;
 
     // RAG: pull Adam's past published pages + saved templates + per-client
     // facts + agent memories that are semantically similar to these notes.
@@ -183,6 +298,7 @@ Be focused — only include pages directly supported by the notes. When in doubt
       system: systemPrompt,
       cacheableContext: ragContext || undefined,
       prompt: userMessage,
+      documents: intakeDocs,
       json: true,
       temperature: 0.4,
       maxOutputTokens: 16384,
@@ -216,6 +332,11 @@ Be focused — only include pages directly supported by the notes. When in doubt
       page_seeds: result.page_seeds || [],
       page_count: (result.page_seeds || []).length,
       sequence_risk_flags: result.sequence_risk_flags || [],
+      intake: {
+        documents_attached: intakeDocs.length,
+        texts_inlined: intakeTexts.length,
+        skipped: intakeSkipped,
+      },
     });
   } catch (e) {
     console.error("seed-report-from-notes error:", e);
