@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Upload,
   X,
@@ -9,6 +11,7 @@ import {
   FileAudio,
   FileVideo,
   File,
+  Link as LinkIcon,
   Loader2,
   AlertCircle,
 } from "lucide-react";
@@ -36,6 +39,18 @@ interface IntakeUploadCardProps {
   accept?: string;
   files: IntakeFileRef[];
   onChange: (next: IntakeFileRef[]) => void;
+  /**
+   * When provided, renders a URL paste input above the file list. Used for
+   * Hover and iGuide cards where the consultant typically pastes the
+   * sharing URL from the third-party scan tool. Saved verbatim to wizard
+   * state and shipped to properties.{hover_url,iguide_url} at publish.
+   */
+  url?: {
+    value: string;
+    onChange: (next: string) => void;
+    label: string;
+    placeholder?: string;
+  };
 }
 
 const fileIcon = (mime: string) => {
@@ -69,6 +84,7 @@ export function IntakeUploadCard({
   accept,
   files,
   onChange,
+  url,
 }: IntakeUploadCardProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
@@ -188,6 +204,32 @@ export function IntakeUploadCard({
           }}
         />
       </div>
+
+      {url && (
+        <div className="space-y-1.5">
+          <Label className="text-xs font-sans flex items-center gap-1.5">
+            <LinkIcon className="w-3.5 h-3.5 text-muted-foreground" aria-hidden />
+            {url.label}
+          </Label>
+          <Input
+            type="url"
+            value={url.value}
+            onChange={(e) => url.onChange(e.target.value)}
+            placeholder={url.placeholder ?? "https://"}
+            className="text-xs"
+          />
+          {url.value && (
+            <a
+              href={url.value}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] font-mono text-accent hover:underline break-all"
+            >
+              Open link →
+            </a>
+          )}
+        </div>
+      )}
 
       {error && (
         <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs font-sans text-destructive">

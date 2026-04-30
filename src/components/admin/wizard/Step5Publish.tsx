@@ -176,6 +176,20 @@ export function Step5Publish() {
       // doesn't surface this draft as resumable.
       void markPublished();
 
+      // Persist Hover / iGUIDE URLs onto the property row so the existing
+      // EmbedBlocks (HoverEmbedBlock / IGuideEmbedBlock) render them in
+      // the report and portal.
+      if (state.propertyId && (state.hoverUrl || state.iguideUrl)) {
+        const propertyPatch: { hover_url?: string; iguide_url?: string } = {};
+        if (state.hoverUrl) propertyPatch.hover_url = state.hoverUrl.trim();
+        if (state.iguideUrl) propertyPatch.iguide_url = state.iguideUrl.trim();
+        const { error: urlErr } = await supabase
+          .from("properties")
+          .update(propertyPatch)
+          .eq("id", state.propertyId);
+        if (urlErr) console.warn("[Step5Publish] hover/iguide URL persist failed", urlErr);
+      }
+
       if (state.propertyId) {
         const { data: prop } = await supabase
           .from("properties")
