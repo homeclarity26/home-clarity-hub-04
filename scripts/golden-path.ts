@@ -200,7 +200,6 @@ async function main(): Promise<void> {
         state: "OH",
         zip: "44236",
         property_type: "single_family",
-        year_built: 1985,
       },
       { return: "representation" },
     );

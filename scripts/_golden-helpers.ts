@@ -167,7 +167,8 @@ export interface SeedTestClientOptions {
   city?: string;
   state?: string;
   zip?: string;
-  yearBuilt?: number;
+  /** "single_family" by default; the table column accepts free text. */
+  propertyType?: string;
 }
 
 /**
@@ -216,8 +217,7 @@ export async function seedTestClient(
       city: options.city || "Hudson",
       state: options.state || "OH",
       zip: options.zip || "44236",
-      property_type: "single_family",
-      year_built: options.yearBuilt || 1998,
+      property_type: options.propertyType || "single_family",
     },
     true,
   );
