@@ -17,11 +17,10 @@
 import {
   loadEnv, restPost, restGet, restPatch, restDelete,
   adminCreateUser, signIn, invokeFn, randSuffix,
+  seedTestClient,
   printResults, runCleanups,
   type StepResult,
 } from "./_golden-helpers.ts";
-
-const TEST_PROPERTY_ID = process.env.GOLDEN_PATH_PROPERTY_ID || "b9d0db18-aeec-4298-bebe-534d9809d0b4";
 
 const ctx = loadEnv();
 const startedAt = Date.now();
@@ -31,6 +30,7 @@ async function main(): Promise<number> {
   const stamp = new Date().toISOString().replace(/[:.]/g, "").slice(0, 15);
 
   let creatorId = "", creatorJWT = "";
+  let testPropertyId = "";
 
   try {
     const email = `gp-quality-${stamp}-${randSuffix()}@clarityhub.test`;
@@ -38,6 +38,8 @@ async function main(): Promise<number> {
     creatorId = await adminCreateUser(ctx, email, pw, { role: "creator", full_name: "GP Quality Creator" });
     ctx.cleanups.push(async () => { await restDelete(ctx, `/auth/v1/admin/users/${creatorId}`); });
     creatorJWT = await signIn(ctx, email, pw);
+    const seeded = await seedTestClient(ctx, "gp-quality");
+    testPropertyId = seeded.propertyId;
   } catch (e) {
     results.push({ name: "0. Setup", status: "FAIL", dataVisible: "", note: String(e) });
     return finish();
@@ -51,10 +53,10 @@ async function main(): Promise<number> {
     // Snapshot the current hbc_concierge_tier so we can restore it
     const propRows = await restGet<Array<{ hbc_concierge_tier: string | null }>>(
       ctx,
-      `/rest/v1/properties?select=hbc_concierge_tier&id=eq.${TEST_PROPERTY_ID}`,
+      `/rest/v1/properties?select=hbc_concierge_tier&id=eq.${testPropertyId}`,
     );
     if (propRows.length === 0) {
-      throw new Error(`TEST_PROPERTY_ID ${TEST_PROPERTY_ID} not found in properties table`);
+      throw new Error(`seeded testPropertyId ${testPropertyId} not found after seeding`);
     }
     const tierBefore = propRows[0].hbc_concierge_tier;
 
@@ -70,7 +72,7 @@ async function main(): Promise<number> {
         ctx,
         `/rest/v1/recurring_services`,
         {
-          property_id: TEST_PROPERTY_ID,
+          property_id: testPropertyId,
           service_name: `${serviceNames[i]} ${stamp}`,
           category: categories[i],
           frequency: "annual",
@@ -90,7 +92,7 @@ async function main(): Promise<number> {
       if (tierBefore !== undefined) {
         await restPatch(
           ctx,
-          `/rest/v1/properties?id=eq.${TEST_PROPERTY_ID}`,
+          `/rest/v1/properties?id=eq.${testPropertyId}`,
           { hbc_concierge_tier: tierBefore },
         );
       }
@@ -103,7 +105,7 @@ async function main(): Promise<number> {
     // a specific trigger mechanism).
     const propAfterRows = await restGet<Array<{ hbc_concierge_tier: string | null }>>(
       ctx,
-      `/rest/v1/properties?select=hbc_concierge_tier&id=eq.${TEST_PROPERTY_ID}`,
+      `/rest/v1/properties?select=hbc_concierge_tier&id=eq.${testPropertyId}`,
     );
     const propAfter = propAfterRows[0];
 
@@ -115,12 +117,12 @@ async function main(): Promise<number> {
       // Valid values per constraint: 'none', 'tier_200', 'tier_400', 'tier_600'.
       await restPatch(
         ctx,
-        `/rest/v1/properties?id=eq.${TEST_PROPERTY_ID}`,
+        `/rest/v1/properties?id=eq.${testPropertyId}`,
         { hbc_concierge_tier: "tier_600" },
       );
       const patchedRows = await restGet<Array<{ hbc_concierge_tier: string | null }>>(
         ctx,
-        `/rest/v1/properties?select=hbc_concierge_tier&id=eq.${TEST_PROPERTY_ID}`,
+        `/rest/v1/properties?select=hbc_concierge_tier&id=eq.${testPropertyId}`,
       );
       tierAfter = patchedRows[0]?.hbc_concierge_tier ?? null;
       if (tierAfter !== "tier_600") {
@@ -256,7 +258,7 @@ async function main(): Promise<number> {
       ctx,
       `/rest/v1/annual_review_notes`,
       {
-        property_id: TEST_PROPERTY_ID,
+        property_id: testPropertyId,
         created_by_user_id: creatorId,
         notes_html: `<p>GP test note ${stamp} - creator-only</p>`,
         visit_year: new Date().getFullYear(),
