@@ -17,8 +17,8 @@
  */
 
 import {
-  loadEnv, restGet, restDelete,
-  adminCreateUser, signIn, randSuffix,
+  loadEnv, restGet,
+  seedTestClient,
   printResults, runCleanups,
   type StepResult,
 } from "./_golden-helpers.ts";
@@ -26,8 +26,6 @@ import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-
-const TEST_PROPERTY_ID = process.env.GOLDEN_PATH_PROPERTY_ID || "b9d0db18-aeec-4298-bebe-534d9809d0b4";
 
 const ctx = loadEnv();
 const startedAt = Date.now();
@@ -37,16 +35,11 @@ const SCRIPTS_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(SCRIPTS_DIR, "..");
 
 async function main(): Promise<number> {
-  const stamp = new Date().toISOString().replace(/[:.]/g, "").slice(0, 15);
-
-  // Create a client user for test 61
-  let clientId = "", clientJWT = "";
+  // Seed a throwaway client + property for test 61's reachability check.
+  let testPropertyId = "";
   try {
-    const email = `gp-mobile-client-${stamp}-${randSuffix()}@clarityhub.test`;
-    const pw = `GP-${randSuffix()}`;
-    clientId = await adminCreateUser(ctx, email, pw, { role: "client", full_name: "GP Mobile Client" });
-    ctx.cleanups.push(async () => { await restDelete(ctx, `/auth/v1/admin/users/${clientId}`); });
-    clientJWT = await signIn(ctx, email, pw);
+    const seeded = await seedTestClient(ctx, "gp-mobile");
+    testPropertyId = seeded.propertyId;
   } catch (e) {
     results.push({ name: "0. Setup client", status: "FAIL", dataVisible: "", note: String(e) });
     return finish();
@@ -97,16 +90,16 @@ async function main(): Promise<number> {
     // GET properties
     const properties = await restGet<Array<{ id: string; property_name: string }>>(
       ctx,
-      `/rest/v1/properties?select=id,property_name&id=eq.${TEST_PROPERTY_ID}`,
+      `/rest/v1/properties?select=id,property_name&id=eq.${testPropertyId}`,
     );
     if (properties.length === 0) {
-      throw new Error(`GET properties returned 0 rows for ${TEST_PROPERTY_ID}`);
+      throw new Error(`GET properties returned 0 rows for ${testPropertyId}`);
     }
 
     // GET report_pages (via most recent published report)
     const reports = await restGet<Array<{ id: string }>>(
       ctx,
-      `/rest/v1/reports?select=id&property_id=eq.${TEST_PROPERTY_ID}&status=eq.published&order=created_at.desc&limit=1`,
+      `/rest/v1/reports?select=id&property_id=eq.${testPropertyId}&status=eq.published&order=created_at.desc&limit=1`,
     );
     if (reports.length > 0) {
       const reportId = reports[0].id;
@@ -119,7 +112,7 @@ async function main(): Promise<number> {
     // GET projects
     await restGet<Array<{ id: string }>>(
       ctx,
-      `/rest/v1/projects?select=id&property_id=eq.${TEST_PROPERTY_ID}&limit=10`,
+      `/rest/v1/projects?select=id&property_id=eq.${testPropertyId}&limit=10`,
     );
 
     results.push({

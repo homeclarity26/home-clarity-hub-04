@@ -15,11 +15,10 @@
 import {
   loadEnv, restPost, restGet, restPatch, restDelete,
   adminCreateUser, signIn, invokeFn, randSuffix,
+  seedTestClient,
   printResults, runCleanups,
   type StepResult,
 } from "./_golden-helpers.ts";
-
-const TEST_PROPERTY_ID = process.env.GOLDEN_PATH_PROPERTY_ID || "b9d0db18-aeec-4298-bebe-534d9809d0b4";
 
 const ctx = loadEnv();
 const startedAt = Date.now();
@@ -33,6 +32,7 @@ async function main(): Promise<number> {
   const stamp = new Date().toISOString().replace(/[:.]/g, "").slice(0, 15);
 
   let creatorId = "", creatorJWT = "";
+  let testPropertyId = "";
 
   try {
     const email = `gp-contentops-${stamp}-${randSuffix()}@clarityhub.test`;
@@ -40,6 +40,8 @@ async function main(): Promise<number> {
     creatorId = await adminCreateUser(ctx, email, pw, { role: "creator", full_name: "GP Content Ops" });
     ctx.cleanups.push(async () => { await restDelete(ctx, `/auth/v1/admin/users/${creatorId}`); });
     creatorJWT = await signIn(ctx, email, pw);
+    const seeded = await seedTestClient(ctx, "gp-contentops");
+    testPropertyId = seeded.propertyId;
   } catch (e) {
     results.push({ name: "0. Setup", status: "FAIL", dataVisible: "", note: String(e) });
     return finish();
@@ -98,7 +100,7 @@ async function main(): Promise<number> {
       ctx,
       `/rest/v1/reports`,
       {
-        property_id: TEST_PROPERTY_ID,
+        property_id: testPropertyId,
         status: "draft",
         created_by: creatorId,
         title: `GP Capital Plan Test ${stamp}`,
@@ -115,7 +117,7 @@ async function main(): Promise<number> {
       ctx,
       `/rest/v1/capital_plan_items`,
       {
-        property_id: TEST_PROPERTY_ID,
+        property_id: testPropertyId,
         report_id: capitalPlanReportId,
         project_name: `GP Roof Replacement ${stamp}`,
         phase: "defense",
@@ -175,7 +177,7 @@ async function main(): Promise<number> {
       ctx,
       `/rest/v1/reports`,
       {
-        property_id: TEST_PROPERTY_ID,
+        property_id: testPropertyId,
         status: "draft",
         created_by: creatorId,
         title: `GP Custom Page Test ${stamp}`,
