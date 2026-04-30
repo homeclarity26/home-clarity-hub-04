@@ -169,6 +169,14 @@ export interface WizardState {
   // Step 1
   client: ClientFormData;
   intakeUploads: IntakeUploads;
+  /**
+   * Hover and iGuide are typically linked to as third-party scan URLs the
+   * consultant pastes in. They survive in the draft and ship to
+   * properties.hover_url / iguide_url at publish time so EmbedBlocks can
+   * render them across admin + portal.
+   */
+  hoverUrl: string;
+  iguideUrl: string;
   anythingElse: string;
   intakeFindings: IntakeFinding[];
   clarifyingQuestions: ClarifyingQuestion[];
@@ -225,6 +233,8 @@ const initialState: WizardState = {
   currentStep: "intake",
   client: emptyClient,
   intakeUploads: emptyUploads,
+  hoverUrl: "",
+  iguideUrl: "",
   anythingElse: "",
   intakeFindings: [],
   clarifyingQuestions: [],
@@ -261,6 +271,8 @@ interface WizardContextValue {
   setClient: (next: Partial<ClientFormData>) => void;
   setIntakeUploads: (key: keyof IntakeUploads, files: IntakeFileRef[]) => void;
   setAnythingElse: (next: string) => void;
+  setHoverUrl: (next: string) => void;
+  setIguideUrl: (next: string) => void;
   setFindings: (next: IntakeFinding[]) => void;
   setClarifyingQuestions: (next: ClarifyingQuestion[]) => void;
   answerClarifyingQuestion: (id: string, optionId: string) => void;
@@ -306,6 +318,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     return {
       client: s.client,
       anything_else: s.anythingElse,
+      hover_url: s.hoverUrl,
+      iguide_url: s.iguideUrl,
       intake_uploads: s.intakeUploads,
       clarifying_questions: s.clarifyingQuestions,
       clarifying_answers: s.clarifyingAnswers,
@@ -416,6 +430,14 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
+
+  const setHoverUrl = useCallback((next: string) => {
+    setState((prev) => ({ ...prev, hoverUrl: next }));
+  }, []);
+
+  const setIguideUrl = useCallback((next: string) => {
+    setState((prev) => ({ ...prev, iguideUrl: next }));
+  }, []);
 
   const setAnythingElse = useCallback((next: string) => {
     setState((prev) => ({ ...prev, anythingElse: next }));
@@ -571,6 +593,12 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       if (envelope.client) next.client = envelope.client as ClientFormData;
       if (typeof envelope.anything_else === "string") {
         next.anythingElse = envelope.anything_else;
+      }
+      if (typeof envelope.hover_url === "string") {
+        next.hoverUrl = envelope.hover_url;
+      }
+      if (typeof envelope.iguide_url === "string") {
+        next.iguideUrl = envelope.iguide_url;
       }
       if (envelope.intake_uploads && typeof envelope.intake_uploads === "object") {
         next.intakeUploads = {
@@ -790,6 +818,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       setClient,
       setIntakeUploads,
       setAnythingElse,
+      setHoverUrl,
+      setIguideUrl,
       setFindings,
       setClarifyingQuestions,
       answerClarifyingQuestion,
@@ -821,6 +851,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       setClient,
       setIntakeUploads,
       setAnythingElse,
+      setHoverUrl,
+      setIguideUrl,
       setFindings,
       setClarifyingQuestions,
       answerClarifyingQuestion,

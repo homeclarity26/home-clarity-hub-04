@@ -69,6 +69,8 @@ export function Step1Intake() {
     setClient,
     setIntakeUploads,
     setAnythingElse,
+    setHoverUrl,
+    setIguideUrl,
     setFindings,
     setClarifyingQuestions,
     answerClarifyingQuestion,
@@ -363,17 +365,29 @@ export function Step1Intake() {
           />
           <IntakeUploadCard
             title="Hover"
-            description="Hover capture exports and PDF reports."
+            description="Hover capture exports and PDF reports. Paste the share URL or upload the export."
             cardKey="hover"
             files={state.intakeUploads.hover}
             onChange={(files) => setIntakeUploads("hover", files)}
+            url={{
+              value: state.hoverUrl,
+              onChange: setHoverUrl,
+              label: "Hover share URL",
+              placeholder: "https://hover.to/...",
+            }}
           />
           <IntakeUploadCard
             title="iGUIDE"
-            description="iGUIDE walkthrough exports, floor plans."
+            description="iGUIDE walkthrough exports, floor plans. Paste the share URL or upload the export."
             cardKey="iguide"
             files={state.intakeUploads.iguide}
             onChange={(files) => setIntakeUploads("iguide", files)}
+            url={{
+              value: state.iguideUrl,
+              onChange: setIguideUrl,
+              label: "iGUIDE share URL",
+              placeholder: "https://youriguide.com/...",
+            }}
           />
           <Card className="p-4 space-y-3">
             <div>
