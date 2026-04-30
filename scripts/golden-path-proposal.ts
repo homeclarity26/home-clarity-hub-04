@@ -11,11 +11,11 @@
  * PricingTiers.tsx does all three INSERTs directly from the client
  * browser via supabase-js. That works only if RLS allows.
  *
- * 1. Creator seeds a report page with real tiers for Sarah's property
- * 2. Client (Sarah) approves the Enhanced tier — emulates the button click
+ * 1. Creator seeds a report page with real tiers on the test property
+ * 2. Client approves the Enhanced tier — emulates the button click
  * 3. Project row exists with approved_tier="Enhanced"
  * 4. Invoice row exists with total matching tier price
- * 5. Sarah's portal queries surface both rows (simulates /portal/.../projects + /payments)
+ * 5. Client portal queries surface both rows (simulates /portal/.../projects + /payments)
  * 6. Cleanup — delete project, invoice, page, report
  *
  * Exits 0/1. Cleans up all test rows.
@@ -24,13 +24,10 @@
 import {
   loadEnv, restPost, restGet, restPatch, restDelete,
   adminCreateUser, signIn, randSuffix,
+  seedTestClient,
   printResults, runCleanups,
   type StepResult,
 } from "./_golden-helpers.ts";
-
-const TEST_PROPERTY_ID = process.env.GOLDEN_PATH_PROPERTY_ID || "b9d0db18-aeec-4298-bebe-534d9809d0b4";
-const SARAH_EMAIL = "testclient@homeclarityhub.com";
-const SARAH_PASSWORD = process.env.GOLDEN_PATH_SARAH_PW || "Jingleisc00l!";
 
 const ctx = loadEnv();
 const startedAt = Date.now();
@@ -38,17 +35,20 @@ const results: StepResult[] = [];
 
 async function main(): Promise<number> {
   const stamp = new Date().toISOString().replace(/[:.]/g, "").slice(0, 15);
-  let creatorId = "", creatorJWT = "", sarahJWT = "";
+  let creatorId = "", creatorJWT = "", clientJWT = "";
+  let testPropertyId = "";
   let reportId = "", pageId = "";
 
-  // Setup
+  // Setup — creator throwaway + seeded client + property
   try {
     const email = `gp-prop-${stamp}-${randSuffix()}@clarityhub.test`;
     const pw = `GP-${randSuffix()}`;
     creatorId = await adminCreateUser(ctx, email, pw, { role: "creator", full_name: "GP Proposal Creator" });
     ctx.cleanups.push(async () => { await restDelete(ctx, `/auth/v1/admin/users/${creatorId}`); });
     creatorJWT = await signIn(ctx, email, pw);
-    sarahJWT = await signIn(ctx, SARAH_EMAIL, SARAH_PASSWORD);
+    const seeded = await seedTestClient(ctx, "gp-prop");
+    clientJWT = seeded.jwt;
+    testPropertyId = seeded.propertyId;
   } catch (e) {
     results.push({ name: "0. Setup", status: "FAIL", dataVisible: "", note: String(e) });
     return finish();
@@ -59,7 +59,7 @@ async function main(): Promise<number> {
     const [report] = await restPost<Array<{ id: string }>>(
       ctx,
       `/rest/v1/reports`,
-      { property_id: TEST_PROPERTY_ID, status: "draft", created_by: creatorId, title: `GP Proposal ${stamp}` },
+      { property_id: testPropertyId, status: "draft", created_by: creatorId, title: `GP Proposal ${stamp}` },
     );
     reportId = report.id;
     ctx.cleanups.push(async () => {
@@ -106,7 +106,7 @@ async function main(): Promise<number> {
     return finish();
   }
 
-  // Step 2: Sarah approves the Enhanced tier — emulate the PricingTiers
+  // Step 2: the client approves the Enhanced tier — emulate the PricingTiers
   // button click exactly: two client-side inserts (projects, then invoices).
   let projectId = "", invoiceId = "";
   const APPROVED_TIER = "Enhanced";
@@ -116,7 +116,7 @@ async function main(): Promise<number> {
       ctx,
       `/rest/v1/projects`,
       {
-        property_id: TEST_PROPERTY_ID,
+        property_id: testPropertyId,
         report_page_id: pageId,
         title: `Roof — ${APPROVED_TIER}`,
         description: "Full roof replacement, architectural asphalt, 30-year warranty.",
@@ -125,7 +125,7 @@ async function main(): Promise<number> {
         status: "planned",
       },
       true,
-      sarahJWT, // ← client auth, NOT service role
+      clientJWT, // ← client auth, NOT service role
     );
     projectId = project.id;
     ctx.cleanups.push(async () => { await restDelete(ctx, `/rest/v1/projects?id=eq.${projectId}`); });
@@ -135,7 +135,7 @@ async function main(): Promise<number> {
       ctx,
       `/rest/v1/invoices`,
       {
-        property_id: TEST_PROPERTY_ID,
+        property_id: testPropertyId,
         description: `Roof — ${APPROVED_TIER} Tier`,
         title: `Roof — ${APPROVED_TIER}`,
         amount: COST, subtotal: COST, tax: 0, total: COST, balance_due: COST,
@@ -143,7 +143,7 @@ async function main(): Promise<number> {
         status: "draft",
       },
       true,
-      sarahJWT, // ← client auth
+      clientJWT, // ← client auth
     );
     invoiceId = invoice.id;
     ctx.cleanups.push(async () => { await restDelete(ctx, `/rest/v1/invoices?id=eq.${invoiceId}`); });
@@ -191,24 +191,24 @@ async function main(): Promise<number> {
     results.push({ name: "4. Invoice created with tier price", status: "FAIL", dataVisible: "", note: String(e) });
   }
 
-  // Step 5: Both are visible to Sarah via her own RLS-scoped SELECTs
+  // Step 5: Both are visible to the client via her own RLS-scoped SELECTs
   try {
     const projs = await restGet<Array<{ id: string }>>(
       ctx,
-      `/rest/v1/projects?select=id&property_id=eq.${TEST_PROPERTY_ID}`,
-      sarahJWT,
+      `/rest/v1/projects?select=id&property_id=eq.${testPropertyId}`,
+      clientJWT,
     );
     const invs = await restGet<Array<{ id: string }>>(
       ctx,
-      `/rest/v1/invoices?select=id&property_id=eq.${TEST_PROPERTY_ID}`,
-      sarahJWT,
+      `/rest/v1/invoices?select=id&property_id=eq.${testPropertyId}`,
+      clientJWT,
     );
-    if (!projs.find((p) => p.id === projectId)) throw new Error("Sarah can't see her own newly-approved project");
-    if (!invs.find((i) => i.id === invoiceId)) throw new Error("Sarah can't see her own newly-approved invoice");
+    if (!projs.find((p) => p.id === projectId)) throw new Error("the client can't see her own newly-approved project");
+    if (!invs.find((i) => i.id === invoiceId)) throw new Error("the client can't see her own newly-approved invoice");
     results.push({
       name: "5. Client sees both on portal-query",
       status: "PASS",
-      dataVisible: `${projs.length} project(s), ${invs.length} invoice(s) visible to Sarah`,
+      dataVisible: `${projs.length} project(s), ${invs.length} invoice(s) visible to the client`,
     });
   } catch (e) {
     results.push({ name: "5. Client sees both on portal-query", status: "FAIL", dataVisible: "", note: String(e) });

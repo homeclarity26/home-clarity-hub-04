@@ -7,11 +7,11 @@
  * scheduling visits. Clients need to see every addition on their portal.
  *
  * 1. Creator adds an equipment item (2018 Lennox AC with serial number)
- * 2. Sarah (client) sees it on her equipment query
+ * 2. Client sees it on her equipment query
  * 3. Creator schedules a service event
- * 4. Sarah sees the event on her schedule query
+ * 4. Client sees the event on her schedule query
  * 5. Creator updates equipment (marks service as completed)
- * 6. Sarah sees the updated last_service_date
+ * 6. Client sees the updated last_service_date
  *
  * Exits 0/1. Cleans up test rows.
  */
@@ -19,13 +19,10 @@
 import {
   loadEnv, restPost, restGet, restPatch, restDelete,
   adminCreateUser, signIn, randSuffix,
+  seedTestClient,
   printResults, runCleanups,
   type StepResult,
 } from "./_golden-helpers.ts";
-
-const TEST_PROPERTY_ID = process.env.GOLDEN_PATH_PROPERTY_ID || "b9d0db18-aeec-4298-bebe-534d9809d0b4";
-const SARAH_EMAIL = "testclient@homeclarityhub.com";
-const SARAH_PASSWORD = process.env.GOLDEN_PATH_SARAH_PW || "Jingleisc00l!";
 
 const ctx = loadEnv();
 const startedAt = Date.now();
@@ -33,7 +30,8 @@ const results: StepResult[] = [];
 
 async function main(): Promise<number> {
   const stamp = new Date().toISOString().replace(/[:.]/g, "").slice(0, 15);
-  let creatorId = "", creatorJWT = "", sarahJWT = "";
+  let creatorId = "", creatorJWT = "", clientJWT = "";
+  let testPropertyId = "";
   let equipmentId = "", scheduleId = "";
 
   try {
@@ -42,7 +40,9 @@ async function main(): Promise<number> {
     creatorId = await adminCreateUser(ctx, email, pw, { role: "creator", full_name: "GP Equipment Creator" });
     ctx.cleanups.push(async () => { await restDelete(ctx, `/auth/v1/admin/users/${creatorId}`); });
     creatorJWT = await signIn(ctx, email, pw);
-    sarahJWT = await signIn(ctx, SARAH_EMAIL, SARAH_PASSWORD);
+    const seeded = await seedTestClient(ctx, "gp-equip");
+    clientJWT = seeded.jwt;
+    testPropertyId = seeded.propertyId;
   } catch (e) {
     results.push({ name: "0. Setup", status: "FAIL", dataVisible: "", note: String(e) });
     return finish();
@@ -55,7 +55,7 @@ async function main(): Promise<number> {
       ctx,
       `/rest/v1/equipment`,
       {
-        property_id: TEST_PROPERTY_ID,
+        property_id: testPropertyId,
         name: `Test AC — ${stamp}`,
         category: "HVAC",
         brand: "Lennox",
@@ -80,12 +80,12 @@ async function main(): Promise<number> {
     return finish();
   }
 
-  // Step 2: Sarah sees it
+  // Step 2: Client sees it
   try {
     const eq = await restGet<Array<{ id: string; name: string; serial_number: string }>>(
       ctx,
-      `/rest/v1/equipment?select=id,name,serial_number&property_id=eq.${TEST_PROPERTY_ID}`,
-      sarahJWT,
+      `/rest/v1/equipment?select=id,name,serial_number&property_id=eq.${testPropertyId}`,
+      clientJWT,
     );
     const found = eq.find((e) => e.id === equipmentId);
     if (!found) throw new Error("client doesn't see creator's new equipment");
@@ -106,7 +106,7 @@ async function main(): Promise<number> {
       ctx,
       `/rest/v1/schedule_events`,
       {
-        property_id: TEST_PROPERTY_ID,
+        property_id: testPropertyId,
         title: EVENT_TITLE,
         description: "Annual spring tune-up for the Lennox AC.",
         event_date: new Date(Date.now() + 14 * 86400 * 1000).toISOString().slice(0, 10),
@@ -128,12 +128,12 @@ async function main(): Promise<number> {
     return finish();
   }
 
-  // Step 4: Sarah sees event
+  // Step 4: Client sees event
   try {
     const events = await restGet<Array<{ id: string; title: string; status: string }>>(
       ctx,
-      `/rest/v1/schedule_events?select=id,title,status&property_id=eq.${TEST_PROPERTY_ID}`,
-      sarahJWT,
+      `/rest/v1/schedule_events?select=id,title,status&property_id=eq.${testPropertyId}`,
+      clientJWT,
     );
     const found = events.find((e) => e.id === scheduleId);
     if (!found) throw new Error("client doesn't see scheduled event");
@@ -159,12 +159,12 @@ async function main(): Promise<number> {
     results.push({ name: "5. Creator logs service completion", status: "FAIL", dataVisible: "", note: String(e) });
   }
 
-  // Step 6: Sarah sees the update on her own query
+  // Step 6: Client sees the update on her own query
   try {
     const [eq] = await restGet<Array<{ last_service_date: string; condition: string }>>(
       ctx,
       `/rest/v1/equipment?select=last_service_date,condition&id=eq.${equipmentId}`,
-      sarahJWT,
+      clientJWT,
     );
     if (eq.last_service_date !== SERVICE_DATE) throw new Error(`client sees last_service_date=${eq.last_service_date}, expected ${SERVICE_DATE}`);
     if (eq.condition !== "Excellent") throw new Error(`client sees condition=${eq.condition}, expected Excellent`);
