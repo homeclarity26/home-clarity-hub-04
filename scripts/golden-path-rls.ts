@@ -4,53 +4,43 @@
  *
  * The worst bug in a multi-tenant app is Client A seeing Client B's data.
  * This script proves, row-by-row, that a foreign client user CANNOT read
- * Sarah's property, report, report_pages, projects, invoices, messages,
- * or equipment. Every leak is a P0 that ships nobody.
+ * the seeded test client's property, report, report_pages, projects,
+ * invoices, messages, or equipment. Every leak is a P0 that ships nobody.
  *
- * 1. Create a random "outsider" client user
- * 2. Ensure Sarah has content (seeds test rows if absent)
- * 3. Outsider SELECTs every client-facing table scoped to Sarah's property
+ * 1. Seed a real client + property
+ * 2. Create a random "outsider" client user with no relationship to (1)
+ * 3. Outsider SELECTs every client-facing table scoped to the seeded property
  * 4. Each query must return 0 rows — anything > 0 is a leak
  *
- * Exits 0/1. Cleans up all test rows (except Sarah's own data which we
- * explicitly didn't create).
+ * Exits 0/1. Cleans up all test rows including the seeded client.
  */
 
 import {
-  loadEnv, restPost, restGet, restDelete,
+  loadEnv, restGet, restDelete,
   adminCreateUser, signIn, randSuffix,
+  seedTestClient,
   printResults, runCleanups,
   type StepResult,
 } from "./_golden-helpers.ts";
-
-const TEST_PROPERTY_ID = process.env.GOLDEN_PATH_PROPERTY_ID || "b9d0db18-aeec-4298-bebe-534d9809d0b4";
-const SARAH_USER_ID = "10ed2749-39cc-4861-b1f8-fc9b53647f82";
 
 const ctx = loadEnv();
 const startedAt = Date.now();
 const results: StepResult[] = [];
 
-// Tables that scope by property_id and should reject cross-tenant reads.
-// Each entry: table name + the filter predicate.
-const TABLES = [
-  { table: "properties", filter: `id=eq.${TEST_PROPERTY_ID}` },
-  { table: "reports", filter: `property_id=eq.${TEST_PROPERTY_ID}` },
-  { table: "report_pages", filter: `report_id=in.(select id from reports where property_id = '${TEST_PROPERTY_ID}')` },
-  { table: "projects", filter: `property_id=eq.${TEST_PROPERTY_ID}` },
-  { table: "invoices", filter: `property_id=eq.${TEST_PROPERTY_ID}` },
-  { table: "property_messages", filter: `property_id=eq.${TEST_PROPERTY_ID}` },
-  { table: "equipment", filter: `property_id=eq.${TEST_PROPERTY_ID}` },
-  { table: "schedule_events", filter: `property_id=eq.${TEST_PROPERTY_ID}` },
-  { table: "files", filter: `property_id=eq.${TEST_PROPERTY_ID}` },
-  { table: "project_updates", filter: `project_id=in.(select id from projects where property_id = '${TEST_PROPERTY_ID}')` },
-  { table: "home_knowledge_base", filter: `client_id=eq.${SARAH_USER_ID}` },
-];
-
 async function main(): Promise<number> {
   let outsiderId = "", outsiderJWT = "";
+  let testPropertyId = "", testClientUserId = "";
 
   try {
     const stamp = new Date().toISOString().replace(/[:.]/g, "").slice(0, 15);
+
+    // Provision a real client + property to isolate from. Stronger than
+    // checking against a pinned UUID — the rows we don't want the outsider
+    // to see are demonstrably present in this run.
+    const seeded = await seedTestClient(ctx, "gp-rls");
+    testPropertyId = seeded.propertyId;
+    testClientUserId = seeded.userId;
+
     const email = `gp-rls-outsider-${stamp}-${randSuffix()}@clarityhub.test`;
     const pw = `GP-${randSuffix()}`;
     outsiderId = await adminCreateUser(ctx, email, pw, { role: "client", full_name: "GP Outsider" });
@@ -61,7 +51,23 @@ async function main(): Promise<number> {
     return finish();
   }
 
-  // Walk every table; any visible rows on Sarah's property = leak.
+  // Tables that scope by property_id and should reject cross-tenant reads.
+  // Each entry: table name + the filter predicate.
+  const TABLES = [
+    { table: "properties", filter: `id=eq.${testPropertyId}` },
+    { table: "reports", filter: `property_id=eq.${testPropertyId}` },
+    { table: "report_pages", filter: `report_id=in.(select id from reports where property_id = '${testPropertyId}')` },
+    { table: "projects", filter: `property_id=eq.${testPropertyId}` },
+    { table: "invoices", filter: `property_id=eq.${testPropertyId}` },
+    { table: "property_messages", filter: `property_id=eq.${testPropertyId}` },
+    { table: "equipment", filter: `property_id=eq.${testPropertyId}` },
+    { table: "schedule_events", filter: `property_id=eq.${testPropertyId}` },
+    { table: "files", filter: `property_id=eq.${testPropertyId}` },
+    { table: "project_updates", filter: `project_id=in.(select id from projects where property_id = '${testPropertyId}')` },
+    { table: "home_knowledge_base", filter: `client_id=eq.${testClientUserId}` },
+  ];
+
+  // Walk every table; any visible rows on the seeded property = leak.
   let allGood = true;
   for (let i = 0; i < TABLES.length; i++) {
     const { table, filter } = TABLES[i];
@@ -78,7 +84,7 @@ async function main(): Promise<number> {
       }
       const rows = await restGet<Array<{ id: string }>>(ctx, path, outsiderJWT);
       // For the non-filtered path we still need to assert the outsider saw
-      // 0 rows on OTHER people's data (not just rows where property_id = Sarah's).
+      // 0 rows on OTHER people's data (not just rows where property_id = the seeded client's).
       // Simplest interpretation: outsider is brand new, so ANY row > 0 on a
       // property-scoped table is a leak.
       if (rows.length > 0) {

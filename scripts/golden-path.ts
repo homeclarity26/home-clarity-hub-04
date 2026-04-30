@@ -57,7 +57,9 @@ interface StepResult {
   note?: string;
 }
 
-const TEST_PROPERTY_ID = process.env.GOLDEN_PATH_PROPERTY_ID || "b9d0db18-aeec-4298-bebe-534d9809d0b4";
+// TEST_PROPERTY_ID is provisioned at runtime in main() so the script no
+// longer depends on a pre-seeded Sarah property.
+let TEST_PROPERTY_ID = "";
 const DEEP_RUN = (process.env.GOLDEN_PATH_DEEP ?? "1") !== "0";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -175,6 +177,39 @@ async function main(): Promise<void> {
   let creatorJWT = "";
   let reportId = "";
   let invoiceId = "";
+  let testClientUserId = "";
+
+  // ─────────────────────────────────────────────────────────────
+  // Step 0: Provision throwaway client + property for this run.
+  // Replaces the old pinned Sarah/b9d0db18 references so the suite
+  // survives any DB clean slate.
+  // ─────────────────────────────────────────────────────────────
+  try {
+    const clientEmail = `golden-path-client-${stamp}-${randSuffix()}@clarityhub.test`;
+    const clientPass = `GP-${randSuffix()}-${randSuffix()}`;
+    const cu = await adminCreateUser(clientEmail, clientPass, { role: "client", full_name: "Golden Path Client" });
+    testClientUserId = cu.id;
+    cleanups.push(async () => { await restDelete(`/auth/v1/admin/users/${testClientUserId}`); });
+    const [prop] = await restPost<Array<{ id: string }>>(
+      `/rest/v1/properties`,
+      {
+        client_user_id: testClientUserId,
+        property_name: `[GP] Core ${randSuffix()}`,
+        address: "123 Golden Path Way",
+        city: "Hudson",
+        state: "OH",
+        zip: "44236",
+        property_type: "single_family",
+        year_built: 1985,
+      },
+      { return: "representation" },
+    );
+    TEST_PROPERTY_ID = prop.id;
+    cleanups.push(async () => { await restDelete(`/rest/v1/properties?id=eq.${TEST_PROPERTY_ID}`); });
+  } catch (e) {
+    results.push({ name: "0. Seed client + property", status: "FAIL", url: "", proof: "", dataVisible: "", note: String(e) });
+    return finish(results, started);
+  }
 
   // ─────────────────────────────────────────────────────────────
   // Step 1: Creator logs in
