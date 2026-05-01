@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
 import { callClaude, parseJSON, type ClaudeInlineDocument } from "../_shared/ai-client.ts";
 import { retrieveContext } from "../_shared/rag.ts";
+import { extractText, getDocumentProxy } from "npm:unpdf@1.3.0";
 
 interface IntakeFile {
   name?: string;
@@ -10,8 +11,12 @@ interface IntakeFile {
   mime?: string;
 }
 
-const INLINE_DOC_TYPES = new Set([
-  "application/pdf",
+// Images stay as Claude multimodal documents (vision required to read
+// them). PDFs get text-extracted server-side with unpdf — passing PDFs
+// as Claude vision documents was costing ~1500 tokens/page of input
+// processing and ~5x output generation time, blowing past Supabase's
+// 150s edge-function ceiling.
+const VISION_DOC_TYPES = new Set([
   "image/png",
   "image/jpeg",
   "image/gif",
@@ -70,7 +75,32 @@ async function loadIntakeFiles(
       if (TEXT_DOC_TYPES.has(mime)) {
         const text = new TextDecoder("utf-8").decode(buf);
         texts.push(`--- ${f.name ?? f.storage_path} ---\n${text}`);
-      } else if (INLINE_DOC_TYPES.has(mime)) {
+      } else if (mime === "application/pdf") {
+        // Extract text from the PDF instead of attaching it as a Claude
+        // vision document. Vision-attached PDFs cost ~1500 tokens per
+        // page of input processing AND ~5x slower generation; text
+        // extraction collapses a 50-page PDF to ~10-30k text tokens
+        // and lets Claude read structurally. Falls back to vision-doc
+        // attachment if extraction yields nothing usable (image-only
+        // scanned PDFs).
+        try {
+          const pdf = await getDocumentProxy(buf);
+          const result = await extractText(pdf, { mergePages: true });
+          const extracted = (typeof result.text === "string" ? result.text : (result.text || []).join("\n")).trim();
+          if (extracted.length > 50) {
+            texts.push(`--- ${f.name ?? f.storage_path} (${result.totalPages} pages, extracted) ---\n${extracted}`);
+          } else {
+            // Likely a scanned-image PDF — keep it as a vision doc so
+            // Claude can OCR by sight.
+            const b64 = await bytesToBase64(buf);
+            docs.push({ data: b64, media_type: mime, name: f.name });
+          }
+        } catch (extractErr) {
+          console.warn(`[loadIntakeFiles] PDF extract failed for ${f.name}, falling back to vision doc:`, extractErr);
+          const b64 = await bytesToBase64(buf);
+          docs.push({ data: b64, media_type: mime, name: f.name });
+        }
+      } else if (VISION_DOC_TYPES.has(mime)) {
         const b64 = await bytesToBase64(buf);
         docs.push({ data: b64, media_type: mime, name: f.name });
       } else {
