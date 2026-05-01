@@ -19,6 +19,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { setCIModeFromRequest } from "./ai-client.ts";
 
 // Tighten CORS to the known production + preview origins if you want,
 // but "*" is acceptable for function calls that require a Bearer token —
@@ -46,6 +47,11 @@ interface AuthFailure {
 }
 
 export async function requireAuth(req: Request): Promise<AuthSuccess | AuthFailure> {
+  // Capture the `x-ci-gemini` header so callClaude() can detect Golden
+  // Path test invocations and route to Gemini Flash instead. See the
+  // comment block above setCIModeFromRequest in ai-client.ts.
+  setCIModeFromRequest(req);
+
   const authHeader = req.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return {

@@ -89,6 +89,12 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      # CI cost-savings: tell golden-path scripts to send `x-ci-gemini: true`
+      # on every edge-function invocation. `_shared/auth.ts` captures the
+      # header and `_shared/ai-client.ts.callClaude()` routes to Gemini
+      # Flash instead of Claude Sonnet. Set ONLY here — never on Supabase
+      # secrets or production .env, or all prod calls would skip Claude.
+      CI_USE_GEMINI: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2

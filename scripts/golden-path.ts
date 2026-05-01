@@ -147,9 +147,18 @@ async function invokeFunction<T = unknown>(fn: string, userJWT: string, body: un
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
+    const headers: Record<string, string> = {
+      "apikey": AK!,
+      "Authorization": `Bearer ${userJWT}`,
+      "Content-Type": "application/json",
+    };
+    // Same CI cost-savings hook as scripts/_golden-helpers.ts → invokeFn.
+    if (process.env.CI_USE_GEMINI === "true") {
+      headers["x-ci-gemini"] = "true";
+    }
     const res = await fetch(`${SUPABASE_URL}/functions/v1/${fn}`, {
       method: "POST",
-      headers: { "apikey": AK!, "Authorization": `Bearer ${userJWT}`, "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(body),
       signal: ctrl.signal,
     });
