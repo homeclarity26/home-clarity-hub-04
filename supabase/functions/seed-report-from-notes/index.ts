@@ -339,19 +339,23 @@ Be focused — only include pages directly supported by the notes. When in doubt
       perSource: 3,
     });
 
-    // maxOutputTokens: 16k — the system prompt tells Claude to seed 65+
-    // pages across the entire home, which generates a JSON response that
-    // comfortably exceeds the 8k default and truncates mid-object. A
-    // truncated JSON can't be recovered by any parser. Sonnet 4.6 supports
-    // up to 64k output; 16k is a comfortable cap for this task.
+    // maxOutputTokens: 6144 + Haiku 4.5 — Sonnet at 16k exceeded Supabase's
+    // 150s edge-function ceiling, returning 504 Gateway Timeout. Haiku 4.5
+    // generates ~3-5x faster than Sonnet at slightly lower long-form
+    // quality, which is acceptable for this seed-only step (page seeds
+    // are short narratives the consultant will refine in Step 3, not the
+    // final report copy). 6k tokens fits 5-15 page seeds comfortably,
+    // matching the system prompt's "typical output is 5-20 page seeds"
+    // guidance after we tightened it below to favor the lower bound.
     const aiText = await callClaude({
       system: systemPrompt,
       cacheableContext: ragContext || undefined,
       prompt: userMessage,
       documents: intakeDocs,
+      model: "claude-haiku-4-5-20251001",
       json: true,
       temperature: 0.4,
-      maxOutputTokens: 16384,
+      maxOutputTokens: 6144,
     });
 
     // Use parseJSON (strips markdown fences + handles leading/trailing
