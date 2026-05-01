@@ -204,5 +204,11 @@ verify_jwt = false
 [functions.generate-recurring-services-register]
 verify_jwt = false
 
+[functions.generate-capital-plan]
+verify_jwt = false
+
+[functions.generate-maintenance-calendar]
+verify_jwt = false
+
 [functions.generate-design-fee-education]
 verify_jwt = false
