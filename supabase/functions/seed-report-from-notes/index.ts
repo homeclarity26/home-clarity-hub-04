@@ -117,6 +117,7 @@ serve(async (req) => {
       request_clarifying_questions,
       clarifying_answers,
       intake_files,
+      draft_notes_only,
     } = await req.json();
     if (!meeting_notes || typeof meeting_notes !== "string") {
       return json({ error: "meeting_notes (string) is required" }, { status: 400 });
@@ -147,6 +148,55 @@ serve(async (req) => {
     const docHint = intakeDocs.length > 0
       ? `\n\n${intakeDocs.length} attached document${intakeDocs.length > 1 ? "s" : ""} (PDF/image): read each one in full and use its contents directly. Do NOT ask for transcript text — the documents ARE the transcript.`
       : "";
+
+    // ─── Stage 0: discovery-notes draft from transcript ────────────────
+    // Wizard Step 1 "Draft from transcript" button — consultant uploads
+    // a discovery transcript and wants a 3-5 sentence summary they can
+    // edit, instead of typing it from scratch. Returns just a string;
+    // does not touch findings, page seeds, or clarifying questions.
+    if (draft_notes_only === true) {
+      const draftSystemPrompt = `You are an expert home consultant assistant for Hometown Builders Club. Read the attached discovery transcript or notes and produce a clean 3-5 sentence summary the consultant can paste into their Discovery Notes field.
+
+Capture: the homeowner's main goals for the property, their stated concerns, anything time-sensitive they raised, and any budget or timing constraints they mentioned. Skip any project-specific detail that belongs on a system or vision page later.
+
+Tone: plain spoken English, written from the consultant's point of view. Never use em-dashes — use commas, semicolons, or short sentences. No headers, no bullets, no preamble. Just the paragraph.
+
+Return ONLY a JSON object with this exact shape (no preamble, no markdown):
+{ "discovery_notes_draft": "string of 3-5 sentences" }`;
+
+      const userMessage = `Discovery materials to summarize:\n${meeting_notes}${inlineTextBlock}${docHint}`;
+
+      const aiText = await callClaude({
+        system: draftSystemPrompt,
+        prompt: userMessage,
+        documents: intakeDocs,
+        json: true,
+        temperature: 0.3,
+        maxOutputTokens: 1024,
+      });
+
+      let parsed: { discovery_notes_draft?: string };
+      try {
+        parsed = parseJSON<typeof parsed>(aiText);
+      } catch (parseErr) {
+        console.error("seed-report-from-notes (draft_notes_only): parseJSON failed; raw (first 800):", aiText.slice(0, 800));
+        console.error("parseJSON error was:", parseErr);
+        return json({ error: "Failed to parse discovery notes draft from AI" }, { status: 502 });
+      }
+
+      return json({
+        stage: "draft_notes_only",
+        discovery_notes_draft:
+          typeof parsed.discovery_notes_draft === "string"
+            ? parsed.discovery_notes_draft.trim()
+            : "",
+        intake: {
+          documents_attached: intakeDocs.length,
+          texts_inlined: intakeTexts.length,
+          skipped: intakeSkipped,
+        },
+      });
+    }
 
     // ─── Stage 1: clarifying questions (E7) ────────────────────────────
     if (request_clarifying_questions === true) {
