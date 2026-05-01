@@ -55,6 +55,29 @@ function isAISuggested(photo: { tags?: string[] | null }): boolean {
   return Array.isArray(photo.tags) && photo.tags.includes(AI_SUGGESTED_TAG);
 }
 
+// Walks a report_pages.narrative jsonb cell and concatenates the text
+// content. Handles the W2.5 ReportBlock array shape (text blocks have
+// `content.html`); strips HTML tags so the AI sees plain text. Falls
+// back to a JSON dump for unrecognized shapes so we always pass
+// SOMETHING to the redraft prompt.
+function extractTextFromNarrative(narrative: unknown): string {
+  if (!narrative) return "";
+  if (typeof narrative === "string") return narrative;
+  if (Array.isArray(narrative)) {
+    const parts: string[] = [];
+    for (const item of narrative) {
+      if (!item || typeof item !== "object") continue;
+      const block = item as { type?: string; content?: { html?: string; text?: string } };
+      if (block.type === "text") {
+        const html = block.content?.html ?? block.content?.text ?? "";
+        parts.push(html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+      }
+    }
+    return parts.filter(Boolean).join("\n\n");
+  }
+  return JSON.stringify(narrative);
+}
+
 type PropertyPhoto = {
   id: string;
   property_id: string;
@@ -90,6 +113,8 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
   const [beforeAfterMode, setBeforeAfterMode] = useState(false);
   const [sliderPos, setSliderPos] = useState(50);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [redrafting, setRedrafting] = useState(false);
+  const [redraftResult, setRedraftResult] = useState<{ narrative: string[]; key_observations: string[]; pageTitle: string } | null>(null);
 
   const { data: photos = [], isLoading } = useQuery({
     queryKey: ["property-photos", propertyId],
@@ -192,6 +217,61 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
     qc.invalidateQueries({ queryKey: ["property-photos", propertyId] });
     if (lightboxPhoto?.id === id) {
       setLightboxPhoto({ ...lightboxPhoto, ...patch } as PropertyPhoto);
+    }
+  };
+
+  // Re-draft this report page using ALL photos currently linked to it.
+  // Loads the page title + existing narrative blocks, harvests photo
+  // URLs, asks draft-page-narrative (redraft_mode) to update the
+  // narrative based on what the photos show now. Returns the AI's
+  // suggestion in a dialog for the consultant to review + manually
+  // copy into the page editor — no auto-apply because the page block
+  // structure varies and we don't want to silently overwrite work.
+  const redraftPageFromPhotos = async (photo: PropertyPhoto) => {
+    if (!photo.report_page_id) return;
+    setRedrafting(true);
+    try {
+      const { data: pageRow, error: pErr } = await supabase
+        .from("report_pages")
+        .select("id, page_key, title, narrative")
+        .eq("id", photo.report_page_id)
+        .single();
+      if (pErr || !pageRow) throw new Error(pErr?.message || "Page not found");
+
+      const { data: linkedPhotos } = await supabase
+        .from("property_photos")
+        .select("file_url")
+        .eq("report_page_id", photo.report_page_id)
+        .order("created_at", { ascending: true });
+      const photoUrls = (linkedPhotos || []).map((p) => p.file_url).filter(Boolean);
+      if (photoUrls.length === 0) {
+        toast.error("No photos linked to this page yet");
+        return;
+      }
+
+      const existingText = extractTextFromNarrative(pageRow.narrative);
+
+      const { data, error } = await supabase.functions.invoke("draft-page-narrative", {
+        body: {
+          pageSlug: pageRow.page_key,
+          pageName: pageRow.title,
+          redraft_mode: true,
+          existing_narrative_text: existingText,
+          photo_urls: photoUrls,
+        },
+      });
+      if (error) throw error;
+
+      setRedraftResult({
+        narrative: Array.isArray(data?.narrative) ? data.narrative : [],
+        key_observations: Array.isArray(data?.key_observations) ? data.key_observations : [],
+        pageTitle: pageRow.title,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Redraft failed";
+      toast.error(message);
+    } finally {
+      setRedrafting(false);
     }
   };
 
@@ -470,6 +550,78 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
         />
       )}
 
+      {/* Re-draft result dialog. Read-only — consultant copies the
+          suggested narrative into the page editor manually. We don't
+          auto-apply because page block structures vary and a silent
+          rewrite could nuke other blocks the consultant added. */}
+      <Dialog open={!!redraftResult} onOpenChange={(o) => !o && setRedraftResult(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {redraftResult && (
+            <>
+              <div className="space-y-1 mb-4">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-accent" />
+                  <h3 className="font-display text-base font-semibold text-foreground">
+                    AI re-draft for {redraftResult.pageTitle}
+                  </h3>
+                </div>
+                <p className="text-xs font-sans text-muted-foreground">
+                  Suggested narrative based on the photos currently linked to this page. Copy what you like into the page editor.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-[10px] font-mono uppercase text-muted-foreground">Suggested narrative</Label>
+                  <div className="mt-1 space-y-2 rounded-md border border-border bg-muted/30 p-3 text-xs font-sans text-foreground">
+                    {redraftResult.narrative.map((p, i) => (
+                      <p key={i}>{p}</p>
+                    ))}
+                  </div>
+                </div>
+                {redraftResult.key_observations.length > 0 && (
+                  <div>
+                    <Label className="text-[10px] font-mono uppercase text-muted-foreground">Key observations</Label>
+                    <ul className="mt-1 space-y-1 rounded-md border border-border bg-muted/30 p-3 text-xs font-sans text-foreground">
+                      {redraftResult.key_observations.map((o, i) => (
+                        <li key={i} className="flex gap-2">
+                          <span className="text-accent" aria-hidden>•</span>
+                          <span>{o}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const text = [
+                        redraftResult.narrative.join("\n\n"),
+                        redraftResult.key_observations.length > 0
+                          ? `\n\nKey observations:\n${redraftResult.key_observations.map((o) => `• ${o}`).join("\n")}`
+                          : "",
+                      ].join("");
+                      navigator.clipboard.writeText(text).then(
+                        () => toast.success("Copied to clipboard"),
+                        () => toast.error("Copy failed"),
+                      );
+                    }}
+                    className="text-xs gap-1.5"
+                  >
+                    <Tag className="w-3.5 h-3.5" />
+                    Copy
+                  </Button>
+                  <Button size="sm" onClick={() => setRedraftResult(null)} className="text-xs">
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Lightbox */}
       <Dialog open={!!lightboxPhoto} onOpenChange={(o) => !o && setLightboxPhoto(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -498,6 +650,19 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
                   <CropIcon className="w-3.5 h-3.5" />
                   Crop / rotate
                 </Button>
+                {lightboxPhoto.report_page_id && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs gap-1.5"
+                    onClick={() => redraftPageFromPhotos(lightboxPhoto)}
+                    disabled={redrafting}
+                    title="Ask AI to update this page's narrative based on the photos linked to it"
+                  >
+                    {redrafting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    {redrafting ? "Reading photos..." : "Re-draft page from photos"}
+                  </Button>
+                )}
                 <div>
                   <Label className="text-[10px] font-mono uppercase text-muted-foreground">Title</Label>
                   <Input

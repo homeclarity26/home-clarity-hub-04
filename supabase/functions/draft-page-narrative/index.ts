@@ -1,8 +1,31 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
-import { callClaude, parseJSON } from "../_shared/ai-client.ts";
+import { callClaude, parseJSON, type ClaudeInlineDocument } from "../_shared/ai-client.ts";
 import { retrieveContext } from "../_shared/rag.ts";
+
+// Fetch a photo URL and encode as a Claude image document (base64 +
+// detected MIME). Used by redraft mode so Claude can SEE the new photo
+// when re-writing the page narrative — e.g. read a serial plate it
+// hasn't seen before. Skips silently on fetch failure so one bad URL
+// doesn't kill the whole redraft.
+async function loadPhotoAsDocument(url: string): Promise<ClaudeInlineDocument | null> {
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    const bytes = new Uint8Array(await resp.arrayBuffer());
+    let binary = "";
+    const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+    }
+    const data = btoa(binary);
+    const mediaType = resp.headers.get("content-type") || "image/jpeg";
+    return { data, media_type: mediaType };
+  } catch {
+    return null;
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -26,6 +49,13 @@ serve(async (req) => {
       clientPriorities,
       existingConditionRating,
       existingSpecs,
+      // Re-draft mode: when true, AI rewrites the existing narrative
+      // taking the supplied photos into account. Used by PhotoManager
+      // when the consultant edits or replaces a photo on a system page
+      // (a new serial plate, a different angle, an after photo, etc.).
+      redraft_mode,
+      existing_narrative_text,
+      photo_urls,
     }: {
       pageSlug: string;
       pageName: string;
@@ -41,12 +71,88 @@ serve(async (req) => {
       clientPriorities?: string[];
       existingConditionRating?: string;
       existingSpecs?: Record<string, unknown>;
+      redraft_mode?: boolean;
+      existing_narrative_text?: string;
+      photo_urls?: string[];
     } = await req.json();
 
     if (!pageSlug || !pageName) {
       return new Response(
         JSON.stringify({ error: "pageSlug and pageName are required." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ─── Redraft mode ─────────────────────────────────────────────────
+    // Caller supplied an existing narrative + a list of photo URLs (the
+    // photos linked to this page in property_photos, post-edit). Read
+    // each photo as an image, then ask Claude to update the narrative
+    // to reflect what's now visible. Returns the same {narrative,
+    // key_observations} shape as default mode.
+    if (redraft_mode === true) {
+      const urls = Array.isArray(photo_urls) ? photo_urls.filter(Boolean) : [];
+      if (urls.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "redraft_mode requires at least one photo_url." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const photoDocs: ClaudeInlineDocument[] = [];
+      for (const url of urls.slice(0, 10)) {
+        // Cap at 10 photos per call to keep the request body sane and
+        // protect Claude's vision context budget.
+        const doc = await loadPhotoAsDocument(url);
+        if (doc) photoDocs.push(doc);
+      }
+      if (photoDocs.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "Could not fetch any of the provided photo URLs." }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const redraftSystem = `You are an expert home consultant updating a Home Clarity Hub report page.
+
+The "${pageName}" page already has a narrative. You are given that narrative AND ${photoDocs.length} photo${photoDocs.length === 1 ? "" : "s"} attached to this page. Look at every photo carefully — read serial plates, model numbers, install dates, visible damage, age clues. Then rewrite the narrative to reflect what the photos show.
+
+Constraints:
+- Keep the consultant's voice and structure where the existing narrative still holds. Only change what the photos contradict or add to.
+- 2-3 paragraphs in the narrative array, same as the original page.
+- 3-5 key observations highlighting what the photos revealed (especially anything model/age/condition specific).
+- Plain spoken English. Never use em-dashes. Use commas, semicolons, or short sentences.
+
+Return ONLY a JSON object with this exact shape (no preamble, no markdown):
+{
+  "narrative": ["paragraph 1", "paragraph 2", "paragraph 3"],
+  "key_observations": ["observation 1", "observation 2", "observation 3"]
+}`;
+
+      const userMessage = `Existing narrative:\n${existing_narrative_text || "(empty — write fresh based on the photos)"}\n\nPhotos attached to this page: ${photoDocs.length}. Read each one and update the narrative.`;
+
+      const aiText = await callClaude({
+        system: redraftSystem,
+        prompt: userMessage,
+        documents: photoDocs,
+        json: true,
+        temperature: 0.4,
+        maxOutputTokens: 1500,
+      });
+
+      let parsed: { narrative?: string[]; key_observations?: string[] };
+      try {
+        parsed = parseJSON<typeof parsed>(aiText);
+      } catch {
+        parsed = { narrative: [aiText], key_observations: [] };
+      }
+
+      return new Response(
+        JSON.stringify({
+          mode: "redraft",
+          narrative: Array.isArray(parsed.narrative) ? parsed.narrative : [parsed.narrative || ""],
+          key_observations: Array.isArray(parsed.key_observations) ? parsed.key_observations : [],
+          photos_read: photoDocs.length,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
