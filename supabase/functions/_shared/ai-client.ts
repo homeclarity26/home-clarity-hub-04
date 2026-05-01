@@ -498,11 +498,27 @@ export async function callClaude(opts: ClaudeOptions): Promise<string> {
 
   if (!res.ok) {
     const err = await res.text();
-    if (res.status === 529 || res.status === 503) {
-      throw new Error("Claude is temporarily busy — please try again in a minute.");
-    }
-    if (res.status === 429) {
-      throw new Error("Claude is rate-limited right now — please wait a moment and retry.");
+    // Anthropic overload (503/529) or rate-limit (429): rather than
+    // throwing and forcing the user to retry by hand (the original
+    // behavior), fall back to Gemini flash so the call still produces
+    // SOMETHING. Same pattern as the 401/402/403 fallbacks below.
+    // Stage-2 of seed-report-from-notes (large 16k-token JSON output)
+    // hits these statuses regularly during peak Anthropic load.
+    if (res.status === 529 || res.status === 503 || res.status === 429) {
+      console.warn(`callClaude: Anthropic ${res.status} (overload/rate-limit) — falling back to Gemini flash`);
+      const fallbackSystem503 = [opts.system, opts.cacheableContext].filter(Boolean).join("\n\n");
+      return callAI({
+        system: fallbackSystem503,
+        prompt: opts.prompt,
+        messages: opts.messages?.map((m) => ({
+          role: m.role === "assistant" ? "model" : m.role,
+          content: m.content,
+        })) as AIOptions["messages"],
+        model: "google/gemini-2.5-flash",
+        json: opts.json,
+        temperature: opts.temperature,
+        maxOutputTokens: opts.maxOutputTokens,
+      });
     }
     if (res.status === 401 || res.status === 403) {
       // Auth failures can be transient (Anthropic infrastructure hiccup) or
