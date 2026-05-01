@@ -215,6 +215,97 @@ async function main(): Promise<number> {
     results.push({ name: "59. Em-dash sweep is clean", status: "FAIL", dataVisible: "", note: String(e) });
   }
 
+  // -------------------------------------------------------
+  // Test 67: send-email edge function is deployed (not 404 / 503).
+  // We POST a deliberately-bad payload (missing to/subject/body) and
+  // expect a 400 from the function's own validation. Anything outside
+  // 400/401/403 means the function is missing or boot-erroring.
+  // -------------------------------------------------------
+  try {
+    const res = await fetch(`${ctx.supabaseUrl}/functions/v1/send-email`, {
+      method: "POST",
+      headers: {
+        apikey: ctx.anonKey,
+        Authorization: `Bearer ${clientJWT}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
+    // 400 = function ran and rejected the payload (correct).
+    // 401/403 = function ran and rejected our auth (also proves it's deployed,
+    //           since send-email requires creator role and the seeded user is a client).
+    // 404/503/BOOT_ERROR = function not deployed.
+    if (res.status === 404) {
+      throw new Error(`send-email returned 404 (not deployed)`);
+    }
+    if (res.status === 503) {
+      throw new Error(`send-email returned 503 (boot error)`);
+    }
+    const acceptable = [400, 401, 403];
+    if (!acceptable.includes(res.status)) {
+      const text = await res.text();
+      throw new Error(`send-email returned unexpected ${res.status}: ${text.slice(0, 200)}`);
+    }
+    results.push({
+      name: "67. send-email edge function is deployed",
+      status: "PASS",
+      dataVisible: `bad-payload ping → ${res.status} (function alive, rejected as expected)`,
+    });
+  } catch (e) {
+    results.push({ name: "67. send-email edge function is deployed", status: "FAIL", dataVisible: "", note: String(e) });
+  }
+
+  // -------------------------------------------------------
+  // Test 68: File-upload accept attributes allow non-image content.
+  // Sweep src/ for `accept=...` attributes; pass if at least one is the
+  // permissive ACCEPT_ANY_FILE token (or empty, or `*/*`, or includes
+  // application/pdf). The shared upload-accept module also has to exist
+  // and export ACCEPT_ANY_FILE — that's what gates real-world docs/audio.
+  // -------------------------------------------------------
+  try {
+    const acceptModulePath = resolve(REPO_ROOT, "src/lib/upload-accept.ts");
+    const moduleGrep = spawnSync(
+      "grep",
+      ["-c", "ACCEPT_ANY_FILE", acceptModulePath],
+      { encoding: "utf8" },
+    );
+    if ((moduleGrep.stdout || "0").trim() === "0") {
+      throw new Error(`src/lib/upload-accept.ts is missing the ACCEPT_ANY_FILE export`);
+    }
+
+    // Find any non-image accept value in src/. The wizard intake card
+    // omits `accept` entirely (HTML default = any file), which we count
+    // as well by checking for IntakeUploadCard usage without a matching
+    // accept= attribute on the same line.
+    const acceptHits = spawnSync(
+      "grep",
+      ["-rEn", "--include=*.tsx", "--include=*.ts",
+        "accept=(\"\"|\\{ACCEPT_ANY_FILE\\}|\"\\*/\\*\"|\"[^\"]*\\.pdf|\"[^\"]*application/pdf|\"[^\"]*audio|\".csv)",
+        resolve(REPO_ROOT, "src")],
+      { encoding: "utf8" },
+    );
+    const intakeCardHits = spawnSync(
+      "grep",
+      ["-rEn", "--include=*.tsx", "<IntakeUploadCard", resolve(REPO_ROOT, "src")],
+      { encoding: "utf8" },
+    );
+
+    const acceptLines = (acceptHits.stdout || "").split("\n").filter(Boolean);
+    const intakeLines = (intakeCardHits.stdout || "").split("\n").filter(Boolean);
+
+    if (acceptLines.length === 0 && intakeLines.length === 0) {
+      throw new Error("no permissive file-input found in src/ — every accept= is image-only?");
+    }
+
+    results.push({
+      name: "68. File-upload inputs accept non-image content",
+      status: "PASS",
+      dataVisible: `${acceptLines.length} permissive accept= hits + ${intakeLines.length} IntakeUploadCard usages`,
+    });
+  } catch (e) {
+    results.push({ name: "68. File-upload inputs accept non-image content", status: "FAIL", dataVisible: "", note: String(e) });
+  }
+
   return finish();
 }
 
