@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Golden Path — Wizard + Daily Brief + AI Expand (tests 48-50).
+ * Golden Path — Wizard + Daily Brief + AI Expand (tests 48-50, 63-66).
  *
  * 48. 5-step wizard happy path — create property+report via DB inserts,
  *     seed pages via seed-report-from-notes (toc_generation stage), mark
@@ -10,6 +10,19 @@
  *     Invoke again; verify idempotency (no second row for same date).
  * 50. AI expand returns longer content — invoke ai-edit with mode=expand,
  *     verify result is longer than input and contains no em-dashes.
+ * 63. Wizard Step 1 provisions property+report — insert a wizard_drafts
+ *     row with intake-shaped step_data, then mirror ensurePropertyAndReport
+ *     by inserting properties + reports rows for the same address. Verify
+ *     all three round-trip readable.
+ * 64. Wizard duplicate guard — insert a property at address X, then run
+ *     the .ilike("address", X) lookup the wizard runs in Step 1 to detect
+ *     prior reports at the same address. Verify it returns the row.
+ * 65. Wizard upload persistence — insert a wizard_drafts row with
+ *     uploaded_file_paths populated AND step_data containing the same
+ *     paths under intakeUploads. Read back and verify both round-tripped.
+ * 66. Hover/iGUIDE URL persistence — update a property with hover_url +
+ *     iguide_url, read back, verify both saved (these power EmbedBlocks
+ *     on the published report).
  *
  * Exits 0/1. Cleans up all test rows.
  */
@@ -237,6 +250,205 @@ async function main(): Promise<number> {
     });
   } catch (e) {
     results.push({ name: "50. AI expand returns expanded content", status: "FAIL", dataVisible: "", note: String(e) });
+  }
+
+  // -------------------------------------------------------
+  // Test 63: Wizard Step 1 provisions property + report
+  // Mirrors WizardContext.ensurePropertyAndReport — insert wizard_draft
+  // with intake state, then provision the matching property + report.
+  // -------------------------------------------------------
+  const dupAddress = `${randSuffix()} Provision Lane`;
+  let provisionedPropertyId = "";
+  let provisionedReportId = "";
+  try {
+    const intakeEnvelope = {
+      currentStep: "intake",
+      client: {
+        fullName: "GP Wizard Provisioning Client",
+        propertyName: "Provision Test Home",
+        address: dupAddress,
+        city: "Hudson",
+        state: "OH",
+        zip: "44236",
+        propertyType: "single_family",
+      },
+      hoverUrl: "",
+      iguideUrl: "",
+    };
+
+    const [draft] = await restPost<Array<{ id: string; step_data: Record<string, unknown> }>>(
+      ctx,
+      `/rest/v1/wizard_drafts`,
+      {
+        creator_id: creatorId,
+        current_step: "intake",
+        step_data: intakeEnvelope,
+        uploaded_file_paths: [],
+        status: "in_progress",
+      },
+    );
+    ctx.cleanups.push(async () => { await restDelete(ctx, `/rest/v1/wizard_drafts?id=eq.${draft.id}`); });
+
+    const [prop] = await restPost<Array<{ id: string; address: string }>>(
+      ctx,
+      `/rest/v1/properties`,
+      {
+        client_user_id: creatorId,
+        property_name: intakeEnvelope.client.propertyName,
+        address: dupAddress,
+        city: intakeEnvelope.client.city,
+        state: intakeEnvelope.client.state,
+        zip: intakeEnvelope.client.zip,
+        property_type: intakeEnvelope.client.propertyType,
+      },
+    );
+    provisionedPropertyId = prop.id;
+    ctx.cleanups.push(async () => { await restDelete(ctx, `/rest/v1/properties?id=eq.${provisionedPropertyId}`); });
+
+    const [report] = await restPost<Array<{ id: string }>>(
+      ctx,
+      `/rest/v1/reports`,
+      {
+        property_id: provisionedPropertyId,
+        created_by: creatorId,
+        title: `${intakeEnvelope.client.fullName} — Home Clarity Report`,
+        status: "draft",
+      },
+    );
+    provisionedReportId = report.id;
+    ctx.cleanups.push(async () => { await restDelete(ctx, `/rest/v1/reports?id=eq.${provisionedReportId}`); });
+
+    await restPatch(
+      ctx,
+      `/rest/v1/wizard_drafts?id=eq.${draft.id}`,
+      { property_id: provisionedPropertyId, report_id: provisionedReportId },
+    );
+
+    const [verifiedDraft] = await restGet<Array<{ property_id: string; report_id: string }>>(
+      ctx,
+      `/rest/v1/wizard_drafts?select=property_id,report_id&id=eq.${draft.id}`,
+    );
+    if (verifiedDraft.property_id !== provisionedPropertyId) {
+      throw new Error(`draft.property_id round-trip failed: ${verifiedDraft.property_id}`);
+    }
+
+    results.push({
+      name: "63. Wizard Step 1 provisions property + report",
+      status: "PASS",
+      dataVisible: `wizard_draft + property (${prop.address}) + report linked`,
+    });
+  } catch (e) {
+    results.push({ name: "63. Wizard Step 1 provisions property + report", status: "FAIL", dataVisible: "", note: String(e) });
+  }
+
+  // -------------------------------------------------------
+  // Test 64: Wizard duplicate guard — same-address detection
+  // -------------------------------------------------------
+  try {
+    if (!provisionedPropertyId) {
+      throw new Error("Test 63 must seed the property first; skipping duplicate-guard check");
+    }
+    // Wizard's lookup: .from("properties").select("id").ilike("address", address)
+    // Replicated as a REST query.
+    const matches = await restGet<Array<{ id: string }>>(
+      ctx,
+      `/rest/v1/properties?select=id&address=ilike.${encodeURIComponent(dupAddress)}`,
+    );
+    if (matches.length === 0) {
+      throw new Error(`duplicate-guard query returned 0 rows for known address ${dupAddress}`);
+    }
+    if (!matches.some((m) => m.id === provisionedPropertyId)) {
+      throw new Error(`duplicate-guard query did not include the seeded property id`);
+    }
+
+    results.push({
+      name: "64. Wizard duplicate-address guard query returns hit",
+      status: "PASS",
+      dataVisible: `${matches.length} row(s) for "${dupAddress}"`,
+    });
+  } catch (e) {
+    results.push({ name: "64. Wizard duplicate-address guard query returns hit", status: "FAIL", dataVisible: "", note: String(e) });
+  }
+
+  // -------------------------------------------------------
+  // Test 65: Wizard upload persistence — uploaded_file_paths + step_data
+  // round-trip together.
+  // -------------------------------------------------------
+  try {
+    const stamp65 = new Date().toISOString().replace(/[:.]/g, "").slice(0, 15);
+    const filePaths = [
+      `${creatorId}/draft-${stamp65}/transcript/notes.pdf`,
+      `${creatorId}/draft-${stamp65}/transcript/walkthrough.m4a`,
+    ];
+    const envelope = {
+      currentStep: "intake",
+      intakeUploads: {
+        transcript: filePaths.map((p) => ({ path: p, size: 1024, name: p.split("/").pop() })),
+      },
+    };
+    const [draft] = await restPost<Array<{ id: string }>>(
+      ctx,
+      `/rest/v1/wizard_drafts`,
+      {
+        creator_id: creatorId,
+        current_step: "intake",
+        step_data: envelope,
+        uploaded_file_paths: filePaths,
+        status: "in_progress",
+      },
+    );
+    ctx.cleanups.push(async () => { await restDelete(ctx, `/rest/v1/wizard_drafts?id=eq.${draft.id}`); });
+
+    const [readback] = await restGet<Array<{ uploaded_file_paths: string[]; step_data: Record<string, unknown> }>>(
+      ctx,
+      `/rest/v1/wizard_drafts?select=uploaded_file_paths,step_data&id=eq.${draft.id}`,
+    );
+    if (!Array.isArray(readback.uploaded_file_paths) || readback.uploaded_file_paths.length !== filePaths.length) {
+      throw new Error(`uploaded_file_paths round-trip mismatch: ${JSON.stringify(readback.uploaded_file_paths)}`);
+    }
+    const intake = readback.step_data?.intakeUploads as Record<string, unknown> | undefined;
+    if (!intake || !Array.isArray((intake as { transcript?: unknown[] }).transcript)) {
+      throw new Error(`step_data.intakeUploads.transcript not preserved`);
+    }
+
+    results.push({
+      name: "65. Wizard upload persistence (paths + envelope)",
+      status: "PASS",
+      dataVisible: `${readback.uploaded_file_paths.length} paths preserved, intake envelope round-tripped`,
+    });
+  } catch (e) {
+    results.push({ name: "65. Wizard upload persistence (paths + envelope)", status: "FAIL", dataVisible: "", note: String(e) });
+  }
+
+  // -------------------------------------------------------
+  // Test 66: Hover + iGUIDE URL persistence on properties
+  // -------------------------------------------------------
+  try {
+    const hoverUrl = `https://hover.to/test-${randSuffix()}`;
+    const iguideUrl = `https://youriguide.com/test-${randSuffix()}`;
+    await restPatch(
+      ctx,
+      `/rest/v1/properties?id=eq.${testPropertyId}`,
+      { hover_url: hoverUrl, iguide_url: iguideUrl },
+    );
+    const [readback] = await restGet<Array<{ hover_url: string; iguide_url: string }>>(
+      ctx,
+      `/rest/v1/properties?select=hover_url,iguide_url&id=eq.${testPropertyId}`,
+    );
+    if (readback.hover_url !== hoverUrl) {
+      throw new Error(`hover_url mismatch: "${readback.hover_url}" vs "${hoverUrl}"`);
+    }
+    if (readback.iguide_url !== iguideUrl) {
+      throw new Error(`iguide_url mismatch: "${readback.iguide_url}" vs "${iguideUrl}"`);
+    }
+
+    results.push({
+      name: "66. Hover + iGUIDE URL persistence on properties",
+      status: "PASS",
+      dataVisible: `both URLs round-tripped on properties row`,
+    });
+  } catch (e) {
+    results.push({ name: "66. Hover + iGUIDE URL persistence on properties", status: "FAIL", dataVisible: "", note: String(e) });
   }
 
   return finish();

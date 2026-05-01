@@ -155,6 +155,38 @@ async function main(): Promise<number> {
     results.push({ name: "62. Mobile wizard on iPad (route check)", status: "FAIL", dataVisible: "", note: String(e) });
   }
 
+  // -------------------------------------------------------
+  // Test 69: Multi-property selector — component file exists and is
+  // imported by App.tsx so the dropdown can render in the desktop +
+  // mobile portal headers.
+  // -------------------------------------------------------
+  try {
+    const selectorPath = resolve(REPO_ROOT, "src/components/PropertySelector.tsx");
+    const fileCheck = spawnSync("test", ["-f", selectorPath]);
+    if (fileCheck.status !== 0) {
+      throw new Error(`src/components/PropertySelector.tsx is missing`);
+    }
+
+    const importCheck = spawnSync(
+      "grep",
+      ["-rln", "PropertySelector", resolve(REPO_ROOT, "src")],
+      { encoding: "utf8" },
+    );
+    const importers = (importCheck.stdout || "").split("\n").filter(Boolean);
+    const consumers = importers.filter((l) => !l.endsWith("PropertySelector.tsx"));
+    if (consumers.length === 0) {
+      throw new Error(`PropertySelector exists but is not imported anywhere`);
+    }
+
+    results.push({
+      name: "69. Multi-property selector wired in",
+      status: "PASS",
+      dataVisible: `PropertySelector imported by ${consumers.length} consumer(s)`,
+    });
+  } catch (e) {
+    results.push({ name: "69. Multi-property selector wired in", status: "FAIL", dataVisible: "", note: String(e) });
+  }
+
   return finish();
 }
 

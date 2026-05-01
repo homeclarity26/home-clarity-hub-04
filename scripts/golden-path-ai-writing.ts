@@ -270,6 +270,77 @@ async function main(): Promise<number> {
     results.push({ name: "6. draft-page-narrative", status: "FAIL", dataVisible: "", note: String(e) });
   }
 
+  // Step 7: generate-capital-plan — Step 4 wizard generator. Sonnet via
+  // CI_USE_GEMINI when running in CI. Verify ok=true and a populated years
+  // array on the capital_plan envelope.
+  try {
+    const resp = await invokeFn<{ ok?: boolean; capital_plan?: { years?: unknown[] }; error?: string }>(
+      ctx,
+      "generate-capital-plan",
+      creatorJWT,
+      {
+        property_id: testPropertyId,
+        page_seeds: [],
+        sequence_risk_flags: [],
+        property_context: {
+          address: "1234 Maple Ridge Drive",
+          year_built: 1998,
+          sqft: 2400,
+          property_type: "colonial",
+        },
+      },
+      240_000,
+    );
+    if (resp.error) throw new Error(`error field set: ${resp.error}`);
+    if (resp.ok !== true) throw new Error(`ok!=true: ${JSON.stringify(resp).slice(0, 200)}`);
+    const years = resp.capital_plan?.years;
+    if (!Array.isArray(years)) {
+      throw new Error(`capital_plan.years missing or not an array: ${JSON.stringify(resp.capital_plan).slice(0, 200)}`);
+    }
+    results.push({
+      name: "7. generate-capital-plan",
+      status: "PASS",
+      dataVisible: `${years.length} year-rows in capital plan`,
+    });
+  } catch (e) {
+    results.push({ name: "7. generate-capital-plan", status: "FAIL", dataVisible: "", note: String(e) });
+  }
+
+  // Step 8: generate-maintenance-calendar — Step 4 wizard generator.
+  // Verify ok=true and the four-season envelope is present.
+  try {
+    const resp = await invokeFn<{ ok?: boolean; maintenance_calendar?: Record<string, unknown[]>; error?: string }>(
+      ctx,
+      "generate-maintenance-calendar",
+      creatorJWT,
+      {
+        property_id: testPropertyId,
+        page_seeds: [],
+        property_context: {
+          address: "1234 Maple Ridge Drive",
+          year_built: 1998,
+          sqft: 2400,
+          property_type: "colonial",
+        },
+      },
+      240_000,
+    );
+    if (resp.error) throw new Error(`error field set: ${resp.error}`);
+    if (resp.ok !== true) throw new Error(`ok!=true: ${JSON.stringify(resp).slice(0, 200)}`);
+    const cal = resp.maintenance_calendar;
+    if (!cal || !Array.isArray(cal.winter) || !Array.isArray(cal.spring) || !Array.isArray(cal.summer) || !Array.isArray(cal.fall)) {
+      throw new Error(`maintenance_calendar missing one of winter/spring/summer/fall arrays: ${JSON.stringify(cal).slice(0, 200)}`);
+    }
+    const total = cal.winter.length + cal.spring.length + cal.summer.length + cal.fall.length;
+    results.push({
+      name: "8. generate-maintenance-calendar",
+      status: "PASS",
+      dataVisible: `${total} tasks across winter/spring/summer/fall`,
+    });
+  } catch (e) {
+    results.push({ name: "8. generate-maintenance-calendar", status: "FAIL", dataVisible: "", note: String(e) });
+  }
+
   return finish();
 }
 

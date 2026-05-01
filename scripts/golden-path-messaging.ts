@@ -203,6 +203,48 @@ async function main(): Promise<number> {
     results.push({ name: "6. Cross-tenant isolation", status: "FAIL", dataVisible: "", note: String(e) });
   }
 
+  // Step 7: HBC Concierge connection CTA — a client posts the canonical
+  // "ready to move forward" message; verify the creator can read it. This
+  // is the trigger phrase the portal CTA fires when a homeowner clicks
+  // "Connect with HBC". If the row doesn't reach the creator, no Concierge
+  // engagement begins.
+  let ctaMsgId = "";
+  try {
+    const ctaBody = `GP-${stamp} CTA: I'm ready to move forward — please reach out about HBC Concierge.`;
+    const [msg] = await restPost<Array<{ id: string }>>(
+      ctx,
+      "/rest/v1/property_messages",
+      {
+        property_id: testPropertyId,
+        sender_id: clientUserId,
+        message: ctaBody,
+      },
+      true,
+      clientJWT,
+    );
+    ctaMsgId = msg.id;
+    ctx.cleanups.push(async () => { await restDelete(ctx, `/rest/v1/property_messages?id=eq.${ctaMsgId}`); });
+
+    const visible = await restGet<Array<{ id: string; message: string }>>(
+      ctx,
+      `/rest/v1/property_messages?select=id,message&property_id=eq.${testPropertyId}&order=created_at.desc&limit=10`,
+      creatorJWT,
+    );
+    const found = visible.find((m) => m.id === ctaMsgId);
+    if (!found) throw new Error("creator does not see the client's CTA message");
+    if (!found.message.includes("ready to move forward")) {
+      throw new Error(`CTA body was rewritten: "${found.message.slice(0, 80)}"`);
+    }
+
+    results.push({
+      name: "7. HBC connection CTA reaches creator",
+      status: "PASS",
+      dataVisible: `creator reads CTA: "${found.message.slice(0, 50)}…"`,
+    });
+  } catch (e) {
+    results.push({ name: "7. HBC connection CTA reaches creator", status: "FAIL", dataVisible: "", note: String(e) });
+  }
+
   return finish();
 }
 
