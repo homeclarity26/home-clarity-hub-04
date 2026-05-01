@@ -374,12 +374,114 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     return paths;
   }, []);
 
+  // Ensures a properties + reports row exist for the current draft. Once
+  // the consultant has filled in name + address we provision both rows
+  // up front so downstream wizard steps (Step 4 strategy generators,
+  // AIQualityGate ack persist, anything that takes property_id) work
+  // without "Save the property first" friction. The property's
+  // client_user_id is set to the creator as a placeholder; publish-time
+  // create-client-account swaps it to the real client.
+  const ensurePropertyAndReport = useCallback(
+    async (snapshot: WizardState): Promise<WizardState> => {
+      if (!user?.id) return snapshot;
+      const fullName = snapshot.client.fullName.trim();
+      const address = snapshot.client.address.trim();
+      let propertyId = snapshot.propertyId;
+      let reportId = snapshot.reportId;
+
+      if (!propertyId && fullName && address) {
+        try {
+          const { data: existing } = await supabase
+            .from("properties")
+            .select("id")
+            .eq("client_user_id", user.id)
+            .ilike("address", address)
+            .maybeSingle();
+          if (existing?.id) {
+            propertyId = existing.id;
+          } else {
+            const propertyName = snapshot.client.propertyName.trim() || fullName;
+            const { data: inserted, error: insertErr } = await supabase
+              .from("properties")
+              .insert({
+                address,
+                client_user_id: user.id,
+                property_name: propertyName,
+                property_type: snapshot.client.propertyType || null,
+                city: snapshot.client.city || null,
+                state: snapshot.client.state || null,
+                zip: snapshot.client.zip || null,
+                county: snapshot.client.county || null,
+                relationship_type: snapshot.client.relationshipType || null,
+                metadata: {
+                  year_built: snapshot.client.yearBuilt || null,
+                  sqft: snapshot.client.sqft || null,
+                  bedrooms: snapshot.client.bedrooms || null,
+                  bathrooms: snapshot.client.bathrooms || null,
+                } as never,
+              })
+              .select("id")
+              .single();
+            if (insertErr) throw insertErr;
+            propertyId = inserted?.id ?? null;
+          }
+        } catch (err) {
+          console.warn("WizardContext ensurePropertyAndReport property failed", err);
+        }
+      }
+
+      if (propertyId && !reportId) {
+        try {
+          const { data: existingReport } = await supabase
+            .from("reports")
+            .select("id")
+            .eq("property_id", propertyId)
+            .neq("status", "published")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (existingReport?.id) {
+            reportId = existingReport.id;
+          } else {
+            const reportTitle = `${fullName || "Home"} — Home Clarity Report`;
+            const { data: insertedReport, error: rErr } = await supabase
+              .from("reports")
+              .insert({
+                property_id: propertyId,
+                created_by: user.id,
+                title: reportTitle,
+                status: "draft",
+              })
+              .select("id")
+              .single();
+            if (rErr) throw rErr;
+            reportId = insertedReport?.id ?? null;
+          }
+        } catch (err) {
+          console.warn("WizardContext ensurePropertyAndReport report failed", err);
+        }
+      }
+
+      if (propertyId !== snapshot.propertyId || reportId !== snapshot.reportId) {
+        setState((prev) => ({
+          ...prev,
+          propertyId: propertyId ?? prev.propertyId,
+          reportId: reportId ?? prev.reportId,
+        }));
+        return { ...snapshot, propertyId, reportId };
+      }
+      return snapshot;
+    },
+    [user?.id],
+  );
+
   // Upserts the draft row. Returns the draft id (creating one on first
   // call). Best-effort: failures don't block navigation — we'll retry on
   // the next transition.
   const persistDraft = useCallback(
-    async (snapshot: WizardState): Promise<string | null> => {
+    async (snapshotIn: WizardState): Promise<string | null> => {
       if (!user?.id) return null;
+      const snapshot = await ensurePropertyAndReport(snapshotIn);
       const envelope = buildEnvelope(snapshot);
       const uploadedPaths = collectUploadedPaths(snapshot);
       setIsSaving(true);
@@ -426,7 +528,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setIsSaving(false);
       }
     },
-    [user?.id, buildEnvelope, collectUploadedPaths],
+    [user?.id, buildEnvelope, collectUploadedPaths, ensurePropertyAndReport],
   );
 
   // Debounced autosave on every state change. Fires 800ms after the last

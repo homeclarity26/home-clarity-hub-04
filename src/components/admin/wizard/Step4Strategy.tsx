@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useWizard } from "@/contexts/WizardContext";
+import { useWizard, type PageSeed, type IntakeFinding } from "@/contexts/WizardContext";
 import { WizardNavigation } from "./WizardNavigation";
 import { PhaseCard } from "./PhaseCard";
 
@@ -14,9 +14,96 @@ import { PhaseCard } from "./PhaseCard";
 // in their own components (B6/B7/B8 already shipped); this step just
 // orchestrates the wiring into the wizard envelope.
 
+// Heuristic phase classifier: maps page seeds + intake findings into the
+// three project phases used on the cards. Defense covers Critical-condition
+// or sequence-risk pages; Offense covers priority + briefing-flagged + Poor
+// pages; Expansion covers vision/strategy pages.
+function classifyPhases(
+  pageSeeds: PageSeed[],
+  intakeFindings: IntakeFinding[],
+): {
+  defense: string[];
+  offense: string[];
+  expansion: string[];
+} {
+  const defense = new Set<string>();
+  const offense = new Set<string>();
+  const expansion = new Set<string>();
+
+  const sequenceRiskKeywords = (
+    intakeFindings.find((f) => f.category === "sequence_risk")?.bullets ?? []
+  )
+    .map((b) => b.toLowerCase())
+    .join(" ");
+
+  for (const seed of pageSeeds) {
+    const key = seed.page_key;
+    const condition = (seed.suggested_condition ?? "").toLowerCase();
+    const group = (seed.group ?? "").toLowerCase();
+    const title = (seed.title ?? "").toLowerCase();
+    const isVision =
+      key.includes("vision") || group.includes("strategy") || title.includes("vision");
+
+    if (isVision) {
+      expansion.add(key);
+      continue;
+    }
+
+    const flaggedBySequenceRisk =
+      title.length > 0 && sequenceRiskKeywords.includes(title);
+    if (condition === "critical" || flaggedBySequenceRisk) {
+      defense.add(key);
+      continue;
+    }
+
+    const hasBriefing =
+      seed.replacement_briefing_stub != null &&
+      typeof seed.replacement_briefing_stub === "object";
+    if (seed.priority === true || hasBriefing || condition === "poor") {
+      offense.add(key);
+    }
+  }
+
+  return {
+    defense: Array.from(defense),
+    offense: Array.from(offense),
+    expansion: Array.from(expansion),
+  };
+}
+
 export function Step4Strategy() {
   const { state, goToStep, setStrategy } = useWizard();
   const [generating, setGenerating] = useState(false);
+
+  // Auto-classify phases the first time the consultant lands on Step 4
+  // with seeds + findings hydrated. Skips when arrays are already filled
+  // so the consultant's manual edits aren't wiped on re-mount.
+  useEffect(() => {
+    const totalAlready =
+      state.strategy.defense_project_ids.length +
+      state.strategy.offense_project_ids.length +
+      state.strategy.expansion_project_ids.length;
+    if (totalAlready > 0) return;
+    if (state.pageSeeds.length === 0 && state.intakeFindings.length === 0) return;
+    const classified = classifyPhases(state.pageSeeds, state.intakeFindings);
+    const totalNew =
+      classified.defense.length +
+      classified.offense.length +
+      classified.expansion.length;
+    if (totalNew === 0) return;
+    setStrategy({
+      defense_project_ids: classified.defense,
+      offense_project_ids: classified.offense,
+      expansion_project_ids: classified.expansion,
+    });
+  }, [
+    state.pageSeeds,
+    state.intakeFindings,
+    state.strategy.defense_project_ids.length,
+    state.strategy.offense_project_ids.length,
+    state.strategy.expansion_project_ids.length,
+    setStrategy,
+  ]);
 
   const buildRecurringRegister = async () => {
     if (!state.propertyId) {
