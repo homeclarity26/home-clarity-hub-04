@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Loader2, AlertCircle, Link as LinkIcon } from "lucide-react";
+import { Sparkles, Loader2, AlertCircle, Link as LinkIcon, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useWizard, type IntakeFinding, type ClarifyingQuestion } from "@/contexts/WizardContext";
@@ -14,6 +14,7 @@ import { IntakeUploadCard } from "./IntakeUploadCard";
 import { FieldChecklist } from "./FieldChecklist";
 import { AIClarifyingQuestions } from "./AIClarifyingQuestions";
 import { WizardNavigation } from "./WizardNavigation";
+import AddressAutocomplete, { type PropertyData } from "@/components/admin/AddressAutocomplete";
 
 // Step 1 — Intake. Three zones:
 //   A. Client & property
@@ -87,6 +88,21 @@ export function Step1Intake() {
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState(false);
+  const [draftingNotes, setDraftingNotes] = useState(false);
+
+  // RentCast PropertyType strings → our dropdown values. RentCast surfaces
+  // human-readable strings ("Single Family", "Condominium") whereas the
+  // dropdown stores snake_case keys. Anything we don't recognize falls
+  // through to "other" so the user can override manually.
+  const mapRentCastPropertyType = (raw?: string): string => {
+    if (!raw) return "";
+    const s = raw.toLowerCase();
+    if (s.includes("single") && s.includes("family")) return "single_family";
+    if (s.includes("multi") && s.includes("family")) return "multi_family";
+    if (s.includes("condo")) return "condo";
+    if (s.includes("town")) return "townhouse";
+    return "other";
+  };
 
   // Debounced check: warn if a published report already exists at this address
   useEffect(() => {
@@ -240,6 +256,92 @@ export function Step1Intake() {
     }
   };
 
+  // Google Places resolved a structured address. Save the city/state/zip/
+  // county fields the wizard will need at publish time so the property row
+  // gets clean data instead of a free-typed string.
+  const handleAddressParsed = (parsed: {
+    address: string;
+    city: string;
+    state: string;
+    zip: string;
+    county: string;
+    lat?: number;
+    lng?: number;
+  }) => {
+    setClient({
+      address: parsed.address,
+      city: parsed.city,
+      state: parsed.state,
+      zip: parsed.zip,
+      county: parsed.county,
+    });
+  };
+
+  // RentCast returned property facts. Fill any field that isn't already set
+  // by the consultant — never overwrite a value they typed in. Skips empty
+  // RentCast fields silently.
+  const handlePropertyDataFetched = (data: PropertyData) => {
+    const patch: Partial<typeof state.client> = {};
+    if (data.yearBuilt && !state.client.yearBuilt) patch.yearBuilt = String(data.yearBuilt);
+    if (data.sqft && !state.client.sqft) patch.sqft = String(data.sqft);
+    if (data.bedrooms && !state.client.bedrooms) patch.bedrooms = String(data.bedrooms);
+    if (data.bathrooms && !state.client.bathrooms) patch.bathrooms = String(data.bathrooms);
+    const mappedType = mapRentCastPropertyType(data.propertyType);
+    if (mappedType && !state.client.propertyType) patch.propertyType = mappedType;
+    if (Object.keys(patch).length === 0) {
+      toast({ title: "Already filled in", description: "Every field RentCast knows is already set." });
+      return;
+    }
+    setClient(patch);
+    toast({ title: "Property data filled", description: `Populated ${Object.keys(patch).length} field${Object.keys(patch).length !== 1 ? "s" : ""} from RentCast.` });
+  };
+
+  // "Draft from transcript" button — reads the uploaded transcripts via
+  // seed-report-from-notes (draft_notes_only mode) and fills or appends to
+  // the Discovery notes textarea. Empty textarea gets the draft as-is;
+  // existing text gets the AI draft appended below a divider so the
+  // consultant can keep what they wrote.
+  const draftDiscoveryNotes = async () => {
+    if (intakeFilesPayload.length === 0) {
+      toast({
+        title: "Upload a transcript first",
+        description: "Drop the discovery transcript or notes into the Files zone, then try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setDraftingNotes(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "seed-report-from-notes",
+        {
+          body: {
+            meeting_notes: "Draft a discovery notes summary from the attached materials.",
+            intake_files: intakeFilesPayload,
+            draft_notes_only: true,
+          },
+        },
+      );
+      if (error) throw error;
+      const draft = typeof data?.discovery_notes_draft === "string" ? data.discovery_notes_draft.trim() : "";
+      if (!draft) {
+        toast({ title: "AI returned an empty draft", description: "Try again, or write the notes yourself.", variant: "destructive" });
+        return;
+      }
+      const existing = state.client.discoveryNotes.trim();
+      const next = existing.length === 0
+        ? draft
+        : `${existing}\n\n---\nAI draft from transcript:\n${draft}`;
+      setClient({ discoveryNotes: next });
+      toast({ title: "Discovery notes drafted", description: "Edit freely; the AI saw the same files you uploaded." });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      toast({ title: "Draft failed", description: message, variant: "destructive" });
+    } finally {
+      setDraftingNotes(false);
+    }
+  };
+
   const handleContinue = async () => {
     await goToStep("toc");
   };
@@ -305,12 +407,11 @@ export function Step1Intake() {
             </Select>
           </div>
           <div className="space-y-1.5 md:col-span-2">
-            <Label className="text-xs font-sans">Property address</Label>
-            <Input
+            <AddressAutocomplete
               value={state.client.address}
-              onChange={(e) => setClient({ address: e.target.value })}
-              placeholder="123 Maple Lane, Hudson, OH 44236"
-              className="text-xs"
+              onChange={(address) => setClient({ address })}
+              onAddressParsed={handleAddressParsed}
+              onPropertyDataFetched={handlePropertyDataFetched}
             />
             {duplicateWarning && (
               <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
@@ -372,7 +473,29 @@ export function Step1Intake() {
             </Select>
           </div>
           <div className="space-y-1.5 md:col-span-2">
-            <Label className="text-xs font-sans">Discovery notes</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-sans">Discovery notes</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={draftDiscoveryNotes}
+                disabled={draftingNotes || intakeFilesPayload.length === 0}
+                className="h-8 text-[11px] gap-1.5"
+                title={
+                  intakeFilesPayload.length === 0
+                    ? "Upload a transcript first"
+                    : "Draft notes from the transcript"
+                }
+              >
+                {draftingNotes ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />
+                ) : (
+                  <Wand2 className="w-3.5 h-3.5" aria-hidden />
+                )}
+                {draftingNotes ? "Drafting..." : "Draft from transcript"}
+              </Button>
+            </div>
             <Textarea
               value={state.client.discoveryNotes}
               onChange={(e) => setClient({ discoveryNotes: e.target.value })}
