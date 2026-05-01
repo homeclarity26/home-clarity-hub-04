@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from "react";
-import { Camera, Upload, Search, Filter, Sparkles, Eye, EyeOff, X, ChevronLeft, ChevronRight, Tag, Loader2, Image as ImageIcon, CheckCircle2 } from "lucide-react";
+import { Camera, Upload, Search, Filter, Sparkles, Eye, EyeOff, X, ChevronLeft, ChevronRight, Tag, Loader2, Image as ImageIcon, CheckCircle2, Crop as CropIcon } from "lucide-react";
+import { PhotoCropDialog } from "./PhotoCropDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -88,6 +89,7 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
   const [categorizing, setCategorizing] = useState(false);
   const [beforeAfterMode, setBeforeAfterMode] = useState(false);
   const [sliderPos, setSliderPos] = useState(50);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
 
   const { data: photos = [], isLoading } = useQuery({
     queryKey: ["property-photos", propertyId],
@@ -191,6 +193,35 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
     if (lightboxPhoto?.id === id) {
       setLightboxPhoto({ ...lightboxPhoto, ...patch } as PropertyPhoto);
     }
+  };
+
+  // Crop dialog → upload edited blob to a sibling path with -edited
+  // suffix + timestamp, then point the photo's file_url at the new
+  // signed URL. Original is preserved (no overwrite) so the consultant
+  // can re-crop later without compounding loss.
+  const saveCroppedPhoto = async (blob: Blob) => {
+    if (!lightboxPhoto || !user) return;
+    const ts = Date.now();
+    const newPath = `${propertyId}/edited-${ts}-${lightboxPhoto.id}.jpg`;
+    const { error: upErr } = await supabase.storage
+      .from("property-photos")
+      .upload(newPath, blob, {
+        contentType: "image/jpeg",
+        cacheControl: "3600",
+        upsert: false,
+      });
+    if (upErr) throw upErr;
+    const { data: signedData } = await supabase.storage
+      .from("property-photos")
+      .createSignedUrl(newPath, 3600 * 24 * 365);
+    const newUrl = signedData?.signedUrl;
+    if (!newUrl) throw new Error("Could not generate URL for cropped photo");
+    await supabase.from("property_photos")
+      .update({ file_url: newUrl, thumbnail_url: null })
+      .eq("id", lightboxPhoto.id);
+    qc.invalidateQueries({ queryKey: ["property-photos", propertyId] });
+    setLightboxPhoto({ ...lightboxPhoto, file_url: newUrl, thumbnail_url: null });
+    toast.success("Photo edited");
   };
 
   // Manual confirm — removes the AI badge without changing anything else.
@@ -429,6 +460,16 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
         )}
       </div>
 
+      {/* Crop dialog */}
+      {lightboxPhoto && (
+        <PhotoCropDialog
+          open={cropDialogOpen}
+          onOpenChange={setCropDialogOpen}
+          photoUrl={lightboxPhoto.file_url}
+          onSave={saveCroppedPhoto}
+        />
+      )}
+
       {/* Lightbox */}
       <Dialog open={!!lightboxPhoto} onOpenChange={(o) => !o && setLightboxPhoto(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -448,6 +489,15 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
                 )}
               </div>
               <div className="space-y-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs gap-1.5"
+                  onClick={() => setCropDialogOpen(true)}
+                >
+                  <CropIcon className="w-3.5 h-3.5" />
+                  Crop / rotate
+                </Button>
                 <div>
                   <Label className="text-[10px] font-mono uppercase text-muted-foreground">Title</Label>
                   <Input
