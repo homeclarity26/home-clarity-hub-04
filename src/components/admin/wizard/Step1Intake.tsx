@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Sparkles, Loader2, AlertCircle, Link as LinkIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useWizard, type IntakeFinding, type ClarifyingQuestion } from "@/contexts/WizardContext";
@@ -14,11 +15,17 @@ import { FieldChecklist } from "./FieldChecklist";
 import { AIClarifyingQuestions } from "./AIClarifyingQuestions";
 import { WizardNavigation } from "./WizardNavigation";
 
-// Step 1 — Intake. Three zones per Master Spec 2.2:
+// Step 1 — Intake. Three zones:
 //   A. Client & property
-//   B. Multi-file intake cards (Transcript / Site Notes / Photos / Hover /
-//      iGUIDE) + "Anything Else?" catchall + Field Checklist link
+//   B. Brain dump — one drop zone for any file type, two URL inputs for
+//      Hover/iGUIDE share links, "Anything else?" textarea, Field Checklist
 //   C. AI findings (6 cards) + clarifying questions
+//
+// All file uploads land in `intakeUploads.transcript` regardless of type;
+// the legacy bucketed shape (transcript/site_notes/photos/hover/iguide) is
+// preserved in WizardContext so existing drafts hydrate without loss.
+// intakeFilesPayload spreads all five buckets so any file from any source
+// reaches the AI.
 //
 // Findings + clarifying questions come from seed-report-from-notes (E7).
 
@@ -114,13 +121,17 @@ export function Step1Intake() {
   }, [state.client.discoveryNotes, state.anythingElse]);
 
   // Storage refs the edge function will fetch + base64 inline for Claude.
-  // Photos go in too — Claude can read condition observations off the
-  // images even before the human writes a transcript.
+  // Spreads ALL five legacy buckets so brain-dump uploads (which land in
+  // `transcript`) plus anything still sitting in older draft buckets all
+  // reach the AI. Hover/iGuide file exports were previously dropped on the
+  // floor here — fixed as part of the brain-dump consolidation.
   const intakeFilesPayload = useMemo(() => {
     const refs = [
       ...state.intakeUploads.transcript,
       ...state.intakeUploads.site_notes,
       ...state.intakeUploads.photos,
+      ...state.intakeUploads.hover,
+      ...state.intakeUploads.iguide,
     ];
     return refs
       .filter((f) => Boolean(f.storage_path) && Boolean(f.bucket))
@@ -131,6 +142,25 @@ export function Step1Intake() {
         mime: f.mime,
       }));
   }, [state.intakeUploads]);
+
+  // MIME-bucketed counts for the type-pill summary above the drop zone.
+  // Display-only; the underlying file list stays a single flat array.
+  const fileTypeCounts = useMemo(() => {
+    const counts = { documents: 0, photos: 0, audio: 0, video: 0, other: 0 };
+    for (const f of intakeFilesPayload) {
+      if (f.mime.startsWith("image/")) counts.photos++;
+      else if (f.mime.startsWith("audio/")) counts.audio++;
+      else if (f.mime.startsWith("video/")) counts.video++;
+      else if (
+        f.mime === "application/pdf" ||
+        f.mime.includes("document") ||
+        f.mime.includes("msword") ||
+        f.mime.startsWith("text/")
+      ) counts.documents++;
+      else counts.other++;
+    }
+    return counts;
+  }, [intakeFilesPayload]);
 
   const hasAnyIntake = aggregatedNotes.trim().length > 0 || intakeFilesPayload.length > 0;
 
@@ -354,83 +384,119 @@ export function Step1Intake() {
         </div>
       </Card>
 
-      {/* Zone B — Multi-file intake cards */}
+      {/* Zone B — Brain dump */}
       <Card className="p-6 space-y-4">
         <div>
           <h3 className="text-base font-sans font-semibold text-foreground">
             Intake materials
           </h3>
           <p className="text-xs font-sans text-muted-foreground mt-1">
-            Drop everything from the visit. Each card accepts multiple files,
-            and we will sort by type later.
+            Drop everything here. Transcripts, site notes, photos, voice
+            memos, Hover or iGUIDE exports — any file type. We will sort
+            them when the AI runs.
           </p>
         </div>
 
+        {(fileTypeCounts.documents +
+          fileTypeCounts.photos +
+          fileTypeCounts.audio +
+          fileTypeCounts.video +
+          fileTypeCounts.other) > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {fileTypeCounts.documents > 0 && (
+              <Badge variant="secondary" className="text-[10px] font-mono uppercase tracking-wider">
+                {fileTypeCounts.documents} document{fileTypeCounts.documents !== 1 ? "s" : ""}
+              </Badge>
+            )}
+            {fileTypeCounts.photos > 0 && (
+              <Badge variant="secondary" className="text-[10px] font-mono uppercase tracking-wider">
+                {fileTypeCounts.photos} photo{fileTypeCounts.photos !== 1 ? "s" : ""}
+              </Badge>
+            )}
+            {fileTypeCounts.audio > 0 && (
+              <Badge variant="secondary" className="text-[10px] font-mono uppercase tracking-wider">
+                {fileTypeCounts.audio} audio
+              </Badge>
+            )}
+            {fileTypeCounts.video > 0 && (
+              <Badge variant="secondary" className="text-[10px] font-mono uppercase tracking-wider">
+                {fileTypeCounts.video} video
+              </Badge>
+            )}
+            {fileTypeCounts.other > 0 && (
+              <Badge variant="secondary" className="text-[10px] font-mono uppercase tracking-wider">
+                {fileTypeCounts.other} other
+              </Badge>
+            )}
+          </div>
+        )}
+
+        <IntakeUploadCard
+          title="Files"
+          description="Drag in any file type. We auto-detect documents vs photos vs audio."
+          cardKey="transcript"
+          files={state.intakeUploads.transcript}
+          onChange={(files) => setIntakeUploads("transcript", files)}
+        />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <IntakeUploadCard
-            title="Transcript"
-            description="Walkthrough recording or transcription. Any audio, video, document, or text source works."
-            cardKey="transcript"
-            files={state.intakeUploads.transcript}
-            onChange={(files) => setIntakeUploads("transcript", files)}
-          />
-          <IntakeUploadCard
-            title="Site notes"
-            description="Field notes, scratch lists, voice memos. PDF, DOCX, MD, images, audio."
-            cardKey="site_notes"
-            files={state.intakeUploads.site_notes}
-            onChange={(files) => setIntakeUploads("site_notes", files)}
-          />
-          <IntakeUploadCard
-            title="Photos"
-            description="Reference photos, condition shots, serial plates. JPG, PNG, HEIC."
-            cardKey="photos"
-            files={state.intakeUploads.photos}
-            onChange={(files) => setIntakeUploads("photos", files)}
-          />
-          <IntakeUploadCard
-            title="Hover"
-            description="Hover capture exports and PDF reports. Paste the share URL or upload the export."
-            cardKey="hover"
-            files={state.intakeUploads.hover}
-            onChange={(files) => setIntakeUploads("hover", files)}
-            url={{
-              value: state.hoverUrl,
-              onChange: setHoverUrl,
-              label: "Hover share URL",
-              placeholder: "https://hover.to/...",
-            }}
-          />
-          <IntakeUploadCard
-            title="iGUIDE"
-            description="iGUIDE walkthrough exports, floor plans. Paste the share URL or upload the export."
-            cardKey="iguide"
-            files={state.intakeUploads.iguide}
-            onChange={(files) => setIntakeUploads("iguide", files)}
-            url={{
-              value: state.iguideUrl,
-              onChange: setIguideUrl,
-              label: "iGUIDE share URL",
-              placeholder: "https://youriguide.com/...",
-            }}
-          />
-          <Card className="p-4 space-y-3">
-            <div>
-              <h4 className="text-sm font-sans font-semibold text-foreground">
-                Anything else? Add more
-              </h4>
-              <p className="text-xs font-sans text-muted-foreground mt-0.5">
-                Catchall for context that does not fit the cards above.
-              </p>
-            </div>
-            <Textarea
-              value={state.anythingElse}
-              onChange={(e) => setAnythingElse(e.target.value)}
-              rows={4}
-              placeholder="Things the AI should know that did not land in a transcript or photo."
+          <div className="space-y-1.5">
+            <Label className="text-xs font-sans flex items-center gap-1.5">
+              <LinkIcon className="w-3.5 h-3.5 text-muted-foreground" aria-hidden />
+              Hover share URL
+            </Label>
+            <Input
+              type="url"
+              value={state.hoverUrl}
+              onChange={(e) => setHoverUrl(e.target.value)}
+              placeholder="https://hover.to/..."
               className="text-xs"
             />
-          </Card>
+            {state.hoverUrl && (
+              <a
+                href={state.hoverUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] font-mono text-accent hover:underline break-all"
+              >
+                Open link →
+              </a>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-sans flex items-center gap-1.5">
+              <LinkIcon className="w-3.5 h-3.5 text-muted-foreground" aria-hidden />
+              iGUIDE share URL
+            </Label>
+            <Input
+              type="url"
+              value={state.iguideUrl}
+              onChange={(e) => setIguideUrl(e.target.value)}
+              placeholder="https://youriguide.com/..."
+              className="text-xs"
+            />
+            {state.iguideUrl && (
+              <a
+                href={state.iguideUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] font-mono text-accent hover:underline break-all"
+              >
+                Open link →
+              </a>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs font-sans">Anything else?</Label>
+          <Textarea
+            value={state.anythingElse}
+            onChange={(e) => setAnythingElse(e.target.value)}
+            rows={3}
+            placeholder="Things the AI should know that did not land in a file or URL above."
+            className="text-xs"
+          />
         </div>
 
         <FieldChecklist
