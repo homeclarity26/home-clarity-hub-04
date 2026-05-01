@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Star } from "lucide-react";
+import { Star, Loader2, CheckCircle2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -93,6 +93,20 @@ export function Step3Authoring() {
     }
   }, [selectedPages, state.activePageKey, setActivePageKey]);
 
+  // Auto-draft progress for the bulk draft-page-narrative pass below.
+  // total > 0 means we kicked off the pass; active=true while batches
+  // are still running. Failed page titles bubble up so the consultant
+  // sees which ones need a retry via per-page Co-Pilot.
+  const [autoDraftStatus, setAutoDraftStatus] = useState<{
+    active: boolean;
+    current: number;
+    total: number;
+    failed: string[];
+  }>({ active: false, current: 0, total: 0, failed: [] });
+  // useRef so we only fire the auto-draft pass once per Step 3 mount —
+  // navigating away and back doesn't re-fire.
+  const autoDraftFiredRef = useRef(false);
+
   // Hydrate any selected page that lacks authoring content from a
   // matching seed produced by Step 1's stage-2 AI run. Runs once per
   // (selectedPages, pageSeeds) change. Pages already touched by the
@@ -128,6 +142,105 @@ export function Step3Authoring() {
     // selected pages actually change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPages, state.pageSeeds]);
+
+  // Bulk auto-draft: fires draft-page-narrative for every selected page
+  // that's still empty after seed hydration. Runs once per session
+  // (gated by autoDraftFiredRef). Batches of 5 in parallel to stay
+  // under Anthropic's tier-based concurrency limits. Pages the
+  // consultant has already touched are skipped. Failed pages bubble
+  // up in the progress banner so the consultant can retry per-page
+  // via AI Co-Pilot. The 600ms delay lets the seed-hydration effect
+  // above settle so we don't double-draft pages that have a seed.
+  useEffect(() => {
+    if (autoDraftFiredRef.current) return;
+    if (selectedPages.length === 0) return;
+    if (state.currentStep !== "authoring") return;
+
+    const timer = setTimeout(async () => {
+      if (autoDraftFiredRef.current) return;
+
+      const empties = selectedPages.filter((p) => {
+        const auth = state.authoring[p.page_key];
+        const blocks = auth?.content;
+        return !Array.isArray(blocks) || blocks.length === 0;
+      });
+      if (empties.length === 0) {
+        autoDraftFiredRef.current = true;
+        return;
+      }
+
+      autoDraftFiredRef.current = true;
+      setAutoDraftStatus({ active: true, current: 0, total: empties.length, failed: [] });
+
+      const BATCH_SIZE = 5;
+      let completed = 0;
+      const failed: string[] = [];
+
+      for (let i = 0; i < empties.length; i += BATCH_SIZE) {
+        const batch = empties.slice(i, i + BATCH_SIZE);
+        const results = await Promise.allSettled(batch.map(async (page) => {
+          const { data, error } = await supabase.functions.invoke(
+            "draft-page-narrative",
+            {
+              body: {
+                pageSlug: page.page_key,
+                pageName: page.title,
+                propertyAddress: state.client.address,
+                yearBuilt: state.client.yearBuilt,
+                sqft: state.client.sqft,
+                bedrooms: state.client.bedrooms,
+                bathrooms: state.client.bathrooms,
+                propertyType: state.client.propertyType,
+                relationshipType: state.client.relationshipType,
+                clientIntelligenceSummary: state.client.discoveryNotes,
+              },
+            },
+          );
+          if (error) throw error;
+          return { page, data };
+        }));
+
+        for (let j = 0; j < results.length; j++) {
+          const r = results[j];
+          const page = batch[j];
+          completed += 1;
+          if (r.status === "fulfilled") {
+            const data = (r.value as { data: unknown }).data as {
+              narrative?: string[] | string;
+              key_observations?: string[];
+            } | null;
+            const narrative = Array.isArray(data?.narrative)
+              ? data!.narrative.filter((p) => typeof p === "string" && p.trim()).join("\n\n")
+              : (typeof data?.narrative === "string" ? data!.narrative.trim() : "");
+            const observations = Array.isArray(data?.key_observations)
+              ? data!.key_observations.filter((o) => typeof o === "string" && o.trim()).join("\n")
+              : "";
+            if (narrative) {
+              const content: Array<{ type: string; value: string }> = [
+                { type: "narrative", value: narrative },
+              ];
+              if (observations) {
+                content.push({ type: "observations", value: observations });
+              }
+              upsertAuthoring(page.page_key, { content, status: "draft" });
+            } else {
+              failed.push(page.title);
+            }
+          } else {
+            failed.push(page.title);
+          }
+        }
+        setAutoDraftStatus((s) => ({ ...s, current: completed, failed: [...failed] }));
+      }
+
+      setAutoDraftStatus((s) => ({ ...s, active: false }));
+    }, 600);
+
+    return () => clearTimeout(timer);
+    // Deliberately narrow deps so changes to authoring (from upsert)
+    // don't re-trigger the effect. autoDraftFiredRef gates the body.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPages.length, state.currentStep]);
 
   const activePage = selectedPages.find(
     (p) => p.page_key === state.activePageKey,
@@ -217,6 +330,39 @@ export function Step3Authoring() {
 
   return (
     <div className="space-y-4">
+      {autoDraftStatus.total > 0 && (
+        <Card className={`p-3 flex items-start gap-3 ${
+          autoDraftStatus.active
+            ? "border-accent/30 bg-accent/5"
+            : autoDraftStatus.failed.length > 0
+              ? "border-amber-300/40 bg-amber-50/40"
+              : "border-emerald-600/30 bg-emerald-50/30"
+        }`}>
+          {autoDraftStatus.active ? (
+            <Loader2 className="w-4 h-4 mt-0.5 animate-spin text-accent shrink-0" aria-hidden />
+          ) : autoDraftStatus.failed.length > 0 ? (
+            <Sparkles className="w-4 h-4 mt-0.5 text-amber-700 shrink-0" aria-hidden />
+          ) : (
+            <CheckCircle2 className="w-4 h-4 mt-0.5 text-emerald-600 shrink-0" aria-hidden />
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-sans font-medium text-foreground">
+              {autoDraftStatus.active
+                ? `AI is drafting page narratives — ${autoDraftStatus.current} of ${autoDraftStatus.total} done`
+                : autoDraftStatus.failed.length > 0
+                  ? `${autoDraftStatus.total - autoDraftStatus.failed.length} of ${autoDraftStatus.total} pages drafted (${autoDraftStatus.failed.length} need a manual retry)`
+                  : `All ${autoDraftStatus.total} empty pages drafted by AI`}
+            </div>
+            <div className="text-[10px] font-mono text-muted-foreground mt-0.5">
+              {autoDraftStatus.active
+                ? "Pages already drafted are ready to edit while the rest finish in the background."
+                : autoDraftStatus.failed.length > 0
+                  ? `Failed: ${autoDraftStatus.failed.slice(0, 3).join(" · ")}${autoDraftStatus.failed.length > 3 ? ` · +${autoDraftStatus.failed.length - 3} more` : ""}. Open each and use AI Co-Pilot to retry.`
+                  : "Edit + refine using the AI Co-Pilot panel below each page."}
+            </div>
+          </div>
+        </Card>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-4">
         {/* Left — Page nav sidebar */}
         <Card className="p-3 space-y-3 md:max-h-[calc(100vh-220px)] md:overflow-auto">
