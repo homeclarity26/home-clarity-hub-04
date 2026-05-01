@@ -394,7 +394,65 @@ export interface ClaudeOptions {
 
 const DEFAULT_CLAUDE_MODEL = "claude-sonnet-4-6";
 
+// ─────────────────────────────────────────────────────────────────────────
+// CI cost-savings switch.
+//
+// Golden Path tests on every push call ~7 Claude Sonnet 4.6 functions per run
+// (seed-report-from-notes, generate-scope, draft-page-narrative, etc.).
+// Sonnet is $3-15/MTok; Gemini Flash is essentially free. When a Golden
+// Path script invokes an edge function, it sets `x-ci-gemini: true` on the
+// inbound request. `_shared/auth.ts.requireAuth()` runs first on every
+// authed handler and captures that flag here, so by the time the handler
+// reaches `callClaude()` we know whether to route to Gemini Flash instead.
+//
+// Module-level state is shared across concurrent requests within the same
+// Supabase edge isolate. The race window: if a CI request and a real
+// production request interleave such that production's auth runs after
+// CI's auth set the flag true, that one production call routes to Gemini
+// instead of Claude. Blast radius: a single call falls through to the
+// same Gemini fallback that already kicks in on Anthropic 402/429/503.
+// Acceptable tradeoff for the cost reduction.
+//
+// `CI_USE_GEMINI=true` Deno env var is checked as a secondary gate but is
+// intentionally not set on Supabase secrets in production — it would route
+// every prod call to Gemini. Header is the active mechanism.
+// ─────────────────────────────────────────────────────────────────────────
+
+let _ciModeForCurrentRequest = false;
+
+export function setCIModeFromRequest(req: Request): void {
+  _ciModeForCurrentRequest = req.headers.get("x-ci-gemini") === "true";
+}
+
+function isCIMode(): boolean {
+  if (_ciModeForCurrentRequest) return true;
+  if (Deno.env.get("CI_USE_GEMINI") === "true") return true;
+  return false;
+}
+
 export async function callClaude(opts: ClaudeOptions): Promise<string> {
+  // CI cost-savings: when invoked by a Golden Path test (via the
+  // x-ci-gemini header) or when the CI_USE_GEMINI env var is set, skip
+  // Claude entirely and route to Gemini Flash. Same response shape so
+  // callers don't need to change. See the comment block above for
+  // rationale.
+  if (isCIMode()) {
+    console.log("CI mode: routing to Gemini");
+    const fallbackSystem = [opts.system, opts.cacheableContext].filter(Boolean).join("\n\n");
+    return callAI({
+      system: fallbackSystem,
+      prompt: opts.prompt,
+      messages: opts.messages?.map((m) => ({
+        role: m.role === "assistant" ? "model" : m.role,
+        content: m.content,
+      })) as AIOptions["messages"],
+      model: "google/gemini-2.5-flash",
+      json: opts.json,
+      temperature: opts.temperature,
+      maxOutputTokens: opts.maxOutputTokens,
+    });
+  }
+
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
 
   if (!apiKey) {

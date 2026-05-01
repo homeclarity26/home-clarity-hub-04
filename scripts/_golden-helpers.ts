@@ -130,9 +130,21 @@ export async function invokeFn<T = unknown>(
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), timeoutMs);
   try {
+    const headers: Record<string, string> = {
+      "apikey": ctx.anonKey,
+      "Authorization": `Bearer ${userJWT}`,
+      "Content-Type": "application/json",
+    };
+    // CI cost-savings: when CI_USE_GEMINI=true (set by the GitHub Actions
+    // workflow on the AI-dependent matrix), tell the edge function to
+    // route Claude calls to Gemini Flash instead. _shared/auth.ts reads
+    // this header and stashes the flag for callClaude() to pick up.
+    if (process.env.CI_USE_GEMINI === "true") {
+      headers["x-ci-gemini"] = "true";
+    }
     const res = await fetch(`${ctx.supabaseUrl}/functions/v1/${fn}`, {
       method: "POST",
-      headers: { "apikey": ctx.anonKey, "Authorization": `Bearer ${userJWT}`, "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(body),
       signal: ac.signal,
     });
