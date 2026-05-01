@@ -11,6 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ReportBlock } from "@/components/wysiwyg/types";
+import { buildDefaultFieldChecklist } from "@/components/admin/wizard/field-checklist-defaults";
 
 // ─── Wizard state shape (covers all 5 steps) ─────────────────────────────
 //
@@ -239,7 +240,7 @@ const initialState: WizardState = {
   intakeFindings: [],
   clarifyingQuestions: [],
   clarifyingAnswers: {},
-  fieldChecklist: [],
+  fieldChecklist: buildDefaultFieldChecklist(),
   tocSections: [],
   tocReasoning: null,
   authoring: {},
@@ -617,7 +618,11 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         >;
       }
       if (Array.isArray(envelope.field_checklist)) {
-        next.fieldChecklist = envelope.field_checklist as ChecklistItem[];
+        const persisted = envelope.field_checklist as ChecklistItem[];
+        // Pre-checklist-defaults drafts have an empty list. Seed defaults
+        // on resume so the consultant gets the same prompts every visit.
+        next.fieldChecklist =
+          persisted.length > 0 ? persisted : buildDefaultFieldChecklist();
       }
       if (Array.isArray(envelope.findings)) {
         next.intakeFindings = envelope.findings as IntakeFinding[];

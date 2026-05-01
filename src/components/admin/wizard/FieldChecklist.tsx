@@ -17,7 +17,11 @@ interface FieldChecklistProps {
 }
 
 export function FieldChecklist({ items, onChange }: FieldChecklistProps) {
-  const [expanded, setExpanded] = useState(false);
+  // Default to expanded whenever the list is pre-populated. The default
+  // checklist is the consultant's walkthrough script — hiding it would
+  // defeat the purpose. Empty list (legacy drafts that opted out) stays
+  // collapsed so it doesn't take up space.
+  const [expanded, setExpanded] = useState(items.length > 0);
   const [draft, setDraft] = useState("");
 
   const checkedCount = items.filter((i) => i.checked).length;
