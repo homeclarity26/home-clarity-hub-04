@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { Camera, Upload, Search, Filter, Sparkles, Eye, EyeOff, X, ChevronLeft, ChevronRight, Tag, Loader2, Image as ImageIcon } from "lucide-react";
+import { Camera, Upload, Search, Filter, Sparkles, Eye, EyeOff, X, ChevronLeft, ChevronRight, Tag, Loader2, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,15 @@ const CATEGORY_COLORS: Record<string, string> = {
   damage: "bg-red-500/10 text-red-700 border-red-200",
   other: "bg-muted text-muted-foreground border-border",
 };
+
+// Sentinel tag stored in property_photos.tags whenever the AI Categorize
+// flow set the category. Stripped on the next user override (or explicit
+// Confirm tap) so the badge disappears once the consultant has reviewed.
+const AI_SUGGESTED_TAG = "ai-suggested";
+
+function isAISuggested(photo: { tags?: string[] | null }): boolean {
+  return Array.isArray(photo.tags) && photo.tags.includes(AI_SUGGESTED_TAG);
+}
 
 type PropertyPhoto = {
   id: string;
@@ -162,10 +171,38 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
   };
 
   const updatePhoto = async (id: string, updates: Record<string, unknown>) => {
-    await supabase.from("property_photos").update(updates).eq("id", id);
+    // When the user manually changes the category, strip the "ai-suggested"
+    // tag — that change is their explicit confirmation, so the badge
+    // should disappear. Same for room_or_area edits since those are part
+    // of the AI's auto-sort.
+    let patch = updates;
+    if (
+      ("category" in updates || "room_or_area" in updates) &&
+      lightboxPhoto?.id === id &&
+      isAISuggested(lightboxPhoto)
+    ) {
+      patch = {
+        ...updates,
+        tags: (lightboxPhoto.tags || []).filter((t) => t !== AI_SUGGESTED_TAG),
+      };
+    }
+    await supabase.from("property_photos").update(patch).eq("id", id);
     qc.invalidateQueries({ queryKey: ["property-photos", propertyId] });
     if (lightboxPhoto?.id === id) {
-      setLightboxPhoto({ ...lightboxPhoto, ...updates } as PropertyPhoto);
+      setLightboxPhoto({ ...lightboxPhoto, ...patch } as PropertyPhoto);
+    }
+  };
+
+  // Manual confirm — removes the AI badge without changing anything else.
+  // Useful when the AI got it right and the consultant just wants to
+  // acknowledge it before moving on.
+  const confirmAISuggestion = async (photo: PropertyPhoto) => {
+    if (!isAISuggested(photo)) return;
+    const nextTags = (photo.tags || []).filter((t) => t !== AI_SUGGESTED_TAG);
+    await supabase.from("property_photos").update({ tags: nextTags }).eq("id", photo.id);
+    qc.invalidateQueries({ queryKey: ["property-photos", propertyId] });
+    if (lightboxPhoto?.id === photo.id) {
+      setLightboxPhoto({ ...lightboxPhoto, tags: nextTags } as PropertyPhoto);
     }
   };
 
@@ -193,7 +230,13 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
           if (!error && data) {
             const category = data.category || "other";
             const room = data.room_or_area || data.pageSlug || null;
-            const tags = data.tags || [];
+            // Stamp ai-suggested tag so the consultant sees a badge on
+            // anything the AI categorized — they confirm by editing a
+            // field or clicking the check icon, which strips the tag.
+            const aiTags = data.tags || [];
+            const tags = aiTags.includes(AI_SUGGESTED_TAG)
+              ? aiTags
+              : [AI_SUGGESTED_TAG, ...aiTags];
             await supabase.from("property_photos")
               .update({ category, room_or_area: room, tags })
               .eq("id", photo.id);
@@ -353,10 +396,17 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
                   loading="lazy"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline" className={`text-[8px] font-mono ${CATEGORY_COLORS[photo.category] || CATEGORY_COLORS.other}`}>
-                      {photo.category}
-                    </Badge>
+                  <div className="flex items-center justify-between gap-1">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <Badge variant="outline" className={`text-[8px] font-mono ${CATEGORY_COLORS[photo.category] || CATEGORY_COLORS.other}`}>
+                        {photo.category}
+                      </Badge>
+                      {isAISuggested(photo) && (
+                        <Badge variant="outline" className="text-[8px] font-mono bg-accent/15 text-accent border-accent/30" title="AI suggested this category — open to review or override">
+                          <Sparkles className="w-2.5 h-2.5 mr-0.5" aria-hidden /> AI
+                        </Badge>
+                      )}
+                    </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleVisibility(photo); }}
                       className="text-white/70 hover:text-white"
@@ -407,7 +457,21 @@ const PhotoManager = ({ propertyId, reportPages, projects }: PhotoManagerProps) 
                   />
                 </div>
                 <div>
-                  <Label className="text-[10px] font-mono uppercase text-muted-foreground">Category</Label>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label className="text-[10px] font-mono uppercase text-muted-foreground">Category</Label>
+                    {isAISuggested(lightboxPhoto) && (
+                      <button
+                        type="button"
+                        onClick={() => confirmAISuggestion(lightboxPhoto)}
+                        className="flex items-center gap-1 text-[10px] font-mono text-accent hover:text-accent/80"
+                        title="Confirm AI choice and remove the badge"
+                      >
+                        <Sparkles className="w-3 h-3" aria-hidden />
+                        AI suggested
+                        <CheckCircle2 className="w-3 h-3" aria-hidden />
+                      </button>
+                    )}
+                  </div>
                   <Select value={lightboxPhoto.category} onValueChange={(v) => updatePhoto(lightboxPhoto.id, { category: v })}>
                     <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
