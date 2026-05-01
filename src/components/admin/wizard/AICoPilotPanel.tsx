@@ -7,7 +7,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, Mic, MicOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +15,19 @@ import { toast } from "@/hooks/use-toast";
 import { getDraftObservationsPrompt } from "./copilot-prompts";
 
 type AiMode = "expand" | "tighten" | "match_brand_voice";
+
+// Loose typing for the Web Speech API — TS lib doesn't ship its types,
+// and the only fields we touch are these.
+interface SpeechRecognitionLike {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  onresult: ((e: { results: ArrayLike<{ readonly 0: { transcript: string }; readonly isFinal: boolean }> }) => void) | null;
+  onend: (() => void) | null;
+  onerror: ((e: { error: string }) => void) | null;
+}
 
 interface AICoPilotPanelProps {
   pageType: "room" | "system" | "vision" | "executive_summary" | "generic";
@@ -54,6 +67,76 @@ export function AICoPilotPanel({
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [prompt, setPrompt] = useState("");
   const [reply, setReply] = useState<string | null>(null);
+  // Web Speech API state for voice-to-text on the prompt textarea.
+  // Browser-only, no backend needed. Chrome and Edge support out of
+  // the box; Safari/Firefox surface an empty constructor and we toast
+  // a helpful message.
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+
+  // Stop any in-flight voice recognition on unmount so it doesn't keep
+  // running after the consultant navigates to a different page.
+  useEffect(
+    () => () => {
+      try { recognitionRef.current?.stop(); } catch { /* noop */ }
+    },
+    [],
+  );
+
+  const toggleVoice = () => {
+    const w = window as unknown as {
+      SpeechRecognition?: new () => SpeechRecognitionLike;
+      webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+    };
+    const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
+    if (!Ctor) {
+      toast({
+        title: "Voice input not supported",
+        description: "Try Chrome or Edge for voice input on this textarea.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (listening && recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch { /* noop */ }
+      return;
+    }
+    const rec = new Ctor();
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.lang = "en-US";
+    rec.onresult = (e) => {
+      let chunk = "";
+      for (let i = 0; i < e.results.length; i += 1) {
+        if (e.results[i].isFinal) chunk += e.results[i][0].transcript + " ";
+      }
+      if (chunk.trim()) {
+        setPrompt((p) => (p ? p + " " + chunk.trim() : chunk.trim()));
+      }
+    };
+    rec.onend = () => {
+      setListening(false);
+      recognitionRef.current = null;
+    };
+    rec.onerror = (e) => {
+      setListening(false);
+      recognitionRef.current = null;
+      // "no-speech" fires routinely when the user pauses; don't bother them.
+      if (e.error && e.error !== "no-speech" && e.error !== "aborted") {
+        toast({ title: "Voice input error", description: e.error, variant: "destructive" });
+      }
+    };
+    recognitionRef.current = rec;
+    setListening(true);
+    try {
+      rec.start();
+    } catch {
+      // start() throws "InvalidStateError" if already running — surface
+      // gracefully so a double-click doesn't crash the panel.
+      setListening(false);
+      recognitionRef.current = null;
+    }
+  };
 
   useEffect(
     () => () => {
@@ -307,7 +390,24 @@ export function AICoPilotPanel({
           className="text-xs"
           disabled={isWorking}
         />
-        <div className="flex justify-end">
+        <div className="flex justify-end items-center gap-2">
+          <Button
+            type="button"
+            variant={listening ? "destructive" : "outline"}
+            size="sm"
+            onClick={toggleVoice}
+            disabled={isWorking}
+            className="min-h-[40px] gap-1.5"
+            title={listening ? "Stop listening" : "Talk to the co-pilot"}
+            aria-pressed={listening}
+          >
+            {listening ? (
+              <MicOff className="w-3.5 h-3.5" aria-hidden />
+            ) : (
+              <Mic className="w-3.5 h-3.5" aria-hidden />
+            )}
+            {listening ? "Listening..." : "Voice"}
+          </Button>
           <Button
             type="button"
             size="sm"
