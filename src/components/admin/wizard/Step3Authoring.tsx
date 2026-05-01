@@ -93,6 +93,42 @@ export function Step3Authoring() {
     }
   }, [selectedPages, state.activePageKey, setActivePageKey]);
 
+  // Hydrate any selected page that lacks authoring content from a
+  // matching seed produced by Step 1's stage-2 AI run. Runs once per
+  // (selectedPages, pageSeeds) change. Pages already touched by the
+  // consultant are skipped — never overwrite typed content. Pages
+  // without a matching seed stay empty (no seed available; consultant
+  // uses AI Co-Pilot per page).
+  useEffect(() => {
+    if (selectedPages.length === 0 || state.pageSeeds.length === 0) return;
+    const seedByKey = new Map<string, typeof state.pageSeeds[number]>();
+    for (const s of state.pageSeeds) {
+      if (s.page_key) seedByKey.set(s.page_key, s);
+    }
+    for (const page of selectedPages) {
+      const existing = state.authoring[page.page_key];
+      const hasContent =
+        Array.isArray(existing?.content) && existing!.content.length > 0;
+      if (hasContent) continue;
+      const seed = seedByKey.get(page.page_key);
+      if (!seed) continue;
+      const content: Array<{ type: string; value: string }> = [];
+      if (seed.narrative_seed && seed.narrative_seed.trim().length > 0) {
+        content.push({ type: "narrative", value: seed.narrative_seed.trim() });
+      }
+      const obs = (seed.key_observations || []).filter((o) => o && o.trim().length > 0);
+      if (obs.length > 0) {
+        content.push({ type: "observations", value: obs.join("\n") });
+      }
+      if (content.length > 0) {
+        upsertAuthoring(page.page_key, { content, status: "draft" });
+      }
+    }
+    // upsertAuthoring is stable from useCallback; only re-run when seeds or
+    // selected pages actually change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPages, state.pageSeeds]);
+
   const activePage = selectedPages.find(
     (p) => p.page_key === state.activePageKey,
   );

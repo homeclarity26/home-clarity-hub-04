@@ -95,6 +95,22 @@ export interface IntakeFinding {
   bullets: string[];
 }
 
+// Per-page seed returned by seed-report-from-notes stage 2. Each holds
+// a starter narrative + observations the AI inferred from the intake.
+// Used by Step 3 Authoring to pre-populate matching pages so the
+// consultant edits instead of writing from scratch.
+export interface PageSeed {
+  page_key: string;
+  title: string;
+  group?: string;
+  suggested_condition?: string;
+  key_observations?: string[];
+  narrative_seed?: string;
+  specs_seed?: { label: string; value: string }[];
+  priority?: boolean;
+  replacement_briefing_stub?: Record<string, unknown> | null;
+}
+
 export interface ClarifyingQuestion {
   id: string;
   question: string;
@@ -180,6 +196,12 @@ export interface WizardState {
   iguideUrl: string;
   anythingElse: string;
   intakeFindings: IntakeFinding[];
+  /**
+   * Per-page seeds from seed-report-from-notes stage 2. Step 3 Authoring
+   * reads this to pre-populate matching pages with AI-drafted narrative
+   * + observations so the consultant doesn't start from a blank page.
+   */
+  pageSeeds: PageSeed[];
   clarifyingQuestions: ClarifyingQuestion[];
   clarifyingAnswers: Record<string, string>;
   fieldChecklist: ChecklistItem[];
@@ -238,6 +260,7 @@ const initialState: WizardState = {
   iguideUrl: "",
   anythingElse: "",
   intakeFindings: [],
+  pageSeeds: [],
   clarifyingQuestions: [],
   clarifyingAnswers: {},
   fieldChecklist: buildDefaultFieldChecklist(),
@@ -275,6 +298,7 @@ interface WizardContextValue {
   setHoverUrl: (next: string) => void;
   setIguideUrl: (next: string) => void;
   setFindings: (next: IntakeFinding[]) => void;
+  setPageSeeds: (next: PageSeed[]) => void;
   setClarifyingQuestions: (next: ClarifyingQuestion[]) => void;
   answerClarifyingQuestion: (id: string, optionId: string) => void;
   setFieldChecklist: (next: ChecklistItem[]) => void;
@@ -326,6 +350,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       clarifying_answers: s.clarifyingAnswers,
       field_checklist: s.fieldChecklist,
       findings: s.intakeFindings,
+      page_seeds: s.pageSeeds,
       toc_sections: s.tocSections,
       toc_reasoning: s.tocReasoning,
       authoring: s.authoring,
@@ -446,6 +471,10 @@ export function WizardProvider({ children }: { children: ReactNode }) {
 
   const setFindings = useCallback((next: IntakeFinding[]) => {
     setState((prev) => ({ ...prev, intakeFindings: next }));
+  }, []);
+
+  const setPageSeeds = useCallback((next: PageSeed[]) => {
+    setState((prev) => ({ ...prev, pageSeeds: next }));
   }, []);
 
   const setClarifyingQuestions = useCallback((next: ClarifyingQuestion[]) => {
@@ -626,6 +655,9 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       }
       if (Array.isArray(envelope.findings)) {
         next.intakeFindings = envelope.findings as IntakeFinding[];
+      }
+      if (Array.isArray(envelope.page_seeds)) {
+        next.pageSeeds = envelope.page_seeds as PageSeed[];
       }
       if (Array.isArray(envelope.toc_sections)) {
         next.tocSections = envelope.toc_sections as TocSection[];
@@ -826,6 +858,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       setHoverUrl,
       setIguideUrl,
       setFindings,
+      setPageSeeds,
       setClarifyingQuestions,
       answerClarifyingQuestion,
       setFieldChecklist,
@@ -859,6 +892,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       setHoverUrl,
       setIguideUrl,
       setFindings,
+      setPageSeeds,
       setClarifyingQuestions,
       answerClarifyingQuestion,
       setFieldChecklist,
