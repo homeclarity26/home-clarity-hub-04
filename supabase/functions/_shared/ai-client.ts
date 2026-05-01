@@ -617,6 +617,27 @@ export async function callClaude(opts: ClaudeOptions): Promise<string> {
         maxOutputTokens: opts.maxOutputTokens,
       });
     }
+    // 2026-05-01: Anthropic now returns HTTP 400 (not 402) when the org's
+    // credit balance is too low; the credit-exhausted message lives in the
+    // body. Detect by status + message and fall back to Gemini so CI and
+    // production stay green during a billing lapse. Pattern is the same
+    // shipped for 402 in PR #124 and 401/403 in PR #132.
+    if (res.status === 400 && /credit balance is too low/i.test(err)) {
+      console.warn("callClaude: Anthropic 400 with credit-exhausted body — falling back to Gemini flash");
+      const fallbackSystem400 = [opts.system, opts.cacheableContext].filter(Boolean).join("\n\n");
+      return callAI({
+        system: fallbackSystem400,
+        prompt: opts.prompt,
+        messages: opts.messages?.map((m) => ({
+          role: m.role === "assistant" ? "model" : m.role,
+          content: m.content,
+        })) as AIOptions["messages"],
+        model: "google/gemini-2.5-flash",
+        json: opts.json,
+        temperature: opts.temperature,
+        maxOutputTokens: opts.maxOutputTokens,
+      });
+    }
     throw new Error(`Anthropic API error ${res.status}: ${err}`);
   }
 
