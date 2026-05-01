@@ -1,24 +1,62 @@
 name: Golden Path
 
+# Three-tier strategy:
+#   Tier 1 (always): build, typecheck, static-integrity. ~60-90s. Cheap.
+#   Tier 2 (path-gated): DB/RLS scripts. Only when src/, supabase/, scripts/ change.
+#   Tier 3 (path-gated): AI scripts. Only when supabase/functions/, golden-path*.ts,
+#                        or workflows change. CI_USE_GEMINI routes Claude→Gemini Flash.
+#
+# Daily 12:00 UTC schedule and the workflow_dispatch "run_full_suite" toggle
+# both bypass path filters and run every tier.
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-  # Daily run at 12:00 UTC so upstream AI / Supabase regressions surface within 24h.
   schedule:
     - cron: '0 12 * * *'
-  # Hand-run button in the Actions tab.
   workflow_dispatch:
+    inputs:
+      run_full_suite:
+        description: 'Run all tiers regardless of path changes'
+        type: boolean
+        default: true
 
 concurrency:
   group: golden-path-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # --- 1. Build is the cheapest layer; fail fast if tsc/vite is broken. ---
-  build:
-    name: Build
+  # --- Path-change detection. Outputs feed Tier 2/3 if: conditions. ---
+  changes:
+    name: Detect path changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      ai: ${{ steps.filter.outputs.ai }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'supabase/**'
+              - 'src/**'
+              - 'scripts/**'
+            ai:
+              - 'supabase/functions/**'
+              - 'scripts/golden-path*.ts'
+              - '.github/workflows/**'
+
+  # =========================================================================
+  # TIER 1 — Static checks. Always run. ~60-90s end-to-end.
+  # =========================================================================
+
+  tier1-build:
+    name: Tier 1 — Build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -29,11 +67,62 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run build
 
-  # --- 2. Deterministic flows (no AI dependency). Must always be green. ---
-  deterministic:
-    name: Deterministic Golden Paths
+  tier1-typecheck:
+    name: Tier 1 — Typecheck
     runs-on: ubuntu-latest
-    needs: build
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: npx tsc --noEmit
+
+  tier1-static-integrity:
+    name: Tier 1 — Static integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      # Test 57 in static-integrity invokes hbc-agent (Gemini-native). The
+      # CI_USE_GEMINI flag also routes any callClaude() through Gemini Flash
+      # so this tier never burns Anthropic credit.
+      CI_USE_GEMINI: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Run static-integrity (3 retries — test 57 hits hbc-agent)
+        run: |
+          for attempt in 1 2 3; do
+            echo "::group::Attempt $attempt"
+            if bun scripts/golden-path-static-integrity.ts; then
+              echo "::endgroup::"
+              exit 0
+            fi
+            echo "::endgroup::"
+            echo "Attempt $attempt failed; sleeping 20s before retry…"
+            sleep 20
+          done
+          echo "All 3 attempts failed — a real regression, not AI flake."
+          exit 1
+
+  # =========================================================================
+  # TIER 2 — Deterministic Golden Paths (DB / RLS). Path-gated.
+  # =========================================================================
+  tier2-deterministic:
+    name: Tier 2 — Deterministic Golden Paths
+    runs-on: ubuntu-latest
+    needs: [changes, tier1-build]
+    if: |
+      needs.changes.outputs.backend == 'true' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_suite)
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -43,7 +132,6 @@ jobs:
           - proposal
           - equipment-schedule
           - rls
-          - quality-controls
           - mobile
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -58,42 +146,42 @@ jobs:
       - name: Run Golden Path (${{ matrix.flow }})
         run: bun scripts/golden-path-${{ matrix.flow }}.ts
 
-  # --- 3. AI-dependent flows. Allowed to flake once (transient Gemini/Claude
-  # 500s shouldn't red-bar the whole suite on every deploy), but must still
-  # pass within 3 tries. If the third attempt fails, something real is
-  # broken. ---
-  ai-dependent:
-    name: AI-dependent Golden Paths
+  # =========================================================================
+  # TIER 3 — AI-dependent Golden Paths. Path-gated. Up to 3 retries per flow
+  # so transient Gemini/Claude 5xx don't red-bar the suite. CI_USE_GEMINI
+  # keeps the spend in Gemini Flash territory.
+  # =========================================================================
+  tier3-ai:
+    name: Tier 3 — AI-dependent Golden Paths
     runs-on: ubuntu-latest
-    needs: build
+    needs: [changes, tier1-build]
+    if: |
+      needs.changes.outputs.ai == 'true' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_suite)
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
         include:
-          - flow: core          # the canonical auth→seed→publish→invoice→portal
+          - flow: core
             script: scripts/golden-path.ts
           - flow: ai-writing
             script: scripts/golden-path-ai-writing.ts
           - flow: learning
             script: scripts/golden-path-learning.ts
-          - flow: photos        # Gemini vision — allow up to 3 attempts for model load spikes
-            script: scripts/golden-path-photos.ts
-          - flow: wizard        # tests 48-50 all call AI (seed-report-from-notes, daily-brief, ai-edit)
-            script: scripts/golden-path-wizard.ts
-          - flow: content-ops   # test 51 calls ai-edit — needs retry tolerance
+          - flow: content-ops
             script: scripts/golden-path-content-ops.ts
-          - flow: static-integrity  # test 57 calls hbc-agent — needs retry tolerance
-            script: scripts/golden-path-static-integrity.ts
+          - flow: quality-controls
+            script: scripts/golden-path-quality-controls.ts
+          - flow: photos
+            script: scripts/golden-path-photos.ts
+          - flow: wizard
+            script: scripts/golden-path-wizard.ts
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      # CI cost-savings: tell golden-path scripts to send `x-ci-gemini: true`
-      # on every edge-function invocation. `_shared/auth.ts` captures the
-      # header and `_shared/ai-client.ts.callClaude()` routes to Gemini
-      # Flash instead of Claude Sonnet. Set ONLY here — never on Supabase
-      # secrets or production .env, or all prod calls would skip Claude.
       CI_USE_GEMINI: "true"
     steps:
       - uses: actions/checkout@v4
