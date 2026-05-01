@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
 import { callClaude, parseJSON, type ClaudeInlineDocument } from "../_shared/ai-client.ts";
 import { retrieveContext } from "../_shared/rag.ts";
+import { findTemplateForPage } from "../_shared/page-type-templates.ts";
 
 // Fetch a photo URL and encode as a Claude image document (base64 +
 // detected MIME). Used by redraft mode so Claude can SEE the new photo
@@ -216,7 +217,20 @@ Return ONLY a JSON object with this exact shape (no preamble, no markdown):
       ? Object.entries(existingSpecs).map(([k, v]) => `${k}: ${v}`).join(", ")
       : "none provided";
 
-    const systemInstruction = `You are an expert home consultant writing professional report content for Home Clarity Hub. Your writing is clear, authoritative, and client-friendly — no jargon, plain English, but with the confidence of a knowledgeable advisor.
+    // Page-type structural template — locks the SHAPE of the narrative
+    // (what topics, in what order, with what vocabulary) so every Roof
+    // page across every report follows the same pattern. Falls back to
+    // a generic instruction if no template matches the slug/name.
+    const template = findTemplateForPage(pageSlug, pageName);
+    const templateBlock = template
+      ? `\n\nSTRUCTURAL TEMPLATE for this page type (${template.id}):\n${template.structureGuidance}${
+          template.vocabularyHints && template.vocabularyHints.length > 0
+            ? `\n\nVocabulary hints (use when relevant): ${template.vocabularyHints.join(", ")}`
+            : ""
+        }`
+      : "";
+
+    const systemInstruction = `You are an expert home consultant writing professional report content for Home Clarity Hub. Your writing is clear, authoritative, and client-friendly — no jargon, plain English, but with the confidence of a knowledgeable advisor. Never use em-dashes; use commas, semicolons, or short sentences.
 
 Write a narrative section for the "${pageName}" page of a home assessment report. The narrative should:
 1. Describe the current state of this system/space based on available context
@@ -241,7 +255,7 @@ Known specs: ${specsStr}
 ${clientIntelligenceSummary ? `Client intelligence summary:\n${clientIntelligenceSummary}` : ""}
 ${clientGoals?.length ? `Client goals: ${clientGoals.join("; ")}` : ""}
 ${clientPriorities?.length ? `Flagged priorities: ${clientPriorities.join("; ")}` : ""}
-${kbContext}
+${kbContext}${templateBlock}
 
 Return a JSON object with:
 - "narrative": array of 2-3 paragraph strings
