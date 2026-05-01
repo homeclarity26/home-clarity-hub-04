@@ -190,6 +190,76 @@ export function Step5Publish() {
         if (urlErr) console.warn("[Step5Publish] hover/iguide URL persist failed", urlErr);
       }
 
+      // Migrate intake files (Hover/iGUIDE PDFs, transcripts, site notes,
+      // photos) from the private wizard-uploads bucket into the public
+      // report-images bucket + client_files table so they appear on the
+      // client portal's Documents tab — downloadable + shareable. Auto-
+      // detects category by filename so Hover/iGUIDE PDFs are easy to
+      // find. Failures are non-fatal (warn, continue) so a single bad
+      // file doesn't block publish.
+      if (state.propertyId) {
+        const allIntakeFiles = [
+          ...state.intakeUploads.transcript,
+          ...state.intakeUploads.site_notes,
+          ...state.intakeUploads.photos,
+          ...state.intakeUploads.hover,
+          ...state.intakeUploads.iguide,
+        ].filter((f) => f.storage_path && f.bucket);
+
+        for (const file of allIntakeFiles) {
+          try {
+            const { data: blob, error: dlErr } = await supabase.storage
+              .from(file.bucket!)
+              .download(file.storage_path!);
+            if (dlErr || !blob) continue;
+
+            const newPath = `${state.propertyId}/documents/${Date.now()}-${file.name}`;
+            const { error: upErr } = await supabase.storage
+              .from("report-images")
+              .upload(newPath, blob, {
+                contentType: file.mime,
+                upsert: false,
+              });
+            if (upErr) continue;
+
+            const lcName = file.name.toLowerCase();
+            let category = "General";
+            if (lcName.includes("hover")) category = "hover.to";
+            else if (lcName.includes("iguide")) category = "iGUIDE";
+            else if (lcName.includes("transcript")) category = "Walkthrough";
+            else if (lcName.includes("discovery")) category = "Discovery Call";
+            else if (lcName.includes("walkthrough") || lcName.includes("walk-through")) category = "Walkthrough";
+            else if (file.mime.startsWith("image/")) category = "Interior Photos";
+
+            const fileType = file.mime.startsWith("image/")
+              ? "image"
+              : file.mime.startsWith("audio/")
+                ? "audio"
+                : file.mime === "application/pdf"
+                  ? "pdf"
+                  : "document";
+
+            const sizeStr =
+              file.size < 1024
+                ? `${file.size} B`
+                : file.size < 1048576
+                  ? `${(file.size / 1024).toFixed(1)} KB`
+                  : `${(file.size / 1048576).toFixed(1)} MB`;
+
+            await supabase.from("client_files").insert({
+              property_id: state.propertyId,
+              file_name: file.name,
+              category,
+              storage_path: newPath,
+              file_type: fileType,
+              file_size: sizeStr,
+            });
+          } catch (err) {
+            console.warn("[Step5Publish] intake file migration failed for", file.name, err);
+          }
+        }
+      }
+
       if (state.propertyId) {
         const { data: prop } = await supabase
           .from("properties")
