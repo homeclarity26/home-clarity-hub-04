@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, Loader2, AlertCircle, Link as LinkIcon, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useWizard, type IntakeFinding, type ClarifyingQuestion } from "@/contexts/WizardContext";
+import { useWizard, type IntakeFinding, type ClarifyingQuestion, type PageSeed } from "@/contexts/WizardContext";
 import { IntakeUploadCard } from "./IntakeUploadCard";
 import { FieldChecklist } from "./FieldChecklist";
 import { AIClarifyingQuestions } from "./AIClarifyingQuestions";
@@ -80,6 +80,7 @@ export function Step1Intake() {
     setHoverUrl,
     setIguideUrl,
     setFindings,
+    setPageSeeds,
     setClarifyingQuestions,
     answerClarifyingQuestion,
     setFieldChecklist,
@@ -239,9 +240,20 @@ export function Step1Intake() {
       );
       if (sErr) throw sErr;
       setFindings(parseFindings(sData));
+      // Save the per-page seeds (narrative + observations) so Step 3
+      // Authoring can pre-populate matching pages. Without this, the
+      // AI's draft narratives are silently dropped and consultants
+      // see empty pages.
+      const rawSeeds = (sData as Record<string, unknown> | null)?.page_seeds;
+      const seeds: PageSeed[] = Array.isArray(rawSeeds)
+        ? (rawSeeds as PageSeed[]).filter((s) => s && typeof s.page_key === "string")
+        : [];
+      setPageSeeds(seeds);
       toast({
         title: "Intake analyzed",
-        description: "Findings and clarifying questions are ready below.",
+        description: seeds.length > 0
+          ? `Findings ready, plus ${seeds.length} page draft${seeds.length === 1 ? "" : "s"} prepared for Step 3.`
+          : "Findings and clarifying questions are ready below.",
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
