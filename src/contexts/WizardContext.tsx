@@ -170,6 +170,52 @@ export interface StrategyState {
   recurring_register_built: boolean;
 }
 
+// 10-year capital plan returned by generate-capital-plan. Step 4 auto-fires
+// the generator on mount; the consultant edits inline and the envelope
+// roundtrips it on resume.
+export interface CapitalPlanYear {
+  year: number;
+  phase: "defense" | "offense" | "expansion";
+  project: string;
+  ballpark_low: number;
+  ballpark_high: number;
+  rationale: string;
+}
+
+export interface CapitalPlan {
+  years: CapitalPlanYear[];
+  total_low: number;
+  total_high: number;
+}
+
+// Four-season maintenance calendar from generate-maintenance-calendar.
+export interface MaintenanceTask {
+  task: string;
+  system: string;
+  frequency: string;
+}
+
+export interface MaintenanceCalendar {
+  winter: MaintenanceTask[];
+  spring: MaintenanceTask[];
+  summer: MaintenanceTask[];
+  fall: MaintenanceTask[];
+}
+
+// One row in the auto-generated recurring services preview shown on Step 4.
+// Mirrors the proposal shape from generate-recurring-services-register so
+// the consultant can refine inline before publish writes the actual
+// recurring_services rows.
+export interface RecurringServicePreview {
+  category: string;
+  service_name: string;
+  vendor_name: string | null;
+  frequency: string;
+  cost_per_visit: number | null;
+  annual_cost: number | null;
+  hbc_managed: boolean;
+}
+
 // W5 — Publish acknowledgments.
 export interface QualityGateAck {
   question_id: string;
@@ -216,6 +262,9 @@ export interface WizardState {
 
   // Step 4
   strategy: StrategyState;
+  capitalPlan: CapitalPlan | null;
+  maintenanceCalendar: MaintenanceCalendar | null;
+  recurringServicesPreview: RecurringServicePreview[];
 
   // Step 5
   qaAcknowledgments: QualityGateAck[];
@@ -274,6 +323,9 @@ const initialState: WizardState = {
     expansion_project_ids: [],
     recurring_register_built: false,
   },
+  capitalPlan: null,
+  maintenanceCalendar: null,
+  recurringServicesPreview: [],
   qaAcknowledgments: [],
   publishedAt: null,
 };
@@ -311,6 +363,9 @@ interface WizardContextValue {
   upsertAuthoring: (page_key: string, patch: Partial<PageAuthoring>) => void;
   setActivePageKey: (next: string | null) => void;
   setStrategy: (patch: Partial<StrategyState>) => void;
+  setCapitalPlan: (next: CapitalPlan | null) => void;
+  setMaintenanceCalendar: (next: MaintenanceCalendar | null) => void;
+  setRecurringServicesPreview: (next: RecurringServicePreview[]) => void;
   acknowledgeQuestion: (ack: QualityGateAck) => void;
   goToStep: (next: WizardStepKey) => Promise<void>;
   setReportId: (next: string | null) => void;
@@ -356,6 +411,9 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       authoring: s.authoring,
       active_page_key: s.activePageKey,
       strategy: s.strategy,
+      capital_plan: s.capitalPlan,
+      maintenance_calendar: s.maintenanceCalendar,
+      recurring_services_preview: s.recurringServicesPreview,
       qa_acknowledgments: s.qaAcknowledgments,
       published_at: s.publishedAt,
     } as Record<string, unknown>;
@@ -679,6 +737,24 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, strategy: { ...prev.strategy, ...patch } }));
   }, []);
 
+  const setCapitalPlan = useCallback((next: CapitalPlan | null) => {
+    setState((prev) => ({ ...prev, capitalPlan: next }));
+  }, []);
+
+  const setMaintenanceCalendar = useCallback(
+    (next: MaintenanceCalendar | null) => {
+      setState((prev) => ({ ...prev, maintenanceCalendar: next }));
+    },
+    [],
+  );
+
+  const setRecurringServicesPreview = useCallback(
+    (next: RecurringServicePreview[]) => {
+      setState((prev) => ({ ...prev, recurringServicesPreview: next }));
+    },
+    [],
+  );
+
   const acknowledgeQuestion = useCallback((ack: QualityGateAck) => {
     setState((prev) => {
       const without = prev.qaAcknowledgments.filter(
@@ -784,6 +860,23 @@ export function WizardProvider({ children }: { children: ReactNode }) {
           ...next.strategy,
           ...(envelope.strategy as Partial<StrategyState>),
         };
+      }
+      if (envelope.capital_plan === null) {
+        next.capitalPlan = null;
+      } else if (envelope.capital_plan && typeof envelope.capital_plan === "object") {
+        next.capitalPlan = envelope.capital_plan as CapitalPlan;
+      }
+      if (envelope.maintenance_calendar === null) {
+        next.maintenanceCalendar = null;
+      } else if (
+        envelope.maintenance_calendar &&
+        typeof envelope.maintenance_calendar === "object"
+      ) {
+        next.maintenanceCalendar = envelope.maintenance_calendar as MaintenanceCalendar;
+      }
+      if (Array.isArray(envelope.recurring_services_preview)) {
+        next.recurringServicesPreview =
+          envelope.recurring_services_preview as RecurringServicePreview[];
       }
       if (Array.isArray(envelope.qa_acknowledgments)) {
         next.qaAcknowledgments =
@@ -973,6 +1066,9 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       upsertAuthoring,
       setActivePageKey,
       setStrategy,
+      setCapitalPlan,
+      setMaintenanceCalendar,
+      setRecurringServicesPreview,
       acknowledgeQuestion,
       goToStep,
       setReportId,
@@ -1007,6 +1103,9 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       upsertAuthoring,
       setActivePageKey,
       setStrategy,
+      setCapitalPlan,
+      setMaintenanceCalendar,
+      setRecurringServicesPreview,
       acknowledgeQuestion,
       goToStep,
       setReportId,
