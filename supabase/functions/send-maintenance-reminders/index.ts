@@ -29,7 +29,7 @@ interface PropertyRow {
 }
 
 interface ProfileRow {
-  id: string;
+  user_id: string;
   email: string | null;
   full_name: string | null;
 }
@@ -123,9 +123,9 @@ serve(async (req) => {
     if (clientUserIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, email, full_name")
-        .in("id", clientUserIds);
-      for (const pr of (profiles ?? []) as ProfileRow[]) profileMap.set(pr.id, pr);
+        .select("user_id, email, full_name")
+        .in("user_id", clientUserIds);
+      for (const pr of (profiles ?? []) as ProfileRow[]) profileMap.set(pr.user_id, pr);
     }
 
     const groups = new Map<string, ScheduleEvent[]>();
