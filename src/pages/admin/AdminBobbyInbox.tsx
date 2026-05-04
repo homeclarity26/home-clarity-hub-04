@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { sendPushNotification } from "@/lib/pushNotifications";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -90,6 +91,22 @@ export default function AdminBobbyInbox() {
       .from("escalation_queue")
       .update({ status: "resolved", resolved_at: new Date().toISOString() })
       .eq("id", esc.id);
+
+    // Push notification to homeowner
+    const { data: thread } = await supabase
+      .from("bobby_threads")
+      .select("client_user_id, property_id")
+      .eq("id", esc.thread_id)
+      .single();
+
+    if (thread?.client_user_id) {
+      sendPushNotification({
+        user_id: thread.client_user_id,
+        title: "Adam replied to your message",
+        body: replyText.trim().slice(0, 100),
+        url: `/portal/${thread.property_id}`,
+      });
+    }
 
     setEscalations((prev) =>
       prev.map((e) => (e.id === esc.id ? { ...e, status: "resolved" } : e))
