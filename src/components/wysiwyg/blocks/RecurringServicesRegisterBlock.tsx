@@ -107,8 +107,8 @@ const RecurringServicesRegisterBlock = ({
   // Locked HONEST-framing pitch — saves time/frustration NOT money
   const defaultPitch =
     services.length > 0 && tier !== "none"
-      ? `With ${services.length} services, the ${TIER_LABEL[tier]} fits. Today: ${fmtMoney(totalMonthly)}/mo. Add ${fmtMoney(tierMonthly)}/mo Concierge for a total of <strong>${fmtMoney(totalIfManaged)}/mo</strong>. You pay more. You stop doing this: scheduling, chasing receipts, remembering due dates, coordinating between vendors, vetting new providers when one falls through. We do all of it. Your AI Concierge handles the routine questions automatically. You stay in one app, one phone number, one bill. The math does not save money. It saves time and frustration. That is the trade.`
-      : `Once your services are captured, HBC Concierge can take over the scheduling, the calling, the receipt-chasing, and the vendor coordination. You stay in one app with one bill. The trade is honest: you pay more, you spend less time managing it.`;
+      ? `With ${services.length} services, the ${TIER_LABEL[tier]} fits. Today: ${fmtMoney(totalMonthly)}/mo. Add ${fmtMoney(tierMonthly)}/mo Bobby for a total of <strong>${fmtMoney(totalIfManaged)}/mo</strong>. You pay more. You stop doing this: scheduling, chasing receipts, remembering due dates, coordinating between vendors, vetting new providers when one falls through. We do all of it. Bobby handles the routine questions automatically. You stay in one app, one phone number, one bill. The math does not save money. It saves time and frustration. That is the trade.`
+      : `Once your services are captured, Bobby can take over the scheduling, the calling, the receipt-chasing, and the vendor coordination. You stay in one app with one bill. The trade is honest: you pay more, you spend less time managing it.`;
 
   return (
     <div className="bg-card border border-border rounded-lg p-5 sm:p-6 space-y-5">
@@ -143,8 +143,8 @@ const RecurringServicesRegisterBlock = ({
           value={`${fmtMoney(totalIfManaged)}/mo`}
           sub={
             tier === "none"
-              ? "Not yet on a Concierge plan"
-              : `+ ${fmtMoney(tierMonthly)}/mo Concierge · ${TIER_LABEL[tier]}`
+              ? "Not yet on a Bobby plan"
+              : `+ ${fmtMoney(tierMonthly)}/mo Bobby · ${TIER_LABEL[tier]}`
           }
           highlight
         />
@@ -164,7 +164,7 @@ const RecurringServicesRegisterBlock = ({
       {/* HBC Concierge pitch — full-width navy card directly above table */}
       <div className="rounded-lg p-5" style={{ background: NAVY, color: "#EDE9E1" }}>
         <div className="font-mono text-[10px] uppercase tracking-[0.15em] mb-1.5" style={{ color: GOLD }}>
-          HBC Concierge: honest pricing
+          Bobby: honest pricing
         </div>
         <div className="font-display text-xl sm:text-2xl mb-3">
           One bill. One number. One conversation.

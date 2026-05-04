@@ -52,7 +52,7 @@ const AISuggestionsStrip = ({ onNavigate, reportPages }: AISuggestionsStripProps
 
   return (
     <div className="w-full">
-      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Your Concierge Suggests</p>
+      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Bobby Suggests</p>
       <div className={cardBase}>
         {displayItems.map((s, i) => (
           <div

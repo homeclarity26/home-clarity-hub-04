@@ -452,7 +452,7 @@ const VisionProjectBlock = ({ content, editable, onChange }: VisionProjectBlockP
           >
             <div>
               <div className="font-mono text-[10px] uppercase tracking-[0.15em]" style={{ color: GOLD }}>
-                Concierge Action
+                Bobby Action
               </div>
               {editable ? (
                 <input
@@ -471,7 +471,7 @@ const VisionProjectBlock = ({ content, editable, onChange }: VisionProjectBlockP
                   className="mt-1 w-72 bg-transparent border-b border-border outline-none text-xs text-muted-foreground"
                   value={content.conciergeActionPrompt ?? ""}
                   onChange={(e) => update({ conciergeActionPrompt: e.target.value })}
-                  placeholder="Prefilled Concierge prompt"
+                  placeholder="Prefilled Bobby prompt"
                 />
               )}
             </div>

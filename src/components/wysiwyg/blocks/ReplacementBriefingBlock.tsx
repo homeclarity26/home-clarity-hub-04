@@ -501,7 +501,7 @@ const ReplacementBriefingBlock = ({ content, editable, onChange }: ReplacementBr
                         arr[i] = { ...cta, prompt: e.target.value };
                         update({ ctas: arr });
                       }}
-                      placeholder="Prefilled Concierge prompt"
+                      placeholder="Prefilled Bobby prompt"
                     />
                   </div>
                 ) : (

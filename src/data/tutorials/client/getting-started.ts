@@ -35,7 +35,7 @@ export const clientGettingStarted: Tutorial[] = [
   {
     id: "client-ai-concierge",
     category: "Getting Started",
-    title: "How to Use the AI Home Concierge",
+    title: "How to Use Bobby",
     description: "Ask questions about your home and get instant answers from your AI assistant.",
     audience: "client",
     steps: [

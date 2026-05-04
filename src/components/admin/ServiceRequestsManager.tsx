@@ -59,7 +59,7 @@ const ServiceRequestsManager = () => {
     <Card className="p-5">
       <div className="flex items-center gap-2 mb-4">
         <Sparkles className="w-4 h-4 text-primary" />
-        <h3 className="text-sm font-sans font-semibold text-foreground">Concierge Requests</h3>
+        <h3 className="text-sm font-sans font-semibold text-foreground">Bobby Requests</h3>
         {pendingCount > 0 && (
           <Badge variant="destructive" className="text-[10px] font-mono">{pendingCount} pending</Badge>
         )}
