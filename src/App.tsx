@@ -36,6 +36,7 @@ const AdminKnowledgeBase = lazy(() => import("./pages/admin/AdminKnowledgeBase")
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminAnnouncements = lazy(() => import("./pages/admin/AdminAnnouncements"));
 const AdminInbox = lazy(() => import("./pages/admin/AdminInbox"));
+const AdminBobbyInbox = lazy(() => import("./pages/admin/AdminBobbyInbox"));
 const AdminTaskBoard = lazy(() => import("./pages/admin/AdminTaskBoard"));
 const AdminVendorDirectory = lazy(() => import("./pages/admin/AdminVendorDirectory"));
 const AdminGoalsDashboard = lazy(() => import("./pages/admin/AdminGoalsDashboard"));
@@ -197,6 +198,7 @@ const AppRoutes = () => {
           <Route index element={<AdminDashboard />} />
           <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="inbox" element={<AdminInbox />} />
+          <Route path="bobby-inbox" element={<AdminBobbyInbox />} />
           <Route path="clients" element={<AdminClients />} />
           <Route path="clients/new" element={<AdminNewReportV2 />} />
           <Route path="clients/:clientId" element={<AdminClientDetail />} />

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Sparkles } from "lucide-react";
 import ConciergePanel from "./ConciergePanel";
 
 interface ConciergeBarProps {
@@ -53,9 +52,14 @@ const ConciergeBar = ({ propertyId }: ConciergeBarProps) => {
           className="w-full flex items-center gap-3 px-4 py-3 sm:px-6"
           style={{ color: CREAM }}
         >
-          <Sparkles className="w-4 h-4" style={{ color: GOLD }} />
+          <span
+            className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+            style={{ background: GOLD }}
+          >
+            <span className="font-display text-[11px] font-bold" style={{ color: NAVY }}>B</span>
+          </span>
           <span className="text-sm flex-1 text-left" style={{ color: CREAM + "cc" }}>
-            Ask your Concierge anything about your home
+            Ask Bobby anything about your home
           </span>
           <span
             className="font-mono text-[10px] uppercase tracking-[0.15em] px-2 py-1 rounded"

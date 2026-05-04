@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X, MessageSquare, CheckSquare, Briefcase, Target, Share2, Megaphone, Zap, GraduationCap, BarChart3, Calendar, Award, Home, ChevronDown } from "lucide-react";
+import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X, MessageSquare, CheckSquare, Briefcase, Target, Share2, Megaphone, Zap, GraduationCap, BarChart3, Calendar, Award, Home, ChevronDown, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 const primaryNavItems = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard, showBadge: true },
   { label: "Inbox", path: "/admin/inbox", icon: MessageSquare },
+  { label: "Bobby Inbox", path: "/admin/bobby-inbox", icon: Sparkles },
   { label: "Clients", path: "/admin/clients", icon: Home },
   { label: "CRM", path: "/admin/crm", icon: Users },
   { label: "Projects", path: "/admin/projects", icon: Briefcase },
