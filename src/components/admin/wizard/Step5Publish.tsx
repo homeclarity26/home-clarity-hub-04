@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2 } from "lucide-react";
@@ -28,6 +29,7 @@ import { AIQualityGate } from "./AIQualityGate";
 // brand-new wizard reports landed in the portal as empty.
 
 export function Step5Publish() {
+  const navigate = useNavigate();
   const { state, goToStep, markPublished } = useWizard();
   const [highsOk, setHighsOk] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -295,6 +297,12 @@ export function Step5Publish() {
         description:
           "Your client can see the report once they receive their invite.",
       });
+
+      if (state.propertyId) {
+        setTimeout(() => {
+          navigate(`/portal/${state.propertyId}?tab=report&preview=admin`);
+        }, 800);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       toast({
