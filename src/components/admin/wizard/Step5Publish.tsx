@@ -2,13 +2,14 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { pageAuthoringToBlocks, useWizard } from "@/contexts/WizardContext";
 import type { ReportBlock } from "@/components/wysiwyg/types";
 import { WizardNavigation } from "./WizardNavigation";
 import { AIQualityGate } from "./AIQualityGate";
+import { IntakeUploadCard } from "./IntakeUploadCard";
 
 // Step 5 — Publish. Renders summary, the AI quality gate, and the publish
 // CTA.
@@ -30,22 +31,34 @@ import { AIQualityGate } from "./AIQualityGate";
 
 export function Step5Publish() {
   const navigate = useNavigate();
-  const { state, goToStep, markPublished } = useWizard();
+  const { state, goToStep, markPublished, setIntakeUploads } = useWizard();
   const [highsOk, setHighsOk] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishedAt, setPublishedAt] = useState<string | null>(state.publishedAt);
+  const [photoBannerDismissed, setPhotoBannerDismissed] = useState(false);
 
   const summary = useMemo(() => {
     const allPages = state.tocSections.flatMap((s) => s.pages.filter((p) => p.selected));
     const counts = { draft: 0, reviewed: 0, complete: 0 };
+    let missingPhotos = 0;
     for (const page of allPages) {
       const status = state.authoring[page.page_key]?.status ?? "draft";
       counts[status] = (counts[status] ?? 0) + 1;
+      const content = state.authoring[page.page_key]?.content ?? [];
+      const hasImage = content.some(
+        (b: unknown) =>
+          b != null &&
+          typeof b === "object" &&
+          "type" in b &&
+          ((b as { type: string }).type === "image" ||
+            (b as { type: string }).type === "photo_grid"),
+      );
+      if (!hasImage) missingPhotos++;
     }
     const featured = allPages.filter(
       (p) => p.is_featured || state.authoring[p.page_key]?.is_featured,
     );
-    return { totalPages: allPages.length, counts, featured };
+    return { totalPages: allPages.length, counts, featured, missingPhotos };
   }, [state.tocSections, state.authoring]);
 
   const canPublish =
@@ -348,6 +361,50 @@ export function Step5Publish() {
       </Card>
 
       <AIQualityGate onAllHighsAcknowledged={setHighsOk} />
+
+      {!publishedAt && (
+        <IntakeUploadCard
+          title="Last chance to add anything"
+          description="Drop photos, PDFs, or notes here. They will be auto-routed to the correct pages."
+          cardKey="photos"
+          files={state.intakeUploads.photos}
+          onChange={(files) => setIntakeUploads("photos", files)}
+        />
+      )}
+
+      {!publishedAt && summary.missingPhotos > 0 && !photoBannerDismissed && (
+        <Card className="p-4 flex items-start gap-3 border-amber-500/30 bg-amber-50/30">
+          <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" aria-hidden />
+          <div className="flex-1">
+            <p className="text-sm font-sans text-foreground">
+              {summary.missingPhotos} {summary.missingPhotos === 1 ? "page doesn't" : "pages don't"} have photos yet.
+            </p>
+            <p className="text-xs font-sans text-muted-foreground mt-0.5">
+              They will show clean placeholder hero images.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-[36px] text-xs"
+              onClick={() => goToStep("authoring")}
+            >
+              Add photos
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="min-h-[36px] text-xs"
+              onClick={() => setPhotoBannerDismissed(true)}
+            >
+              Continue
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {publishedAt ? (
         <Card className="p-6 flex items-start gap-3 border-emerald-600/30 bg-emerald-50/30">
