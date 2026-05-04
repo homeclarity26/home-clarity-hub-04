@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   Home, FileText, Calendar, FolderOpen,
-  CreditCard, Users, ChevronLeft, ChevronRight, X,
+  CreditCard, ChevronLeft, ChevronRight, X,
 } from "lucide-react";
 import HCRLogo from "@/components/brand/HCRLogo";
 
@@ -40,7 +40,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: "CONNECT",
     items: [
-      { key: "contacts", label: "Contacts", icon: Users },
+      { key: "documents", label: "Documents", icon: FolderOpen },
     ],
   },
 ];
