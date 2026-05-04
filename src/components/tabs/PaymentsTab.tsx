@@ -759,7 +759,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                   disabled={!aiQuestion.trim()}
                   className="bg-accent hover:bg-accent/90 text-white font-sans flex-shrink-0"
                 >
-                  Ask Concierge
+                  Ask Bobby
                 </Button>
               </div>
             </Card>

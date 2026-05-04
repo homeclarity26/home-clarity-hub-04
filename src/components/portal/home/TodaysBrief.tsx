@@ -50,7 +50,7 @@ export function TodaysBrief({ propertyId }: TodaysBriefProps) {
   if (!loaded || !brief) return null;
 
   const content: TodaysBriefContent = {
-    eyebrow: `From your Concierge · ${formatBriefDate(brief.brief_date)}`,
+    eyebrow: `From Bobby · ${formatBriefDate(brief.brief_date)}`,
     title: "Today's Brief",
     briefDate: brief.brief_date,
     briefHtml: brief.brief_html,

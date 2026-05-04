@@ -33,11 +33,11 @@ const TodaysBriefBlock = ({ content, editable, onChange }: TodaysBriefBlockProps
           <input
             className="w-full bg-transparent outline-none"
             style={{ color: GOLD }}
-            value={content.eyebrow ?? "From your Concierge · generated this morning"}
+            value={content.eyebrow ?? "From Bobby · generated this morning"}
             onChange={(e) => update({ eyebrow: e.target.value })}
           />
         ) : (
-          content.eyebrow ?? "From your Concierge · generated this morning"
+          content.eyebrow ?? "From Bobby · generated this morning"
         )}
       </div>
 

@@ -735,12 +735,12 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
   },
   {
     type: "concierge_action",
-    label: "Concierge Action",
-    description: "Tappable do-prompt that opens the Concierge with prefilled text",
+    label: "Bobby Action",
+    description: "Tappable do-prompt that opens Bobby with prefilled text",
     icon: "MessageSquarePlus",
     defaultColSpan: 6,
     defaultContent: {
-      eyebrow: "Concierge Action",
+      eyebrow: "Bobby Action",
       label: "Schedule a service",
       prompt: "I want to schedule a service for my home.",
       style: "gold",
@@ -768,7 +768,7 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
     icon: "Sun",
     defaultColSpan: 12,
     defaultContent: {
-      eyebrow: "From your Concierge · generated this morning",
+      eyebrow: "From Bobby · generated this morning",
       title: "Today's Brief",
       briefHtml: "<strong>Welcome.</strong> Today is a calm day. Nothing is overdue. Your home is in good standing.",
       actions: [],
