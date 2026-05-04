@@ -147,7 +147,7 @@ const AdminAnalytics = () => {
   // the healthDistQuery below. Until that finishes loading (or if the user
   // has no published reports with condition ratings yet) the chart shows
   // an empty state instead of hardcoded demo numbers. We also surface the
-  // overall average across all properties for the "Avg Health Score" stat
+  // overall average across all properties for the "Avg Home Condition" stat
   // card so it reflects real data instead of a hardcoded 72.
   const { data: healthData } = useQuery({
     queryKey: ["analytics-health-distribution"],

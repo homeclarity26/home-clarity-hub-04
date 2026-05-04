@@ -96,7 +96,7 @@ export const useTutorialProgress = () => {
 
   const clientChecklistItems = [
     { key: "view_report", title: "View your Home Clarity Report", description: "Read through your full home assessment", tab: "report" },
-    { key: "check_health", title: "Check your Home Health Score", description: "See how your home rates overall", tab: "home" },
+    { key: "check_health", title: "Check your home condition ratings", description: "See how your home rates overall", tab: "home" },
     { key: "review_actions", title: "Review your Priority Action Items", description: "See what your advisor recommends first", tab: "report" },
     { key: "explore_projects", title: "Explore your Active Projects", description: "Track work in progress on your home", tab: "projects" },
     { key: "view_equipment", title: "View your Equipment Registry", description: "See every major system logged in your home", tab: "equipment" },

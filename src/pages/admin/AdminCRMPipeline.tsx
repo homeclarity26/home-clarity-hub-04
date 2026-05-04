@@ -63,7 +63,7 @@ const PipelineCard = ({ contact, type, onDragStart, onClick }: PipelineCardProps
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             {type === "client" && contact.healthScore > 0 && (
               <Badge variant="outline" className="text-[9px] h-4">
-                HS: {contact.healthScore}
+                Condition
               </Badge>
             )}
             {type === "trade_partner" && contact.rating > 0 && (

@@ -65,7 +65,7 @@ export const adminProjectsProposals: Tutorial[] = [
       { title: "Assign a vendor", body: "Link a vendor from your Vendor Directory to the project for tracking and future reference." },
       { title: "Mark complete", body: "When finished, mark the project complete. Then update the linked report page's condition rating and re-publish the report." },
     ],
-    tip: "Always update the report after completing a project. The client sees their Health Score improve, which reinforces the value of your ongoing relationship.",
+    tip: "Always update the report after completing a project. The client sees their condition ratings improve, which reinforces the value of your ongoing relationship.",
     keywords: ["progress", "milestones", "change orders", "vendor", "complete", "status", "tracking"],
   },
 ];

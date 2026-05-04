@@ -25,7 +25,7 @@ const DEFAULT_RULES = [
   { rule_type: "stale_project", rule_name: "Stale Project Reminder", rule_description: "Create a task when a project has been in 'Planned' status for X days.", icon: Calendar, config: { days: 45 } },
   // CRM Client Automations
   { rule_type: "portal_inactivity", rule_name: "Portal Inactivity Check-In", rule_description: "Send check-in message when client hasn't logged into portal in X days.", icon: Heart, config: { days: 30 } },
-  { rule_type: "health_score_drop", rule_name: "Health Score Drop Alert", rule_description: "Flag client and create follow-up task when health score drops below threshold.", icon: AlertTriangle, config: { threshold: 60 } },
+  { rule_type: "condition_drop", rule_name: "Condition Rating Drop Alert", rule_description: "Flag client and create follow-up task when condition rating drops below threshold.", icon: AlertTriangle, config: { threshold: "Fair" } },
   { rule_type: "invoice_overdue_escalate", rule_name: "Invoice Overdue Escalation", rule_description: "Send reminder then escalate when invoice is unpaid X days after due date.", icon: FileText, config: { days: 7 } },
   { rule_type: "client_completed_survey", rule_name: "Completion Survey & Referral Ask", rule_description: "Send satisfaction survey + referral request when client moves to 'Completed' stage.", icon: Heart, config: {} },
   { rule_type: "new_client_welcome_sequence", rule_name: "New Client Welcome Sequence", rule_description: "Day 1 welcome email, Day 7 call task, Day 30 check-in for every new client.", icon: Calendar, config: { day1: true, day7: true, day30: true } },

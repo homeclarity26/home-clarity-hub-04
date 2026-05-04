@@ -45,10 +45,10 @@ export const pushTemplates = {
     url: "/admin",
   }),
 
-  healthScoreAlert: (userId: string, clientName: string, score: number) => ({
+  conditionAlert: (userId: string, clientName: string, rating: string) => ({
     user_id: userId,
-    title: `⚠️ Client health score alert`,
-    body: `${clientName}'s health score dropped to ${score}`,
+    title: `⚠️ Client condition alert`,
+    body: `${clientName}'s condition changed to ${rating}`,
     url: "/admin",
   }),
 };
