@@ -55,6 +55,6 @@ Managed by HCR_REBUILD_RUNNER.md.
 ## ALL REBUILD PHASES COMPLETE — 2026-05-04
 
 Remaining non-blocking items:
-- [ ] Push notifications for Bobby responses (in-app realtime works; no native push)
+- [x] PR #199 — Push notifications for Bobby replies — merged 2026-05-04
 - [ ] Visual walkthrough against caldwell_prototype_v2_screens.pdf (Adam manual task)
 - [ ] Seed a real Caldwell demo property via the wizard for portal demo
