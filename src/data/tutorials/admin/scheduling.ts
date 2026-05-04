@@ -26,7 +26,7 @@ export const adminScheduling: Tutorial[] = [
     audience: "admin",
     steps: [
       { title: "Open Annual Reviews", body: "Navigate to the Annual Reviews section in the admin sidebar." },
-      { title: "Generate a briefing", body: "Select a client and click 'Generate Briefing.' The AI compiles their year in review: Health Score changes, completed projects, outstanding items, investment totals, and recommended topics." },
+      { title: "Generate a briefing", body: "Select a client and click 'Generate Briefing.' The AI compiles their year in review: condition changes, completed projects, outstanding items, investment totals, and recommended topics." },
       { title: "Schedule the call", body: "Set a review call date. The client is notified of the upcoming meeting." },
       { title: "Conduct the review", body: "Use the generated briefing as your agenda. Walk through accomplishments, current priorities, and the plan for the coming year." },
       { title: "Log outcomes", body: "After the meeting, add outcome notes and any new action items. Mark the review as complete." },

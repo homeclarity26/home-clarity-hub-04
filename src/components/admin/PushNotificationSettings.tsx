@@ -74,7 +74,7 @@ const PushNotificationSettings = () => {
           <li>New messages from clients or trade partners</li>
           <li>Invoice payments</li>
           <li>Proposal signatures</li>
-          <li>Client health score alerts</li>
+          <li>Client condition alerts</li>
         </ul>
       </div>
     </Card>

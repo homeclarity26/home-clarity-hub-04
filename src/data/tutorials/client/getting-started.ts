@@ -10,8 +10,8 @@ export const clientGettingStarted: Tutorial[] = [
     steps: [
       { title: "What is the Home Clarity Portal?", body: "Your portal is a private online hub where you can view your home's assessment, track projects, manage documents, communicate with your advisor, and stay on top of maintenance — all in one place." },
       { title: "Who can see it?", body: "Only you and your Home Clarity Hub advisor team have access. Your data is private and secure." },
-      { title: "What's inside?", body: "Your portal includes your Home Clarity Report, Home Health Score, active projects, equipment registry, payment history, maintenance calendar, document storage, and a direct messaging channel with your advisor." },
-      { title: "It gets smarter over time", body: "As your advisor updates your report and completes projects, your portal reflects the improvements — including an updated Health Score showing your home's progress." },
+      { title: "What's inside?", body: "Your portal includes your Home Clarity Report, active projects, equipment registry, payment history, maintenance calendar, document storage, and a direct messaging channel with your advisor." },
+      { title: "It gets smarter over time", body: "As your advisor updates your report and completes projects, your portal reflects the improvements; condition ratings upgrade and your strategy evolves." },
     ],
     tip: "Bookmark your portal URL so you can quickly check in anytime. Your advisor will also send you links when something new is available.",
     keywords: ["welcome", "portal", "overview", "what is", "getting started", "introduction"],
@@ -24,7 +24,7 @@ export const clientGettingStarted: Tutorial[] = [
     audience: "client",
     steps: [
       { title: "The tab bar", body: "At the top of your portal, you'll see tabs: Home, Report, Projects, Payments, Equipment, Documents, Messages, Contacts, Schedule, and more." },
-      { title: "Home tab", body: "Your landing page with a summary of your home's status, Health Score, quick links, and recent activity." },
+      { title: "Home tab", body: "Your landing page with a summary of your home's status, quick links, and recent activity." },
       { title: "Report tab", body: "Your full Home Clarity Report with every finding, condition rating, and recommendation." },
       { title: "More tabs", body: "Scroll the tab bar or look for the 'More' menu to access Photos, Goals, Services, Referrals, and Settings." },
       { title: "Switch properties", body: "If you have multiple properties, use the property selector at the top to switch between them." },
