@@ -9,16 +9,19 @@ export interface ChapterDef {
   groupIds: string[];
 }
 
-/**
- * Report chapters — align 1:1 with the five HBC monograms (ES / EX / IN / SY / SP)
- * plus an implicit Safety chapter that lives under Systems in the data model.
- */
 export const CHAPTERS: ChapterDef[] = [
-  { id: "exterior", label: "Exterior", groupIds: ["exterior", "exterior-spaces", "exterior-structures"] },
-  { id: "interior", label: "Interior", groupIds: ["interior", "interior-spaces", "interior-living", "interior-bedrooms", "interior-bathrooms", "interior-utility", "interior-unfinished", "interior-additional", "appliances"] },
-  { id: "systems", label: "Systems", groupIds: ["systems", "systems-hvac", "systems-mechanical", "systems-additional"] },
-  { id: "safety", label: "Safety", groupIds: ["safety", "safety-detection"] },
-  { id: "strategy", label: "Strategic Plan", groupIds: ["strategy"] },
+  { id: "information", label: "Information",
+    groupIds: ["information"] },
+  { id: "interior-spaces", label: "Interior Spaces",
+    groupIds: ["interior-living", "interior-bedrooms", "interior-bathrooms",
+               "interior-utility", "interior-unfinished", "interior-additional"] },
+  { id: "exterior-spaces", label: "Exterior Spaces",
+    groupIds: ["exterior", "exterior-structures"] },
+  { id: "systems-appliances", label: "Systems & Appliances",
+    groupIds: ["systems-hvac", "systems-mechanical", "systems-additional",
+               "safety-detection", "appliances"] },
+  { id: "strategy", label: "Strategy",
+    groupIds: ["strategy"] },
 ];
 
 interface ReportChapterNavProps {

@@ -35,9 +35,9 @@ const chapterLabelFromGroup = (group?: string): string => {
   if (!group) return "Report";
   if (group.startsWith("exterior")) return "Exterior";
   if (group === "appliances" || group.startsWith("interior")) return "Interior";
-  if (group.startsWith("systems")) return "Systems";
-  if (group.startsWith("safety")) return "Safety";
-  if (group.startsWith("strategy")) return "Strategic Plan";
+  if (group.startsWith("systems")) return "Systems & Appliances";
+  if (group.startsWith("safety")) return "Systems & Appliances";
+  if (group.startsWith("strategy")) return "Strategy";
   return "Report";
 };
 
