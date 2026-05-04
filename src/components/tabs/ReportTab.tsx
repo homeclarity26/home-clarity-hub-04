@@ -7,8 +7,6 @@ import type { ReportBlock } from "@/components/wysiwyg/types";
 import { isReportBlockArray } from "@/contexts/WizardContext";
 import { reportPages as staticPages, reportGroups as staticGroups, type ReportPageData } from "@/data/reportContent";
 import ReportPage from "@/components/report/ReportPage";
-import FinancialRoadmapPage from "@/components/report/FinancialRoadmapPage";
-import ActionPlanPage from "@/components/report/ActionPlanPage";
 import ReportChapterNav, { CHAPTERS } from "@/components/report/ReportChapterNav";
 import ReportHome from "@/components/portal/report/ReportHome";
 import RoomTemplatePage from "@/components/report/templates/RoomTemplatePage";
@@ -478,23 +476,17 @@ const ReportTab = ({
         )}
 
         {/* Main page content */}
-        {activePageId === "financial-roadmap" ? (
-          <FinancialRoadmapPage reportId={reportId} />
-        ) : activePageId === "action-plan" ? (
-          <ActionPlanPage reportId={reportId} />
-        ) : (
-          <ReportPage
-            page={page}
-            onNavigate={onNavigate}
-            dbPageId={dbPageId}
-            images={images}
-            pdfData={pdfData}
-            reportId={reportId}
-            propertyId={propertyId}
-            propertyAddress={propertyAddress}
-            propertyContext={propertyContext}
-          />
-        )}
+        <ReportPage
+          page={page}
+          onNavigate={onNavigate}
+          dbPageId={dbPageId}
+          images={images}
+          pdfData={pdfData}
+          reportId={reportId}
+          propertyId={propertyId}
+          propertyAddress={propertyAddress}
+          propertyContext={propertyContext}
+        />
 
         {/* Findings Table */}
         {findings.length > 0 && (

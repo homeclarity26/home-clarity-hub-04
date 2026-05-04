@@ -91,7 +91,7 @@ export const reportGroups = [
   {
     id: "strategy",
     title: "Strategy",
-    pages: ["financial-roadmap", "action-plan"],
+    pages: ["recurring-services", "capital-plan-10yr", "maintenance-calendar", "sequencing-dependencies", "membership"],
   },
 ];
 
@@ -1519,43 +1519,49 @@ export const reportPages: Record<string, ReportPageData> = {
   // ────────────────────────────────────────────
   // STRATEGY
   // ────────────────────────────────────────────
-  "financial-roadmap": {
-    id: "financial-roadmap",
-    title: "Financial Roadmap",
+  "recurring-services": {
+    id: "recurring-services",
+    title: "Recurring Services Register",
     group: "strategy",
     narrative: [
-      "This financial roadmap sequences your recommended improvements over a 5-year horizon, organized by priority and construction logic. The goal is not to do everything at once — it's to invest strategically in the right order.",
-      "Year 1 focuses on life-safety and infrastructure: furnace replacement, electrical panel upgrade, AC coordination, water heater, chimney cleaning, and insulation. These are foundational — they must happen before cosmetic renovations.",
-      "Years 2–3 address the building envelope: roof replacement, window upgrades, siding maintenance, exterior doors, gutters, and deck work. These protect every other investment you'll make.",
-      "Years 3–5 are quality-of-life improvements: kitchen renovation, bathroom updates, bedroom refreshes, basement finishing, and landscape enhancements. By this point, your systems are modern and reliable.",
-    ],
-    recommendations: [
-      "Year 1: Furnace + AC + Electrical + Water Heater + Insulation = $22,000–$38,000",
-      "Year 1: Chimney + Gutters + Drainage = $3,000–$6,000",
-      "Year 2–3: Roof + Windows + Siding + Doors + Deck = $40,000–$70,000",
-      "Year 3–5: Kitchen + Bathrooms + Bedrooms + Basement = $55,000–$120,000",
-      "5-Year Total (Enhanced tier): $120,000–$234,000",
+      "Every standing service your home requires, catalogued with vendor, frequency, cost, and next due date. This register is the single view into your home's ongoing operational rhythm.",
+      "Services range from weekly lawn care to annual furnace tune-ups to biannual gutter cleanings. When managed through HBC Concierge, scheduling, payment, and record-keeping happen automatically. When self-managed, this page is your reminder system.",
     ],
   },
-
-  "action-plan": {
-    id: "action-plan",
-    title: "Action Plan",
+  "capital-plan-10yr": {
+    id: "capital-plan-10yr",
+    title: "10-Year Capital Plan",
     group: "strategy",
     narrative: [
-      "This action plan translates your Home Clarity Report findings into concrete next steps — the bridge between 'here's what we found' and 'here's what to do about it.'",
-      "Step 1: Review this report with your family. Discuss priorities, timeline preferences, and budget comfort levels. The Essential, Enhanced, and Signature tiers give you flexibility to choose what fits.",
-      "Step 2: Schedule a strategic planning session with your advisor. We'll walk through the sequencing, discuss contractor options, and create a timeline that works with your family's schedule and budget.",
-      "Step 3: Begin with the furnace and chimney. The furnace has a hard deadline (before next heating season) and the chimney must be cleaned before use. These are your immediate action items.",
-      "Step 4: While HVAC work is underway, schedule the electrical panel evaluation. These projects can be coordinated for efficiency. Your HBC membership means you're never navigating this alone.",
+      "Your strategic project roadmap across a 10-year horizon. Projects are phased by type: defense (protecting what is there now), offense (upgrading existing spaces), and expansion (adding new footprint).",
+      "Each project appears at the year it should begin, with a cost range spanning the three investment tiers. Drag projects across years as priorities shift. The bottom row shows annual cash flow so you can plan budget allocation year by year.",
     ],
-    recommendations: [
-      "This week: Review report with family, note questions",
-      "Within 2 weeks: Schedule planning session with advisor",
-      "Within 30 days: Get furnace replacement bids (we'll help)",
-      "Within 30 days: Schedule chimney inspection and cleaning",
-      "Within 60 days: Schedule electrical panel evaluation",
-      "Ongoing: Use this portal to track progress and ask questions",
+  },
+  "maintenance-calendar": {
+    id: "maintenance-calendar",
+    title: "Maintenance Calendar",
+    group: "strategy",
+    narrative: [
+      "A four-season grid of everything your home needs, organized by when it needs to happen. Spring inspections, summer maintenance, fall preparation, winter monitoring. Each task links to the system or service it protects.",
+      "This calendar is the proactive counterpart to your reactive service calls. Follow it consistently and you prevent most of the emergency calls that catch homeowners off guard.",
+    ],
+  },
+  "sequencing-dependencies": {
+    id: "sequencing-dependencies",
+    title: "Sequencing & Dependencies",
+    group: "strategy",
+    narrative: [
+      "Some projects must happen before others. Electrical must precede a kitchen renovation. Roofing must precede solar. HVAC ductwork must happen before finishing a basement. This page maps those constraints so you never invest in something that gets torn out for the next project.",
+      "When you discuss timelines with us, we reference this page to confirm nothing is out of order. It is also why we sometimes recommend deferring a project you are ready for today, because a prerequisite project should happen first.",
+    ],
+  },
+  "membership": {
+    id: "membership",
+    title: "How We Work With You Going Forward",
+    group: "strategy",
+    narrative: [
+      "Your relationship with HBC continues beyond this report. Your annual review updates every page in this document, catches new issues before they become expensive, and keeps your home record current as things change.",
+      "When you are ready to act on any project in this report, reach out through the portal or call directly. We coordinate contractors, manage timelines, and update your record as work completes. Your home stays documented, your projects stay on track, and you always know what comes next.",
     ],
   },
 };
