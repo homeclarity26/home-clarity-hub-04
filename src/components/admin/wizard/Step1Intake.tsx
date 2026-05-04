@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Loader2, AlertCircle, Link as LinkIcon, Wand2 } from "lucide-react";
+import { Sparkles, Loader2, AlertCircle, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useWizard, type IntakeFinding, type ClarifyingQuestion, type PageSeed } from "@/contexts/WizardContext";
@@ -575,52 +575,34 @@ export function Step1Intake() {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label className="text-xs font-sans flex items-center gap-1.5">
-              <LinkIcon className="w-3.5 h-3.5 text-muted-foreground" aria-hidden />
-              Hover share URL
-            </Label>
-            <Input
-              type="url"
-              value={state.hoverUrl}
-              onChange={(e) => setHoverUrl(e.target.value)}
-              placeholder="https://hover.to/..."
-              className="text-xs"
-            />
-            {state.hoverUrl && (
-              <a
-                href={state.hoverUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] font-mono text-accent hover:underline break-all"
-              >
-                Open link →
-              </a>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs font-sans flex items-center gap-1.5">
-              <LinkIcon className="w-3.5 h-3.5 text-muted-foreground" aria-hidden />
-              iGUIDE share URL
-            </Label>
-            <Input
-              type="url"
-              value={state.iguideUrl}
-              onChange={(e) => setIguideUrl(e.target.value)}
-              placeholder="https://youriguide.com/..."
-              className="text-xs"
-            />
-            {state.iguideUrl && (
-              <a
-                href={state.iguideUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] font-mono text-accent hover:underline break-all"
-              >
-                Open link →
-              </a>
-            )}
-          </div>
+          <IntakeUploadCard
+            title="Hover"
+            description="3D model share link + measurement report PDF."
+            cardKey="hover"
+            accept="application/pdf,.pdf"
+            files={state.intakeUploads.hover}
+            onChange={(files) => setIntakeUploads("hover", files)}
+            url={{
+              value: state.hoverUrl,
+              onChange: setHoverUrl,
+              label: "Hover share URL",
+              placeholder: "https://hover.to/...",
+            }}
+          />
+          <IntakeUploadCard
+            title="iGUIDE"
+            description="Floor plan share link + measurement report PDF."
+            cardKey="iguide"
+            accept="application/pdf,.pdf"
+            files={state.intakeUploads.iguide}
+            onChange={(files) => setIntakeUploads("iguide", files)}
+            url={{
+              value: state.iguideUrl,
+              onChange: setIguideUrl,
+              label: "iGUIDE share URL",
+              placeholder: "https://youriguide.com/...",
+            }}
+          />
         </div>
 
         <div className="space-y-1.5">
