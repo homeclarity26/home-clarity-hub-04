@@ -28,6 +28,7 @@ import ClientHealthCard from "@/components/admin/ClientHealthCard";
 import AdminInvoicesSection from "@/components/admin/AdminInvoicesSection";
 import ClientActivityTimeline from "@/components/admin/ClientActivityTimeline";
 import SmartScheduleDialog from "@/components/admin/SmartScheduleDialog";
+import { PostPublishCoPilot } from "@/components/admin/PostPublishCoPilot";
 import FollowUpSequence from "@/components/admin/FollowUpSequence";
 import TasksSection from "@/components/admin/TasksSection";
 import TimeTrackingSection from "@/components/admin/TimeTrackingSection";
@@ -493,6 +494,8 @@ const AdminClientDetail = () => {
           onNavigate={(tab) => setActiveTab(tab as ClientTab)}
         />
       </div>
+
+      {clientId && <PostPublishCoPilot propertyId={clientId} />}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import ConciergeBar from "@/components/portal/concierge/ConciergeBar";
+import { AddToMyHome } from "@/components/portal/AddToMyHome";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import Header from "@/components/Header";
@@ -483,6 +484,9 @@ const Index = () => {
           every tab, opens ConciergePanel as a sheet. Replaces both the
           inline AICommandBar (C2) and the ClientAgentPanel FAB (C8). */}
       {!isCreator && <ConciergeBar propertyId={portal.property?.id} />}
+      {!isCreator && portal.property?.id && !portal.property.id.startsWith("mock-") && (
+        <AddToMyHome propertyId={portal.property.id} />
+      )}
 
       {/* Mobile primary navigation. Replaces the hamburger-round-trip pattern. */}
       <MobileBottomNav
