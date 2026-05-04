@@ -240,6 +240,62 @@ export function Step2TOC() {
         )}
       </Card>
 
+      {!loading && state.tocSections.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="min-h-[36px] text-[11px]"
+            onClick={() => {
+              setTocSections(
+                state.tocSections.map((s) => ({
+                  ...s,
+                  pages: s.pages.map((p) => ({ ...p, selected: true })),
+                })),
+              );
+            }}
+          >
+            Select all
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="min-h-[36px] text-[11px]"
+            onClick={() => {
+              setTocSections(
+                state.tocSections.map((s) => ({
+                  ...s,
+                  pages: s.pages.map((p) => ({
+                    ...p,
+                    selected: p.ai_recommended,
+                  })),
+                })),
+              );
+            }}
+          >
+            Defaults only
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="min-h-[36px] text-[11px]"
+            onClick={() => {
+              setTocSections(
+                state.tocSections.map((s) => ({
+                  ...s,
+                  pages: s.pages.map((p) => ({ ...p, selected: false })),
+                })),
+              );
+            }}
+          >
+            Clear all
+          </Button>
+        </div>
+      )}
+
       {loading && (
         <Card className="p-8 flex items-center justify-center gap-2 text-xs font-sans text-muted-foreground">
           <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
