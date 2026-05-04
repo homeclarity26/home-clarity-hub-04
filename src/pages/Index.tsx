@@ -8,7 +8,7 @@ import PortalHome from "@/components/portal/home/PortalHome";
 import ReportTab from "@/components/tabs/ReportTab";
 import ProjectsTab from "@/components/tabs/ProjectsTab";
 import PaymentsTab from "@/components/tabs/PaymentsTab";
-import ContactsTab from "@/components/tabs/ContactsTab";
+import DocumentsTab from "@/components/tabs/DocumentsTab";
 import ScheduleTab from "@/components/tabs/ScheduleTab";
 // OnboardingOverlay removed — consolidated into ClientOnboardingModal
 import PushNotificationBanner from "@/components/PushNotificationBanner";
@@ -29,12 +29,12 @@ import type { PDFReportData } from "@/features/pdf/PDFReport";
 // Services → schedule, Messages → concierge bar, Refer → quick link on Home,
 // Notifications → concierge bar indicator. Old URLs are redirected below.
 const VALID_TABS = new Set([
-  "home", "report", "projects", "payments", "contacts", "schedule",
+  "home", "report", "projects", "payments", "documents", "schedule",
 ]);
 
 const FOLDED_TAB_REDIRECTS: Record<string, string> = {
   photos: "projects",
-  documents: "report",
+  contacts: "documents",
   equipment: "report",
   services: "schedule",
   estimates: "payments",
@@ -448,13 +448,9 @@ const Index = () => {
             <PaymentsTab propertyId={portal.property?.id} onTabChange={handleTabChange} />
           )}
         </div>
-        <div className={`transition-opacity duration-300 ${activeTab === "contacts" ? "opacity-100" : "opacity-0 hidden"}`}>
-          {activeTab === "contacts" && (
-            <ContactsTab
-              creator={portal.creatorProfile}
-              onTabChange={handleTabChange}
-              propertyId={portal.property?.id}
-            />
+        <div className={`transition-opacity duration-300 ${activeTab === "documents" ? "opacity-100" : "opacity-0 hidden"}`}>
+          {activeTab === "documents" && (
+            <DocumentsTab propertyId={portal.property?.id} />
           )}
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === "schedule" ? "opacity-100" : "opacity-0 hidden"}`}>
