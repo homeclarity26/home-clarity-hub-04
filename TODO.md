@@ -31,8 +31,8 @@ Managed by HCR_REBUILD_RUNNER.md.
 - [x] PHASE 8 COMPLETE — 2026-05-03
 - [x] PR #186 — Recurring Care section in Schedule tab — merged 2026-05-03
 - [x] PR #187 — What Changed feed on Portal Home — merged 2026-05-03
-- [ ] PR #26 — Proactive alerts engine (BLOCKED: needs DB migration)
-- [x] PHASE 9 PARTIAL — 2026-05-03 (PR #26 blocked on SUPABASE_ACCESS_TOKEN)
+- [x] PR #26 — Proactive alerts engine — merged 2026-05-04
+- [x] PHASE 9 COMPLETE — 2026-05-04
 - [x] PR #188 — Mobile nav stacking in report templates — merged 2026-05-03
 - [x] PR #189 — Photo capture flow on Portal Home — merged 2026-05-03
 - [x] PHASE 10 COMPLETE — 2026-05-03
@@ -42,8 +42,11 @@ Managed by HCR_REBUILD_RUNNER.md.
 - [x] PR #192 — Delete 24 orphan components (-4,754 lines) — merged 2026-05-03
 - [x] PHASE 12 COMPLETE — 2026-05-03
 
-## Blocked (need SUPABASE_ACCESS_TOKEN for DB migrations)
+## Unblocked (2026-05-04 — migration applied, all phases complete)
 
-- [ ] Phase 5 — Bobby (needs copilot_inbox migration + types regen)
-- [ ] Phase 7 — AI Co-Pilot (needs copilot_inbox migration + types regen)
-- [ ] Phase 9 PR #26 — Proactive alerts engine (needs proactive_alerts table)
+- [x] PR #194 — DB migration: bobby_threads + copilot_inbox + proactive_alerts + types regen — merged 2026-05-04
+- [x] PR #195 — Phase 5: Bobby UI (input bar, panel rebrand, admin inbox) — merged 2026-05-04
+- [x] PR #196 — Phase 7: AI Co-Pilot (PostPublishCoPilot + AddToMyHome) — merged 2026-05-04
+- [x] PR #197 — Phase 9 PR #26: Proactive alerts engine + NotificationBell — merged 2026-05-04
+- [x] PHASE 5 COMPLETE — 2026-05-04
+- [x] PHASE 7 COMPLETE — 2026-05-04
