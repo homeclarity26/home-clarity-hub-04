@@ -74,9 +74,9 @@ export default {
         },
       },
       fontFamily: {
-        display: ['Cormorant Garamond', 'serif'],
-        mono: ['Inter', 'sans-serif'],
+        display: ['"Cormorant Garamond"', 'serif'],
         sans: ['Inter', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'monospace'],
       },
       borderRadius: {
         lg: "var(--radius)",

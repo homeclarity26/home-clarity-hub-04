@@ -41,7 +41,7 @@ const tc = StyleSheet.create({
     marginBottom: 6,
   },
   price: {
-    fontFamily: "Playfair Display",
+    fontFamily: "Cormorant Garamond",
     fontSize: 16,
     color: colors.navy,
     marginBottom: 8,

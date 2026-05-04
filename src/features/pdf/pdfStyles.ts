@@ -2,10 +2,11 @@ import { Font, StyleSheet } from "@react-pdf/renderer";
 
 // Register fonts from Google Fonts CDN
 Font.register({
-  family: "Playfair Display",
+  family: "Cormorant Garamond",
   fonts: [
-    { src: "https://fonts.gstatic.com/s/playfairdisplay/v37/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKdFvXDXbtM.ttf", fontWeight: 400 },
-    { src: "https://fonts.gstatic.com/s/playfairdisplay/v37/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKd1unDXbtM.ttf", fontWeight: 700 },
+    { src: "https://fonts.gstatic.com/s/cormorantgaramond/v16/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYrEtFmSq2LQ.ttf", fontWeight: 500 },
+    { src: "https://fonts.gstatic.com/s/cormorantgaramond/v16/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYrEPBmiq2LQ.ttf", fontWeight: 600 },
+    { src: "https://fonts.gstatic.com/s/cormorantgaramond/v16/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYrEfEmiq2LQ.ttf", fontWeight: 700 },
   ],
 });
 
@@ -41,16 +42,19 @@ export const DEFAULT_BRAND: PDFBrandConfig = {
   tagline: "Professional Home Stewardship",
 };
 
-// Design tokens
+// Design tokens — locked to HCR_STRUCTURE_LOCK.md palette
 export const colors = {
-  navy: "#1B2B4D",
-  gold: "#C9A961",
-  cream: "#F9F8F6",
+  navy: "#0A1628",
+  navySoft: "#1B2B4D",
+  gold: "#B87333",
+  goldLight: "#D4A574",
+  cream: "#EDE9E1",
+  creamLight: "#F5F2EC",
   white: "#FFFFFF",
-  grey100: "#F2F0ED",
-  grey300: "#D4D0CA",
-  grey500: "#8D8A84",
-  grey700: "#5A5750",
+  grey100: "#F5F2EC",
+  grey300: "#E5E0D6",
+  grey500: "#6B6B6B",
+  grey700: "#0A1628",
 };
 
 // Shared styles
@@ -74,21 +78,21 @@ export const s = StyleSheet.create({
 
   // Typography
   h1: {
-    fontFamily: "Playfair Display",
+    fontFamily: "Cormorant Garamond",
     fontSize: 36,
     fontWeight: 400,
     color: colors.navy,
     marginBottom: 12,
   },
   h2: {
-    fontFamily: "Playfair Display",
+    fontFamily: "Cormorant Garamond",
     fontSize: 24,
     fontWeight: 400,
     color: colors.navy,
     marginBottom: 8,
   },
   h3: {
-    fontFamily: "Playfair Display",
+    fontFamily: "Cormorant Garamond",
     fontSize: 18,
     fontWeight: 400,
     color: colors.navy,

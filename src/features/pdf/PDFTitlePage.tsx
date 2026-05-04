@@ -15,7 +15,7 @@ const ts = StyleSheet.create({
     padding: 72,
   },
   logo: {
-    fontFamily: "Playfair Display",
+    fontFamily: "Cormorant Garamond",
     fontSize: 28,
     color: colors.navy,
     marginBottom: 6,

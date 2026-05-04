@@ -6,20 +6,36 @@
 
 @layer base {
   :root {
-    /* HCR Brand Colors — exact values from hcr-design-reference.html */
+    /* HCR Brand Colors — locked in HCR_STRUCTURE_LOCK.md */
     --hbc-navy: 216 60% 10%;          /* #0A1628 */
     --hbc-cream: 40 25% 91%;          /* #EDE9E1 */
-    --hbc-surface: 34 26% 95%;        /* #F5F2EE */
+    --hbc-surface: 34 26% 95%;        /* #F5F2EC */
     --hbc-gold: 29 57% 46%;           /* #B87333 */
-    /* Darker gold for body text on cream — passes WCAG AA at normal text sizes */
-    --hbc-gold-readable: 29 57% 32%;  /* ~#7a4d1e */
-    --hbc-border: 39 14% 80%;         /* #D4CFC6 */
-    --hbc-text-secondary: 36 4% 52%;  /* #8A8680 */
-    --hbc-text-muted: 42 6% 67%;      /* #B0ADA6 */
-    --hbc-rust: 16 86% 39%;
+    --hbc-gold-readable: 29 57% 32%;  /* ~#7a4d1e — WCAG AA on cream */
+    --hbc-border: 39 14% 80%;         /* #E5E0D6 */
+    --hbc-text-secondary: 36 4% 52%;  /* #6B6B6B */
+    --hbc-text-muted: 0 0% 60%;       /* #999999 */
+    --hbc-rust: 16 86% 39%;           /* #B7410E */
     --hbc-white: 0 0% 100%;
     --hbc-grey-100: 34 26% 95%;       /* surface */
     --hbc-grey-500: 36 4% 52%;        /* text-secondary */
+
+    /* Locked palette — hex convenience tokens (match prototype) */
+    --navy: #0A1628;
+    --navy-soft: #1B2B4D;
+    --gold: #B87333;
+    --gold-light: #D4A574;
+    --cream: #EDE9E1;
+    --cream-light: #F5F2EC;
+    --rust: #B7410E;
+    --text-color: #0A1628;
+    --text-muted-color: #6B6B6B;
+    --text-subtle-color: #999999;
+    --border-color: #E5E0D6;
+    --border-strong: #C9C2B5;
+    --success-color: #2F6E40;
+    --warning-color: #B58A1F;
+    --danger-color: #B7410E;
 
     /* Semantic Tokens */
     --background: 40 25% 91%;          /* cream  #EDE9E1 */
@@ -43,7 +59,7 @@
     --accent: 29 57% 46%;              /* gold #B87333 */
     --accent-foreground: 216 60% 10%;  /* navy */
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 16 86% 39%;            /* rust #B7410E */
     --destructive-foreground: 0 0% 100%;
 
     --border: 39 14% 80%;              /* #D4CFC6 — solid */
@@ -132,7 +148,7 @@
   }
 
   .font-mono {
-    font-family: 'Inter', sans-serif;
+    font-family: 'IBM Plex Mono', monospace;
     font-weight: 400;
   }
 }
@@ -164,6 +180,14 @@
   
   .bg-hbc-cream {
     background-color: hsl(var(--hbc-cream));
+  }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: hsl(var(--accent));
   }
   
   .bg-hbc-gold {
