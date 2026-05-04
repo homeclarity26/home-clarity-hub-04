@@ -50,3 +50,11 @@ Managed by HCR_REBUILD_RUNNER.md.
 - [x] PR #197 — Phase 9 PR #26: Proactive alerts engine + NotificationBell — merged 2026-05-04
 - [x] PHASE 5 COMPLETE — 2026-05-04
 - [x] PHASE 7 COMPLETE — 2026-05-04
+- [x] PR #198 — Wire Bobby persistence + AI proposals + alerts cron — merged 2026-05-04
+
+## ALL REBUILD PHASES COMPLETE — 2026-05-04
+
+Remaining non-blocking items:
+- [ ] Push notifications for Bobby responses (in-app realtime works; no native push)
+- [ ] Visual walkthrough against caldwell_prototype_v2_screens.pdf (Adam manual task)
+- [ ] Seed a real Caldwell demo property via the wizard for portal demo
