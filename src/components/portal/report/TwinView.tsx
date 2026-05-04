@@ -57,11 +57,20 @@ export function TwinView({ groups, pages, onPageSelect }: TwinViewProps) {
                 {page.title}
               </p>
               {condColor && (
-                <span
-                  className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full"
-                  style={{ background: condColor }}
-                  title={condition ?? undefined}
-                />
+                <div className="absolute top-2 right-2 flex items-center gap-1">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ background: condColor }}
+                  />
+                  <span className="hidden group-hover:inline text-[8px] font-mono uppercase tracking-wider" style={{ color: condColor }}>
+                    {condition}
+                  </span>
+                </div>
+              )}
+              {page.tiers && (page.tiers.essential || page.tiers.enhanced || page.tiers.signature) && (
+                <span className="absolute bottom-2 right-2 text-[8px] font-mono uppercase tracking-wider text-accent bg-accent/10 px-1.5 py-0.5 rounded">
+                  Vision
+                </span>
               )}
               {page.specs && Object.keys(page.specs).length > 0 && (
                 <p className="text-[9px] font-mono text-muted-foreground mt-1 truncate">
