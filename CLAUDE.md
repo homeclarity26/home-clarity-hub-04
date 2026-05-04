@@ -10,7 +10,7 @@
 <!-- Token efficiency: read this file + TODO.md only. Don't re-read all components unless modifying one. -->
 
 **Branch:** `main`
-**Last updated:** 2026-05-03
+**Last updated:** 2026-05-04
 
 ---
 
@@ -111,20 +111,21 @@ If a session has no UI changes, skip this step entirely.
 
 ---
 
-## 🚦 Where the app stands (post-HCR-rebuild, 2026-04-27)
+## 🚦 Where the app stands (ALL REBUILD PHASES COMPLETE, 2026-05-04)
 
-- Golden Path 62/62 green; CI 11/11 jobs green on `main` (PRs #101–#120 merged).
-- 149/149 tables accept UI-shaped writes (synthetic-insert smoke).
-- 89/89 tenant-scoped tables block anon read + write via RLS.
-- 52/70 edge functions auth-gated (18 intentionally open — see PR #66).
-- 70/70 edge functions smoke-ping clean (0 × 500, 0 × 503, 0 × BOOT_ERROR).
+- **ALL 12 rebuild phases complete.** PRs #168–#199 merged on main.
+- Golden Path 74/74 green; CI 11/11 jobs green on `main`.
 - 0 TypeScript errors; 0 non-legit `as any` casts.
 - CI auto-runs Golden Path on every push + daily at 12:00 UTC (11 jobs: build + 5 deterministic + 6 AI-dependent).
-- CI auto-deploys edge functions when `supabase/functions/**` changes
-  (individual function deploys on per-function change; full-fleet
-  redeploy on `_shared/**` change).
-- HCR rebuild complete through Phase 9. Old wizard (BuildMyReport, ReportPageManager, NewReportWizard) retired in PR #121.
-- Photo edge functions (analyze-photo, categorize-photo, enhance-photo) use `gemini-flash-latest` + 90s timeout (hotfix PR #117).
+- CI auto-deploys edge functions when `supabase/functions/**` changes.
+- Bobby chat is PERSISTENT — messages survive sessions via `bobby_threads` + `bobby_messages`.
+- AI Co-Pilot has proposal engine — `propose-copilot-updates` suggests page edits.
+- Proactive alerts run daily at 08:00 UTC via pg_cron.
+- Push notifications wired for Bobby replies, escalations, and proactive alerts.
+- Portal structure complete: 6 tabs, all templates rendering, Bobby bar on every screen.
+- Photo edge functions use `gemini-flash-latest` + 90s timeout.
+- `callClaude()` falls back to Gemini on Anthropic 400/401/402/403 + credit-exhausted body.
+- `callAI()` (Gemini) falls back to Claude on 429/500/503/network error.
 
 If you make a change that breaks any of the above, it's a regression.
 Fix before merging.
@@ -170,16 +171,67 @@ Two-model hybrid with persistent semantic memory:
   `remember`/`add_kb_article` embed synchronously via `callGeminiEmbedding`
   rather than calling `embed-content` in the background.
 
-## ✅ Migrations applied through 2026-04-18
+## 💬 Bobby Persistence Architecture (2026-05-04)
 
-Most recent: `20260418000000_pgvector_memory_foundation.sql` — enables
-pgvector, adds embedding columns, creates `agent_memory`, registers the
-four `match_*()` RPCs. Applied via `npx supabase db push --linked`.
+Bobby is the homeowner-facing AI assistant. Messages are PERSISTENT, not ephemeral.
 
-Earlier today: `20260417120000_handle_new_user_role_metadata.sql` —
-honors `raw_user_meta_data.role` in the `handle_new_user()` trigger so
-admin-created creators don't get stuck with a `client` role too.
-**Stack:** React 18 + TypeScript + Vite (Bun runtime) · Supabase (Postgres, Auth, Storage, Edge Functions) · Gemini 2.0 Flash · shadcn/ui · TanStack React Query · Tiptap WYSIWYG · @react-pdf/renderer · date-fns · framer-motion · DOMPurify · @dnd-kit
+### Data flow
+
+1. `useBobbyThread` hook (in portal) auto-creates a `bobby_threads` row on first load.
+2. User sends message → inserted into `bobby_messages` (sender='user').
+3. Hook invokes `hbc-agent` edge function with message + last 10 messages as history.
+4. Agent reply persisted as `bobby_messages` (sender='bobby').
+5. Supabase realtime subscription pushes new messages to all connected clients.
+
+### Admin replies
+
+1. Bobby escalates messages it can't handle → row in `escalation_queue`.
+2. Adam sees pending escalations at `/admin/bobby-inbox` (AdminBobbyInbox.tsx).
+3. Adam's reply is inserted as `bobby_messages` (sender='adam').
+4. Push notification sent to homeowner via `send-push-notification` edge function.
+
+### Rules for future sessions
+
+- **Never revert ConciergePanel to ephemeral AgentChat.** The panel consumes `useBobbyThread`.
+- **Never rename Bobby back to Concierge** in any homeowner-facing text. Internal code may still use `concierge/` paths.
+- **The hbc-agent expects `{ message, history, context }` body** — not `{ message, propertyId, threadId }`.
+- **Always persist the agent reply** — if hbc-agent returns `{ reply }`, it MUST be written to `bobby_messages`.
+
+## 📲 Push Notification Stack
+
+- **Service Worker:** `public/sw.js` — handles `push` events, shows native notifications, tracks clicks.
+- **Subscription:** `push_subscriptions` table stores VAPID endpoint + keys per user.
+- **Send function:** `supabase/functions/send-push-notification/index.ts` — takes `{ user_id, title, body, url }`.
+- **Frontend helper:** `src/lib/pushNotifications.ts` — fire-and-forget `sendPushNotification()` + typed templates.
+- **Triggers:** Bobby replies (AdminBobbyInbox), escalations (Bobby auto-escalate), proactive alerts (cron).
+
+## 🤖 Proactive Alerts + Co-Pilot
+
+### Proactive Alerts
+- `generate-proactive-alerts` edge function scans all properties daily (08:00 UTC via pg_cron).
+- Alert types: age-based (system >80% lifespan), service-overdue (>12 months), seasonal.
+- Frequency cap: max 3 alerts per property per week.
+- `NotificationBell.tsx` reads from `proactive_alerts` table.
+
+### AI Co-Pilot
+- `PostPublishCoPilot.tsx` on AdminClientDetail shows copilot_inbox items.
+- "Analyze" button calls `propose-copilot-updates` edge function.
+- Proposals suggest which report pages should be updated based on the inbox item content.
+- `AddToMyHome.tsx` is the client-side floating button that submits to copilot_inbox.
+
+---
+
+## ✅ Migrations applied through 2026-05-04
+
+Most recent:
+- `20260504010000_schedule_proactive_alerts_cron.sql` — pg_cron schedules `generate-proactive-alerts` daily at 08:00 UTC via `pg_net.http_post`.
+- `20260504000000_create_bobby_copilot_alerts.sql` — creates `bobby_threads`, `bobby_messages`, `escalation_queue`, `copilot_inbox`, `proactive_alerts` tables + RLS + adds `report_pages.proposed_by_ai` column.
+
+Earlier:
+- `20260418000000_pgvector_memory_foundation.sql` — pgvector, embedding columns, `agent_memory`, four `match_*()` RPCs.
+- `20260417120000_handle_new_user_role_metadata.sql` — `handle_new_user()` honors `raw_user_meta_data.role`.
+
+**Stack:** React 18 + TypeScript + Vite (Bun runtime) · Supabase (Postgres, Auth, Storage, Edge Functions) · Gemini 2.5 Flash · Claude Sonnet 4.6 · shadcn/ui · TanStack React Query · Tiptap WYSIWYG · @react-pdf/renderer · date-fns · framer-motion · DOMPurify · @dnd-kit
 
 ---
 
@@ -210,10 +262,11 @@ Core product: a structured **Home Clarity Report** — multi-page document cover
 ## ✅ Deployment Status (LIVE)
 
 - **Supabase project:** `vvwojahsianpmwjvkunn` at https://vvwojahsianpmwjvkunn.supabase.co
-- **67 edge functions:** ALL deployed + ACTIVE
-- **All DB migrations:** applied (hero_image_url column, RLS tightening on 10 tables, project_updates table)
-- **Storage buckets:** `property-photos` and `report-images` — public read, creator write
-- **Secrets set:** GEMINI_API_KEY, RENTCAST_API_KEY, RESEND_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, VAPID keys, SUPABASE_* internals
+- **70+ edge functions:** ALL deployed + ACTIVE (includes generate-proactive-alerts, propose-copilot-updates, send-push-notification, send-maintenance-reminders)
+- **All DB migrations:** applied through 2026-05-04 (bobby/copilot/alerts tables, pg_cron schedule)
+- **pg_cron:** `generate-proactive-alerts-daily` runs at 08:00 UTC
+- **Storage buckets:** `property-photos`, `report-images`, `wizard-uploads` — public read, creator write
+- **Secrets set:** GEMINI_API_KEY, ANTHROPIC_API_KEY, RENTCAST_API_KEY, RESEND_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, VAPID keys, SUPABASE_* internals
 
 **If edge functions are updated, redeploy with:**
 ```bash
@@ -223,32 +276,26 @@ npx supabase functions deploy <function-name> --no-verify-jwt
 
 ---
 
-## Recently Shipped — HCR Rebuild (PRs #101–#122, 2026-04-27)
+## Recently Shipped — Full HCR Rebuild (PRs #101–#199, completed 2026-05-04)
 
-| PR | Summary |
-|---|---|
-| #101 | hcr-rebuild/h9+h10: drop health_bar column + health_score_history table, regen types |
-| #102 | hcr-rebuild/c-batch: collapse 5 fragmented Concierge entry points (C3–C9) |
-| #103 | hcr-rebuild/e3: ai-edit gains expand/tighten/match_brand_voice modes |
-| #104 | hcr-rebuild/e5: consistency-check returns pre_publish_questions |
-| #105 | hcr-rebuild/e7: seed-report-from-notes clarifying questions + sequence risk + briefing stubs |
-| #106 | hcr-rebuild/e8: recommend-report-pages four-section grouping + custom section suggestions |
-| #107 | hcr-rebuild/z1: delete chat-assistant edge function (replaced by hbc-agent) |
-| #108 | hcr-rebuild/d2+d8: IBM Plex Mono font loaded + CLAUDE.md surgical additions |
-| #109 | hcr-rebuild/w1-w6: 5-step wizard shell + Step 1 Intake at /admin/clients/new |
-| #110 | hcr-rebuild/c10-c12: PortalHome + ReportHome + 6-tab portal consolidation (Home, Report, Schedule, Projects, Payments, Documents). Documents replaces Contacts. Trade partners surface contextually (Bobby, Schedule, appliance pages) rather than as a tab. |
-| #111 | hcr-rebuild/d6+d7: ESLint rules for inline hex and fixed-height prose |
-| #112 | hcr-rebuild/d3+d4: HCR color sweep batch 1+2 (invoices, proposals, change orders, ledger) |
-| #113 | hcr-rebuild/w2-w5: full Step 2–5 wizard implementations |
-| #114 | hcr-rebuild/w7: cut over /admin/clients/new to 5-step wizard (W-series complete) |
-| #115 | hcr-rebuild/z3: Golden Path tests 48–62 (62/62 baseline established) |
-| #116 | hcr-rebuild/d1: em-dash ESLint rule + sweep across JSX text |
-| #117 | hotfix: photos edge functions to gemini-flash-latest + 90s timeout |
-| #118 | hcr-rebuild/z4: regenerate Supabase types |
-| #119 | hcr-rebuild/d5a: fix eslint-disable scope for condition-rating palette objects |
-| #120 | hcr-rebuild/d5b: fix eslint-disable scope for brand-config objects + #fff → white |
-| #121 | hcr-rebuild/r1-r5: retire old wizard (BuildMyReport, ReportPageManager, NewReportWizard) — 3,081 lines deleted |
-| #122 | hcr-rebuild/z3-fix: move content-ops + static-integrity to ai-dependent CI matrix |
+The rebuild is COMPLETE. All 12 phases merged. Key milestones:
+
+| Phase | PRs | What shipped |
+|---|---|---|
+| Floor rebuild | #101–#122 | Health Score deletion, 5-step wizard, 6-tab portal, ESLint rules, Golden Path 62/62, old wizard retired |
+| Wizard overhaul | #149–#157 | AI-drafts every page on mount, 20 structural templates, voice input, PDF extraction |
+| Infrastructure | #124–#145 | Anthropic/Gemini cross-fallbacks, wizard state persistence, multi-property selector, GP self-provisioning |
+| Phase 0–4 | #168–#178 | CLAUDE.md reconciliation, naming consolidation (Bobby), 5-chapter taxonomy, visual system, report + room/system/vision templates, Information + Strategy standing pages |
+| Phase 5 (Bobby) | #194–#195 | DB migration (bobby_threads + messages + escalation_queue), Bobby input bar, ConciergePanel rewrite, AdminBobbyInbox |
+| Phase 6 | #179–#182 | TOC select-all, post-publish redirect, paired Hover/iGUIDE cards, Step 5 upload + missing-photo banner |
+| Phase 7 (Co-Pilot) | #196 | PostPublishCoPilot with AI "Analyze" button, AddToMyHome floating button, copilot_inbox table |
+| Phase 8 (Documents) | #183–#185 | Documents tab replaces Contacts, semantic search UI, context shortcuts on pages |
+| Phase 9 (Alerts) | #186–#187, #197 | Recurring Care in Schedule, What Changed feed, proactive_alerts engine + NotificationBell |
+| Phase 10 (Mobile) | #188–#189 | Mobile nav stacking, photo capture flow on Portal Home |
+| Phase 11 (Twin) | #190–#191 | Cover/Twin view toggle, digital twin grid, hover states + vision badge |
+| Phase 12 (Cleanup) | #192 | Delete 24 orphan components (-4,754 lines) |
+| Integration | #198 | Bobby persistence (useBobbyThread), AI proposals, pg_cron for alerts |
+| Push | #199 | Push notifications for Bobby replies, escalations, proactive alerts |
 
 ---
 
@@ -328,80 +375,92 @@ SUPABASE_URL / ANON / SERVICE_ROLE ✅
 ### Core
 - `profiles` — user profile (id, email, full_name, phone, avatar_url)
 - `user_roles` — (user_id, role: 'creator' | 'client' | 'trade_partner')
-- `properties` — core property + admin-uploaded `hero_image_url` (PR #2 added this)
+- `properties` — core property record. `client_user_id` links to the homeowner. `hero_image_url` for front-of-house photo.
 - `reports` — status ('draft' | 'published'), completion_percent
-- `report_pages` — narrative/specs/tiers/condition/images jsonb fields, status ('draft' | 'complete' | 'published')
+- `report_pages` — narrative/specs/tiers/condition/images jsonb fields, status ('draft' | 'complete' | 'published'), `proposed_by_ai` boolean
 - `invoices`, `projects`, `milestones`, `equipment`, `schedule_events`, `vendors`, `files`, `property_messages`
 
-### Added in recent PRs
-- `project_updates` (PR #5) — social-feed-style project updates with optional photos. RLS: creators manage, clients read own
-- `properties.hero_image_url` (PR #2) — admin-uploaded front-of-house photo
+### Bobby + Co-Pilot + Alerts (added 2026-05-04)
+- `bobby_threads` — one row per homeowner per property. `{id, property_id, client_user_id, last_message_at}`. Persistent across sessions.
+- `bobby_messages` — `{id, thread_id, sender ('user' | 'bobby' | 'adam'), content, status, action_taken, created_at}`. Every message persists.
+- `escalation_queue` — `{id, message_id, thread_id, property_id, status ('pending' | 'in_progress' | 'resolved' | 'dismissed'), context_summary, resolved_at}`. Admin inbox for Bobby handoffs.
+- `copilot_inbox` — `{id, property_id, submitted_by, item_type ('photo' | 'document' | 'note'), content, file_url, status ('pending' | 'applied' | 'dismissed')}`. Client/admin submissions for report updates.
+- `proactive_alerts` — `{id, property_id, user_id, alert_type, title, description, priority, dismissed, created_at}`. Generated daily by cron.
+- `push_subscriptions` — `{id, user_id, endpoint, p256dh, auth, created_at}`. Web Push subscription storage.
 
 ### RLS status
-- `properties`, `property_messages`, `report_pages`, `invoices`, `equipment` — scoped by `client_user_id` / `creator` role (verified via live smoke test)
-- 10 formerly-leaky tables fixed in PR #2: `document_extractions`, `home_knowledge_base`, `property_timeline`, `structural_specifications`, `warranty_registry`, `permit_registry`, `service_history`, `photo_analyses`, `project_scopes`, `home_value_snapshots` — now use `public.user_can_access_property(id)` helper
+- All Bobby/Co-Pilot/Alert tables have RLS: clients see own property data, creators see all.
+- `properties`, `property_messages`, `report_pages`, `invoices`, `equipment` — scoped by `client_user_id` / `creator` role.
+- 10 formerly-leaky tables fixed: `document_extractions`, `home_knowledge_base`, `property_timeline`, `structural_specifications`, `warranty_registry`, `permit_registry`, `service_history`, `photo_analyses`, `project_scopes`, `home_value_snapshots` — use `public.user_can_access_property(id)` helper.
 
 ---
 
-## File Structure — Key New/Changed Components
+## File Structure — Key Components
 
 ```
 src/
 ├── components/
 │   ├── ui/                       # Shared design primitives
-│   │   ├── Monogram.tsx          # ✨ NEW — ES/EX/IN/SY/SP/SA chapter badges
-│   │   └── SanitizedHtml.tsx     # ✨ NEW — DOMPurify wrapper for AI output
-│   │   # HealthScoreRing.tsx deleted in PR #101 — no health scores in HCR v2
+│   │   ├── Monogram.tsx          # Chapter badges (page-level)
+│   │   └── SanitizedHtml.tsx     # DOMPurify wrapper for AI output
 │   ├── portal/
-│   │   ├── PropertyHero.tsx      # ✨ NEW — full-bleed hero w/ photo
-│   │   ├── MobileBottomNav.tsx   # ✨ NEW — 4 tabs + More (replaces hamburger-only)
+│   │   ├── PropertyHero.tsx      # Full-bleed hero w/ photo
+│   │   ├── MobileBottomNav.tsx   # 4 tabs + More
 │   │   ├── PortalSidebar.tsx     # Desktop sidebar + controlled mobile drawer
-│   │   └── ... (other widgets: SmartActionTiles, AICommandBar, etc.)
+│   │   ├── NotificationBell.tsx  # Reads proactive_alerts + ai_notification_nudges
+│   │   ├── AddToMyHome.tsx       # Floating "+" button for client copilot submissions
+│   │   └── concierge/
+│   │       ├── ConciergeBar.tsx  # Gold "B" Bobby bar (bottom of every screen)
+│   │       └── ConciergePanel.tsx # PERSISTENT Bobby thread (uses useBobbyThread)
+│   ├── portal/home/
+│   │   ├── PortalHome.tsx        # Portal Home dashboard
+│   │   └── BobbyInputBar.tsx     # Pinned "Ask Bobby" input under hero
 │   ├── report/
-│   │   ├── PublishBar.tsx        # ✨ NEW — floating publish CTA in edit mode
-│   │   ├── PageAIChat.tsx        # ✨ NEW — inline AI edit on each report page
-│   │   ├── ReportOverview.tsx    # Architectural cover w/ monogram TOC
-│   │   ├── ReportChapterNav.tsx  # Monogram pills + TOC drawer (keyboard-accessible)
-│   │   └── ... (existing renderers)
+│   │   ├── PublishBar.tsx        # Floating publish CTA in edit mode
+│   │   ├── PageAIChat.tsx        # Inline AI edit on each report page
+│   │   ├── ReportOverview.tsx    # Cover view with chapter cards
+│   │   └── ReportChapterNav.tsx  # TOC drawer (keyboard-accessible)
 │   ├── editor/
-│   │   ├── ImageGrid.tsx         # Symmetrical CSS Grid layouts + @dnd-kit reorder
-│   │   ├── AIEditPanel.tsx       # ← uses supabase.functions.invoke() now
-│   │   └── ...
-│   ├── agent/
-│   │   └── ClientAgentPanel.tsx  # Persistent command bar + ⌘K + Sheet
-│   ├── chat/
-│   │   └── useChat.ts            # ← uses real JWT from session (NOT anon key)
+│   │   ├── ImageGrid.tsx         # Symmetrical CSS Grid + @dnd-kit reorder
+│   │   └── AIEditPanel.tsx       # supabase.functions.invoke("ai-edit")
 │   ├── tabs/
-│   │   ├── HomeTab.tsx           # Collapsed to hero + AI bar + tiles + "Explore more"
+│   │   ├── HomeTab.tsx           # Hero + Bobby bar + tiles
 │   │   ├── ProjectsTab.tsx       # Phase timeline + update feed
-│   │   ├── PaymentsTab.tsx       # Draw schedule bar + Promise.allSettled
-│   │   └── ...
+│   │   └── PaymentsTab.tsx       # Draw schedule bar
 │   └── admin/
-│       ├── wizard/               # 5-step new client wizard (W1–W7)
+│       ├── wizard/               # 5-step new client wizard
+│       ├── PostPublishCoPilot.tsx # AI proposal engine for copilot_inbox items
 │       └── ... (existing)
-│       # ReportPageManager.tsx, BuildMyReport.tsx, NewReportWizard.tsx deleted in PR #121
-├── data/
-│   └── reportContent.ts          # 65+ page templates (was 39) — appliances, safety, etc.
+├── hooks/
+│   └── useBobbyThread.ts         # THE Bobby persistence hook (auto-create thread, realtime sub, agent invoke)
+├── lib/
+│   └── pushNotifications.ts      # sendPushNotification + templates (bobbyReply, bobbyEscalation, proactiveAlert)
 ├── pages/
-│   ├── Index.tsx                 # MobileBottomNav + memoized footerReportContext
-│   └── ... (all /admin/* and /trade/* routes are lazy-loaded)
-└── App.tsx                       # Lazy routes + QueryClient defaults + TradePartnerRoute
+│   ├── Index.tsx                 # Portal shell + AddToMyHome for non-creators
+│   ├── admin/
+│   │   └── AdminBobbyInbox.tsx   # Escalation management + reply composer
+│   └── ... (all /admin/* and /trade/* routes lazy-loaded)
+└── App.tsx                       # Routes include /admin/bobby-inbox
 
 supabase/
 ├── functions/
 │   ├── _shared/
-│   │   ├── auth.ts               # ✨ NEW — requireAuth / requireRole / requirePropertyAccess
-│   │   ├── ai-client.ts          # Gemini wrapper (callAI)
+│   │   ├── auth.ts               # requireAuth / requireRole / requirePropertyAccess
+│   │   ├── ai-client.ts          # callAI (Gemini) + callClaude (Sonnet) with cross-fallbacks
 │   │   └── rate-limit.ts
-│   ├── hbc-agent/                # ~200 tools — THE AI operating system
-│   ├── seed-report-from-notes/   # meeting notes → full report seed
-│   ├── enhance-photo/            # Gemini Vision photo analysis (gemini-flash-latest)
-│   ├── ai-edit/                  # expand/tighten/match_brand_voice (creator-only)
-│   └── ... (66 total — chat-assistant deleted in PR #107, replaced by hbc-agent)
-└── migrations/
-    ├── 20260415000000_add_hero_image_url.sql
-    ├── 20260415000001_tighten_leaky_rls.sql
-    └── 20260415000002_create_project_updates.sql
+│   ├── hbc-agent/                # ~200 tools — Bobby's AI backend
+│   ├── generate-proactive-alerts/ # Cron-triggered: age/service/seasonal alerts
+│   ├── propose-copilot-updates/  # AI suggests which pages a copilot item should update
+│   ├── send-push-notification/   # Web Push via VAPID
+│   ├── seed-report-from-notes/   # Meeting notes → full report seed
+│   ├── enhance-photo/            # Gemini Vision photo analysis
+│   ├── ai-edit/                  # expand/tighten/match_brand_voice
+│   └── ... (70+ total)
+├── migrations/
+│   ├── ...earlier migrations...
+│   ├── 20260504000000_create_bobby_copilot_alerts.sql
+│   └── 20260504010000_schedule_proactive_alerts_cron.sql
+└── config.toml
 ```
 
 ---
@@ -699,15 +758,9 @@ If a ticket appears to require touching more than 3 files, the right move is to 
 
 The rule applies to test files too. If adding a feature requires updating 5 test files, split the ticket. The exception is when a single new test file is added alongside the feature — that counts as one of the 3.
 
-### Golden Path 47 baseline becomes 62
+### Golden Path 74/74 baseline
 
-The existing 47/47 Golden Path test baseline grows to 62/62 across the rebuild. Master Spec Section 6.10 enumerates the 15 new tests. The invariant during the rebuild is:
-
-- After Phase 1 (foundation): 47/47 still passes (no functional change yet)
-- After Phase 2-3 (new blocks + wizard): 47/47 plus new tests as they ship
-- After Phase 10 (cleanup): 62/62 holds
-
-A ticket that breaks any green test does not merge. A ticket that adds a new test and the test fails on first run is fine — that's the test catching its target. A ticket that "skips" a test to ship faster is non-compliant.
+The Golden Path test suite is at 74/74 (grew from 47 → 62 → 74 across the rebuild). CI runs all 74 on every push. A ticket that breaks any green test does not merge. A ticket that adds a new test and the test fails on first run is fine. A ticket that "skips" a test to ship faster is non-compliant.
 
 ### Em-dashes are never permitted in client copy
 
@@ -721,11 +774,9 @@ The HCR brand palette applies system-wide, including AKR-branded admin documents
 
 Inline hex codes outside the design token file (src/index.css) are flagged by ESLint rule no-inline-hex (added in Phase 9). Future work uses CSS variables and shadcn tokens exclusively.
 
-### IBM Plex Mono must load
+### IBM Plex Mono is loaded (fixed PR #108)
 
-The brand specifies three fonts: Cormorant Garamond (display), Inter (body), IBM Plex Mono (data labels and uppercase mono captions). The audit found Plex Mono is currently NOT loaded; font-mono renders Inter as a fallback. The fix is one ticket touching index.html.
-
-After the fix ships, every font-mono usage in the app inherits Plex Mono. No component changes required.
+The brand specifies three fonts: Cormorant Garamond (display), Inter (body), IBM Plex Mono (data labels and uppercase mono captions). Plex Mono is loaded via index.html. Every `font-mono` usage renders Plex Mono.
 
 ### Caldwell residence is pure 1998 build
 
@@ -773,9 +824,9 @@ The Mock Report (deliverable 3) is the canonical content for every Caldwell page
 
 The brand system is locked. Cormorant Garamond, Inter, IBM Plex Mono. Navy #0A1628, Gold #B87333, Cream #EDE9E1, Rust #B7410E. The shadcn/ui component patterns. Tailwind spacing scale. Tickets that introduce new fonts, new spacing units, or new component primitives are non-compliant.
 
-### Touching the existing CLAUDE.md beyond additive surgical changes
+### Reverting Bobby to Concierge or removing persistence
 
-CLAUDE.md is battle-tested. The HCR rebuild adds to it. The HCR rebuild does NOT rewrite it. Tickets that modify existing sections (other than the explicit single-line insertions noted in this addition document) are non-compliant.
+Bobby is the locked name. ConciergePanel uses useBobbyThread for persistent messaging. Never replace it with ephemeral AgentChat. Never rename Bobby back to "Concierge" or "Home Assistant" in homeowner-facing text. The folder path `portal/concierge/` stays for code organization but all user-facing copy says "Bobby."
 
 ### Touching more than 3 files in a single ticket
 
@@ -851,7 +902,7 @@ Adam is the PR reviewer for every HCR rebuild ticket. Nothing merges without his
 ### New components live in dedicated subdirectories
 
 - `src/components/admin/wizard/` — the 5-step wizard step components and shared sub-components (Step1Intake.tsx, Step2TOC.tsx, Step3Authoring.tsx, Step4Strategy.tsx, Step5Publish.tsx, AICoPilotPanel.tsx, SideBySideEditor.tsx, AIClarifyingQuestions.tsx, AIQualityGate.tsx, CustomPageDialog.tsx, FieldChecklist.tsx)
-- `src/components/portal/concierge/` — ConciergeBar.tsx, ConciergePanel.tsx, ConciergeAction.tsx, ConciergeTranscript.tsx
+- `src/components/portal/concierge/` — ConciergeBar.tsx (Bobby floating bar), ConciergePanel.tsx (persistent Bobby thread via useBobbyThread)
 - `src/components/portal/home/` — PortalHome.tsx, PortalHomeHero.tsx, TodaysBrief.tsx, HoverEmbed.tsx, IGuideEmbed.tsx, FloorPlanEmbed.tsx
 - `src/components/portal/report/` — ReportHome.tsx and supporting components
 - `src/components/wysiwyg/blocks/` — new block renderers (RoomRecordBlock.tsx, SystemRecordBlock.tsx, ReplacementBriefingBlock.tsx, VisionProjectBlock.tsx, RecurringServicesBlock.tsx, CapitalPlanBlock.tsx, MaintenanceCalendarBlock.tsx, TodaysBriefBlock.tsx, ConditionRatingBlock.tsx, ConditionPillBlock.tsx, FieldChecklistBlock.tsx, ConciergeActionBlock.tsx)
