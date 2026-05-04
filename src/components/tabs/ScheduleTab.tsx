@@ -7,6 +7,7 @@ import {
 import MaintenanceReminders from "@/components/MaintenanceReminders";
 import SeasonalMaintenanceTips from "@/components/portal/SeasonalMaintenanceTips";
 import PredictiveMaintenanceCard from "@/components/portal/PredictiveMaintenanceCard";
+import { RecurringCareSection } from "@/components/portal/RecurringCareSection";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -381,6 +382,11 @@ const ScheduleTab = ({ propertyId, propertyAddress, onTabChange }: ScheduleTabPr
           </div>
         </div>
 
+        {/* Recurring Care */}
+        {propertyId && !propertyId?.startsWith("mock-") && (
+          <RecurringCareSection propertyId={propertyId} />
+        )}
+
         {/* Maintenance Reminders — relocated from Home */}
         {propertyId && !propertyId?.startsWith("mock-") && (
           <MaintenanceReminders propertyId={propertyId} />
@@ -396,7 +402,7 @@ const ScheduleTab = ({ propertyId, propertyAddress, onTabChange }: ScheduleTabPr
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent mb-6">Quick Actions</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button onClick={() => onTabChange?.("contacts")} className={cardBase}>
+            <button onClick={() => onTabChange?.("home")} className={cardBase}>
               <Phone className="w-5 h-5 text-accent" />
               <h2 className="font-display text-xl text-foreground mb-1">Contact Your Advisor</h2>
               <p className="font-sans text-sm text-muted-foreground">Schedule a consultation or ask a question</p>
