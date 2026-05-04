@@ -51,4 +51,25 @@ export const pushTemplates = {
     body: `${clientName}'s condition changed to ${rating}`,
     url: "/admin",
   }),
+
+  bobbyReply: (userId: string, propertyId: string, preview: string) => ({
+    user_id: userId,
+    title: "Adam replied to your message",
+    body: preview.slice(0, 100),
+    url: `/portal/${propertyId}`,
+  }),
+
+  bobbyEscalation: (adminUserId: string, clientName: string, preview: string) => ({
+    user_id: adminUserId,
+    title: `Bobby escalated: ${clientName}`,
+    body: preview.slice(0, 100),
+    url: "/admin/bobby-inbox",
+  }),
+
+  proactiveAlert: (userId: string, propertyId: string, title: string) => ({
+    user_id: userId,
+    title: "Home alert",
+    body: title,
+    url: `/portal/${propertyId}`,
+  }),
 };
