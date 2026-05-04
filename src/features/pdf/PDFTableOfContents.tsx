@@ -11,7 +11,7 @@ interface PDFTableOfContentsProps {
 
 const tc = StyleSheet.create({
   title: {
-    fontFamily: "Playfair Display",
+    fontFamily: "Cormorant Garamond",
     fontSize: 28,
     color: colors.navy,
     marginBottom: 40,

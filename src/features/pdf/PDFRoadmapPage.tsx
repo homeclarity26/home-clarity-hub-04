@@ -86,7 +86,7 @@ const rm = StyleSheet.create({
     marginVertical: 20,
   },
   pullQuoteText: {
-    fontFamily: "Playfair Display",
+    fontFamily: "Cormorant Garamond",
     fontSize: 16,
     color: colors.navy,
     lineHeight: 1.5,

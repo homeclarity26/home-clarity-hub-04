@@ -27,7 +27,7 @@ const ds = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontFamily: "Playfair Display",
+    fontFamily: "Cormorant Garamond",
     fontSize: 32,
     color: colors.white,
     lineHeight: 1.3,

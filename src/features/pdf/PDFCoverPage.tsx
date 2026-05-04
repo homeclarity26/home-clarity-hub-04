@@ -36,7 +36,7 @@ const cs = StyleSheet.create({
     marginBottom: 24,
   },
   title: {
-    fontFamily: "Playfair Display",
+    fontFamily: "Cormorant Garamond",
     fontSize: 36,
     color: colors.navy,
     textAlign: "center",
@@ -95,7 +95,7 @@ const PDFCoverPage = ({ propertyName, address, date, coverImageUrl, brand }: PDF
             {brand?.logoUrl ? (
               <Image src={brand.logoUrl} style={{ width: 160, height: 80, objectFit: "contain" as const }} />
             ) : (
-              <Text style={{ fontFamily: "Playfair Display", fontSize: 48, color: colors.gold }}>HBC</Text>
+              <Text style={{ fontFamily: "Cormorant Garamond", fontSize: 48, color: colors.gold }}>HBC</Text>
             )}
           </View>
         )}
