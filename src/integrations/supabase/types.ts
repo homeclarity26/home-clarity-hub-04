@@ -964,6 +964,76 @@ export type Database = {
         }
         Relationships: []
       }
+      bobby_messages: {
+        Row: {
+          action_taken: Json | null
+          content: string
+          created_at: string
+          id: string
+          sender: string
+          status: string
+          thread_id: string
+        }
+        Insert: {
+          action_taken?: Json | null
+          content: string
+          created_at?: string
+          id?: string
+          sender: string
+          status?: string
+          thread_id: string
+        }
+        Update: {
+          action_taken?: Json | null
+          content?: string
+          created_at?: string
+          id?: string
+          sender?: string
+          status?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bobby_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "bobby_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bobby_threads: {
+        Row: {
+          client_user_id: string
+          created_at: string
+          id: string
+          last_message_at: string
+          property_id: string
+        }
+        Insert: {
+          client_user_id: string
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          property_id: string
+        }
+        Update: {
+          client_user_id?: string
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bobby_threads_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: true
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       capital_plan_items: {
         Row: {
           cost_high: number | null
@@ -1530,6 +1600,47 @@ export type Database = {
           },
         ]
       }
+      copilot_inbox: {
+        Row: {
+          absorbed_at: string | null
+          created_at: string
+          id: string
+          kind: string
+          payload: Json
+          property_id: string
+          source: string
+          status: string
+        }
+        Insert: {
+          absorbed_at?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          payload: Json
+          property_id: string
+          source: string
+          status?: string
+        }
+        Update: {
+          absorbed_at?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          property_id?: string
+          source?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "copilot_inbox_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_activity_log: {
         Row: {
           activity_type: string
@@ -2070,6 +2181,61 @@ export type Database = {
             columns: ["report_page_id"]
             isOneToOne: false
             referencedRelation: "report_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      escalation_queue: {
+        Row: {
+          context_summary: string | null
+          created_at: string
+          id: string
+          message_id: string
+          property_id: string
+          resolved_at: string | null
+          status: string
+          thread_id: string
+        }
+        Insert: {
+          context_summary?: string | null
+          created_at?: string
+          id?: string
+          message_id: string
+          property_id: string
+          resolved_at?: string | null
+          status?: string
+          thread_id: string
+        }
+        Update: {
+          context_summary?: string | null
+          created_at?: string
+          id?: string
+          message_id?: string
+          property_id?: string
+          resolved_at?: string | null
+          status?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escalation_queue_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "bobby_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escalation_queue_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escalation_queue_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "bobby_threads"
             referencedColumns: ["id"]
           },
         ]
@@ -3966,6 +4132,56 @@ export type Database = {
             columns: ["prediction_id"]
             isOneToOne: false
             referencedRelation: "maintenance_predictions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proactive_alerts: {
+        Row: {
+          action_label: string | null
+          action_url: string | null
+          body: string
+          created_at: string
+          due_date: string | null
+          id: string
+          property_id: string
+          severity: string
+          status: string
+          title: string
+          type: string
+        }
+        Insert: {
+          action_label?: string | null
+          action_url?: string | null
+          body: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          property_id: string
+          severity: string
+          status?: string
+          title: string
+          type: string
+        }
+        Update: {
+          action_label?: string | null
+          action_url?: string | null
+          body?: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          property_id?: string
+          severity?: string
+          status?: string
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proactive_alerts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -5894,6 +6110,7 @@ export type Database = {
           narrative: Json
           next_review_date: string | null
           page_key: string
+          proposed_by_ai: boolean | null
           recommendations: Json | null
           replacement_cost_today: number | null
           report_id: string
@@ -5927,6 +6144,7 @@ export type Database = {
           narrative?: Json
           next_review_date?: string | null
           page_key: string
+          proposed_by_ai?: boolean | null
           recommendations?: Json | null
           replacement_cost_today?: number | null
           report_id: string
@@ -5960,6 +6178,7 @@ export type Database = {
           narrative?: Json
           next_review_date?: string | null
           page_key?: string
+          proposed_by_ai?: boolean | null
           recommendations?: Json | null
           replacement_cost_today?: number | null
           report_id?: string
@@ -6154,6 +6373,7 @@ export type Database = {
           event_type: string
           id: string
           property_id: string
+          reminder_sent: boolean
           status: string
           title: string
         }
@@ -6164,6 +6384,7 @@ export type Database = {
           event_type?: string
           id?: string
           property_id: string
+          reminder_sent?: boolean
           status?: string
           title: string
         }
@@ -6174,6 +6395,7 @@ export type Database = {
           event_type?: string
           id?: string
           property_id?: string
+          reminder_sent?: boolean
           status?: string
           title?: string
         }
