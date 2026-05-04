@@ -199,7 +199,7 @@ const SystemTemplatePage = ({
 
       {/* Prev / Next */}
       {(prevPage || nextPage) && (
-        <div className="border-t border-border pt-8 mt-12 grid grid-cols-2 gap-3">
+        <div className="border-t border-border pt-8 mt-12 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {prevPage && prevPageId ? (
             <button
               onClick={() => onNavigate?.(prevPageId)}
