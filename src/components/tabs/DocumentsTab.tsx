@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import DocumentExpirationTracker from "@/components/portal/DocumentExpirationTracker";
 import InsuranceAssistant from "@/components/InsuranceAssistant";
+import { DocumentVaultSearch } from "@/components/portal/DocumentVaultSearch";
 
 interface DocumentsTabProps {
   propertyId?: string;
@@ -206,6 +207,11 @@ const DocumentsTab = ({ propertyId }: DocumentsTabProps) => {
             </>
           )}
         </div>
+
+        {/* Semantic Search */}
+        {propertyId && !propertyId.startsWith("mock-") && (
+          <DocumentVaultSearch propertyId={propertyId} />
+        )}
 
         {/* Search & Filter */}
         {files.length > 0 && (
