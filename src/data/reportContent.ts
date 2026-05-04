@@ -21,7 +21,7 @@ export const reportGroups = [
   {
     id: "information",
     title: "Information",
-    pages: ["executive-summary"],
+    pages: ["welcome-letter", "executive-summary", "home-at-a-glance", "vision-inventory", "top-priorities", "how-to-use"],
   },
   {
     id: "exterior",
@@ -99,6 +99,17 @@ export const reportPages: Record<string, ReportPageData> = {
   // ────────────────────────────────────────────
   // INFORMATION
   // ────────────────────────────────────────────
+  "welcome-letter": {
+    id: "welcome-letter",
+    title: "Welcome from Adam",
+    group: "information",
+    narrative: [
+      "Welcome to your Home Clarity Report. This document is the single most complete record of your home's physical condition, history, and future potential. It is a living record, not a static document, and it will grow with your home over time.",
+      "Inside you will find every room documented with its finishes, fixtures, and condition. Every major system catalogued with its age, lifecycle position, and maintenance history. Every vision project we discussed, scoped across three investment tiers so you always have options, never pressure.",
+      "This report is yours. Use it to plan, to budget, to communicate with contractors, to track what has been done and what comes next. When something changes in your home, we update the record together. When you are ready to act on a project, the scope is already written.",
+      "Thank you for trusting us with the stewardship of your home. We take that responsibility seriously.",
+    ],
+  },
   "executive-summary": {
     id: "executive-summary",
     title: "Executive Summary",
@@ -115,6 +126,51 @@ export const reportPages: Record<string, ReportPageData> = {
       "Plan roof replacement within 2–3 years (Priority: High)",
       "Kitchen renovation in Year 3–5 window (Priority: Medium)",
       "Bathroom updates can follow kitchen work (Priority: Medium)",
+    ],
+  },
+  "home-at-a-glance": {
+    id: "home-at-a-glance",
+    title: "Your Home At-a-Glance",
+    group: "information",
+    narrative: [
+      "A quick reference card for your home's key data points. Year built, total square footage, lot size, bedroom and bathroom count, construction type, mechanical systems, and utility providers, all in one place.",
+      "This page updates as we learn more about your home. When systems are replaced, ages update automatically. When permits are pulled, they appear here. Think of it as the vital statistics page for your home.",
+    ],
+    specs: [
+      { label: "Year Built", value: "1987" },
+      { label: "Sqft", value: "3,200" },
+      { label: "Beds / Baths", value: "4 / 2.5" },
+      { label: "Lot Size", value: "0.38 acres" },
+      { label: "Construction", value: "Wood frame, brick veneer" },
+      { label: "Heating", value: "Forced air, natural gas" },
+    ],
+  },
+  "vision-inventory": {
+    id: "vision-inventory",
+    title: "Project Vision Inventory",
+    group: "information",
+    narrative: [
+      "Every improvement project we discussed during your consultation is captured here with its investment range and recommended timeline. Projects are organized by strategic phase: defense (protecting what you have), offense (upgrading what exists), and expansion (adding something new).",
+      "Each project links to its full Vision page in the Strategy chapter where you can explore three investment tiers, see the scope of work, and take action when you are ready.",
+    ],
+  },
+  "top-priorities": {
+    id: "top-priorities",
+    title: "Top Priorities",
+    group: "information",
+    narrative: [
+      "These are the items that need your attention first, ranked by urgency and consequence of deferral. Critical items pose safety or structural risk if left unaddressed. High-priority items will cost more if delayed. Medium items are quality-of-life improvements with flexible timelines.",
+      "We revisit this list together every year during your annual review. As items get completed, new ones surface. The goal is to always know what comes next so nothing catches you off guard.",
+    ],
+  },
+  "how-to-use": {
+    id: "how-to-use",
+    title: "How to Use This Report",
+    group: "information",
+    narrative: [
+      "Your report is organized into five chapters. Information gives you the big picture. Interior Spaces and Exterior Spaces document every room and surface with their finishes, condition, and relevant photos. Systems and Appliances catalogues every piece of equipment with its lifecycle position. Strategy ties it all together into a forward-looking plan.",
+      "Use the chapter tabs at the top to jump between sections. Use the Contents drawer for a full table of contents with search. Each page has Previous and Next navigation at the bottom so you can read straight through like a book.",
+      "When you are ready to take action on any project, tap the Bobby button to start a conversation. Bobby knows your home, your report, and your project history, and can help you schedule services, plan replacements, or explore vision projects.",
     ],
   },
 
