@@ -630,7 +630,7 @@ export const BLOCK_TEMPLATES: BlockTemplate[] = [
   },
   {
     type: "strategic_plan",
-    label: "Strategic Plan",
+    label: "Strategy",
     description: "Project recommendation card",
     icon: "Target",
     defaultColSpan: 6,

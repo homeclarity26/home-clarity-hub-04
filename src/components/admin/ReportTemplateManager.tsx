@@ -175,11 +175,11 @@ const ReportTemplateManager = () => {
             </div>
             <div className="space-y-2">
               <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Chapters</p>
-              {["Exterior", "Interior", "Systems", "Strategic Plan"].map(ch => (
+              {["Interior Spaces", "Exterior Spaces", "Systems & Appliances", "Strategy"].map(ch => (
                 <div key={ch} className="flex items-center justify-between py-2 border-b border-border">
                   <span className="text-sm font-sans">{ch}</span>
                   <span className="text-xs font-mono text-muted-foreground">
-                    {ch !== "Strategic Plan" ? `${previewOpen?.scoring_weights_json?.[ch.toLowerCase()] || 33}% weight` : "Roadmap"}
+                    {ch !== "Strategy" ? `${previewOpen?.scoring_weights_json?.[ch.toLowerCase()] || 33}% weight` : "Roadmap"}
                   </span>
                 </div>
               ))}

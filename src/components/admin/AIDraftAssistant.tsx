@@ -14,7 +14,7 @@ interface AIDraftAssistantProps {
   onInsert?: (text: string, section: string) => void;
 }
 
-const SECTIONS = ["Exterior", "Interior — Kitchen", "Interior — Bathrooms", "Interior — Living Spaces", "Systems — HVAC", "Systems — Electrical", "Systems — Plumbing", "Strategic Plan", "Executive Summary"];
+const SECTIONS = ["Exterior", "Interior — Kitchen", "Interior — Bathrooms", "Interior — Living Spaces", "Systems — HVAC", "Systems — Electrical", "Systems — Plumbing", "Strategy", "Executive Summary"];
 
 const AIDraftAssistant = ({ propertyId, propertyContext, onInsert }: AIDraftAssistantProps) => {
   const { user } = useAuth();
