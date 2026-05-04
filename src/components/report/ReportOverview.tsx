@@ -5,6 +5,14 @@ import type { PDFReportData } from "@/features/pdf/PDFReport";
 import { CHAPTERS } from "./ReportChapterNav";
 import HCRLogo from "@/components/brand/HCRLogo";
 
+const CHAPTER_DESCRIPTIONS: Record<string, string> = {
+  "information": "Welcome letter, executive summary, top priorities, vision inventory, at-a-glance specs",
+  "interior-spaces": "Every room inside your home — your home's living record",
+  "exterior-spaces": "Roof, siding, windows, structures, landscape — everything outside your home",
+  "systems-appliances": "Every furnace, condenser, water heater, fridge, range, and major appliance with its full lifecycle",
+  "strategy": "Your 10-year capital plan, maintenance calendar, vision projects, and recurring services",
+};
+
 interface ReportOverviewProps {
   groups: PortalGroup[];
   pages: Record<string, ReportPageData>;
@@ -38,7 +46,7 @@ const ReportOverview = ({
   isReportEmpty = false,
 }: ReportOverviewProps) => {
   const chapterData = useMemo(() => {
-    return CHAPTERS.map((ch) => {
+    return CHAPTERS.map((ch, idx) => {
       const chapterPages = groups
         .filter((g) => ch.groupIds.some((gid) => g.id === gid || g.id.includes(gid)))
         .flatMap((g) => g.pages)
@@ -47,7 +55,9 @@ const ReportOverview = ({
 
       return {
         ...ch,
+        num: String(idx + 1).padStart(2, "0"),
         sectionCount: chapterPages.length,
+        description: CHAPTER_DESCRIPTIONS[ch.id] || "",
       };
     });
   }, [groups, pages]);
@@ -67,115 +77,111 @@ const ReportOverview = ({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-[1040px] mx-auto px-6 sm:px-8 md:px-10 pt-10 md:pt-16 pb-14">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
-          {/* ── Left column: document cover ─────────────────────────── */}
-          <div className="lg:col-span-7">
-            <HCRLogo size="md" className="mb-8" />
+      <div className="max-w-[1040px] mx-auto px-5 sm:px-8 md:px-10 pt-10 md:pt-16 pb-14">
+        {/* Header */}
+        <HCRLogo size="md" className="mb-8" />
 
-            <p className="font-sans text-[10px] uppercase tracking-[0.25em] font-semibold text-muted-foreground mb-5">
-              Home Clarity Report · {reportDate}
+        <div className="font-mono uppercase text-[10px] tracking-[0.12em] text-accent mb-2">
+          Your Home Clarity Report
+        </div>
+        <h1 className="font-display text-[28px] sm:text-[36px] text-primary font-semibold leading-tight mb-3">
+          Read by chapter
+        </h1>
+        <p className="text-muted-foreground text-sm leading-relaxed max-w-[720px] mb-8">
+          Your report is organized into five chapters. Start with Information for the big picture. Browse any room or system to see the full record. Use Strategy to see what's coming and when.
+        </p>
+
+        {reportEmpty ? (
+          <div className="bg-card border border-border rounded-lg p-6">
+            <p className="font-mono uppercase text-[10px] tracking-[0.12em] text-accent mb-3">
+              In Preparation
             </p>
-
-            <h1 className="font-display text-[38px] md:text-[50px] lg:text-[64px] text-primary font-semibold leading-[1.0] mb-3">
-              {propertyName || "Your Home"}
-            </h1>
-
-            {propertyAddress && (
-              <p className="font-display italic text-[18px] md:text-[22px] text-muted-foreground leading-snug mb-7">
-                {propertyAddress}
-              </p>
-            )}
-
-            <div className="border-t border-border mb-6" />
-
-            <div className="space-y-3 mb-6">
-              {propertyAddress && (
-                <div className="flex gap-5">
-                  <span className="font-sans text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold w-24 flex-shrink-0">
-                    Address
-                  </span>
-                  <span className="font-sans text-sm text-foreground">{propertyAddress}</span>
+            <p className="font-display text-lg text-foreground mb-2 leading-snug">
+              Your Home Clarity Report is being prepared by {creatorName}.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              You'll get an email when it's ready.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Chapter cards — 2x2 grid + 5th full-width */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {chapterData.slice(0, 4).map((ch) => (
+                <ChapterCard
+                  key={ch.id}
+                  num={ch.num}
+                  title={ch.label}
+                  description={ch.description}
+                  pageCount={ch.sectionCount}
+                  onClick={() => onChapterSelect(ch.id)}
+                />
+              ))}
+              {chapterData[4] && (
+                <div className="sm:col-span-2">
+                  <ChapterCard
+                    num={chapterData[4].num}
+                    title={chapterData[4].label}
+                    description={chapterData[4].description}
+                    pageCount={chapterData[4].sectionCount}
+                    onClick={() => onChapterSelect(chapterData[4].id)}
+                  />
                 </div>
               )}
-              <div className="flex gap-5">
-                <span className="font-sans text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold w-24 flex-shrink-0">
-                  Prepared by
-                </span>
-                <span className="font-sans text-sm text-foreground">{creatorName}</span>
-              </div>
-              <div className="flex gap-5">
-                <span className="font-sans text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold w-24 flex-shrink-0">
-                  Issued
-                </span>
-                <span className="font-sans text-sm text-foreground">{reportDate}</span>
-              </div>
             </div>
-          </div>
 
-          {/* ── Right column: chapter list + CTA ────────────────────── */}
-          <div className="lg:col-span-5">
-            {reportEmpty ? (
-              <div className="bg-card border border-border rounded p-6">
-                <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold mb-3">
-                  In Preparation
-                </p>
-                <p className="font-display text-lg text-foreground mb-2 leading-snug">
-                  Your Home Clarity Report is being prepared by {creatorName}.
-                </p>
-                <p className="font-sans text-sm text-muted-foreground">
-                  You'll get an email when it's ready.
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="bg-card border border-border rounded">
-                  <p className="font-sans text-[9px] uppercase tracking-[0.28em] font-semibold text-muted-foreground px-5 pt-5 pb-3">
-                    Report Chapters
-                  </p>
-                  <div>
-                    {chapterData
-                      .filter((ch) => ch.sectionCount > 0)
-                      .map((ch, idx, arr) => (
-                        <button
-                          key={ch.id}
-                          onClick={() => onChapterSelect(ch.id)}
-                          className={`flex items-center justify-between w-full px-5 py-4 text-left hover:bg-accent/5 transition-colors group ${
-                            idx < arr.length - 1 ? "border-b border-border/60" : ""
-                          }`}
-                        >
-                          <span className="font-display text-[20px] text-primary leading-none">
-                            {ch.label}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-sans text-[9px] uppercase tracking-[0.2em] text-accent font-semibold">
-                              {ch.sectionCount} Section{ch.sectionCount !== 1 ? "s" : ""}
-                            </span>
-                            <span className="text-accent font-semibold text-base leading-none group-hover:translate-x-0.5 transition-transform">
-                              ›
-                            </span>
-                          </div>
-                        </button>
-                      ))}
-                  </div>
-                </div>
-
-                {firstPageId && (
-                  <button
-                    onClick={() => onPageSelect(firstPageId)}
-                    className="w-full mt-6 bg-primary text-primary-foreground py-4 rounded font-sans text-sm font-semibold tracking-[0.04em] hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 min-h-[52px]"
-                  >
-                    Begin reading
-                    <span className="text-accent font-bold text-base">→</span>
-                  </button>
-                )}
-              </>
+            {/* Begin reading CTA */}
+            {firstPageId && (
+              <button
+                onClick={() => onPageSelect(firstPageId)}
+                className="w-full mt-8 bg-primary text-primary-foreground py-4 rounded-lg font-sans text-sm font-semibold tracking-[0.04em] hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 min-h-[52px]"
+              >
+                Begin reading
+                <span className="text-accent font-bold text-base">→</span>
+              </button>
             )}
-          </div>
-        </div>
+
+            {/* Footer note */}
+            <div className="mt-8 p-5 bg-white rounded-lg border border-border" style={{ borderLeft: "3px solid hsl(var(--accent))" }}>
+              <div className="font-mono uppercase text-[10px] tracking-[0.12em] text-accent mb-2">
+                How this report stays alive
+              </div>
+              <p className="text-[13px] text-foreground leading-relaxed">
+                This isn't a static document. It's an evolving record. Every service call, every renovation, every paint touch-up updates the record. Every year we walk through together and catch the changes. Your report grows with the home.
+              </p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 };
+
+interface ChapterCardProps {
+  num: string;
+  title: string;
+  description: string;
+  pageCount: number;
+  onClick: () => void;
+}
+
+const ChapterCard = ({ num, title, description, pageCount, onClick }: ChapterCardProps) => (
+  <button
+    onClick={onClick}
+    className="bg-white rounded-[10px] p-6 border border-border text-left cursor-pointer hover:border-accent/40 transition-colors w-full"
+  >
+    <div className="font-mono uppercase text-[10px] tracking-[0.12em] text-accent mb-1">
+      Section {num}
+    </div>
+    <h2 className="font-display text-[24px] sm:text-[26px] text-primary mb-2">{title}</h2>
+    <p className="text-[13px] text-muted-foreground leading-relaxed mb-4">{description}</p>
+    <div className="flex justify-between items-center">
+      <span className="text-[11px] text-muted-foreground">
+        {pageCount} {pageCount === 1 ? "page" : "pages"}
+      </span>
+      <span className="text-[13px] text-accent font-medium">Open →</span>
+    </div>
+  </button>
+);
 
 export default ReportOverview;
