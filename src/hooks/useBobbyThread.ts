@@ -107,20 +107,42 @@ export function useBobbyThread(propertyId: string | undefined) {
       .update({ last_message_at: new Date().toISOString() })
       .eq("id", thread.id);
 
-    // Trigger agent response
+    // Build conversation history for the agent
+    const history = messages.slice(-10).map((m) => ({
+      role: m.sender === "user" ? "user" : "assistant",
+      content: m.content,
+    }));
+
+    // Trigger agent response and persist reply
     try {
-      await supabase.functions.invoke("hbc-agent", {
+      const { data } = await supabase.functions.invoke("hbc-agent", {
         body: {
           message: content,
-          propertyId: thread.property_id,
-          threadId: thread.id,
-          channel: "bobby",
+          history,
+          context: {
+            currentEntityType: "property",
+            currentEntityId: thread.property_id,
+            propertyId: thread.property_id,
+          },
         },
       });
+
+      if (data?.reply) {
+        await supabase.from("bobby_messages").insert({
+          thread_id: thread.id,
+          sender: "bobby",
+          content: data.reply,
+        });
+      }
     } catch {
-      // Agent may fail — message is still persisted
+      await supabase.from("bobby_messages").insert({
+        thread_id: thread.id,
+        sender: "bobby",
+        content: "I had trouble processing that. Please try again.",
+        status: "sent",
+      });
     }
-  }, [thread]);
+  }, [thread, messages]);
 
   return { thread, messages, isLoading, sendMessage };
 }
