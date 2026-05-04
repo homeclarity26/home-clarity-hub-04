@@ -10,7 +10,16 @@
 <!-- Token efficiency: read this file + TODO.md only. Don't re-read all components unless modifying one. -->
 
 **Branch:** `main`
-**Last updated:** 2026-04-18 after the floor rebuild + CI activation.
+**Last updated:** 2026-05-03
+
+---
+
+## 🔒 Source of truth for HCR structure
+
+`HCR_STRUCTURE_LOCK.md` (in repo root) is the canonical spec for the
+five-chapter HCR structure, page templates, portal navigation, and
+visual system. If anything below this section conflicts with that
+file, the lock file wins. Read it before any structural change.
 
 ---
 
@@ -227,7 +236,7 @@ npx supabase functions deploy <function-name> --no-verify-jwt
 | #107 | hcr-rebuild/z1: delete chat-assistant edge function (replaced by hbc-agent) |
 | #108 | hcr-rebuild/d2+d8: IBM Plex Mono font loaded + CLAUDE.md surgical additions |
 | #109 | hcr-rebuild/w1-w6: 5-step wizard shell + Step 1 Intake at /admin/clients/new |
-| #110 | hcr-rebuild/c10-c12: PortalHome + ReportHome + 6-tab portal consolidation |
+| #110 | hcr-rebuild/c10-c12: PortalHome + ReportHome + 6-tab portal consolidation (Home, Report, Schedule, Projects, Payments, Documents). Documents replaces Contacts. Trade partners surface contextually (Bobby, Schedule, appliance pages) rather than as a tab. |
 | #111 | hcr-rebuild/d6+d7: ESLint rules for inline hex and fixed-height prose |
 | #112 | hcr-rebuild/d3+d4: HCR color sweep batch 1+2 (invoices, proposals, change orders, ledger) |
 | #113 | hcr-rebuild/w2-w5: full Step 2–5 wizard implementations |
@@ -272,7 +281,7 @@ npx supabase functions deploy <function-name> --no-verify-jwt
 - **Mock user bypass:** `propertyId.startsWith("mock-")` pattern in all client portal tabs for demo data
 - **Edit mode:** `useEditMode()` context — `canEdit` boolean gates inline editing UI
 - **Image storage:** `report-images` bucket for page photos, `property-photos` bucket for hero photos
-- **Monograms:** chapter/module badges (ES/EX/IN/SY/SP/SA) via `<Monogram>` component. Use `chapterToMonogram(groupId)` to map group IDs
+- **Monograms:** The six-chapter monogram system (ES/EX/IN/SY/SP/SA) is deprecated. Page-level monogram badges may still be used but no longer represent chapters. The HCR has five chapters: Information, Interior Spaces, Exterior Spaces, Systems & Appliances, Strategy.
 - **Condition ratings:** word-based only (Excellent / Good / Fair / Poor / Critical). HealthScoreRing deleted as of PR #101. No numerical health scores anywhere.
 
 ---
@@ -488,7 +497,7 @@ const text = await callAI({
   - Gold `43 41% 59%` (accent) + `--hbc-gold-readable: 34 47% 38%` for text on cream
   - Rust `16 86% 39%` (destructive/rust accent)
 - **Fonts:** Cormorant Garamond SemiBold/Bold (headings, `font-display`), IBM Plex Mono (labels/badges/timestamps, `font-mono`), Inter (body, `font-sans`)
-- **Monograms:** ES (Executive Summary, gold circle navy text), EX (Exterior, navy circle gold text), IN (Interior, gold circle navy text), SY (Systems, navy circle gold text), SP (Strategy, gold circle navy text), SA (Safety, navy circle gold text)
+- **Chapters:** The HCR has five chapters: Information, Interior Spaces, Exterior Spaces, Systems & Appliances, Strategy. The previous six-monogram chapter system (ES/EX/IN/SY/SP/SA) is deprecated. Page-level monogram badges may still be used for individual pages but no longer represent chapters.
 - **Touch targets:** all interactive elements `min-h-[44px]`
 - **Motion:** 400-800ms ease-out, respects `prefers-reduced-motion` (zeroed globally in index.css)
 
@@ -896,15 +905,18 @@ When working on any HCR rebuild ticket, these are the source-of-truth documents.
 
 ### Required reads before starting any rebuild ticket
 
-1. **HCR_PROTOTYPE_DECISIONS_LOG.md** — every locked decision through [v2.44]. Non-negotiable inputs.
-2. **HCR_Master_Spec_Section_1_Foundation.md** — locked principles, two-surface model, brand system, removal sweep, four-tag system
-3. **HCR_Master_Spec_Section_2_Admin_Builder.md** — 5-step wizard tickets
-4. **HCR_Master_Spec_Section_3_Page_Renderers.md** — block types and page-type renderers tickets
-5. **HCR_Master_Spec_Section_4_Client_Portal.md** — 6-tab consolidation and Concierge tickets
-6. **HCR_Master_Spec_Section_5_Backend.md** — tables, columns, edge functions, migration sequence, RLS
-7. **HCR_Master_Spec_Section_6_Cross_Cutting.md** — universal patterns, mobile rules, photo handling, ESLint, Golden Path, retirement sequence
-8. **MASTER_IMPLEMENTATION_PLAN.md** — the punch list with all tickets
-9. **HCR Mock Report — The Caldwell Residence** — long-form Caldwell content used as AI seed and demo
+1. **HCR_STRUCTURE_LOCK.md** (repo root) — supersedes all prior structural specs in conflict. The canonical five-chapter structure, page templates, portal nav, Bobby, and visual system.
+2. **HCR_REBUILD_RUNNER.md** (repo root) — phase sequencing and PR discipline.
+3. **HCR_CLEANUP_LIST.md** (repo root) — explicit kill targets per phase.
+4. **HCR_PROTOTYPE_DECISIONS_LOG.md** — every locked decision through [v2.44]. Non-negotiable inputs.
+5. **HCR_Master_Spec_Section_1_Foundation.md** (historical, deprecated — superseded by lock file in conflict)
+6. **HCR_Master_Spec_Section_2_Admin_Builder.md** (historical, deprecated)
+7. **HCR_Master_Spec_Section_3_Page_Renderers.md** (historical, deprecated)
+8. **HCR_Master_Spec_Section_4_Client_Portal.md** (historical, deprecated)
+9. **HCR_Master_Spec_Section_5_Backend.md** (historical, deprecated)
+10. **HCR_Master_Spec_Section_6_Cross_Cutting.md** (historical, deprecated)
+11. **MASTER_IMPLEMENTATION_PLAN.md** — the punch list with all tickets
+12. **HCR Mock Report — The Caldwell Residence** — long-form Caldwell content used as AI seed and demo
 
 ### Visual source of truth
 
