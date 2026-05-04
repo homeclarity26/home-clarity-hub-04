@@ -1,5 +1,5 @@
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Sparkles, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import AgentChat from "@/components/agent/AgentChat";
@@ -53,13 +53,18 @@ const ConciergePanel = ({ open, onOpenChange, propertyId }: ConciergePanelProps)
           style={{ borderColor: GOLD + "33" }}
         >
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4" style={{ color: GOLD }} />
+            <span
+              className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+              style={{ background: GOLD }}
+            >
+              <span className="font-display text-xs font-bold" style={{ color: NAVY }}>B</span>
+            </span>
             <div>
               <div className="font-mono text-[10px] uppercase tracking-[0.15em]" style={{ color: GOLD }}>
-                HBC Concierge
+                Ask Bobby
               </div>
               <div className="text-sm" style={{ color: CREAM }}>
-                Your home, on tap
+                Trained on your home
               </div>
             </div>
           </div>

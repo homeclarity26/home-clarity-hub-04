@@ -18,6 +18,7 @@ import {
   FloorPlanEmbedBlock,
 } from "@/components/wysiwyg/blocks/EmbedBlocks";
 import { PortalHomeHero } from "@/components/portal/home/PortalHomeHero";
+import { BobbyInputBar } from "@/components/portal/home/BobbyInputBar";
 import { TodaysBrief } from "@/components/portal/home/TodaysBrief";
 import { WhatChangedFeed } from "@/components/portal/home/WhatChangedFeed";
 import { PhotoCaptureFlow } from "@/components/portal/PhotoCaptureFlow";
@@ -180,6 +181,11 @@ export function PortalHome({
         initial="initial"
         animate="animate"
       >
+        {/* 0. Bobby input — persistent entry point */}
+        <motion.section variants={fadeUp}>
+          <BobbyInputBar onOpen={() => openConcierge("")} />
+        </motion.section>
+
         {/* 1. Embed prominence — Hover + iGUIDE first */}
         <motion.section variants={fadeUp} className="space-y-4">
           <div className="flex items-baseline justify-between">
