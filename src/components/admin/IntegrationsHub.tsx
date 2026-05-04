@@ -330,7 +330,7 @@ const IntegrationsHub = () => {
             onDisconnect={() => disconnectIntegration(integration.id)}
             extra={isConnected ? (
               <div className="space-y-2">
-                <p className="text-xs font-sans text-muted-foreground">New clients will auto-create a Notion page with: name, address, tier, health score, active projects, last contact date.</p>
+                <p className="text-xs font-sans text-muted-foreground">New clients will auto-create a Notion page with: name, address, tier, condition rating, active projects, last contact date.</p>
                 <Button size="sm" variant="outline" className="text-xs font-sans gap-1.5"><RefreshCw className="w-3 h-3" />Sync All Clients to Notion</Button>
               </div>
             ) : null}

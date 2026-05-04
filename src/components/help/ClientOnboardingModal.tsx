@@ -30,7 +30,7 @@ const steps: Step[] = [
   {
     id: "report",
     title: "Your Home Clarity Report",
-    body: "At the heart of your portal is your Home Clarity Report — a chapter-by-chapter assessment of your home's condition. It includes your Home Health Score, condition ratings for every major system, Priority Action Items, and a multi-year Strategic Plan built just for your home.",
+    body: "At the heart of your portal is your Home Clarity Report; a chapter-by-chapter assessment of your home's condition. It includes condition ratings for every major system, Priority Action Items, and a Strategy chapter built just for your home.",
     icon: FileText,
     button: "Next →",
   },
@@ -44,7 +44,7 @@ const steps: Step[] = [
   {
     id: "ready",
     title: "You're All Set",
-    body: "Your portal is ready. Explore at your own pace — or jump straight to your report to see your Home Health Score and what your advisor recommends.",
+    body: "Your portal is ready. Explore at your own pace, or jump straight to your report to see what your advisor recommends.",
     icon: Star,
     button: null,
   },

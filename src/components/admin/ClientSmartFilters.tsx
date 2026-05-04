@@ -116,7 +116,7 @@ const ClientSmartFilters = ({ filters, onChange }: ClientSmartFiltersProps) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Health Score</label>
+            <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Condition</label>
             <Select value={filters.health} onValueChange={(v) => onChange({ ...filters, health: v })}>
               <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
