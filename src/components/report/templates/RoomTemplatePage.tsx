@@ -3,6 +3,7 @@ import type { PortalGroup } from "@/hooks/useClientPortal";
 import type { ReportBlock } from "@/components/wysiwyg/types";
 import SharedBlockRenderer from "@/components/wysiwyg/SharedBlockRenderer";
 import ImageGrid from "@/components/editor/ImageGrid";
+import { AttachedDocuments } from "@/components/report/AttachedDocuments";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 
 const RATING_COLORS: Record<string, string> = {
@@ -132,6 +133,10 @@ const RoomTemplatePage = ({
       )}
 
       {/* Prev / Next */}
+      {propertyId && page.id && (
+        <AttachedDocuments propertyId={propertyId} pageKey={page.id} />
+      )}
+
       {(prevPage || nextPage) && (
         <div className="border-t border-border pt-8 mt-12 grid grid-cols-2 gap-3">
           {prevPage && prevPageId ? (
