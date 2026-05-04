@@ -13,6 +13,7 @@ import ReportChapterNav, { CHAPTERS } from "@/components/report/ReportChapterNav
 import ReportHome from "@/components/portal/report/ReportHome";
 import RoomTemplatePage from "@/components/report/templates/RoomTemplatePage";
 import SystemTemplatePage from "@/components/report/templates/SystemTemplatePage";
+import VisionTemplatePage from "@/components/report/templates/VisionTemplatePage";
 import FindingsTable, { type Finding } from "@/components/report/FindingsTable";
 import LifespanBar from "@/components/report/LifespanBar";
 import InvestmentSummary from "@/components/report/InvestmentSummary";
@@ -44,7 +45,11 @@ function pickTemplate(
   if (groupId === "appliances") return "appliance";
   if (groupId.startsWith("systems-") || groupId === "safety-detection" || groupId === "systems-and-appliances") return "system";
   if (groupId.startsWith("interior-") || groupId.startsWith("exterior") || groupId === "spaces") return "room";
-  if (groupId === "strategy" && page.id?.startsWith("vision-")) return "vision";
+  if (groupId === "strategy") {
+    const hasVisionKey = page.id?.includes("vision");
+    const hasTiers = !!(page.tiers?.essential || page.tiers?.enhanced || page.tiers?.signature);
+    if (hasVisionKey || hasTiers) return "vision";
+  }
   return "generic";
 }
 
@@ -238,7 +243,37 @@ const ReportTab = ({
         );
       }
 
-      // Generic fallback — flat block grid for non-template pages (vision handled in next PR)
+      if (template === "vision") {
+        return (
+          <div>
+            <ReportChapterNav
+              groups={reportGroups}
+              pages={reportPages}
+              activeChapter={resolvedChapter}
+              activePageId={activePageId}
+              onChapterChange={handleChapterChange}
+              onPageSelect={handlePageSelect}
+              onBackToHome={() => onNavigate?.("")}
+            />
+            <VisionTemplatePage
+              page={page}
+              group={group}
+              blocks={sortedBlocks}
+              images={images}
+              prevPage={prevPage}
+              nextPage={nextPage}
+              prevPageId={prevPageId}
+              nextPageId={nextPageId}
+              onNavigate={onNavigate}
+              propertyAddress={propertyAddress}
+              propertyId={propertyId}
+              reportId={reportId}
+            />
+          </div>
+        );
+      }
+
+      // Generic fallback — flat block grid for pages that don't match a template
       const spanClassFor = (cs: ReportBlock["colSpan"]): string => {
         if (cs === 3) return "col-span-12 sm:col-span-3";
         if (cs === 4) return "col-span-12 sm:col-span-4";
