@@ -78,6 +78,27 @@ const NotificationBell = ({ propertyId, onNavigate }: NotificationBellProps) => 
         }
       }
 
+      // Proactive alerts
+      const { data: alerts } = await supabase.from("proactive_alerts")
+        .select("*")
+        .eq("property_id", propertyId)
+        .in("status", ["pending", "shown"])
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (alerts) {
+        for (const a of alerts) {
+          items.push({
+            id: a.id,
+            type: "maintenance",
+            title: a.title,
+            body: a.body,
+            created_at: a.created_at,
+            is_read: a.status === "shown",
+          });
+        }
+      }
+
       setNotifications(items);
     };
 
@@ -88,7 +109,14 @@ const NotificationBell = ({ propertyId, onNavigate }: NotificationBellProps) => 
 
   const dismiss = async (id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
-    if (id !== "unread-msgs") {
+    if (id === "unread-msgs") return;
+
+    // Try proactive_alerts first, then nudges
+    const { error: alertErr } = await supabase.from("proactive_alerts")
+      .update({ status: "dismissed" })
+      .eq("id", id);
+
+    if (alertErr) {
       await supabase.from("ai_notification_nudges")
         .update({ is_dismissed: true })
         .eq("id", id);
