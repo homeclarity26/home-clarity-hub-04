@@ -11,6 +11,7 @@ import FinancialRoadmapPage from "@/components/report/FinancialRoadmapPage";
 import ActionPlanPage from "@/components/report/ActionPlanPage";
 import ReportChapterNav, { CHAPTERS } from "@/components/report/ReportChapterNav";
 import ReportHome from "@/components/portal/report/ReportHome";
+import RoomTemplatePage from "@/components/report/templates/RoomTemplatePage";
 import FindingsTable, { type Finding } from "@/components/report/FindingsTable";
 import LifespanBar from "@/components/report/LifespanBar";
 import InvestmentSummary from "@/components/report/InvestmentSummary";
@@ -33,6 +34,18 @@ import {
   PlusCircle,
   Share2,
 } from "lucide-react";
+
+function pickTemplate(
+  page: ReportPageData,
+  group: PortalGroup | undefined,
+): "room" | "system" | "appliance" | "vision" | "generic" {
+  const groupId = group?.id ?? "";
+  if (groupId === "appliances") return "appliance";
+  if (groupId.startsWith("systems-") || groupId === "safety-detection" || groupId === "systems-and-appliances") return "system";
+  if (groupId.startsWith("interior-") || groupId.startsWith("exterior") || groupId === "spaces") return "room";
+  if (groupId === "strategy" && page.id?.startsWith("vision-")) return "vision";
+  return "generic";
+}
 
 export interface PropertyContext {
   yearBuilt?: number;
@@ -160,6 +173,40 @@ const ReportTab = ({
         currentIndex < allPageIds.length - 1 ? allPageIds[currentIndex + 1] : null;
       const prevPage = prevPageId ? reportPages[prevPageId] : null;
       const nextPage = nextPageId ? reportPages[nextPageId] : null;
+
+      const template = pickTemplate(page, group);
+
+      if (template === "room") {
+        return (
+          <div>
+            <ReportChapterNav
+              groups={reportGroups}
+              pages={reportPages}
+              activeChapter={resolvedChapter}
+              activePageId={activePageId}
+              onChapterChange={handleChapterChange}
+              onPageSelect={handlePageSelect}
+              onBackToHome={() => onNavigate?.("")}
+            />
+            <RoomTemplatePage
+              page={page}
+              group={group}
+              blocks={sortedBlocks}
+              images={images}
+              prevPage={prevPage}
+              nextPage={nextPage}
+              prevPageId={prevPageId}
+              nextPageId={nextPageId}
+              onNavigate={onNavigate}
+              propertyAddress={propertyAddress}
+              propertyId={propertyId}
+              reportId={reportId}
+            />
+          </div>
+        );
+      }
+
+      // Generic fallback — flat block grid for non-room templates (system, appliance, vision handled in future PRs)
       const spanClassFor = (cs: ReportBlock["colSpan"]): string => {
         if (cs === 3) return "col-span-12 sm:col-span-3";
         if (cs === 4) return "col-span-12 sm:col-span-4";
