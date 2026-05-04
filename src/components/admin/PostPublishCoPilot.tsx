@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Loader2, Upload, CheckCircle2, X } from "lucide-react";
+import { Plus, Loader2, Upload, CheckCircle2, X, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -19,12 +19,22 @@ interface InboxItem {
   created_at: string;
 }
 
+interface Proposal {
+  page_id: string;
+  page_title?: string;
+  suggested_title?: string;
+  suggested_action: string;
+  rationale: string;
+}
+
 export function PostPublishCoPilot({ propertyId }: PostPublishCoPilotProps) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<InboxItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState<string | null>(null);
+  const [proposals, setProposals] = useState<Record<string, Proposal[]>>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
   const loadItems = async () => {
@@ -85,12 +95,34 @@ export function PostPublishCoPilot({ propertyId }: PostPublishCoPilotProps) {
     }
   };
 
+  const analyzeItem = async (item: InboxItem) => {
+    setAnalyzing(item.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("propose-copilot-updates", {
+        body: { itemId: item.id, propertyId },
+      });
+      if (error) throw error;
+      if (data?.proposals?.length > 0) {
+        setProposals((prev) => ({ ...prev, [item.id]: data.proposals }));
+        toast({ title: `${data.proposals.length} page update${data.proposals.length > 1 ? "s" : ""} suggested` });
+      } else {
+        toast({ title: "No page updates suggested", description: "Content doesn't map to existing pages." });
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Analysis failed";
+      toast({ title: "Analysis failed", description: msg, variant: "destructive" });
+    } finally {
+      setAnalyzing(null);
+    }
+  };
+
   const updateStatus = async (id: string, status: "absorbed" | "rejected") => {
     await supabase
       .from("copilot_inbox")
       .update({ status, absorbed_at: status === "absorbed" ? new Date().toISOString() : null })
       .eq("id", id);
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)));
+    setProposals((prev) => { const next = { ...prev }; delete next[id]; return next; });
   };
 
   const pending = items.filter((i) => i.status === "pending");
@@ -165,33 +197,59 @@ export function PostPublishCoPilot({ propertyId }: PostPublishCoPilotProps) {
                     Pending ({pending.length})
                   </h3>
                   {pending.map((item) => (
-                    <Card key={item.id} className="p-3 flex items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-mono text-muted-foreground capitalize">{item.kind}</p>
-                        <p className="text-sm text-foreground mt-0.5 truncate">
-                          {(item.payload as Record<string, string>).text ||
-                           (item.payload as Record<string, string>).fileName ||
-                           "Content"}
-                        </p>
+                    <Card key={item.id} className="p-3 space-y-2">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-mono text-muted-foreground capitalize">{item.kind}</p>
+                          <p className="text-sm text-foreground mt-0.5 truncate">
+                            {(item.payload as Record<string, string>).text ||
+                             (item.payload as Record<string, string>).fileName ||
+                             "Content"}
+                          </p>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => analyzeItem(item)}
+                            disabled={analyzing === item.id}
+                            className="min-h-[32px] h-8 px-2"
+                          >
+                            {analyzing === item.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Sparkles className="w-3.5 h-3.5" />
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateStatus(item.id, "absorbed")}
+                            className="min-h-[32px] h-8 px-2"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => updateStatus(item.id, "rejected")}
+                            className="min-h-[32px] h-8 px-2 text-muted-foreground"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-1 shrink-0">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateStatus(item.id, "absorbed")}
-                          className="min-h-[32px] h-8 px-2"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => updateStatus(item.id, "rejected")}
-                          className="min-h-[32px] h-8 px-2 text-muted-foreground"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
+                      {proposals[item.id] && proposals[item.id].length > 0 && (
+                        <div className="pl-2 border-l-2 border-accent/30 space-y-1.5">
+                          <p className="text-[10px] font-mono uppercase tracking-wider text-accent">AI Suggestions</p>
+                          {proposals[item.id].map((p, i) => (
+                            <div key={i} className="text-xs text-foreground">
+                              <span className="font-medium">{p.page_title || p.suggested_title || "New page"}</span>
+                              <span className="text-muted-foreground"> — {p.rationale}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </Card>
                   ))}
                 </section>

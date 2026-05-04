@@ -1,9 +1,8 @@
+import { useEffect, useRef, useState } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { X } from "lucide-react";
+import { X, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import AgentChat from "@/components/agent/AgentChat";
-import type { AgentContextOverride } from "@/components/agent/AgentChat";
+import { useBobbyThread } from "@/hooks/useBobbyThread";
 import ConciergeTranscript from "./ConciergeTranscript";
 
 interface ConciergePanelProps {
@@ -12,15 +11,12 @@ interface ConciergePanelProps {
   propertyId?: string;
 }
 
-// Demo prompts per [v1.24] — schedule, pay, log, retrieve, communication-route.
-// These render as quick-tap chips above the transcript so the client never
-// has to stare at a blank input.
-const DEMO_PROMPTS = [
+const SUGGESTED_PROMPTS = [
   "Schedule the chimney sweep",
-  "Pay the AKR draw invoice",
   "What paint is in the dining room?",
   "Pull up the furnace serial plate",
-  "Where do I send a question?",
+  "When is my next service visit?",
+  "What should I do before winter?",
 ];
 
 const NAVY = "#0A1628";
@@ -28,16 +24,42 @@ const GOLD = "#B87333";
 const CREAM = "#EDE9E1";
 
 const ConciergePanel = ({ open, onOpenChange, propertyId }: ConciergePanelProps) => {
-  const { user } = useAuth();
+  const { messages, isLoading, sendMessage } = useBobbyThread(propertyId);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const agentContext: AgentContextOverride = {
-    userId: user?.id || "",
-    role: "client",
-    currentPage: typeof window !== "undefined" ? window.location.pathname : "",
-    currentEntityType: "property",
-    currentEntityId: propertyId || "",
-    currentEntityName: "",
-    propertyId,
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    const onPrefill = (e: Event) => {
+      const detail = (e as CustomEvent<{ prompt?: string }>).detail;
+      if (detail?.prompt) {
+        setInput(detail.prompt);
+      }
+    };
+    window.addEventListener("concierge:prefill", onPrefill as EventListener);
+    return () => window.removeEventListener("concierge:prefill", onPrefill as EventListener);
+  }, []);
+
+  const handleSend = async () => {
+    const text = input.trim();
+    if (!text || sending) return;
+    setInput("");
+    setSending(true);
+    await sendMessage(text);
+    setSending(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      void handleSend();
+    }
   };
 
   return (
@@ -79,41 +101,127 @@ const ConciergePanel = ({ open, onOpenChange, propertyId }: ConciergePanelProps)
           </Button>
         </div>
 
-        {/* Demo prompt chips */}
-        <div className="px-4 pt-3 pb-2 flex flex-wrap gap-2">
-          {DEMO_PROMPTS.map((prompt) => (
-            <button
-              key={prompt}
-              type="button"
-              onClick={() => {
-                // Drop the prompt into the AgentChat input. AgentChat doesn't
-                // expose a controlled input prop today, so we use a custom
-                // event the AgentChat component can listen for. Until that
-                // wire-up lands the chips are visual demos.
-                const ev = new CustomEvent("concierge:prefill", { detail: { prompt } });
-                window.dispatchEvent(ev);
-              }}
-              className="text-xs px-3 py-1 rounded-full border transition-colors"
+        {/* Message thread */}
+        <ConciergeTranscript>
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-5 h-5 animate-spin" style={{ color: GOLD }} />
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="space-y-4 py-6">
+                <p className="text-sm text-center" style={{ color: CREAM + "99" }}>
+                  Ask me anything about your home. I have access to your full report.
+                </p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {SUGGESTED_PROMPTS.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      onClick={() => {
+                        setInput(prompt);
+                      }}
+                      className="text-xs px-3 py-1.5 rounded-full border transition-colors"
+                      style={{
+                        borderColor: GOLD + "55",
+                        background: GOLD + "15",
+                        color: CREAM,
+                      }}
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              messages.map((msg) => {
+                if (msg.sender === "user") {
+                  return (
+                    <div key={msg.id} className="flex justify-end">
+                      <div
+                        className="max-w-[80%] rounded-lg px-3 py-2 text-sm"
+                        style={{ background: CREAM + "22", color: CREAM }}
+                      >
+                        {msg.content}
+                      </div>
+                    </div>
+                  );
+                }
+                if (msg.sender === "adam") {
+                  return (
+                    <div key={msg.id} className="flex justify-start">
+                      <div
+                        className="max-w-[80%] rounded-lg px-3 py-2 text-sm border-l-2"
+                        style={{
+                          background: "#ffffff11",
+                          color: CREAM,
+                          borderLeftColor: NAVY === "#0A1628" ? "#1a2d4a" : NAVY,
+                        }}
+                      >
+                        <span
+                          className="block font-mono text-[9px] uppercase tracking-[0.15em] mb-1"
+                          style={{ color: GOLD }}
+                        >
+                          From Adam
+                        </span>
+                        {msg.content}
+                      </div>
+                    </div>
+                  );
+                }
+                // bobby
+                return (
+                  <div key={msg.id} className="flex justify-start">
+                    <div
+                      className="max-w-[80%] rounded-lg px-3 py-2 text-sm"
+                      style={{ background: "#ffffff11", color: CREAM }}
+                    >
+                      {msg.content}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            {sending && (
+              <div className="flex justify-start">
+                <div
+                  className="rounded-lg px-3 py-2 flex items-center gap-2"
+                  style={{ background: "#ffffff11" }}
+                >
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: GOLD }} />
+                  <span className="text-xs" style={{ color: CREAM + "88" }}>Bobby is thinking...</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Input */}
+          <div
+            className="px-4 py-3 border-t flex gap-2"
+            style={{ borderColor: GOLD + "33" }}
+          >
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask Bobby anything..."
+              className="flex-1 bg-transparent border rounded-lg px-3 py-2 text-sm outline-none min-h-[44px]"
               style={{
-                borderColor: GOLD + "55",
-                background: GOLD + "15",
+                borderColor: GOLD + "44",
                 color: CREAM,
               }}
+            />
+            <Button
+              size="sm"
+              disabled={!input.trim() || sending}
+              onClick={() => void handleSend()}
+              className="min-h-[44px] min-w-[44px] p-0 flex items-center justify-center shrink-0"
+              style={{ background: GOLD, color: NAVY }}
             >
-              {prompt}
-            </button>
-          ))}
-        </div>
-
-        {/* Transcript + input — AgentChat handles its own scroll, wrapped
-            in ConciergeTranscript so the Master Spec 6.1 "one allowed
-            inner scroll" rule is documented at the call site. */}
-        <ConciergeTranscript>
-          <AgentChat
-            contextOverride={agentContext}
-            quickChips={DEMO_PROMPTS}
-            className="flex-1 flex flex-col"
-          />
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
         </ConciergeTranscript>
       </SheetContent>
     </Sheet>
