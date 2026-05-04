@@ -12,6 +12,7 @@ import ActionPlanPage from "@/components/report/ActionPlanPage";
 import ReportChapterNav, { CHAPTERS } from "@/components/report/ReportChapterNav";
 import ReportHome from "@/components/portal/report/ReportHome";
 import RoomTemplatePage from "@/components/report/templates/RoomTemplatePage";
+import SystemTemplatePage from "@/components/report/templates/SystemTemplatePage";
 import FindingsTable, { type Finding } from "@/components/report/FindingsTable";
 import LifespanBar from "@/components/report/LifespanBar";
 import InvestmentSummary from "@/components/report/InvestmentSummary";
@@ -206,7 +207,38 @@ const ReportTab = ({
         );
       }
 
-      // Generic fallback — flat block grid for non-room templates (system, appliance, vision handled in future PRs)
+      if (template === "system" || template === "appliance") {
+        return (
+          <div>
+            <ReportChapterNav
+              groups={reportGroups}
+              pages={reportPages}
+              activeChapter={resolvedChapter}
+              activePageId={activePageId}
+              onChapterChange={handleChapterChange}
+              onPageSelect={handlePageSelect}
+              onBackToHome={() => onNavigate?.("")}
+            />
+            <SystemTemplatePage
+              page={page}
+              group={group}
+              blocks={sortedBlocks}
+              images={images}
+              prevPage={prevPage}
+              nextPage={nextPage}
+              prevPageId={prevPageId}
+              nextPageId={nextPageId}
+              onNavigate={onNavigate}
+              propertyAddress={propertyAddress}
+              propertyId={propertyId}
+              reportId={reportId}
+              simplified={template === "appliance"}
+            />
+          </div>
+        );
+      }
+
+      // Generic fallback — flat block grid for non-template pages (vision handled in next PR)
       const spanClassFor = (cs: ReportBlock["colSpan"]): string => {
         if (cs === 3) return "col-span-12 sm:col-span-3";
         if (cs === 4) return "col-span-12 sm:col-span-4";
