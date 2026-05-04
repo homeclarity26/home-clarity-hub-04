@@ -20,6 +20,7 @@ import {
 import { PortalHomeHero } from "@/components/portal/home/PortalHomeHero";
 import { TodaysBrief } from "@/components/portal/home/TodaysBrief";
 import { WhatChangedFeed } from "@/components/portal/home/WhatChangedFeed";
+import { PhotoCaptureFlow } from "@/components/portal/PhotoCaptureFlow";
 import ClientGoalsWidget from "@/components/portal/ClientGoalsWidget";
 import MyHomeStory from "@/components/portal/MyHomeStory";
 import PropertyValueWidget from "@/components/portal/PropertyValueWidget";
@@ -237,6 +238,13 @@ export function PortalHome({
         {propertyId && (
           <motion.section variants={fadeUp}>
             <WhatChangedFeed propertyId={propertyId} />
+          </motion.section>
+        )}
+
+        {/* 3c. Photo capture — mobile-prominent */}
+        {propertyId && !propertyId.startsWith("mock-") && (
+          <motion.section variants={fadeUp}>
+            <PhotoCaptureFlow propertyId={propertyId} />
           </motion.section>
         )}
 
