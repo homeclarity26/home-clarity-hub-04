@@ -77,19 +77,7 @@ const buildPrePublishQuestions = (pages: PageInput[]): PrePublishQuestion[] => {
     const title = page.title || key;
     const narrative = collectNarrative(page.narrative);
     const pageType = (page.page_type || page.group || "").toLowerCase();
-    const photoCount = Array.isArray(page.photos) ? page.photos.length : 0;
     const specs = (page.specs ?? {}) as Record<string, unknown>;
-
-    // 1) Missing photos — medium severity.
-    if (photoCount === 0) {
-      out.push({
-        id: `missing_photo_${key}`,
-        severity: "medium",
-        page_key: page.page_key,
-        question: `${title} has no photos attached. Add one now or acknowledge?`,
-        actions: [{ id: "add_photo", label: "Add photo" }, ACK_ACTION],
-      });
-    }
 
     // 2) System page with a stub but no full replacement briefing — high.
     if (pageType.includes("system") && hasValue(page.replacement_briefing_stub) && !hasValue(page.replacement_briefing)) {
