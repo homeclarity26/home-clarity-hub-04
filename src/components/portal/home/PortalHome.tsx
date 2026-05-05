@@ -140,9 +140,12 @@ export function PortalHome({
     };
   }, [propertyId]);
 
+  const isEmail = (s?: string | null) => !!s && s.includes("@");
   const firstName = isAdminPreview
-    ? clientFirstName || undefined
-    : user?.user_metadata?.full_name?.split(" ")[0] ||
+    ? (isEmail(clientFirstName) ? undefined : clientFirstName || undefined)
+    : (!isEmail(user?.user_metadata?.full_name)
+        ? user?.user_metadata?.full_name?.split(" ")[0]
+        : undefined) ||
       (propertyName && propertyName !== "Your Home" ? propertyName.split(" ")[0] : undefined);
 
   const resolvedHeroUrl = customization?.hero_photo_url || heroImageUrl || undefined;
