@@ -58,3 +58,33 @@ Remaining non-blocking items:
 - [x] PR #199 — Push notifications for Bobby replies — merged 2026-05-04
 - [ ] Visual walkthrough against caldwell_prototype_v2_screens.pdf (Adam manual task)
 - [ ] Seed a real Caldwell demo property via the wizard for portal demo
+
+## Prototype Match — Gap Fix (2026-05-04)
+
+The client portal does not match the v2 prototype. Root causes:
+1. The wizard's publish pipeline (`pageAuthoringToBlocks()`) flattens all structured data to flat `text` blocks, discarding specs/tiers/condition_rating/images.
+2. `PortalBlockViewer` intercepts reports with `blocks_json` content and renders an endless text scroll, bypassing the per-page template system (Room/System/Vision) that already exists.
+3. Internal documents (transcripts, site notes) leak to the client Documents tab via the publish pipeline.
+
+See `PROTOTYPE_MATCH_PLAN.md` for the full 7-workstream breakdown.
+
+### Session 1 (2026-05-04) — DONE
+- [x] W1: Stop internal docs leak — filter transcript/site_notes from client_files migration
+- [x] W3: Fix report per-page navigation — add `&& !hasRealPages` to PortalBlockViewer gate
+- [x] W2: Portal Home — thumbnail cards instead of iframes, "YOUR HOME, ALWAYS AVAILABLE" label
+- [x] Remove per-page missing_photo acknowledge cards from consistency-check
+
+### Session 2 (next)
+- [ ] W7: Photo auto-routing — wire categorize-photo in wizard, populate report_pages.images
+- [ ] W4a: Publish pipeline writes specs/tiers/condition_rating/images to report_pages
+- [ ] W4b-d: Verify Room/System/Vision template renderers consume structured data
+
+### Session 3
+- [ ] W5: Recurring services register — summary cards, service tables, spend chart
+- [ ] W6: Capital plan phase cards + Gantt + maintenance calendar grid
+- [ ] W4e: AI spec extraction improvements
+
+### Session 4
+- [ ] Visual walkthrough against all 55 prototype screens
+- [ ] Polish pass on every template
+- [ ] Caldwell demo seed with real data

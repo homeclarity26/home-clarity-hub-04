@@ -13,8 +13,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  HoverEmbedBlock,
-  IGuideEmbedBlock,
   FloorPlanEmbedBlock,
 } from "@/components/wysiwyg/blocks/EmbedBlocks";
 import { PortalHomeHero } from "@/components/portal/home/PortalHomeHero";
@@ -186,17 +184,60 @@ export function PortalHome({
           <BobbyInputBar onOpen={() => openConcierge("")} />
         </motion.section>
 
-        {/* 1. Embed prominence — Hover + iGUIDE first */}
+        {/* 1. Embed prominence — Hover + iGUIDE as thumbnail cards */}
         <motion.section variants={fadeUp} className="space-y-4">
-          <div className="flex items-baseline justify-between">
-            <h2 className="font-display text-xl text-foreground">Your home, in 3D</h2>
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Tour anytime
-            </p>
-          </div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-accent">
+            Your home, always available
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <HoverEmbedBlock content={{ url: hoverUrl ?? "" }} />
-            <IGuideEmbedBlock content={{ url: iguideUrl ?? "" }} />
+            {hoverUrl ? (
+              <a
+                href={hoverUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="group relative bg-card border border-border rounded-lg overflow-hidden aspect-[4/3] flex items-center justify-center transition-all hover:shadow-hbc-md hover:-translate-y-0.5"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/90 to-primary/70" />
+                <div className="relative z-10 flex flex-col items-center gap-3">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
+                    Hover · 3D
+                  </span>
+                  <span className="font-display text-lg text-white">Exterior 3D Scan</span>
+                  <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-white/60 group-hover:text-accent transition-colors">
+                    Open tour ↗
+                  </span>
+                </div>
+              </a>
+            ) : (
+              <div className="bg-card border border-border rounded-lg aspect-[4/3] flex flex-col items-center justify-center text-center p-4">
+                <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-accent">Hover · 3D</span>
+                <span className="text-xs text-muted-foreground mt-2 italic">Hover scan not yet uploaded</span>
+              </div>
+            )}
+            {iguideUrl ? (
+              <a
+                href={iguideUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="group relative bg-card border border-border rounded-lg overflow-hidden aspect-[4/3] flex items-center justify-center transition-all hover:shadow-hbc-md hover:-translate-y-0.5"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/90 to-primary/70" />
+                <div className="relative z-10 flex flex-col items-center gap-3">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
+                    iGUIDE · 360
+                  </span>
+                  <span className="font-display text-lg text-white">Interior 360 Tour</span>
+                  <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-white/60 group-hover:text-accent transition-colors">
+                    Open tour ↗
+                  </span>
+                </div>
+              </a>
+            ) : (
+              <div className="bg-card border border-border rounded-lg aspect-[4/3] flex flex-col items-center justify-center text-center p-4">
+                <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-accent">iGUIDE · 360</span>
+                <span className="text-xs text-muted-foreground mt-2 italic">iGUIDE tour not yet uploaded</span>
+              </div>
+            )}
           </div>
         </motion.section>
 

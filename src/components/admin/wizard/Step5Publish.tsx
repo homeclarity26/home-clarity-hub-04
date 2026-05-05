@@ -214,8 +214,6 @@ export function Step5Publish() {
       // file doesn't block publish.
       if (state.propertyId) {
         const allIntakeFiles = [
-          ...state.intakeUploads.transcript,
-          ...state.intakeUploads.site_notes,
           ...state.intakeUploads.photos,
           ...state.intakeUploads.hover,
           ...state.intakeUploads.iguide,
