@@ -106,6 +106,17 @@ export function Step5Publish() {
           const pageBlocks = pageAuthoringToBlocks(authoring);
 
           const sortOrder = sectionIndex * 100 + pageIndex;
+
+          // Pull structured data from page seeds (AI-generated during intake)
+          const seed = state.pageSeeds.find((s) => s.page_key === page.page_key);
+          const conditionRating = seed?.suggested_condition || null;
+          const specs = seed?.specs_seed && seed.specs_seed.length > 0
+            ? seed.specs_seed
+            : null;
+          const keyObservations = seed?.key_observations && seed.key_observations.length > 0
+            ? seed.key_observations
+            : null;
+
           // Step 1 — upsert the row. onConflict on (report_id, page_key)
           // means re-publishing the same wizard run updates in place.
           const { error: upErr } = await supabase
@@ -117,6 +128,9 @@ export function Step5Publish() {
                 title: page.title,
                 group_name: section.label,
                 narrative: pageBlocks as never,
+                condition_rating: conditionRating,
+                specs: specs as never,
+                key_observations: keyObservations as never,
                 status: authoring.status,
                 sort_order: sortOrder,
                 is_complete: authoring.status === "complete",
@@ -205,13 +219,10 @@ export function Step5Publish() {
         if (urlErr) console.warn("[Step5Publish] hover/iguide URL persist failed", urlErr);
       }
 
-      // Migrate intake files (Hover/iGUIDE PDFs, transcripts, site notes,
-      // photos) from the private wizard-uploads bucket into the public
-      // report-images bucket + client_files table so they appear on the
-      // client portal's Documents tab — downloadable + shareable. Auto-
-      // detects category by filename so Hover/iGUIDE PDFs are easy to
-      // find. Failures are non-fatal (warn, continue) so a single bad
-      // file doesn't block publish.
+      // Migrate intake files (Hover/iGUIDE PDFs, photos) from the private
+      // wizard-uploads bucket into the public report-images bucket +
+      // client_files table. Track photo public URLs for auto-routing.
+      const photoPublicUrls: string[] = [];
       if (state.propertyId) {
         const allIntakeFiles = [
           ...state.intakeUploads.photos,
@@ -235,13 +246,18 @@ export function Step5Publish() {
               });
             if (upErr) continue;
 
+            // Collect public URLs for photos (used for auto-routing below)
+            if (file.mime.startsWith("image/")) {
+              const { data: urlData } = supabase.storage
+                .from("report-images")
+                .getPublicUrl(newPath);
+              if (urlData?.publicUrl) photoPublicUrls.push(urlData.publicUrl);
+            }
+
             const lcName = file.name.toLowerCase();
             let category = "General";
             if (lcName.includes("hover")) category = "hover.to";
             else if (lcName.includes("iguide")) category = "iGUIDE";
-            else if (lcName.includes("transcript")) category = "Walkthrough";
-            else if (lcName.includes("discovery")) category = "Discovery Call";
-            else if (lcName.includes("walkthrough") || lcName.includes("walk-through")) category = "Walkthrough";
             else if (file.mime.startsWith("image/")) category = "Interior Photos";
 
             const fileType = file.mime.startsWith("image/")
@@ -270,6 +286,47 @@ export function Step5Publish() {
           } catch (err) {
             console.warn("[Step5Publish] intake file migration failed for", file.name, err);
           }
+        }
+      }
+
+      // W7 — Auto-route photos to report pages via AI categorization.
+      // Non-blocking: failures are logged but don't prevent publish.
+      if (photoPublicUrls.length > 0 && state.reportId) {
+        try {
+          const availablePages = state.tocSections
+            .flatMap((s) => s.pages.filter((p) => p.selected))
+            .map((p) => ({ slug: p.page_key, name: p.title }));
+
+          const assignments: Record<string, string[]> = {};
+          const PHOTO_BATCH = 3;
+          for (let i = 0; i < photoPublicUrls.length; i += PHOTO_BATCH) {
+            const batch = photoPublicUrls.slice(i, i + PHOTO_BATCH);
+            const results = await Promise.allSettled(
+              batch.map((url) =>
+                supabase.functions.invoke("categorize-photo", {
+                  body: { imageUrl: url, availablePages },
+                }).then(({ data }) => ({ url, pageSlug: (data as { pageSlug?: string })?.pageSlug }))
+              )
+            );
+            for (const r of results) {
+              if (r.status === "fulfilled" && r.value.pageSlug) {
+                const slug = r.value.pageSlug;
+                if (!assignments[slug]) assignments[slug] = [];
+                assignments[slug].push(r.value.url);
+              }
+            }
+          }
+
+          // Write images to report_pages
+          for (const [pageKey, urls] of Object.entries(assignments)) {
+            await supabase
+              .from("report_pages")
+              .update({ images: urls as never })
+              .eq("report_id", state.reportId)
+              .eq("page_key", pageKey);
+          }
+        } catch (photoErr) {
+          console.warn("[Step5Publish] photo auto-routing failed (non-blocking):", photoErr);
         }
       }
 
