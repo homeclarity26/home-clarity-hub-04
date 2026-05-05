@@ -67,6 +67,7 @@ export function Step3Authoring() {
     goToStep,
     setActivePageKey,
     upsertAuthoring,
+    setPageSeeds,
   } = useWizard();
   const [savingNotes, setSavingNotes] = useState(false);
 
@@ -208,6 +209,8 @@ export function Step3Authoring() {
             const data = (r.value as { data: unknown }).data as {
               narrative?: string[] | string;
               key_observations?: string[];
+              suggested_condition?: string;
+              specs?: { label: string; value: string }[];
             } | null;
             const narrative = Array.isArray(data?.narrative)
               ? data!.narrative.filter((p) => typeof p === "string" && p.trim()).join("\n\n")
@@ -223,6 +226,30 @@ export function Step3Authoring() {
                 content.push({ type: "observations", value: observations });
               }
               upsertAuthoring(page.page_key, { content, status: "draft" });
+
+              // Merge AI-returned specs/condition into pageSeeds
+              if (data?.suggested_condition || data?.specs) {
+                setPageSeeds(state.pageSeeds.map((s) =>
+                  s.page_key === page.page_key
+                    ? {
+                        ...s,
+                        suggested_condition: data.suggested_condition || s.suggested_condition,
+                        specs_seed: data.specs || s.specs_seed,
+                        key_observations: data.key_observations || s.key_observations,
+                      }
+                    : s
+                ).concat(
+                  state.pageSeeds.some((s) => s.page_key === page.page_key)
+                    ? []
+                    : [{
+                        page_key: page.page_key,
+                        title: page.title,
+                        suggested_condition: data.suggested_condition,
+                        specs_seed: data.specs,
+                        key_observations: data.key_observations,
+                      }]
+                ));
+              }
             } else {
               failed.push(page.title);
             }

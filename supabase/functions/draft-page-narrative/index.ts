@@ -259,7 +259,9 @@ ${kbContext}${templateBlock}
 
 Return a JSON object with:
 - "narrative": array of 2-3 paragraph strings
-- "key_observations": array of 3-5 concise observation strings (no bullet symbols, just the text)`;
+- "key_observations": array of 3-5 concise observation strings (no bullet symbols, just the text)
+- "suggested_condition": one of "Excellent", "Good", "Fair", "Poor", "Critical" — your best assessment based on the context
+- "specs": array of {label, value} pairs — key physical attributes of this space/system (dimensions, materials, model, age, capacity, etc). 3-8 entries. Omit if insufficient context.`;
 
     // RAG: pull past narratives on the same page/system + relevant memories.
     // This is where Claude + retrieval is most valuable — the narrative
@@ -281,9 +283,9 @@ Return a JSON object with:
       maxOutputTokens: 1500,
     });
 
-    let parsed: { narrative?: string[]; key_observations?: string[] };
+    let parsed: { narrative?: string[]; key_observations?: string[]; suggested_condition?: string; specs?: { label: string; value: string }[] };
     try {
-      parsed = parseJSON<{ narrative?: string[]; key_observations?: string[] }>(rawContent);
+      parsed = parseJSON<typeof parsed>(rawContent);
     } catch {
       parsed = {
         narrative: [rawContent],
@@ -295,6 +297,8 @@ Return a JSON object with:
       JSON.stringify({
         narrative: Array.isArray(parsed.narrative) ? parsed.narrative : [parsed.narrative || ""],
         key_observations: Array.isArray(parsed.key_observations) ? parsed.key_observations : [],
+        suggested_condition: parsed.suggested_condition || null,
+        specs: Array.isArray(parsed.specs) ? parsed.specs : null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -105,6 +105,82 @@ export function Step5Publish() {
             };
           const pageBlocks = pageAuthoringToBlocks(authoring);
 
+          // Inject structured strategy blocks for matching pages
+          const makeId = () =>
+            typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+              ? crypto.randomUUID()
+              : `sb-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+          if (page.page_key === "recurring-services" && state.recurringServicesPreview.length > 0) {
+            pageBlocks.push({
+              id: makeId(),
+              type: "recurring_services_register",
+              content: {
+                title: "Recurring Services Register",
+                services: state.recurringServicesPreview.map((s) => ({
+                  category: s.category,
+                  serviceName: s.service_name,
+                  vendorName: s.vendor_name || undefined,
+                  frequency: s.frequency,
+                  costPerVisit: s.cost_per_visit || undefined,
+                  annualCost: s.annual_cost || undefined,
+                  monthlyCost: s.annual_cost ? Math.round(s.annual_cost / 12) : undefined,
+                  hbcManaged: s.hbc_managed,
+                  status: "current" as const,
+                })),
+              } as never,
+              colSpan: 12,
+              order: pageBlocks.length,
+              createdAt: now,
+              updatedAt: now,
+            });
+          }
+
+          if (page.page_key === "capital-plan-10yr" && state.capitalPlan?.years?.length) {
+            pageBlocks.push({
+              id: makeId(),
+              type: "capital_plan",
+              content: {
+                eyebrow: "Strategic Roadmap",
+                title: "10-Year Capital Plan",
+                startYear: new Date().getFullYear(),
+                items: state.capitalPlan.years.map((y, idx) => ({
+                  projectName: y.project,
+                  phase: y.phase,
+                  yearStart: y.year,
+                  yearEnd: y.year,
+                  costLow: y.ballpark_low,
+                  costHigh: y.ballpark_high,
+                  displayOrder: idx,
+                })),
+              } as never,
+              colSpan: 12,
+              order: pageBlocks.length,
+              createdAt: now,
+              updatedAt: now,
+            });
+          }
+
+          if (page.page_key === "maintenance-calendar" && state.maintenanceCalendar) {
+            const mc = state.maintenanceCalendar;
+            pageBlocks.push({
+              id: makeId(),
+              type: "maintenance_calendar",
+              content: {
+                eyebrow: "The annual cadence",
+                title: "Maintenance Calendar",
+                spring: mc.spring.map((t) => ({ description: `${t.task} (${t.system})` })),
+                summer: mc.summer.map((t) => ({ description: `${t.task} (${t.system})` })),
+                fall: mc.fall.map((t) => ({ description: `${t.task} (${t.system})` })),
+                winter: mc.winter.map((t) => ({ description: `${t.task} (${t.system})` })),
+              } as never,
+              colSpan: 12,
+              order: pageBlocks.length,
+              createdAt: now,
+              updatedAt: now,
+            });
+          }
+
           const sortOrder = sectionIndex * 100 + pageIndex;
 
           // Pull structured data from page seeds (AI-generated during intake)
