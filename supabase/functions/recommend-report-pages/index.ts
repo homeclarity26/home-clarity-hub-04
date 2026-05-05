@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callClaude, isGeminiRetryable } from "../_shared/ai-client.ts";
+import { callAI } from "../_shared/ai-client.ts";
 import { requireRole, corsHeaders, json } from "../_shared/auth.ts";
 
 interface AvailablePage {
@@ -83,9 +83,6 @@ serve(async (req) => {
       );
     }
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
-
     const pageList = availablePages
       .map((p) => `- ${p.slug} (${p.name}, group: ${p.group})`)
       .join("\n");
@@ -138,50 +135,13 @@ Constraints: ${constraints.join(", ") || "none specified"}
 Available pages:
 ${pageList}`;
 
-    let rawContent: string;
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: systemInstruction }] },
-            contents: [
-              {
-                role: "user",
-                parts: [{ text: "Group the most relevant report pages into the four sections for this client." }],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.2,
-              maxOutputTokens: 2048,
-              responseMimeType: "application/json",
-            },
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
-      }
-
-      const aiResult = await response.json();
-      rawContent = aiResult.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    } catch (fetchErr) {
-      console.warn("Gemini failed in recommend-report-pages, falling back to Claude:", fetchErr instanceof Error ? fetchErr.message : fetchErr);
-      try {
-        rawContent = await callClaude({
-          system: systemInstruction,
-          prompt: "Group the most relevant report pages into the four sections for this client.",
-          json: true,
-          geminiFallback: false,
-        });
-      } catch {
-        throw fetchErr;
-      }
-    }
+    const rawContent = await callAI({
+      system: systemInstruction,
+      prompt: "Group the most relevant report pages into the four sections for this client.",
+      json: true,
+      temperature: 0.2,
+      maxOutputTokens: 2048,
+    });
 
     let parsed: RawRecommendations;
     try {
