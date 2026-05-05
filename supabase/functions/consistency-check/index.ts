@@ -202,21 +202,17 @@ Do not include any explanation outside the JSON.`;
       });
       analysis = parseJSON<Record<string, unknown>>(aiText);
     } catch (e) {
-      if (isGeminiRetryable(e)) {
-        console.warn("Gemini failed in consistency-check, falling back to Claude:", e instanceof Error ? e.message : e);
-        try {
-          const claudeText = await callClaude({
-            system: systemPrompt,
-            prompt: `Review this report for quality and consistency:\n\n${allText}`,
-            json: true,
-            geminiFallback: false,
-          });
-          analysis = parseJSON<Record<string, unknown>>(claudeText);
-        } catch (claudeErr) {
-          console.error("consistency-check AI analysis failed (continuing with empty analysis):", claudeErr);
-        }
-      } else {
-        console.error("consistency-check AI analysis failed (continuing with empty analysis):", e);
+      console.warn("Gemini failed in consistency-check, falling back to Claude:", e instanceof Error ? e.message : e);
+      try {
+        const claudeText = await callClaude({
+          system: systemPrompt,
+          prompt: `Review this report for quality and consistency:\n\n${allText}`,
+          json: true,
+          geminiFallback: false,
+        });
+        analysis = parseJSON<Record<string, unknown>>(claudeText);
+      } catch (claudeErr) {
+        console.error("consistency-check AI analysis failed (continuing with empty analysis):", claudeErr);
       }
     }
 

@@ -170,7 +170,6 @@ ${pageList}`;
       const aiResult = await response.json();
       rawContent = aiResult.candidates?.[0]?.content?.parts?.[0]?.text || "";
     } catch (fetchErr) {
-      if (!isGeminiRetryable(fetchErr)) throw fetchErr;
       console.warn("Gemini failed in recommend-report-pages, falling back to Claude:", fetchErr instanceof Error ? fetchErr.message : fetchErr);
       try {
         rawContent = await callClaude({

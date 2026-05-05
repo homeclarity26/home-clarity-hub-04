@@ -66,7 +66,6 @@ async function callWithFallback(geminiOpts: Parameters<typeof callAI>[0], claude
   try {
     return await callAI(geminiOpts);
   } catch (geminiErr) {
-    if (!isGeminiRetryable(geminiErr)) throw geminiErr;
     console.warn("Gemini failed in ai-edit, falling back to Claude:", geminiErr instanceof Error ? geminiErr.message : geminiErr);
     try {
       return await callClaude({ system: claudeSystem, prompt: claudePrompt, geminiFallback: false });
