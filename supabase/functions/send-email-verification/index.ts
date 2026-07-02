@@ -5,6 +5,8 @@
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireAuth } from "../_shared/auth.ts";
+import { rateLimit, getClientIP, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,12 +16,21 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  // Authenticated + rate-limited. userId comes from the JWT so a caller can't
+  // write a verification code against another account, and per-IP limiting
+  // stops using this endpoint to blast verification emails at arbitrary
+  // addresses.
+  if (!rateLimit(getClientIP(req), 5, 300_000)) return rateLimitResponse(corsHeaders);
+  const auth = await requireAuth(req);
+  if ("error" in auth) return auth.error;
+
   try {
-    const { phone: emailOrPhone, userId, email } = await req.json();
+    const { phone: emailOrPhone, email } = await req.json();
     // Accept either field name — frontend may pass phone or email
     const recipient = email || emailOrPhone;
-    if (!recipient || !userId) {
-      return new Response(JSON.stringify({ error: "Missing recipient or userId", missing: [!recipient && "email", !userId && "userId"].filter(Boolean) }), {
+    const userId = auth.user.id;
+    if (!recipient) {
+      return new Response(JSON.stringify({ error: "Missing recipient", missing: ["email"] }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

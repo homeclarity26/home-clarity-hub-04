@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireAuth } from "../_shared/auth.ts";
+import { rateLimit, getClientIP, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,10 +11,17 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  // Authenticated + rate-limited. userId comes from the JWT so a caller can't
+  // verify another account, and per-IP limiting stops brute-forcing the code.
+  if (!rateLimit(getClientIP(req), 10, 300_000)) return rateLimitResponse(corsHeaders);
+  const auth = await requireAuth(req);
+  if ("error" in auth) return auth.error;
+
   try {
-    const { phone, code, userId } = await req.json();
-    if (!phone || !code || !userId) {
-      return new Response(JSON.stringify({ error: "Missing required fields", missing: [!phone && "phone", !code && "code", !userId && "userId"].filter(Boolean) }), {
+    const { phone, code } = await req.json();
+    const userId = auth.user.id;
+    if (!phone || !code) {
+      return new Response(JSON.stringify({ error: "Missing required fields", missing: [!phone && "phone", !code && "code"].filter(Boolean) }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
