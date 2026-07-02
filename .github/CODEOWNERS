@@ -1,0 +1,21 @@
+# Require human review for the files where Supabase project-ref drift and
+# auth/CI regressions actually happen. An automated agent (Lovable, Claude)
+# editing any of these should not be able to self-merge.
+#
+# NOTE: replace @homeclarity26 with the exact GitHub owner/team handle if the
+# account name differs. CODEOWNERS only enforces review when branch protection
+# has "Require review from Code Owners" enabled on main.
+
+# Config truth — the drift surface
+/.env                                   @homeclarity26
+/supabase/config.toml                   @homeclarity26
+/src/integrations/supabase/client.ts    @homeclarity26
+/src/integrations/supabase/project-ref.ts @homeclarity26
+/scripts/check-supabase-project-ref.ts  @homeclarity26
+
+# CI / deploy
+/.github/workflows/                      @homeclarity26
+
+# Auth boundary
+/supabase/functions/_shared/auth.ts      @homeclarity26
+/supabase/functions/_shared/cron-auth.ts @homeclarity26

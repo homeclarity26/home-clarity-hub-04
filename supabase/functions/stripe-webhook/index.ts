@@ -52,6 +52,24 @@ serve(async (req) => {
     const eventType = event.type;
     const obj = event.data.object;
 
+    // Idempotency: Stripe retries deliveries, so guard against processing the
+    // same event twice. Insert-first; a unique violation means already handled.
+    if (event.id) {
+      const { error: dupErr } = await supabase
+        .from("stripe_webhook_events")
+        .insert({ event_id: event.id, type: eventType });
+      if (dupErr) {
+        if (dupErr.code === "23505") {
+          return new Response(JSON.stringify({ received: true, duplicate: true }), {
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        // Non-duplicate failure (e.g. table missing) — log and continue so a
+        // ledger problem never drops a real payment event.
+        console.error("stripe idempotency insert error:", dupErr);
+      }
+    }
+
     // Helper to find client_id from Stripe customer
     const findClientId = async (customerId: string): Promise<string | null> => {
       const { data } = await supabase
