@@ -215,7 +215,52 @@ const TOOLS: ToolDef[] = [
 
 // ─── TOOL HANDLERS ───
 
-async function executeTool(supabase: any, toolName: string, params: any, userId: string): Promise<{ success: boolean; result: any; entity_id?: string; entity_type?: string; nav_link?: string }> {
+// Ownership gate for client-role tool calls. executeTool runs with a
+// service-role client (RLS is bypassed), so without this a client could ask
+// Bobby for another tenant's report/projects/invoices/equipment by passing a
+// different property_id/project_id/invoice_id/goal_id. Creators are trusted
+// (they manage every client), so this only runs for role === "client".
+async function clientCanAccess(supabase: any, userId: string, params: any): Promise<boolean> {
+  const owns = async (propertyId?: string | null): Promise<boolean> => {
+    if (!propertyId) return true;
+    const { data } = await supabase
+      .from("properties")
+      .select("id")
+      .eq("id", propertyId)
+      .eq("client_user_id", userId)
+      .maybeSingle();
+    return !!data;
+  };
+  const resolveOwns = async (table: string, id?: string | null): Promise<boolean> => {
+    if (!id) return true;
+    const { data } = await supabase.from(table).select("property_id").eq("id", id).maybeSingle();
+    if (!data) return false; // referenced row doesn't exist → deny
+    return owns(data.property_id);
+  };
+
+  if (params?.property_id && !(await owns(params.property_id))) return false;
+  if (params?.project_id && !(await resolveOwns("projects", params.project_id))) return false;
+  if (params?.invoice_id && !(await resolveOwns("invoices", params.invoice_id))) return false;
+  if (params?.goal_id && !(await resolveOwns("client_goals", params.goal_id))) return false;
+  return true;
+}
+
+async function executeTool(supabase: any, toolName: string, params: any, userId: string, role: string): Promise<{ success: boolean; result: any; entity_id?: string; entity_type?: string; nav_link?: string }> {
+  // Server-side role backstop. The tool list is already filtered by role
+  // before the model sees it, but never trust that alone — re-check here so a
+  // future direct-dispatch path or model confusion can't run a creator tool
+  // as a client.
+  const toolDef = TOOLS.find((t) => t.name === toolName);
+  if (!toolDef) {
+    return { success: false, result: { message: `Unknown tool: ${toolName}` } };
+  }
+  if (!toolDef.allowedRoles.includes(role)) {
+    return { success: false, result: { message: "Forbidden: this action is not allowed for your role." } };
+  }
+  if (role === "client" && !(await clientCanAccess(supabase, userId, params))) {
+    return { success: false, result: { message: "Forbidden: you don't have access to that property." } };
+  }
+
   try {
     switch (toolName) {
       // ── CLIENT MANAGEMENT ──
@@ -1908,7 +1953,7 @@ serve(async (req) => {
           continue;
         }
 
-        const result = await executeTool(supabase, fc.name, fc.args, userId);
+        const result = await executeTool(supabase, fc.name, fc.args, userId, role);
         // Build a human-readable one-liner. Used to fall back to
         // JSON.stringify(result).slice(0, 200) which leaked raw backend
         // objects like `{"count":2,"projects":[{"id":"…`} into the chat
