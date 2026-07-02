@@ -75,7 +75,7 @@ serve(async (req) => {
 
       if (outcomes && outcomes.length > 0) {
         const byType = new Map<string, { accepted: number; edited: number; rejected: number }>();
-        for (const o of outcomes) {
+        for (const o of (outcomes as any[])) {
           if (!byType.has(o.suggestion_type)) byType.set(o.suggestion_type, { accepted: 0, edited: 0, rejected: 0 });
           const counts = byType.get(o.suggestion_type)!;
           if (o.outcome === "accepted") counts.accepted++;
@@ -99,8 +99,9 @@ serve(async (req) => {
           .eq("id", scopedPropertyId)
           .single();
 
-        if (prop?.metadata?.year_built) {
-          const decade = `${Math.floor(Number(prop.metadata.year_built) / 10) * 10}s`;
+        const meta = (prop?.metadata ?? {}) as Record<string, unknown>;
+        if (meta.year_built) {
+          const decade = `${Math.floor(Number(meta.year_built) / 10) * 10}s`;
           const { data: insights } = await supabase
             .from("cross_client_insights")
             .select("insight_type, insight_key, insight_data, confidence")
@@ -141,8 +142,9 @@ serve(async (req) => {
           .eq("id", scopedPropertyId)
           .single();
 
-        if (prop?.metadata?.year_built) {
-          const decade = `${Math.floor(Number(prop.metadata.year_built) / 10) * 10}s`;
+        const meta = (prop?.metadata ?? {}) as Record<string, unknown>;
+        if (meta.year_built) {
+          const decade = `${Math.floor(Number(meta.year_built) / 10) * 10}s`;
           const { data: insights } = await supabase
             .from("cross_client_insights")
             .select("insight_type, insight_key, insight_data")

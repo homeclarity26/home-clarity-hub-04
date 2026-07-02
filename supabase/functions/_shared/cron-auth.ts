@@ -2,19 +2,23 @@
  * Guard for cron-only edge functions.
  *
  * These functions have `verify_jwt = false` in config.toml and use a
- * service-role client to scan across all tenants, so the cron-secret header
- * is the ONLY thing standing between them and an anonymous caller dumping or
- * mutating every property's data. The pg_cron scheduler (see the
- * schedule_*_cron migrations) sends `x-supabase-cron-secret`; anything else
- * gets 403.
+ * service-role client to scan across all tenants, so this header check is the
+ * only thing standing between them and an anonymous caller dumping or mutating
+ * every property's data.
+ *
+ * A call is accepted as trusted if EITHER:
+ *   1. it carries the service-role key as the Bearer token — which is exactly
+ *      what Supabase pg_cron / dashboard-scheduled jobs already send (see the
+ *      schedule_*_cron migrations), so no DB setting or reschedule is needed; or
+ *   2. it carries the shared CRON_SECRET in the x-supabase-cron-secret header
+ *      (a convenience for manual/testing invocation; optional).
  *
  * Usage:
  *   const denied = requireCron(req);
  *   if (denied) return denied;
  *
- * Returns a 403 Response to short-circuit on failure, or null to proceed.
- * `hasValidCronSecret` is exported for functions that are ALSO reachable by
- * an authenticated admin (e.g. a "run now" button).
+ * `hasValidCronSecret` is exported for functions that are ALSO reachable by an
+ * authenticated admin (e.g. a "run now" button), which fall back to requireRole.
  */
 
 const corsHeaders = {
@@ -25,9 +29,18 @@ const corsHeaders = {
 };
 
 export function hasValidCronSecret(req: Request): boolean {
+  // 1. Service-role key presented as Bearer (what pg_cron already sends).
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const authz = req.headers.get("authorization") ?? "";
+  const bearer = authz.startsWith("Bearer ") ? authz.slice(7).trim() : "";
+  if (serviceKey && bearer && bearer === serviceKey) return true;
+
+  // 2. Optional explicit shared secret header.
   const cronSecret = Deno.env.get("CRON_SECRET");
-  const provided = req.headers.get("x-supabase-cron-secret");
-  return Boolean(cronSecret) && provided === cronSecret;
+  const providedHeader = req.headers.get("x-supabase-cron-secret");
+  if (cronSecret && providedHeader === cronSecret) return true;
+
+  return false;
 }
 
 export function requireCron(req: Request): Response | null {

@@ -49,31 +49,35 @@ commit (anon key only). `.env.local` (gitignored) overrides it locally.
 
 ## Manual steps to activate the remediation
 
-### 1. Cron secret (required for the cron-gated functions)
+### 1. Cron auth (no dashboard action required)
 
 `daily-brief-cron`, `generate-proactive-alerts`, `activity-summary-email`,
 `maintenance-alerts`, `payment-escalation-check`, `learn-from-activity`, and the
-scheduled path of `send-maintenance-reminders` now require the
-`x-supabase-cron-secret` header. Set the secret in **both** places to the same
-value:
+scheduled path of `send-maintenance-reminders` are gated by `requireCron`
+(`_shared/cron-auth.ts`). A call is accepted when it carries **the service-role
+key as the Bearer token** — which is exactly what the existing pg_cron schedule
+already sends (`schedule_proactive_alerts_cron` migration). So the cron jobs keep
+working with **no** DB setting, no reschedule migration, and no permission
+changes.
 
-```bash
-# 1. Function secret (read by the edge functions)
-supabase secrets set CRON_SECRET="<long random value>"
+> Note: `ALTER DATABASE ... SET app.settings.*` is blocked for the `postgres`
+> role in the Supabase SQL editor (error 42501). That's why we authenticate via
+> the service-role Bearer the scheduler already sends rather than a custom GUC.
 
-# 2. DB setting (read by pg_cron when it calls the function)
-#    Run in the SQL editor:
-ALTER DATABASE postgres SET app.settings.cron_secret = '<same value>';
+An optional `CRON_SECRET` function secret is also accepted (via the
+`x-supabase-cron-secret` header) as a convenience for manual/testing invocation.
+Setting it is not required.
+
+Verify the existing schedule actually sends a real service-role key (read-only):
+
+```sql
+select current_setting('app.settings.service_role_key', true) is not null
+       as service_key_set;
 ```
 
-Migration `20260701000000_cron_send_secret_header.sql` reschedules the
-proactive-alerts pg_cron job to send that header. **If `CRON_SECRET` is not set
-before this migration is applied, the daily alert job will start returning 403
-and alerts will stop** — set the secret first.
-
-If any of the other background functions are scheduled via the Supabase
-dashboard cron UI (not in migrations), update those schedules to send the
-`x-supabase-cron-secret` header too.
+If this returns `false`, the proactive-alerts cron was already failing before
+this change (a pre-existing issue) — tell me and we'll re-point the schedule at
+Supabase Vault.
 
 ### 2. Apply the new migrations
 
@@ -83,7 +87,6 @@ npx supabase db push
 ```
 
 New migrations:
-- `20260701000000_cron_send_secret_header.sql` — cron sends the secret.
 - `20260701000001_stripe_webhook_idempotency.sql` — dedupe table for Stripe.
 - `20260701000002_restrict_report_images_listing.sql` — blocks anonymous
   enumeration of the `report-images` bucket.
