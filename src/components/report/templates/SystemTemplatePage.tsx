@@ -25,11 +25,20 @@ function deriveUrgency(age: number, lifespan: number): Urgency {
   return "well_within_life";
 }
 
-const URGENCY_BAR_GRADIENT: Record<Urgency, string> = {
-  well_within_life: "linear-gradient(90deg, #2F6E40 0%, #5A8A4F 100%)",
-  approaching_eol: "linear-gradient(90deg, #2F6E40 0%, #B58A1F 100%)",
-  overdue: "linear-gradient(90deg, #2F6E40 0%, #B58A1F 60%, #B7410E 100%)",
-  critical: "#B7410E",
+// Prototype LifecycleBar gradient: past 75% of lifespan the fill runs
+// green → amber → rust; earlier it stays green shading into amber.
+const LATE_LIFE_GRADIENT = "linear-gradient(90deg, #2F6E40 0%, #B58A1F 70%, #B7410E 100%)";
+const EARLY_LIFE_GRADIENT = "linear-gradient(90deg, #2F6E40 0%, #2F6E40 70%, #B58A1F 100%)";
+
+// Amber alert palette — same values SystemRecordBlock used for the
+// Proactive Lifecycle Alert (locked prototype colors).
+const ALERT_BG = "#FBF1DD";
+const ALERT_AMBER = "#B58A1F";
+
+const URGENCY_PILL_LABEL: Partial<Record<Urgency, string>> = {
+  approaching_eol: "Approaching End-of-Life",
+  overdue: "Approaching End-of-Life",
+  critical: "Past Expected Lifespan",
 };
 
 interface SystemTemplatePageProps {
@@ -86,6 +95,17 @@ const SystemTemplatePage = ({
   const fillPct = currentAge && lifespanYears && lifespanYears > 0
     ? Math.min((currentAge / lifespanYears) * 100, 100)
     : 0;
+  const urgencyPillLabel = showLifespan ? URGENCY_PILL_LABEL[urgency] : undefined;
+
+  // Lifecycle timeline endpoints (derived: install year and EOL year)
+  const currentYear = new Date().getFullYear();
+  const installYear = currentAge != null ? currentYear - currentAge : undefined;
+  const eolYear = installYear != null && lifespanYears ? installYear + lifespanYears : undefined;
+
+  // "our HVAC partner" — derive the trade label from the group title
+  // ("HVAC System" → "HVAC"); fall back to a generic "trade partner".
+  const tradeLabel = (group?.title ?? "").replace(/\s*Systems?$/i, "").trim();
+  const partnerPhrase = tradeLabel ? `our ${tradeLabel} partner` : "our trade partner";
 
   const eyebrowLabel = simplified ? "Appliances" : "Systems";
   const chapterLabel = group?.title ?? "";
@@ -107,33 +127,45 @@ const SystemTemplatePage = ({
         </div>
       )}
 
-      {/* Eyebrow + title */}
+      {/* Eyebrow + title — prototype shows the group title alone (HVAC SYSTEM) */}
       <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent mb-2">
-        {eyebrowLabel} · {chapterLabel}
+        {chapterLabel || eyebrowLabel}
       </div>
       <h1 className="font-display text-[28px] sm:text-[34px] text-primary leading-tight mb-3">
         {page.title}
       </h1>
 
-      {/* Condition rating */}
+      {/* Condition rating + urgency pill */}
       {rating && (
-        <div className="flex items-center gap-2 mb-5">
-          <span
-            className="w-2.5 h-2.5 rounded-full inline-block"
-            style={{ background: ratingColor }}
-          />
-          <span
-            className="font-mono text-[10px] uppercase tracking-[0.14em]"
-            style={{ color: ratingColor }}
-          >
-            {rating}
+        <div className="flex items-center gap-4 mb-5 flex-wrap">
+          <span className="inline-flex items-center gap-2">
+            <span
+              className="w-2 h-2 rounded-full inline-block"
+              style={{ background: ratingColor }}
+            />
+            <span
+              className="font-mono text-[10px] uppercase tracking-[0.14em]"
+              style={{ color: ratingColor }}
+            >
+              {rating}
+            </span>
           </span>
+          {urgencyPillLabel && (
+            <span
+              className="font-mono text-[10px] uppercase tracking-[0.14em] px-2.5 py-[3px] rounded-[3px] whitespace-nowrap"
+              style={{ background: ALERT_BG, color: ALERT_AMBER }}
+            >
+              {urgencyPillLabel}
+            </span>
+          )}
         </div>
       )}
 
-      {/* Spec row */}
+      <hr className="border-border mb-6" />
+
+      {/* Spec grid — flat mono-label pattern on the page background */}
       {specs.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6 p-4 bg-card border border-border rounded-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 mb-6">
           {specs.map((s) => (
             <div key={s.label}>
               <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
@@ -145,35 +177,51 @@ const SystemTemplatePage = ({
         </div>
       )}
 
-      {/* Lifespan bar */}
+      {/* Lifecycle Timeline — prototype gradient bar with year labels */}
       {showLifespan && (
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
-              Lifecycle Position
-            </span>
-            <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
-              {currentAge} of {lifespanYears} years
-            </span>
-          </div>
-          <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+        <div className="mb-6">
+          <h3 className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent mb-3">
+            Lifecycle Timeline
+          </h3>
+          <div
+            className="relative h-8 rounded-2xl overflow-hidden"
+            style={{ background: "var(--hbc-cream-light, #F5F2EE)" }}
+          >
             <div
-              className="h-full rounded-full transition-all"
+              className="absolute inset-y-0 left-0"
               style={{
                 width: `${fillPct}%`,
-                background: URGENCY_BAR_GRADIENT[urgency],
+                background: fillPct > 75 ? LATE_LIFE_GRADIENT : EARLY_LIFE_GRADIENT,
               }}
             />
+            <div className="absolute inset-0 flex items-center justify-between px-3.5 text-[11px] font-medium text-foreground">
+              <span>{installYear ?? ""}</span>
+              <span>Today · {currentAge} years</span>
+              <span>{eolYear != null ? `EOL ~${eolYear}` : ""}</span>
+            </div>
           </div>
-          {(urgency === "approaching_eol" || urgency === "overdue" || urgency === "critical") && (
-            <p className="font-mono text-[9px] uppercase tracking-[0.12em] mt-2" style={{ color: "#B7410E" }}>
-              {urgency === "critical" ? "Past expected lifespan" : urgency === "overdue" ? "Nearing end of life" : "Approaching end of life"}
-            </p>
+
+          {urgencyPillLabel && (
+            <div
+              className="mt-6 p-4 rounded-lg"
+              style={{ background: ALERT_BG, borderLeft: `3px solid ${ALERT_AMBER}` }}
+            >
+              <div
+                className="font-mono text-[10px] uppercase tracking-[0.15em] mb-1.5"
+                style={{ color: ALERT_AMBER }}
+              >
+                Proactive Lifecycle Alert
+              </div>
+              <p className="text-sm leading-relaxed text-foreground">
+                This system is {currentAge} years old, with a typical lifespan of {lifespanYears} years.
+                Now is the right time to start planning replacement on your terms, not on a January
+                night when it fails. The Replacement Briefing below tells {partnerPhrase} exactly
+                what to bring on the first visit.
+              </p>
+            </div>
           )}
         </div>
       )}
-
-      <hr className="border-border mb-8" />
 
       {/* Observations */}
       {keyObservations.length > 0 && (
