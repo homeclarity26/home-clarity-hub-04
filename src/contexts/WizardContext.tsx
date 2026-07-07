@@ -11,6 +11,11 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ReportBlock } from "@/components/wysiwyg/types";
+import type {
+  RoomPageContent,
+  SystemPageContent,
+  VisionPageContent,
+} from "@/lib/reportPageSchemas";
 import { buildDefaultFieldChecklist } from "@/components/admin/wizard/field-checklist-defaults";
 
 // ─── Wizard state shape (covers all 5 steps) ─────────────────────────────
@@ -153,6 +158,27 @@ export interface TocSection {
 // W3 — Authoring state per page.
 export type PageAuthoringStatus = "draft" | "reviewed" | "complete";
 
+// Executive Summary structured fields (prototype screen 15). The welcome
+// personal note lives in the shared narrative content row; the themes are
+// wizard-only structured state until publish maps them into blocks.
+export interface ExecutiveSummaryStructured {
+  personalNote?: string;
+  topThemes?: string;
+}
+
+// Phase 5b — optional per-page structured payload. Exactly one branch is
+// populated, matching the inferred page type. Room / system / vision reuse
+// the Phase 1 schema-inferred types from src/lib/reportPageSchemas (never
+// redefined here); publish validates through the same schemas. Values may
+// hold empty strings mid-edit — publish strips those to `undefined` so an
+// untouched field always means "Not yet documented".
+export interface PageStructuredData {
+  room?: RoomPageContent;
+  system?: SystemPageContent;
+  vision?: VisionPageContent;
+  executiveSummary?: ExecutiveSummaryStructured;
+}
+
 export interface PageAuthoring {
   page_key: string;
   status: PageAuthoringStatus;
@@ -160,6 +186,9 @@ export interface PageAuthoring {
   // arbitrary blocks shape (rendered by SharedBlockRenderer downstream)
   content: unknown[];
   notes_for_next_visit?: string;
+  // Phase 5b structured fields — persisted through the same draft
+  // envelope as the rest of `authoring` (save + resume round-trip).
+  structured?: PageStructuredData;
 }
 
 // W4 — Strategy (light wrapper; child blocks own deep state).
