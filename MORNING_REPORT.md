@@ -30,11 +30,16 @@
 - Codebase deep-dive complete (3 exploration agents): root cause confirmed — publish pipeline flattens structured data; legacy BlockRenderer renders bare `<p>`; styled templates + 27 block types already exist but are starved of data.
 - `docs/VISUAL_QA_CHECKLIST.md` created (38 screens).
 
-### Phase 1 — Structured content contract — IN PROGRESS
+### Phase 0.5 — Visual QA harness ✅
+- `/dev/prototype-qa` renders the REAL RoomTemplatePage / SystemTemplatePage / VisionTemplatePage / ReportHome with Caldwell fixtures, no auth needed (commit `be8be02`). All four scenarios render purely; verified in browser.
+- Gap list captured for Phase 2: duplicate header/specs (template + record block both render them); duplicate tiers on vision pages; price ranges "$14,000 to $18,000" vs prototype "$14,000 - $18,000"; urgency label mismatch ("Nearing end of life" vs "Approaching End-of-Life"); missing CONCIERGE ACTION card on room pages; missing "View Vision Project" link; Report Home "Open" is a text link not a pill button; em-dashes found in existing client copy on chapter cards (locked-rule violation, sweep in Phase 2).
+- Merged `main` into branch (security remediation #205 + `scripts/backfill-page-structured-data.ts` from #204, useful for Phase 7).
+
+### Phase 1 — Structured content contract — IN PROGRESS (agent in isolated worktree)
 ### Phase 2 — Client report templates — pending
 ### Phase 3 — Strategy pages — pending
 ### Phase 4 — Photos/media — pending (deploy steps blocked on Supabase token)
-### Phase 5 — Admin builder visuals — pending
+### Phase 5 — Admin builder visuals — IN PROGRESS (agent in isolated worktree, screens 1-20)
 ### Phase 6 — MCP bridge — pending (code overnight; deploy + connector = morning)
 ### Phase 7 — Migration + full QA — pending (live-DB parts blocked on credentials)
 ### Phase 8 — Beyond-prototype backlog — pending
@@ -42,4 +47,7 @@
 ## Commits on feat/prototype-match
 (updated as the night progresses)
 
-- `Phase 0: morning report + 38-screen visual QA checklist`
+- `4b139e3` Phase 0: morning report + 38-screen visual QA checklist
+- `c49389e` Phase 0: bring MASTER_UX_REBUILD_PLAN onto work branch
+- `be8be02` Phase 0: /dev/prototype-qa harness (real templates + Caldwell fixtures)
+- `f40227e` Merge main (security remediation #205, cron revert)
