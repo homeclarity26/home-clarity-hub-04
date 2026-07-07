@@ -35,7 +35,7 @@
 - Gap list captured for Phase 2: duplicate header/specs (template + record block both render them); duplicate tiers on vision pages; price ranges "$14,000 to $18,000" vs prototype "$14,000 - $18,000"; urgency label mismatch ("Nearing end of life" vs "Approaching End-of-Life"); missing CONCIERGE ACTION card on room pages; missing "View Vision Project" link; Report Home "Open" is a text link not a pill button; em-dashes found in existing client copy on chapter cards (locked-rule violation, sweep in Phase 2).
 - Merged `main` into branch (security remediation #205 + `scripts/backfill-page-structured-data.ts` from #204, useful for Phase 7).
 
-### Phase 1 — Structured content contract — IN PROGRESS (agent in isolated worktree)
+### Phase 1 — Structured content contract ✅ MERGED (3877f8b) (agent in isolated worktree)
 ### Phase 2 — Client report templates — pending
 ### Phase 3 — Strategy pages — pending
 ### Phase 4 — Photos/media — pending (deploy steps blocked on Supabase token)
@@ -51,3 +51,26 @@
 - `c49389e` Phase 0: bring MASTER_UX_REBUILD_PLAN onto work branch
 - `be8be02` Phase 0: /dev/prototype-qa harness (real templates + Caldwell fixtures)
 - `f40227e` Merge main (security remediation #205, cron revert)
+
+
+---
+
+## ⛔ 22:45 — SESSION LIMIT HIT. RUN PAUSED. RESUME STATE BELOW.
+
+Account usage limit hit ~22:45 Mon; resets Tue 2:20am ET. All three in-flight agents (Phase 2 templates, Phase 3 strategy pages, Phase 5 admin reskin) died at spawn or early; NO partial work lost (worktrees verified clean; everything done is pushed on origin/feat/prototype-match).
+
+**Contributing factor Adam should know:** a SECOND Claude Code session is running on this machine executing REMEDIATION_PLAN.md (it commits to main as you, flips the shared checkout to main, cherry-picked its migration fix 15dec3a onto this branch, and shares the memory dir). Two sessions + agents burned the 5-hour window fast. Consider closing one tomorrow.
+
+### State at pause (branch feat/prototype-match, all pushed)
+- ✅ Phase 0 baseline + 38-screen checklist (docs/VISUAL_QA_CHECKLIST.md)
+- ✅ Phase 0.5 /dev/prototype-qa harness (real templates + Caldwell fixtures, no auth needed)
+- ✅ Phase 1 structured content contract (schemas + structured publish + QA gate + legacy read-path upgrade), 30/30 tests, build+tsc clean
+- ⛔ Phase 2 (screens 23-28), Phase 3 (29-32), Phase 5 (1-20): NOT started in code; full agent briefs exist in the session transcript; gap lists are in this report + checklist
+- Pending after those: Phase 4 (photos/media), Phase 6 (MCP server+skills), Phase 7 (backfill via scripts/backfill-page-structured-data.ts from #204 + full QA), Phase 8 (backlog)
+
+### Resume instructions (for the 2:25am wakeup or any fresh session)
+1. Read memory file hcr-master-rebuild-plan + this section + MASTER_UX_REBUILD_PLAN.md + docs/VISUAL_QA_CHECKLIST.md.
+2. Work ONLY in isolated worktrees off origin/feat/prototype-match (the main checkout belongs to the other session). Orchestrator worktree exists at .claude/worktrees/orchestrator.
+3. Re-dispatch Phase 2 agent (gap list in "Phase 0.5" section above; targets proto_23-28), Phase 3 agent (proto_29-32), Phase 5 agent (proto_01-20) — one at a time to conserve the token window; verify visually via /dev/prototype-qa on a dev server run from the worktree.
+4. Then Phase 4, 6, 7 per MASTER_UX_REBUILD_PLAN.md. Phase 6 MCP server: write code, do NOT deploy (needs Adam's SUPABASE_ACCESS_TOKEN).
+5. Budget: prefer single sequential agents; no parallel fan-outs until Adam confirms plan/usage headroom.
