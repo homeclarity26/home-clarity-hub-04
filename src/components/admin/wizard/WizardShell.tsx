@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, RotateCcw, FilePlus } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
+import { Loader2, RotateCcw, FilePlus, Check } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import {
   useWizard,
   WIZARD_STEPS,
@@ -16,8 +16,10 @@ import { Step3Authoring } from "./Step3Authoring";
 import { Step4Strategy } from "./Step4Strategy";
 import { Step5Publish } from "./Step5Publish";
 
-// Five-step shell: progress indicator + step body. Internal step state is
-// driven by WizardContext.currentStep.
+// Five-step shell, prototype screens 1-20: full-height navy left rail
+// (BUILDING REPORT eyebrow, property name, numbered step list, auto-save
+// footer) + cream content area. Internal step state is driven by
+// WizardContext.currentStep.
 //
 // Resume flow:
 //   1. URL `?reportId=X` resumes a draft via the legacy report-id path
@@ -27,13 +29,31 @@ import { Step5Publish } from "./Step5Publish";
 //      in-progress draft and offer a resume prompt. They can either
 //      "Resume" (hydrates state) or "Start fresh" (marks the draft
 //      abandoned and continues with empty state).
+//
+// `qaMode` (dev-only, threaded from DevPrototypeQA) skips the resume
+// check and suppresses the steps' on-mount network calls so the visual
+// QA harness can render each step from in-memory fixture state.
 
 type ResumePromptState =
   | { phase: "checking" }
   | { phase: "found"; draft: WizardDraftSummary }
   | { phase: "dismissed" };
 
-export function WizardShell() {
+// Display labels for the rail per prototype; WIZARD_STEPS (context) keeps
+// its own shorter labels for drafts/resume copy.
+const RAIL_LABELS: Record<WizardStepKey, string> = {
+  intake: "Intake",
+  toc: "TOC Proposal",
+  authoring: "Page Authoring",
+  strategy: "Strategy & Roadmap",
+  publish: "Publish",
+};
+
+interface WizardShellProps {
+  qaMode?: boolean;
+}
+
+export function WizardShell({ qaMode = false }: WizardShellProps) {
   const {
     state,
     resumeFromReportId,
@@ -44,11 +64,12 @@ export function WizardShell() {
   const [searchParams] = useSearchParams();
   const resumeReportId = searchParams.get("reportId");
   const resumeDraftId = searchParams.get("draftId");
-  const [resumePrompt, setResumePrompt] = useState<ResumePromptState>({
-    phase: "checking",
-  });
+  const [resumePrompt, setResumePrompt] = useState<ResumePromptState>(
+    qaMode ? { phase: "dismissed" } : { phase: "checking" },
+  );
 
   useEffect(() => {
+    if (qaMode) return;
     if (resumeDraftId) {
       void resumeFromDraftId(resumeDraftId);
       setResumePrompt({ phase: "dismissed" });
@@ -90,7 +111,7 @@ export function WizardShell() {
 
   if (resumePrompt.phase === "checking") {
     return (
-      <Card className="p-6 flex items-center justify-center gap-2 text-xs font-sans text-muted-foreground">
+      <Card className="m-6 p-6 flex items-center justify-center gap-2 text-xs font-sans text-muted-foreground">
         <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
         Checking for an in-progress draft...
       </Card>
@@ -113,7 +134,7 @@ export function WizardShell() {
       when = "";
     }
     return (
-      <Card className="p-6 space-y-4">
+      <Card className="m-6 p-6 space-y-4">
         <div>
           <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
             Resume in-progress wizard
@@ -151,75 +172,139 @@ export function WizardShell() {
   }
 
   return (
-    <div className="space-y-6">
-      <ProgressIndicator currentStep={state.currentStep} />
-      <div>
-        {state.currentStep === "intake" && <Step1Intake />}
-        {state.currentStep === "toc" && <Step2TOC />}
-        {state.currentStep === "authoring" && <Step3Authoring />}
-        {state.currentStep === "strategy" && <Step4Strategy />}
-        {state.currentStep === "publish" && <Step5Publish />}
-      </div>
+    <div className="flex min-h-screen">
+      <StepRail currentStep={state.currentStep} />
+      <main className="flex-1 min-w-0 bg-hbc-cream">
+        {state.currentStep === "authoring" ? (
+          <Step3Authoring qaMode={qaMode} />
+        ) : (
+          <div className="px-6 md:px-10 py-8 max-w-[1160px]">
+            {state.currentStep === "intake" && <Step1Intake qaMode={qaMode} />}
+            {state.currentStep === "toc" && <Step2TOC />}
+            {state.currentStep === "strategy" && (
+              <Step4Strategy qaMode={qaMode} />
+            )}
+            {state.currentStep === "publish" && (
+              <Step5Publish qaMode={qaMode} />
+            )}
+          </div>
+        )}
+      </main>
     </div>
   );
 }
 
-interface ProgressIndicatorProps {
+// ─── Left rail ────────────────────────────────────────────────────────────
+
+interface StepRailProps {
   currentStep: WizardStepKey;
 }
 
-function ProgressIndicator({ currentStep }: ProgressIndicatorProps) {
+function StepRail({ currentStep }: StepRailProps) {
+  const { state, isSaving } = useWizard();
   const currentIndex = WIZARD_STEPS.findIndex((s) => s.key === currentStep);
-  const { isSaving, lastSavedAt } = useWizard();
-
-  let saveLabel: string | null = null;
-  if (isSaving) {
-    saveLabel = "Saving...";
-  } else if (lastSavedAt) {
-    try {
-      saveLabel = `Saved ${format(lastSavedAt, "h:mm a")}`;
-    } catch {
-      saveLabel = "Saved";
-    }
-  }
+  const propertyName =
+    state.client.propertyName.trim() ||
+    state.client.fullName.trim() ||
+    "New Client Report";
+  const address = state.client.address.trim();
 
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between gap-3">
-        <ol className="flex items-center gap-2 overflow-x-auto" aria-label="Wizard progress">
-          {WIZARD_STEPS.map((step, i) => {
-            const isActive = i === currentIndex;
-            const isComplete = i < currentIndex;
-            return (
-              <li key={step.key} className="flex items-center gap-2 shrink-0">
-                <div
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-sans transition-colors min-h-[36px] ${
-                    isActive
-                      ? "bg-primary text-primary-foreground font-medium"
-                      : isComplete
-                        ? "bg-primary/10 text-foreground"
-                        : "bg-muted text-muted-foreground"
-                  }`}
-                  aria-current={isActive ? "step" : undefined}
-                >
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border border-current/20">
-                    {isComplete ? "✓" : i + 1}
-                  </span>
-                  <span className="hidden sm:inline">{step.label}</span>
-                </div>
-                {i < WIZARD_STEPS.length - 1 && (
-                  <div className="w-8 h-px bg-border" aria-hidden />
-                )}
-              </li>
-            );
-          })}
-        </ol>
-        {saveLabel && (
-          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground shrink-0">
-            {saveLabel}
-          </span>
+    <aside className="w-[210px] shrink-0 bg-hbc-navy flex flex-col">
+      <div className="px-5 pt-7 pb-6 border-b border-white/10">
+        <div className="font-mono text-[9px] uppercase tracking-[0.22em] text-[hsl(var(--hbc-gold))]">
+          Building Report
+        </div>
+        <div className="font-display text-xl leading-tight text-white mt-2">
+          {propertyName}
+        </div>
+        {address && (
+          <div className="text-[11px] font-sans text-white/50 mt-1.5 leading-snug">
+            {address}
+          </div>
         )}
       </div>
-    </Card>
+      <ol className="flex-1 py-3" aria-label="Wizard progress">
+        {WIZARD_STEPS.map((step, i) => {
+          const isActive = i === currentIndex;
+          const isComplete = i < currentIndex;
+          return (
+            <li key={step.key}>
+              <div
+                className={`flex items-center gap-3 px-4 py-3 border-l-2 ${
+                  isActive
+                    ? "border-hbc-gold bg-white/5"
+                    : "border-transparent"
+                }`}
+                aria-current={isActive ? "step" : undefined}
+              >
+                <span
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-mono ${
+                    isActive
+                      ? "border-hbc-gold text-[hsl(var(--hbc-gold))]"
+                      : isComplete
+                        ? "border-white/40 text-white/80"
+                        : "border-white/25 text-white/40"
+                  }`}
+                  aria-hidden
+                >
+                  {isComplete ? <Check className="h-3.5 w-3.5" /> : i + 1}
+                </span>
+                <span
+                  className={`text-[13px] font-sans ${
+                    isActive
+                      ? "text-[hsl(var(--hbc-gold))] font-medium"
+                      : isComplete
+                        ? "text-white/80"
+                        : "text-white/50"
+                  }`}
+                >
+                  {RAIL_LABELS[step.key]}
+                </span>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      <div className="px-5 py-5 border-t border-white/10 font-mono text-[9px] uppercase tracking-wider text-white/40">
+        {isSaving ? "Saving..." : "Auto-saving every 30 seconds"}
+      </div>
+    </aside>
+  );
+}
+
+// ─── Shared step header ──────────────────────────────────────────────────
+
+interface WizardStepHeaderProps {
+  step: number;
+  title: string;
+  description?: string;
+  actions?: ReactNode;
+}
+
+export function WizardStepHeader({
+  step,
+  title,
+  description,
+  actions,
+}: WizardStepHeaderProps) {
+  return (
+    <header className="mb-6">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-hbc-gold-readable">
+            Step {step} of 5
+          </div>
+          <h2 className="font-display text-3xl text-hbc-navy mt-1">{title}</h2>
+        </div>
+        {actions && <div className="flex items-center gap-2">{actions}</div>}
+      </div>
+      <div className="h-px bg-[hsl(var(--hbc-border))] mt-5" aria-hidden />
+      {description && (
+        <p className="text-sm font-sans text-hbc-grey mt-4 max-w-2xl">
+          {description}
+        </p>
+      )}
+    </header>
   );
 }

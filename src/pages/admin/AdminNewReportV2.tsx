@@ -14,11 +14,11 @@ const AdminNewReportV2 = () => {
           { label: "New Report" },
         ]}
       />
-      <div className="p-6 max-w-6xl mx-auto">
-        <WizardProvider>
-          <WizardShell />
-        </WizardProvider>
-      </div>
+      {/* Full-bleed: WizardShell owns its own navy rail + cream content
+          layout per prototype screens 1-20. */}
+      <WizardProvider>
+        <WizardShell />
+      </WizardProvider>
     </div>
   );
 };
