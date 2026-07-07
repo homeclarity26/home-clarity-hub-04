@@ -48,10 +48,13 @@ const SEVERITY_META: Record<Severity, { label: string; tone: string; Icon: typeo
 
 interface AIQualityGateProps {
   onAllHighsAcknowledged: (ok: boolean) => void;
+  /** Dev-only (QA harness): skip the consistency-check network call. */
+  qaMode?: boolean;
 }
 
 export function AIQualityGate({
   onAllHighsAcknowledged,
+  qaMode = false,
 }: AIQualityGateProps) {
   const { state, acknowledgeQuestion } = useWizard();
   const [loading, setLoading] = useState(false);
@@ -61,6 +64,7 @@ export function AIQualityGate({
 
   // Run consistency-check on mount.
   useEffect(() => {
+    if (qaMode) return;
     let cancelled = false;
     const run = async () => {
       setLoading(true);

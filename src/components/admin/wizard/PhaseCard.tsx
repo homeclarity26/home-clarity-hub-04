@@ -1,8 +1,10 @@
-import { Card } from "@/components/ui/card";
 import type { ReactNode } from "react";
 
-// Defense / Offense / Expansion phase card. Universal expanding container
-// pattern — accepts any number of children rows without clipping.
+// Defense / Offense / Expansion phase card, prototype screen 16: white
+// card with a colored top border (rust / gold / navy), colored YEAR
+// eyebrow, Cormorant title, bullet children. Universal expanding
+// container pattern — accepts any number of children rows without
+// clipping.
 
 type PhaseTone = "defense" | "offense" | "expansion";
 
@@ -11,22 +13,27 @@ interface PhaseCardProps {
   title: string;
   description: string;
   count?: number;
+  /** Colored mono eyebrow, e.g. "Year 1". Defaults per tone. */
+  eyebrow?: string;
   children?: ReactNode;
 }
 
-const TONE_CLASSES: Record<PhaseTone, { eyebrow: string; border: string }> = {
+const TONE_META: Record<
+  PhaseTone,
+  { accent: string; defaultEyebrow: string }
+> = {
   defense: {
-    eyebrow: "text-destructive",
-    border: "border-destructive/40",
+    accent: "hsl(var(--hbc-rust))",
+    defaultEyebrow: "Year 1",
   },
   offense: {
-    // Use the readable gold token so the eyebrow passes contrast on cream.
-    eyebrow: "text-[hsl(var(--hbc-gold-readable))]",
-    border: "border-[hsl(var(--hbc-gold-readable))]/40",
+    // Use the readable gold token so the eyebrow passes contrast on white.
+    accent: "hsl(var(--hbc-gold-readable))",
+    defaultEyebrow: "Year 1-3",
   },
   expansion: {
-    eyebrow: "text-primary",
-    border: "border-primary/40",
+    accent: "hsl(var(--hbc-navy))",
+    defaultEyebrow: "Year 2-5",
   },
 };
 
@@ -35,18 +42,24 @@ export function PhaseCard({
   title,
   description,
   count,
+  eyebrow,
   children,
 }: PhaseCardProps) {
-  const tones = TONE_CLASSES[tone];
+  const meta = TONE_META[tone];
   return (
-    <Card className={`p-5 space-y-3 border ${tones.border}`}>
+    <div
+      className="rounded-lg border border-hbc-border bg-white p-5 space-y-3"
+      style={{ borderTop: `3px solid ${meta.accent}` }}
+    >
       <div className="space-y-1">
         <div
-          className={`text-[10px] font-mono uppercase tracking-wider ${tones.eyebrow}`}
+          className="font-mono text-[10px] uppercase tracking-[0.16em]"
+          style={{ color: meta.accent }}
         >
-          {title}
+          {eyebrow ?? meta.defaultEyebrow}
         </div>
-        <p className="text-xs font-sans text-muted-foreground">{description}</p>
+        <div className="font-display text-2xl text-hbc-navy">{title}</div>
+        <p className="text-xs font-sans text-hbc-grey">{description}</p>
         {typeof count === "number" && (
           <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
             {count} project{count === 1 ? "" : "s"}
@@ -54,6 +67,6 @@ export function PhaseCard({
         )}
       </div>
       {children && <div className="space-y-1.5">{children}</div>}
-    </Card>
+    </div>
   );
 }

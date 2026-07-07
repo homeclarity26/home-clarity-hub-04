@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Card } from "@/components/ui/card";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,17 +14,21 @@ import {
   type MaintenanceTask,
   type RecurringServicePreview,
 } from "@/contexts/WizardContext";
-import { WizardNavigation } from "./WizardNavigation";
 import { PhaseCard } from "./PhaseCard";
+import { WizardStepHeader } from "./WizardShell";
 
-// Step 4 — Strategy. On mount the wizard auto-fires three Sonnet 4.6
-// generators in parallel (capital plan, recurring services register,
-// maintenance calendar) so the consultant lands on a fully drafted
-// strategy view and only has to refine. A top progress banner streams
-// the running count while sections fill in. Each section is editable
-// inline so adam can nudge AI output toward what he actually saw on the
-// walkthrough. Phase classification (defense / offense / expansion) is
-// hydrated from state.pageSeeds + intake findings via classifyPhases.
+// Step 4 — Strategy, prototype screens 16-19. On mount the wizard
+// auto-fires three Sonnet 4.6 generators in parallel (capital plan,
+// recurring services register, maintenance calendar) so the consultant
+// lands on a fully drafted strategy view and only has to refine. A top
+// progress banner streams the running count while sections fill in.
+// Layout: Sequencing phase cards (rust/gold/navy top borders) under a
+// "DEFENSE → OFFENSE → EXPANSION" eyebrow, then the 10-Year Capital Plan
+// as a year-grid Gantt (gold bars, same pattern as CapitalPlanBlock's
+// flat viewer) with the editable rows beneath, then the recurring
+// services register and maintenance calendar. Phase classification
+// (defense / offense / expansion) is hydrated from state.pageSeeds +
+// intake findings via classifyPhases.
 
 const SEASONS: Array<{ key: keyof MaintenanceCalendar; label: string }> = [
   { key: "winter", label: "Winter" },
@@ -33,6 +36,8 @@ const SEASONS: Array<{ key: keyof MaintenanceCalendar; label: string }> = [
   { key: "summer", label: "Summer" },
   { key: "fall", label: "Fall" },
 ];
+
+const HORIZON_YEARS = 10;
 
 interface PhasedProject {
   key: string;
@@ -99,7 +104,12 @@ interface SectionStatus {
 
 const TOTAL_SECTIONS = 3;
 
-export function Step4Strategy() {
+interface Step4StrategyProps {
+  /** Dev-only (QA harness): hide the property-not-saved banner. */
+  qaMode?: boolean;
+}
+
+export function Step4Strategy({ qaMode = false }: Step4StrategyProps) {
   const {
     state,
     goToStep,
@@ -319,30 +329,45 @@ export function Step4Strategy() {
     status.calendar === "running";
 
   return (
-    <div className="space-y-5">
-      <Card className="p-6">
-        <h3 className="text-base font-sans font-semibold text-foreground">
-          Strategy and roadmap
-        </h3>
-        <p className="text-xs font-sans text-muted-foreground mt-1">
-          Sequence projects across three phases, set the capital plan, and
-          confirm the recurring services and maintenance calendar.
-        </p>
-      </Card>
+    <div className="space-y-8">
+      <WizardStepHeader
+        step={4}
+        title="Strategy & Roadmap"
+        description="The 10-year capital plan, the maintenance calendar, the recurring services register, and the strategic narrative that ties them together."
+        actions={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => goToStep("authoring")}
+              className="min-h-[44px] border-hbc-border bg-white text-hbc-navy"
+            >
+              ← Back
+            </Button>
+            <Button
+              type="button"
+              onClick={() => goToStep("publish")}
+              className="min-h-[44px] bg-hbc-navy text-white hover:bg-[hsl(var(--hbc-navy)/0.92)]"
+            >
+              Continue to Publish →
+            </Button>
+          </>
+        }
+      />
 
       {(anyRunning || completedSections < TOTAL_SECTIONS) && state.propertyId && (
-        <Card className="p-4 border-primary/30 bg-primary/5">
+        <div className="rounded-lg border border-hbc-gold/50 bg-white p-4">
           <div className="flex items-center gap-3">
             {anyRunning ? (
               <Loader2
-                className="w-4 h-4 animate-spin text-primary"
+                className="w-4 h-4 animate-spin text-hbc-gold-readable"
                 aria-hidden
               />
             ) : (
-              <Sparkles className="w-4 h-4 text-primary" aria-hidden />
+              <Sparkles className="w-4 h-4 text-hbc-gold-readable" aria-hidden />
             )}
             <div className="flex-1">
-              <div className="text-[10px] font-mono uppercase tracking-wider text-primary">
+              <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-hbc-gold-readable">
                 AI is drafting your strategy
               </div>
               <p className="text-xs font-sans text-foreground mt-0.5">
@@ -351,11 +376,11 @@ export function Step4Strategy() {
               </p>
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
-      {!state.propertyId && (
-        <Card className="p-4 border-amber-200 bg-amber-50">
+      {!state.propertyId && !qaMode && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
           <div className="flex items-start gap-2 text-xs font-sans text-amber-800">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden />
             <span>
@@ -364,53 +389,69 @@ export function Step4Strategy() {
               as the property row exists.
             </span>
           </div>
-        </Card>
+        </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <PhaseCard
-          tone="defense"
-          title="Defense"
-          description="Stabilize what's at risk. Roof, water intrusion, life-safety."
-          count={phases.defense.length}
-        >
-          {phases.defense.length > 0 && (
-            <ul className="text-[11px] font-sans text-foreground space-y-0.5">
-              {phases.defense.map((p) => (
-                <li key={p.key}>• {p.title}</li>
-              ))}
-            </ul>
-          )}
-        </PhaseCard>
-        <PhaseCard
-          tone="offense"
-          title="Offense"
-          description="High-leverage upgrades that move the home forward."
-          count={phases.offense.length}
-        >
-          {phases.offense.length > 0 && (
-            <ul className="text-[11px] font-sans text-foreground space-y-0.5">
-              {phases.offense.map((p) => (
-                <li key={p.key}>• {p.title}</li>
-              ))}
-            </ul>
-          )}
-        </PhaseCard>
-        <PhaseCard
-          tone="expansion"
-          title="Expansion"
-          description="Vision projects: kitchens, additions, design-fee work."
-          count={phases.expansion.length}
-        >
-          {phases.expansion.length > 0 && (
-            <ul className="text-[11px] font-sans text-foreground space-y-0.5">
-              {phases.expansion.map((p) => (
-                <li key={p.key}>• {p.title}</li>
-              ))}
-            </ul>
-          )}
-        </PhaseCard>
-      </div>
+      {/* Sequencing */}
+      <section className="space-y-4">
+        <SectionHeading
+          eyebrow="Defense → Offense → Expansion"
+          title="Sequencing"
+        />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <PhaseCard
+            tone="defense"
+            title="Defense"
+            description="Stabilize what's at risk. Roof, water intrusion, life-safety."
+            count={phases.defense.length}
+          >
+            {phases.defense.length > 0 && (
+              <ul className="text-[13px] font-sans text-foreground space-y-1.5">
+                {phases.defense.map((p) => (
+                  <li key={p.key} className="flex gap-2">
+                    <span aria-hidden className="text-hbc-gold-readable">·</span>
+                    <span>{p.title}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </PhaseCard>
+          <PhaseCard
+            tone="offense"
+            title="Offense"
+            description="High-leverage upgrades that move the home forward."
+            count={phases.offense.length}
+          >
+            {phases.offense.length > 0 && (
+              <ul className="text-[13px] font-sans text-foreground space-y-1.5">
+                {phases.offense.map((p) => (
+                  <li key={p.key} className="flex gap-2">
+                    <span aria-hidden className="text-hbc-gold-readable">·</span>
+                    <span>{p.title}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </PhaseCard>
+          <PhaseCard
+            tone="expansion"
+            title="Expansion"
+            description="Vision projects: kitchens, additions, design-fee work."
+            count={phases.expansion.length}
+          >
+            {phases.expansion.length > 0 && (
+              <ul className="text-[13px] font-sans text-foreground space-y-1.5">
+                {phases.expansion.map((p) => (
+                  <li key={p.key} className="flex gap-2">
+                    <span aria-hidden className="text-hbc-gold-readable">·</span>
+                    <span>{p.title}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </PhaseCard>
+        </div>
+      </section>
 
       <CapitalPlanSection
         plan={state.capitalPlan}
@@ -435,14 +476,36 @@ export function Step4Strategy() {
         onRebuild={() => void runMaintenanceCalendar(true)}
         onChange={setMaintenanceCalendar}
       />
-
-      <WizardNavigation
-        onBack={() => goToStep("authoring")}
-        onNext={() => goToStep("publish")}
-      />
     </div>
   );
 }
+
+// ─── Section heading (gold mono eyebrow + Cormorant title + hairline) ────
+
+interface SectionHeadingProps {
+  eyebrow: string;
+  title: string;
+  action?: ReactNode;
+}
+
+function SectionHeading({ eyebrow, title, action }: SectionHeadingProps) {
+  return (
+    <div>
+      <div className="flex items-end justify-between gap-3 flex-wrap">
+        <div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-hbc-gold-readable">
+            {eyebrow}
+          </div>
+          <h3 className="font-display text-2xl text-hbc-navy mt-1">{title}</h3>
+        </div>
+        {action}
+      </div>
+      <div className="h-px bg-[hsl(var(--hbc-border))] mt-3" aria-hidden />
+    </div>
+  );
+}
+
+// ─── Capital plan ─────────────────────────────────────────────────────────
 
 interface CapitalPlanSectionProps {
   plan: CapitalPlan | null;
@@ -475,36 +538,39 @@ function CapitalPlanSection({
     onChange({ years: nextYears, total_low, total_high });
   };
 
+  // Year-grid Gantt (same visual pattern as CapitalPlanBlock's flat
+  // viewer): calendar year headers across the top, one row per project,
+  // gold bar in the project's year. Wizard rows are single-year stops.
+  const startYear = new Date().getFullYear();
+  const years = Array.from({ length: HORIZON_YEARS }, (_, i) => startYear + i);
+  const gridTemplate = `44px repeat(${HORIZON_YEARS}, 1fr)`;
+
   return (
-    <Card className="p-5 space-y-3">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h4 className="text-sm font-sans font-semibold text-foreground">
-            Capital plan
-          </h4>
-          <p className="text-xs font-sans text-muted-foreground">
-            10-year roadmap. Edit any row inline; total recomputes live.
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onRebuild}
-          disabled={status === "running"}
-          className="h-9 text-[11px] gap-1.5"
-        >
-          {status === "running" ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />
-          ) : (
-            <RotateCcw className="w-3.5 h-3.5" aria-hidden />
-          )}
-          {plan ? "Rebuild" : "Build"}
-        </Button>
-      </div>
+    <section className="space-y-4">
+      <SectionHeading
+        eyebrow="Time-Based Stops, Never Summed"
+        title="10-Year Capital Plan"
+        action={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onRebuild}
+            disabled={status === "running"}
+            className="h-9 text-[11px] gap-1.5 border-hbc-border bg-white"
+          >
+            {status === "running" ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />
+            ) : (
+              <RotateCcw className="w-3.5 h-3.5" aria-hidden />
+            )}
+            {plan ? "Rebuild" : "Build"}
+          </Button>
+        }
+      />
 
       {status === "running" && !plan && (
-        <div className="flex items-center gap-2 text-xs font-sans text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs font-sans text-hbc-grey">
           <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
           Drafting 10-year capital plan...
         </div>
@@ -518,94 +584,148 @@ function CapitalPlanSection({
       )}
 
       {plan && plan.years.length > 0 && (
-        <div className="space-y-2">
-          <div className="grid grid-cols-12 gap-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground px-1">
-            <div className="col-span-1">Yr</div>
-            <div className="col-span-2">Phase</div>
-            <div className="col-span-4">Project</div>
-            <div className="col-span-2">Low</div>
-            <div className="col-span-2">High</div>
-            <div className="col-span-1" />
-          </div>
-          {plan.years.map((row, idx) => (
-            <div
-              key={`${row.year}-${idx}`}
-              className="grid grid-cols-12 gap-2 items-start"
-            >
-              <Input
-                type="number"
-                value={row.year}
-                onChange={(e) => updateRow(idx, { year: Number(e.target.value) || 1 })}
-                className="col-span-1 text-xs h-9"
-              />
-              <Input
-                value={row.phase}
-                onChange={(e) =>
-                  updateRow(idx, {
-                    phase: e.target.value as CapitalPlanYear["phase"],
-                  })
-                }
-                className="col-span-2 text-xs h-9"
-              />
-              <div className="col-span-4 space-y-1">
-                <Input
-                  value={row.project}
-                  onChange={(e) => updateRow(idx, { project: e.target.value })}
-                  className="text-xs h-9"
-                />
-                <Textarea
-                  value={row.rationale}
-                  onChange={(e) => updateRow(idx, { rationale: e.target.value })}
-                  rows={2}
-                  className="text-[11px]"
-                />
-              </div>
-              <Input
-                type="number"
-                value={row.ballpark_low}
-                onChange={(e) =>
-                  updateRow(idx, { ballpark_low: Number(e.target.value) || 0 })
-                }
-                className="col-span-2 text-xs h-9"
-              />
-              <Input
-                type="number"
-                value={row.ballpark_high}
-                onChange={(e) =>
-                  updateRow(idx, { ballpark_high: Number(e.target.value) || 0 })
-                }
-                className="col-span-2 text-xs h-9"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="col-span-1 h-9 text-[10px]"
-                onClick={() => removeRow(idx)}
+        <>
+          {/* Gantt view */}
+          <div className="rounded-lg border border-hbc-border bg-white p-5 overflow-x-auto">
+            <div style={{ minWidth: 760 }}>
+              <div
+                className="grid gap-1.5 mb-2"
+                style={{ gridTemplateColumns: gridTemplate }}
               >
-                Remove
-              </Button>
-            </div>
-          ))}
-          <div className="flex items-center justify-between pt-2 border-t border-border">
-            <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-              Total range
-            </div>
-            <div className="text-sm font-sans font-semibold text-foreground">
-              ${plan.total_low.toLocaleString()} to ${plan.total_high.toLocaleString()}
+                <div />
+                {years.map((y) => (
+                  <div
+                    key={y}
+                    className="font-mono text-[10px] text-center text-muted-foreground py-1"
+                  >
+                    {y}
+                  </div>
+                ))}
+              </div>
+              {plan.years.map((row, i) => (
+                <div
+                  key={`${row.year}-${i}`}
+                  className="grid gap-1.5 mb-1.5 items-center"
+                  style={{ gridTemplateColumns: gridTemplate }}
+                >
+                  <div className="font-mono text-[10px] text-muted-foreground pr-2">
+                    P{i + 1}
+                  </div>
+                  {years.map((y, yi) => {
+                    const inSpan = yi + 1 === row.year;
+                    return (
+                      <div
+                        key={y}
+                        className={`h-8 rounded relative ${inSpan ? "bg-hbc-gold" : "bg-hbc-surface"}`}
+                      >
+                        {inSpan && (
+                          <div className="absolute inset-0 flex items-center pl-2 text-[10px] font-medium text-white whitespace-nowrap overflow-hidden">
+                            {row.project}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+
+          {/* Editable rows */}
+          <div className="rounded-lg border border-hbc-border bg-white p-5 space-y-2">
+            <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-hbc-gold-readable">
+              Edit plan rows
+            </div>
+            <div className="grid grid-cols-12 gap-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground px-1">
+              <div className="col-span-1">Yr</div>
+              <div className="col-span-2">Phase</div>
+              <div className="col-span-4">Project</div>
+              <div className="col-span-2">Low</div>
+              <div className="col-span-2">High</div>
+              <div className="col-span-1" />
+            </div>
+            {plan.years.map((row, idx) => (
+              <div
+                key={`${row.year}-${idx}`}
+                className="grid grid-cols-12 gap-2 items-start"
+              >
+                <Input
+                  type="number"
+                  value={row.year}
+                  onChange={(e) => updateRow(idx, { year: Number(e.target.value) || 1 })}
+                  className="col-span-1 text-xs h-9"
+                />
+                <Input
+                  value={row.phase}
+                  onChange={(e) =>
+                    updateRow(idx, {
+                      phase: e.target.value as CapitalPlanYear["phase"],
+                    })
+                  }
+                  className="col-span-2 text-xs h-9"
+                />
+                <div className="col-span-4 space-y-1">
+                  <Input
+                    value={row.project}
+                    onChange={(e) => updateRow(idx, { project: e.target.value })}
+                    className="text-xs h-9"
+                  />
+                  <Textarea
+                    value={row.rationale}
+                    onChange={(e) => updateRow(idx, { rationale: e.target.value })}
+                    rows={2}
+                    className="text-[11px]"
+                  />
+                </div>
+                <Input
+                  type="number"
+                  value={row.ballpark_low}
+                  onChange={(e) =>
+                    updateRow(idx, { ballpark_low: Number(e.target.value) || 0 })
+                  }
+                  className="col-span-2 text-xs h-9"
+                />
+                <Input
+                  type="number"
+                  value={row.ballpark_high}
+                  onChange={(e) =>
+                    updateRow(idx, { ballpark_high: Number(e.target.value) || 0 })
+                  }
+                  className="col-span-2 text-xs h-9"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="col-span-1 h-9 text-[10px]"
+                  onClick={() => removeRow(idx)}
+                >
+                  Remove
+                </Button>
+              </div>
+            ))}
+            <div className="flex items-center justify-between pt-2 border-t border-hbc-border">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                Total range
+              </div>
+              <div className="text-sm font-sans font-semibold text-foreground">
+                ${plan.total_low.toLocaleString()} to ${plan.total_high.toLocaleString()}
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {plan && plan.years.length === 0 && status !== "running" && (
-        <div className="rounded-md border border-dashed border-border bg-muted/30 px-4 py-6 text-xs font-sans text-muted-foreground">
+        <div className="rounded-md border border-dashed border-hbc-border bg-white px-4 py-6 text-xs font-sans text-hbc-grey">
           Plan is empty. Click Rebuild to draft a fresh 10-year roadmap.
         </div>
       )}
-    </Card>
+    </section>
   );
 }
+
+// ─── Recurring services ──────────────────────────────────────────────────
 
 interface RecurringServicesSectionProps {
   proposals: RecurringServicePreview[];
@@ -627,36 +747,35 @@ function RecurringServicesSection({
   };
 
   return (
-    <Card className="p-5 space-y-3">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h4 className="text-sm font-sans font-semibold text-foreground">
-            Recurring services register
-          </h4>
-          <p className="text-xs font-sans text-muted-foreground">
-            Categories, frequencies, and HBC-managed toggles. Honest framing:
-            the value is saved time and reduced stress, not lower cost.
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onRebuild}
-          disabled={status === "running"}
-          className="h-9 text-[11px] gap-1.5"
-        >
-          {status === "running" ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />
-          ) : (
-            <RotateCcw className="w-3.5 h-3.5" aria-hidden />
-          )}
-          {proposals.length > 0 ? "Rebuild" : "Build"}
-        </Button>
-      </div>
+    <section className="space-y-4">
+      <SectionHeading
+        eyebrow="Consolidate the Chaos"
+        title="Recurring Services Register"
+        action={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onRebuild}
+            disabled={status === "running"}
+            className="h-9 text-[11px] gap-1.5 border-hbc-border bg-white"
+          >
+            {status === "running" ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />
+            ) : (
+              <RotateCcw className="w-3.5 h-3.5" aria-hidden />
+            )}
+            {proposals.length > 0 ? "Rebuild" : "Build"}
+          </Button>
+        }
+      />
+      <p className="text-xs font-sans text-hbc-grey">
+        Categories, frequencies, and HBC-managed toggles. Honest framing:
+        the value is saved time and reduced stress, not lower cost.
+      </p>
 
       {status === "running" && proposals.length === 0 && (
-        <div className="flex items-center gap-2 text-xs font-sans text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs font-sans text-hbc-grey">
           <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
           Pulling recurring services from intake...
         </div>
@@ -670,7 +789,7 @@ function RecurringServicesSection({
       )}
 
       {proposals.length > 0 && (
-        <div className="space-y-2">
+        <div className="rounded-lg border border-hbc-border bg-white p-5 space-y-2">
           <div className="grid grid-cols-12 gap-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground px-1">
             <div className="col-span-3">Service</div>
             <div className="col-span-2">Category</div>
@@ -732,15 +851,17 @@ function RecurringServicesSection({
       )}
 
       {status === "ready" && proposals.length === 0 && (
-        <div className="rounded-md border border-dashed border-border bg-muted/30 px-4 py-6 text-xs font-sans text-muted-foreground">
+        <div className="rounded-md border border-dashed border-hbc-border bg-white px-4 py-6 text-xs font-sans text-hbc-grey">
           No recurring services found in the intake. Add them manually in the
           register block once the report is published, or drop a transcript
           into Step 1 and rebuild.
         </div>
       )}
-    </Card>
+    </section>
   );
 }
+
+// ─── Maintenance calendar ─────────────────────────────────────────────────
 
 interface MaintenanceCalendarSectionProps {
   calendar: MaintenanceCalendar | null;
@@ -770,36 +891,35 @@ function MaintenanceCalendarSection({
   };
 
   return (
-    <Card className="p-5 space-y-3">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h4 className="text-sm font-sans font-semibold text-foreground">
-            Maintenance calendar
-          </h4>
-          <p className="text-xs font-sans text-muted-foreground">
-            Four-season grid. Edit any task inline; HBC Concierge can pick
-            up the calendar at publish.
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onRebuild}
-          disabled={status === "running"}
-          className="h-9 text-[11px] gap-1.5"
-        >
-          {status === "running" ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />
-          ) : (
-            <RotateCcw className="w-3.5 h-3.5" aria-hidden />
-          )}
-          {calendar ? "Rebuild" : "Build"}
-        </Button>
-      </div>
+    <section className="space-y-4">
+      <SectionHeading
+        eyebrow="The Annual Cadence"
+        title="Maintenance Calendar"
+        action={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onRebuild}
+            disabled={status === "running"}
+            className="h-9 text-[11px] gap-1.5 border-hbc-border bg-white"
+          >
+            {status === "running" ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />
+            ) : (
+              <RotateCcw className="w-3.5 h-3.5" aria-hidden />
+            )}
+            {calendar ? "Rebuild" : "Build"}
+          </Button>
+        }
+      />
+      <p className="text-xs font-sans text-hbc-grey">
+        Four-season grid. Edit any task inline; HBC Concierge can pick
+        up the calendar at publish.
+      </p>
 
       {status === "running" && !calendar && (
-        <div className="flex items-center gap-2 text-xs font-sans text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs font-sans text-hbc-grey">
           <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
           Drafting four-season calendar...
         </div>
@@ -817,12 +937,12 @@ function MaintenanceCalendarSection({
           {SEASONS.map(({ key, label }) => {
             const tasks = calendar[key];
             return (
-              <div key={key} className="rounded-md border border-border p-3">
-                <div className="text-[10px] font-mono uppercase tracking-wider text-primary">
+              <div key={key} className="rounded-lg border border-hbc-border bg-white p-4">
+                <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-hbc-gold-readable">
                   {label}
                 </div>
                 {tasks.length === 0 ? (
-                  <div className="mt-2 text-[11px] font-sans text-muted-foreground">
+                  <div className="mt-2 text-[11px] font-sans text-hbc-grey">
                     No tasks yet.
                   </div>
                 ) : (
@@ -863,6 +983,6 @@ function MaintenanceCalendarSection({
           })}
         </div>
       )}
-    </Card>
+    </section>
   );
 }

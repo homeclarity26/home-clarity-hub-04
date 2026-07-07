@@ -14,12 +14,14 @@ import {
 import type { Database } from "@/integrations/supabase/types";
 
 type ReportPageInsert = Database["public"]["Tables"]["report_pages"]["Insert"];
-import { WizardNavigation } from "./WizardNavigation";
 import { AIQualityGate } from "./AIQualityGate";
 import { IntakeUploadCard } from "./IntakeUploadCard";
+import { WizardStepHeader } from "./WizardShell";
 
-// Step 5 — Publish. Renders summary, the AI quality gate, and the publish
-// CTA.
+// Step 5 — Publish, prototype screen 20. Renders three stat cards
+// (pages authored / vision projects / systems documented), the AI quality
+// gate, the "Final preview before publish" band with the rust publish CTA
+// named after the client, and the "What happens when you publish" inset.
 //
 // W2.5 publish sequence:
 //   1. Materialize each authored page's content into a ReportBlock[] and
@@ -36,7 +38,12 @@ import { IntakeUploadCard } from "./IntakeUploadCard";
 // Pre-W2.5 the publish handler skipped step 1 entirely, which is why
 // brand-new wizard reports landed in the portal as empty.
 
-export function Step5Publish() {
+interface Step5PublishProps {
+  /** Dev-only (QA harness): suppress the quality gate's on-mount AI call. */
+  qaMode?: boolean;
+}
+
+export function Step5Publish({ qaMode = false }: Step5PublishProps) {
   const navigate = useNavigate();
   const { state, goToStep, markPublished, setIntakeUploads } = useWizard();
   const [highsOk, setHighsOk] = useState(false);
@@ -65,8 +72,34 @@ export function Step5Publish() {
     const featured = allPages.filter(
       (p) => p.is_featured || state.authoring[p.page_key]?.is_featured,
     );
-    return { totalPages: allPages.length, counts, featured, missingPhotos };
+    // Prototype-screen-20 stat cards: vision projects (any selected page
+    // whose key reads as a vision/project page) + systems documented
+    // (selected pages in the systems_appliances section).
+    const visionProjects = allPages.filter(
+      (p) =>
+        p.page_key.toLowerCase().includes("vision") ||
+        p.page_key.toLowerCase().includes("project"),
+    ).length;
+    const systemsDocumented = state.tocSections
+      .filter((s) => s.key === "systems_appliances")
+      .flatMap((s) => s.pages.filter((p) => p.selected)).length;
+    return {
+      totalPages: allPages.length,
+      counts,
+      featured,
+      missingPhotos,
+      visionProjects,
+      systemsDocumented,
+    };
   }, [state.tocSections, state.authoring]);
+
+  // "Publish to the Caldwells"-style CTA using the real client's family
+  // name (last word of the full name). Falls back to a plain label.
+  const familyName = state.client.fullName.trim().split(/\s+/).pop() ?? "";
+  const publishLabel = familyName
+    ? `Publish to the ${familyName}${familyName.toLowerCase().endsWith("s") ? "" : "s"}`
+    : "Publish report";
+  const clientLabel = familyName ? `The ${familyName}s` : "Your client";
 
   const canPublish =
     !publishing &&
@@ -512,38 +545,49 @@ export function Step5Publish() {
   };
 
   return (
-    <div className="space-y-5">
-      <Card className="p-6 space-y-3">
-        <div>
-          <h3 className="text-base font-sans font-semibold text-foreground">
-            Final review and publish
-          </h3>
-          <p className="text-xs font-sans text-muted-foreground mt-1">
-            Confirm the AI quality gate clears, then publish. The client gets
-            a magic-link email after publish.
-          </p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
-          <SummaryStat label="Pages" value={String(summary.totalPages)} />
-          <SummaryStat label="Complete" value={String(summary.counts.complete ?? 0)} />
-          <SummaryStat label="Reviewed" value={String(summary.counts.reviewed ?? 0)} />
-          <SummaryStat label="Draft" value={String(summary.counts.draft ?? 0)} />
-        </div>
-        {summary.featured.length > 0 && (
-          <div>
-            <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-              Featured
-            </div>
-            <ul className="text-xs font-sans text-foreground mt-1 space-y-0.5">
-              {summary.featured.map((p) => (
-                <li key={p.page_key}>• {p.title}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </Card>
+    <div className="space-y-6">
+      <WizardStepHeader
+        step={5}
+        title="Review & Publish"
+        description="Last step. Preview the full client experience, confirm the AI quality gate clears, then publish. The client gets a magic-link email after publish."
+      />
 
-      <AIQualityGate onAllHighsAcknowledged={setHighsOk} />
+      {/* Stat cards, prototype screen 20 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <SummaryStat
+          label="Pages Authored"
+          value={String(summary.totalPages)}
+          caption={`${(summary.counts.reviewed ?? 0) + (summary.counts.complete ?? 0)} of ${summary.totalPages} reviewed`}
+        />
+        <SummaryStat
+          label="Vision Projects"
+          value={String(summary.visionProjects)}
+          caption="from the strategy pages"
+        />
+        <SummaryStat
+          label="Systems Documented"
+          value={String(summary.systemsDocumented)}
+          caption="systems & appliances pages"
+        />
+      </div>
+
+      {summary.featured.length > 0 && (
+        <div className="rounded-lg border border-hbc-border bg-white p-5">
+          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-hbc-gold-readable">
+            Featured
+          </div>
+          <ul className="text-xs font-sans text-foreground mt-2 space-y-1">
+            {summary.featured.map((p) => (
+              <li key={p.page_key} className="flex gap-2">
+                <span aria-hidden className="text-hbc-gold-readable">·</span>
+                <span>{p.title}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <AIQualityGate onAllHighsAcknowledged={setHighsOk} qaMode={qaMode} />
 
       {!publishedAt && (
         <IntakeUploadCard
@@ -602,31 +646,74 @@ export function Step5Publish() {
           </div>
         </Card>
       ) : (
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            onClick={handlePublish}
-            disabled={!canPublish}
-            className="min-h-[44px]"
-          >
-            {publishing ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden />
-            ) : null}
-            Publish report
-          </Button>
+        <div className="rounded-lg border border-hbc-border bg-white p-6 space-y-4">
+          <h3 className="font-display text-2xl text-hbc-navy">
+            Final preview before publish
+          </h3>
+          <p className="text-sm font-sans text-hbc-grey">
+            Open the client portal preview to walk through exactly what{" "}
+            {clientLabel.toLowerCase() === "your client"
+              ? "your client"
+              : clientLabel.replace(/^The/, "the")}{" "}
+            will see. When you're satisfied, come back here and publish.
+          </p>
+          <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => goToStep("strategy")}
+              className="min-h-[44px] border-hbc-border bg-white text-hbc-navy"
+            >
+              ← Back to Strategy
+            </Button>
+            <Button
+              type="button"
+              onClick={handlePublish}
+              disabled={!canPublish}
+              className="min-h-[44px] bg-hbc-rust text-white hover:bg-[hsl(var(--hbc-rust)/0.92)]"
+            >
+              {publishing ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden />
+              ) : null}
+              {publishLabel}
+            </Button>
+          </div>
+          {!highsOk && (
+            <p className="text-xs font-sans text-hbc-grey">
+              Resolve all blocking pre-publish questions to enable Publish.
+            </p>
+          )}
         </div>
       )}
 
-      <WizardNavigation
-        onBack={() => goToStep("strategy")}
-        helperText={
-          publishedAt
-            ? "Report is live. You can leave this page."
-            : !highsOk
-              ? "Resolve all blocking pre-publish questions to enable Publish."
-              : null
-        }
-      />
+      {/* What happens when you publish — honest list matching the actual
+          publish sequence in handlePublish. */}
+      <div className="rounded-lg bg-hbc-surface p-6">
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-hbc-gold-readable">
+          What Happens When You Publish
+        </div>
+        <ol className="mt-3 space-y-1.5 text-sm font-sans text-foreground list-decimal list-inside">
+          <li>
+            The report flips to published and every page becomes visible in
+            the client portal
+          </li>
+          <li>{clientLabel} receive an email with their portal link</li>
+          <li>
+            Uploaded photos and documents are routed to their matching
+            report pages
+          </li>
+          <li>
+            Hover and iGUIDE links attach to the property so the 3D tours
+            render in the portal
+          </li>
+        </ol>
+      </div>
+
+      {publishedAt && (
+        <p className="text-xs font-sans text-hbc-grey">
+          Report is live. You can leave this page.
+        </p>
+      )}
     </div>
   );
 }
@@ -634,15 +721,21 @@ export function Step5Publish() {
 interface SummaryStatProps {
   label: string;
   value: string;
+  caption?: string;
 }
 
-function SummaryStat({ label, value }: SummaryStatProps) {
+function SummaryStat({ label, value, caption }: SummaryStatProps) {
   return (
-    <div className="rounded-md border border-border bg-background p-3">
-      <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+    <div className="rounded-lg border border-hbc-border bg-white p-5">
+      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-hbc-gold-readable">
         {label}
       </div>
-      <div className="text-xl font-display text-foreground">{value}</div>
+      <div className="font-display text-5xl text-hbc-navy mt-2 leading-none">
+        {value}
+      </div>
+      {caption && (
+        <div className="text-[11px] font-sans text-hbc-grey mt-2">{caption}</div>
+      )}
     </div>
   );
 }
