@@ -201,6 +201,9 @@ describe("buildStructuredPagePayload — system structured fields", () => {
     expect(record.content.typicalLifespanYears).toBe(20);
     expect(record.content.status).toBe("Approaching End-of-Life");
     expect(record.content.make).toBe("Lennox");
+    // Identity rows live in the page-level spec grid; the block's free-form
+    // specifications list must not duplicate them.
+    expect(record.content.specifications).toEqual([]);
   });
 
   it("publishes a replacement_briefing block with priced tiers + details", () => {

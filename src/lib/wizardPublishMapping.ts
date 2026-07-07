@@ -502,13 +502,12 @@ export function buildStructuredPagePayload(
     }
     const coveredLabels =
       /make|model|serial|install|lifespan|age/i;
+    // Free-form extras (capacity, efficiency, filter size, ...) that the
+    // identity fields don't cover. The system template owns the identity
+    // spec grid (page.specs); the system_record block renders only these.
+    const extraSpecs = seedSpecs.filter((s) => !coveredLabels.test(s.label));
     const specs =
-      derivedSpecs.length > 0
-        ? [
-            ...derivedSpecs,
-            ...seedSpecs.filter((s) => !coveredLabels.test(s.label)),
-          ]
-        : seedSpecs;
+      derivedSpecs.length > 0 ? [...derivedSpecs, ...extraSpecs] : seedSpecs;
 
     const schema =
       pageType === "appliance"
@@ -548,7 +547,7 @@ export function buildStructuredPagePayload(
           installDate: content.installDate,
           typicalLifespanYears:
             pageType === "system" ? lifespanYears : undefined,
-          specifications: content.specs,
+          specifications: extraSpecs,
           maintenanceLog: [],
           routineCareItems: [],
           photos: {},
