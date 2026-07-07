@@ -115,10 +115,13 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
   const rating = content.conditionRating ?? "Good";
   const ratingColor = RATING_COLORS[rating];
 
+  // Viewer mode renders flat on the page background — RoomTemplatePage owns
+  // the page header (eyebrow, title, metadata strip, condition dot), so the
+  // block contributes only the unique sections per prototype screen 24.
   return (
-    <div className="bg-card border border-border rounded-lg overflow-hidden">
-      {/* Hero strip — only when imageUrl is set; matches v2 prototype line 1313 */}
-      {content.imageUrl && (
+    <div className={editable ? "bg-card border border-border rounded-lg overflow-hidden" : ""}>
+      {/* Hero strip — editable mode only; the page template owns the hero in viewer mode */}
+      {editable && content.imageUrl && (
         <div
           className="h-44 sm:h-56 bg-cover bg-center relative"
           style={{ backgroundImage: `url(${content.imageUrl})` }}
@@ -132,7 +135,9 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
         </div>
       )}
 
-      {/* Header */}
+      {/* Header — editable mode only; RoomTemplatePage renders the page
+          header (eyebrow, title, meta strip, condition dot) in viewer mode */}
+      {editable && (
       <div className="px-6 sm:px-8 pt-6 pb-4 border-b border-border">
         {(content.roomGroup || editable) && (
           editable ? (
@@ -143,7 +148,7 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
               placeholder="Spaces · Group (e.g. Bedrooms & Suites)"
             />
           ) : (
-            <div className="font-mono text-[10px] uppercase tracking-[0.15em]" style={{ color: "var(--hbc-gold, #B87333)" }}>
+            <div className="font-mono text-[10px] uppercase tracking-[0.15em]" style={{ color: "hsl(var(--hbc-gold))" }}>
               {content.roomGroup}
             </div>
           )
@@ -244,12 +249,13 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
           )}
         </div>
       </div>
+      )}
 
       {/* Body */}
-      <div className="px-6 sm:px-8 py-6 space-y-6">
+      <div className={editable ? "px-6 sm:px-8 py-6 space-y-6" : "space-y-6"}>
         {/* Finishes */}
         <section>
-          <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3" style={{ color: "var(--hbc-gold, #B87333)" }}>
+          <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3 text-accent">
             Finishes
           </h3>
           {editable ? (
@@ -269,33 +275,38 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
           )}
         </section>
 
-        {/* Power, light, openings */}
-        <section>
-          <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3" style={{ color: "var(--hbc-gold, #B87333)" }}>
-            Fixtures, Power & Openings
-          </h3>
-          {editable ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <FieldEditor label="Light Fixtures" value={content.lightFixtures} onChange={(v) => update({ lightFixtures: v })} />
-              <FieldEditor label="Outlets" value={content.outlets} onChange={(v) => update({ outlets: v })} />
-              <FieldEditor label="Switches" value={content.switches} onChange={(v) => update({ switches: v })} />
-              <FieldEditor label="Windows" value={content.windows} onChange={(v) => update({ windows: v })} />
-              <FieldEditor label="Doors" value={content.doors} onChange={(v) => update({ doors: v })} />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <SpecRow label="Light Fixtures" value={content.lightFixtures} />
-              <SpecRow label="Outlets" value={content.outlets} />
-              <SpecRow label="Switches" value={content.switches} />
-              <SpecRow label="Windows" value={content.windows} />
-              <SpecRow label="Doors" value={content.doors} />
-            </div>
-          )}
-        </section>
+        {/* Fixtures & Power — viewer omits rows with no data (prototype
+            screen 24 shows only documented rows in this section) */}
+        {(editable ||
+          content.lightFixtures || content.outlets || content.switches ||
+          content.windows || content.doors) && (
+          <section>
+            <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3 text-accent">
+              Fixtures & Power
+            </h3>
+            {editable ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <FieldEditor label="Light Fixtures" value={content.lightFixtures} onChange={(v) => update({ lightFixtures: v })} />
+                <FieldEditor label="Outlets" value={content.outlets} onChange={(v) => update({ outlets: v })} />
+                <FieldEditor label="Switches" value={content.switches} onChange={(v) => update({ switches: v })} />
+                <FieldEditor label="Windows" value={content.windows} onChange={(v) => update({ windows: v })} />
+                <FieldEditor label="Doors" value={content.doors} onChange={(v) => update({ doors: v })} />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {content.lightFixtures && <SpecRow label="Light Fixtures" value={content.lightFixtures} />}
+                {content.outlets && <SpecRow label="Outlets" value={content.outlets} />}
+                {content.switches && <SpecRow label="Switches" value={content.switches} />}
+                {content.windows && <SpecRow label="Windows" value={content.windows} />}
+                {content.doors && <SpecRow label="Doors" value={content.doors} />}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Observations */}
         <section>
-          <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3" style={{ color: "var(--hbc-gold, #B87333)" }}>
+          <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3 text-accent">
             Observations
           </h3>
           {editable ? (
@@ -316,23 +327,24 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
           )}
         </section>
 
-        {/* Linked vision projects */}
+        {/* Linked vision projects — prototype screen 24 callout: cream card,
+            gold left border, title + "{priority} priority" + gold link */}
         {(editable || (content.linkedVisionProjects && content.linkedVisionProjects.length > 0)) && (
           <section>
-            <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3" style={{ color: "var(--hbc-gold, #B87333)" }}>
-              Linked Vision Projects
-            </h3>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {(content.linkedVisionProjects ?? []).map((vp, i) => (
                 <div
                   key={vp.id ?? i}
-                  className="rounded-md p-3 border-l-2 flex items-center gap-3"
+                  className="rounded-lg p-[18px] flex items-center gap-3"
                   style={{
                     background: "var(--hbc-cream-light, #F5F2EE)",
-                    borderLeftColor: "var(--hbc-gold, #B87333)",
+                    borderLeft: "3px solid hsl(var(--hbc-gold))",
                   }}
                 >
                   <div className="flex-1">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.15em] mb-1.5" style={{ color: "hsl(var(--hbc-gold))" }}>
+                      Linked Vision Project
+                    </div>
                     {editable ? (
                       <input
                         className="w-full bg-transparent text-sm font-medium text-foreground outline-none"
@@ -345,7 +357,7 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
                         placeholder="Vision project title"
                       />
                     ) : (
-                      <div className="text-sm font-medium text-foreground">{vp.title}</div>
+                      <div className="text-sm font-medium" style={{ color: "hsl(var(--hbc-navy))" }}>{vp.title}</div>
                     )}
                     {(editable || vp.priority) && (
                       editable ? (
@@ -360,8 +372,21 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
                           placeholder="Priority (e.g. Year 1-2)"
                         />
                       ) : (
-                        <div className="text-xs text-muted-foreground mt-0.5">{vp.priority}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{vp.priority} priority</div>
                       )
+                    )}
+                    {!editable && (
+                      <button
+                        type="button"
+                        className="mt-2 text-xs font-medium min-h-[44px] sm:min-h-0"
+                        style={{ color: "hsl(var(--hbc-gold))" }}
+                        onClick={() => {
+                          // Cross-page navigation to the vision page wires up
+                          // in the portal shell; visual link per prototype.
+                        }}
+                      >
+                        View Vision Project →
+                      </button>
                     )}
                   </div>
                   {editable && (
@@ -394,6 +419,28 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
                 </button>
               )}
             </div>
+          </section>
+        )}
+
+        {/* Concierge Action — bottom-of-page callout per prototype screen 24 */}
+        {!editable && (
+          <section
+            className="rounded-md px-4 py-3"
+            style={{ background: "var(--hbc-cream-light, #F5F2EE)" }}
+          >
+            <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-accent">
+              Concierge Action
+            </div>
+            <button
+              type="button"
+              className="mt-1 text-[13px] font-medium text-left min-h-[44px] sm:min-h-0"
+              style={{ color: "hsl(var(--hbc-navy))" }}
+              onClick={() => {
+                // Wires to the Bobby/Concierge panel in the portal shell.
+              }}
+            >
+              + Update finishes, log a touch-up, or schedule cleaning
+            </button>
           </section>
         )}
       </div>

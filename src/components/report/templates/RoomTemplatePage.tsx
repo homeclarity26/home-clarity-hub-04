@@ -76,14 +76,11 @@ const RoomTemplatePage = ({
         {page.title}
       </h1>
 
-      {/* Metadata strip */}
+      {/* Metadata strip — plain values per prototype (18 × 22 · 396 sqft · 10ft · Floor 1) */}
       {(specs && specs.length > 0) && (
-        <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground mb-4">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mb-4">
           {specs.map((s) => (
-            <span key={s.label}>
-              <span className="font-mono text-[9px] uppercase tracking-[0.12em]">{s.label}:</span>{" "}
-              {s.value}
-            </span>
+            <span key={s.label}>{s.value}</span>
           ))}
         </div>
       )}
@@ -92,7 +89,7 @@ const RoomTemplatePage = ({
       {rating && (
         <div className="flex items-center gap-2 mb-6">
           <span
-            className="w-2.5 h-2.5 rounded-full inline-block"
+            className="w-2 h-2 rounded-full inline-block"
             style={{ background: ratingColor }}
           />
           <span
