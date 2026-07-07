@@ -25,12 +25,12 @@ interface ReplacementBriefingBlockProps {
   onChange?: (content: ReplacementBriefingContent) => void;
 }
 
-// Format a price range for display. Avoids em-dash (use plain "to") per
-// repo-wide tone discipline. Handles missing low or high gracefully.
+// Format a price range for display. Hyphen-formatted ("$14,000 - $18,000")
+// per locked copy discipline — never the word "to", never an em-dash.
 function formatPriceRange(low?: number, high?: number): string {
   if (low == null && high == null) return "Pricing pending";
   const fmt = (n: number) => "$" + n.toLocaleString();
-  if (low != null && high != null) return `${fmt(low)} to ${fmt(high)}`;
+  if (low != null && high != null) return `${fmt(low)} - ${fmt(high)}`;
   if (low != null) return `from ${fmt(low)}`;
   return `up to ${fmt(high!)}`;
 }
@@ -125,7 +125,7 @@ const TierCard = ({ tier, editable, onChange, onRemove }: TierCardProps) => {
           />
         </div>
       ) : (
-        <div className="mt-2 text-sm font-medium" style={{ color: CREAM }}>
+        <div className="mt-2 font-display text-lg" style={{ color: CREAM }}>
           {formatPriceRange(tier.priceLow, tier.priceHigh)}
         </div>
       )}
@@ -342,7 +342,7 @@ const ReplacementBriefingBlock = ({ content, editable, onChange }: ReplacementBr
             onChange={(e) => update({ headline: e.target.value })}
           />
         ) : (
-          <h4 className="font-display text-lg sm:text-xl mb-2" style={{ color: CREAM }}>
+          <h4 className="font-display text-xl sm:text-2xl mb-2" style={{ color: CREAM }}>
             {headline}
           </h4>
         )}

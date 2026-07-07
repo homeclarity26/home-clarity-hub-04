@@ -35,8 +35,17 @@ const SCENARIOS: { id: ScenarioId; label: string; sublabel: string }[] = [
 
 const noop = () => undefined;
 
+// Allow deep-linking a scenario for automated screenshot diffs:
+// /dev/prototype-qa?scenario=room-kitchen
+function initialScenario(): ScenarioId {
+  const requested = new URLSearchParams(window.location.search).get("scenario");
+  return SCENARIOS.some((s) => s.id === requested)
+    ? (requested as ScenarioId)
+    : "report-home";
+}
+
 const DevPrototypeQA = () => {
-  const [active, setActive] = useState<ScenarioId>("report-home");
+  const [active, setActive] = useState<ScenarioId>(initialScenario);
 
   return (
     <div className="min-h-screen bg-background flex">
