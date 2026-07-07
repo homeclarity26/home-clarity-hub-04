@@ -1,12 +1,10 @@
 import { useMemo, useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Sparkles, Loader2, AlertCircle, Wand2 } from "lucide-react";
+import { Loader2, AlertCircle, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useWizard, type IntakeFinding, type ClarifyingQuestion, type PageSeed } from "@/contexts/WizardContext";
@@ -14,19 +12,21 @@ import { IntakeUploadCard } from "./IntakeUploadCard";
 import { FieldChecklist } from "./FieldChecklist";
 import { AIClarifyingQuestions } from "./AIClarifyingQuestions";
 import { WizardNavigation } from "./WizardNavigation";
+import { WizardStepHeader } from "./WizardShell";
 import AddressAutocomplete, { type PropertyData } from "@/components/admin/AddressAutocomplete";
 
-// Step 1 — Intake. Three zones:
-//   A. Client & property
-//   B. Brain dump — one drop zone for any file type, two URL inputs for
-//      Hover/iGUIDE share links, "Anything else?" textarea, Field Checklist
-//   C. AI findings (6 cards) + clarifying questions
+// Step 1 — Intake, prototype screens 1-4. Zones:
+//   A. Client & property form (functional prerequisite; the prototype
+//      assumes the client is already picked)
+//   B. Six upload cards in a 2-col grid (Meeting Transcript / Site Notes /
+//      Photos / Hover 3D Model / iGUIDE 360 Tour / Property Records)
+//   C. Anything else + Field Checklist
+//   D. Analysis band: READY TO ANALYZE → ANALYZING checklist →
+//      REVIEW & APPROVE findings with the Approve & Build TOC CTA
 //
-// All file uploads land in `intakeUploads.transcript` regardless of type;
-// the legacy bucketed shape (transcript/site_notes/photos/hover/iguide) is
-// preserved in WizardContext so existing drafts hydrate without loss.
-// intakeFilesPayload spreads all five buckets so any file from any source
-// reaches the AI.
+// Each upload card maps 1:1 to its WizardContext bucket
+// (transcript/site_notes/photos/hover/iguide); intakeFilesPayload spreads
+// all five buckets so any file from any card reaches the AI.
 //
 // Findings + clarifying questions come from seed-report-from-notes (E7).
 
@@ -71,7 +71,21 @@ const findingLabels: Record<IntakeFinding["category"], { title: string; helper: 
   },
 };
 
-export function Step1Intake() {
+const ANALYZING_CHECKLIST = [
+  "Reading meeting transcript",
+  "Parsing site notes",
+  "Identifying spaces and rooms",
+  "Cataloging systems and appliances",
+  "Extracting vision projects",
+  "Drafting findings",
+];
+
+interface Step1IntakeProps {
+  /** Dev-only (QA harness): suppress on-mount network calls. */
+  qaMode?: boolean;
+}
+
+export function Step1Intake({ qaMode = false }: Step1IntakeProps) {
   const {
     state,
     setClient,
@@ -107,6 +121,7 @@ export function Step1Intake() {
 
   // Debounced check: warn if a published report already exists at this address
   useEffect(() => {
+    if (qaMode) return;
     const address = state.client.address.trim();
     if (address.length < 5) { setDuplicateWarning(false); return; }
     const timer = setTimeout(async () => {
@@ -120,7 +135,7 @@ export function Step1Intake() {
       setDuplicateWarning(Boolean(found));
     }, 600);
     return () => clearTimeout(timer);
-  }, [state.client.address]);
+  }, [state.client.address, qaMode]);
 
   // Build a single block of "meeting notes" from all the freeform sources
   // we have in state. seed-report-from-notes (E7) takes a single string for
@@ -138,10 +153,7 @@ export function Step1Intake() {
   }, [state.client.discoveryNotes, state.anythingElse]);
 
   // Storage refs the edge function will fetch + base64 inline for Claude.
-  // Spreads ALL five legacy buckets so brain-dump uploads (which land in
-  // `transcript`) plus anything still sitting in older draft buckets all
-  // reach the AI. Hover/iGuide file exports were previously dropped on the
-  // floor here — fixed as part of the brain-dump consolidation.
+  // Spreads ALL five buckets so uploads from every card reach the AI.
   const intakeFilesPayload = useMemo(() => {
     const refs = [
       ...state.intakeUploads.transcript,
@@ -159,25 +171,6 @@ export function Step1Intake() {
         mime: f.mime,
       }));
   }, [state.intakeUploads]);
-
-  // MIME-bucketed counts for the type-pill summary above the drop zone.
-  // Display-only; the underlying file list stays a single flat array.
-  const fileTypeCounts = useMemo(() => {
-    const counts = { documents: 0, photos: 0, audio: 0, video: 0, other: 0 };
-    for (const f of intakeFilesPayload) {
-      if (f.mime.startsWith("image/")) counts.photos++;
-      else if (f.mime.startsWith("audio/")) counts.audio++;
-      else if (f.mime.startsWith("video/")) counts.video++;
-      else if (
-        f.mime === "application/pdf" ||
-        f.mime.includes("document") ||
-        f.mime.includes("msword") ||
-        f.mime.startsWith("text/")
-      ) counts.documents++;
-      else counts.other++;
-    }
-    return counts;
-  }, [intakeFilesPayload]);
 
   const hasAnyIntake = aggregatedNotes.trim().length > 0 || intakeFilesPayload.length > 0;
 
@@ -317,7 +310,7 @@ export function Step1Intake() {
     if (intakeFilesPayload.length === 0) {
       toast({
         title: "Upload a transcript first",
-        description: "Drop the discovery transcript or notes into the Files zone, then try again.",
+        description: "Drop the discovery transcript or notes into a card below, then try again.",
         variant: "destructive",
       });
       return;
@@ -358,15 +351,36 @@ export function Step1Intake() {
     await goToStep("toc");
   };
 
+  // Property Records card content (auto-fetched via RentCast when the
+  // address resolves; never fabricated).
+  const hasPropertyRecords = Boolean(
+    state.client.yearBuilt || state.client.sqft || state.client.bedrooms,
+  );
+  const propertyRecordsSummary = [
+    state.client.yearBuilt ? `Built ${state.client.yearBuilt}` : null,
+    state.client.sqft ? `${state.client.sqft} sqft` : null,
+    state.client.bedrooms && state.client.bathrooms
+      ? `${state.client.bedrooms}/${state.client.bathrooms}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <div className="space-y-6">
+      <WizardStepHeader
+        step={1}
+        title="Intake"
+        description="Drop in everything from the on-site visit. The AI ingests transcripts, photos, the Hover scan, and the iGUIDE tour and tells you what it found before any pages are drafted."
+      />
+
       {/* Zone A — Client & Property */}
-      <Card className="p-6 space-y-5">
+      <section className="rounded-lg border border-hbc-border bg-white p-6 space-y-5">
         <div>
-          <h3 className="text-base font-sans font-semibold text-foreground">
+          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-hbc-gold-readable">
             Client & Property
-          </h3>
-          <p className="text-xs font-sans text-muted-foreground mt-1">
+          </div>
+          <p className="text-xs font-sans text-hbc-grey mt-1">
             Start with who and where. Everything else hangs off this row.
           </p>
         </div>
@@ -517,94 +531,104 @@ export function Step1Intake() {
             />
           </div>
         </div>
-      </Card>
+      </section>
 
-      {/* Zone B — Brain dump */}
-      <Card className="p-6 space-y-4">
-        <div>
-          <h3 className="text-base font-sans font-semibold text-foreground">
-            Intake materials
-          </h3>
-          <p className="text-xs font-sans text-muted-foreground mt-1">
-            Drop everything here. Transcripts, site notes, photos, voice
-            memos, Hover or iGUIDE exports — any file type. We will sort
-            them when the AI runs.
-          </p>
-        </div>
-
-        {(fileTypeCounts.documents +
-          fileTypeCounts.photos +
-          fileTypeCounts.audio +
-          fileTypeCounts.video +
-          fileTypeCounts.other) > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {fileTypeCounts.documents > 0 && (
-              <Badge variant="secondary" className="text-[10px] font-mono uppercase tracking-wider">
-                {fileTypeCounts.documents} document{fileTypeCounts.documents !== 1 ? "s" : ""}
-              </Badge>
-            )}
-            {fileTypeCounts.photos > 0 && (
-              <Badge variant="secondary" className="text-[10px] font-mono uppercase tracking-wider">
-                {fileTypeCounts.photos} photo{fileTypeCounts.photos !== 1 ? "s" : ""}
-              </Badge>
-            )}
-            {fileTypeCounts.audio > 0 && (
-              <Badge variant="secondary" className="text-[10px] font-mono uppercase tracking-wider">
-                {fileTypeCounts.audio} audio
-              </Badge>
-            )}
-            {fileTypeCounts.video > 0 && (
-              <Badge variant="secondary" className="text-[10px] font-mono uppercase tracking-wider">
-                {fileTypeCounts.video} video
-              </Badge>
-            )}
-            {fileTypeCounts.other > 0 && (
-              <Badge variant="secondary" className="text-[10px] font-mono uppercase tracking-wider">
-                {fileTypeCounts.other} other
-              </Badge>
-            )}
-          </div>
-        )}
-
+      {/* Zone B — Six upload cards, 2-col grid (prototype screens 1-2) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <IntakeUploadCard
-          title="Files"
-          description="Drag in any file type. We auto-detect documents vs photos vs audio."
+          title="Meeting Transcript"
+          description="Otter.ai transcript from the walkthrough"
           cardKey="transcript"
           files={state.intakeUploads.transcript}
           onChange={(files) => setIntakeUploads("transcript", files)}
         />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <IntakeUploadCard
-            title="Hover"
-            description="3D model share link + measurement report PDF."
-            cardKey="hover"
-            accept="application/pdf,.pdf"
-            files={state.intakeUploads.hover}
-            onChange={(files) => setIntakeUploads("hover", files)}
-            url={{
-              value: state.hoverUrl,
-              onChange: setHoverUrl,
-              label: "Hover share URL",
-              placeholder: "https://hover.to/...",
-            }}
-          />
-          <IntakeUploadCard
-            title="iGUIDE"
-            description="Floor plan share link + measurement report PDF."
-            cardKey="iguide"
-            accept="application/pdf,.pdf"
-            files={state.intakeUploads.iguide}
-            onChange={(files) => setIntakeUploads("iguide", files)}
-            url={{
-              value: state.iguideUrl,
-              onChange: setIguideUrl,
-              label: "iGUIDE share URL",
-              placeholder: "https://youriguide.com/...",
-            }}
-          />
+        <IntakeUploadCard
+          title="Site Notes"
+          description="Your iPhone notes, scribbled observations"
+          cardKey="site_notes"
+          files={state.intakeUploads.site_notes}
+          onChange={(files) => setIntakeUploads("site_notes", files)}
+        />
+        <IntakeUploadCard
+          title="Photos"
+          description="Serial plates, key findings, evidence"
+          cardKey="photos"
+          files={state.intakeUploads.photos}
+          onChange={(files) => setIntakeUploads("photos", files)}
+        />
+        <IntakeUploadCard
+          title="Hover 3D Model"
+          description="Exterior measurements + 3D walkthrough"
+          cardKey="hover"
+          accept="application/pdf,.pdf"
+          files={state.intakeUploads.hover}
+          onChange={(files) => setIntakeUploads("hover", files)}
+          url={{
+            value: state.hoverUrl,
+            onChange: setHoverUrl,
+            label: "Hover share URL",
+            placeholder: "https://hover.to/...",
+          }}
+        />
+        <IntakeUploadCard
+          title="iGUIDE 360° Tour"
+          description="Interior immersive tour + 2D floor plans"
+          cardKey="iguide"
+          accept="application/pdf,.pdf"
+          files={state.intakeUploads.iguide}
+          onChange={(files) => setIntakeUploads("iguide", files)}
+          url={{
+            value: state.iguideUrl,
+            onChange: setIguideUrl,
+            label: "iGUIDE share URL",
+            placeholder: "https://youriguide.com/...",
+          }}
+        />
+        {/* Property Records — auto-fetched, no upload control */}
+        <div
+          className={`rounded-lg border bg-white p-5 space-y-3 ${
+            hasPropertyRecords
+              ? "border-hbc-gold"
+              : "border-hbc-border"
+          }`}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-sans font-semibold text-hbc-navy">
+                Property Records
+              </h4>
+              <p className="text-xs font-sans text-hbc-grey mt-0.5">
+                Auto-pulled from county records + RentCast
+              </p>
+            </div>
+            <span className="inline-flex shrink-0 items-center rounded-sm bg-hbc-gold px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-white">
+              Auto-fetched
+            </span>
+          </div>
+          {hasPropertyRecords ? (
+            <div className="rounded-sm border-l-2 border-hbc-gold bg-hbc-surface px-3 py-2">
+              <div className="text-xs font-sans font-semibold text-hbc-navy">
+                {propertyRecordsSummary}
+              </div>
+              {(state.client.county || state.client.propertyType) && (
+                <div className="text-[10px] font-sans text-hbc-grey mt-0.5">
+                  {[state.client.county, state.client.propertyType.replace("_", "-")]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs font-sans text-hbc-grey">
+              Not yet fetched. Add the property address above and records
+              fill in automatically.
+            </p>
+          )}
         </div>
+      </div>
 
+      {/* Zone C — Anything else + Field Checklist */}
+      <section className="rounded-lg border border-hbc-border bg-white p-6 space-y-4">
         <div className="space-y-1.5">
           <Label className="text-xs font-sans">Anything else?</Label>
           <Textarea
@@ -620,57 +644,67 @@ export function Step1Intake() {
           items={state.fieldChecklist}
           onChange={setFieldChecklist}
         />
-      </Card>
+      </section>
 
-      {/* Zone C — AI analysis */}
-      <Card className="p-6 space-y-4">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <h3 className="text-base font-sans font-semibold text-foreground">
-              AI analysis
-            </h3>
-            <p className="text-xs font-sans text-muted-foreground mt-1">
-              When you have enough intake captured, run the analyzer. It
-              returns six findings buckets plus clarifying questions.
-            </p>
+      {/* Zone D — Analysis band */}
+      {analyzing ? (
+        <section className="rounded-lg border border-hbc-border bg-white p-6 space-y-4">
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-hbc-gold-readable">
+            Analyzing...
           </div>
-          <Button
-            type="button"
-            onClick={runAIAnalysis}
-            disabled={analyzing}
-            className="min-h-[44px]"
-          >
-            {analyzing ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden />
-            ) : (
-              <Sparkles className="w-4 h-4 mr-2" aria-hidden />
-            )}
-            {analyzing ? "Analyzing..." : "Run AI analysis"}
-          </Button>
-        </div>
-
-        {analyzeError && (
-          <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs font-sans text-destructive">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden />
-            <span>{analyzeError}</span>
+          <ul className="space-y-2.5">
+            {ANALYZING_CHECKLIST.map((label, i) => (
+              <li key={label} className="flex items-center gap-2.5 text-sm font-sans text-hbc-grey">
+                <span
+                  className="h-2.5 w-2.5 rounded-full bg-[hsl(var(--hbc-gold))] animate-pulse"
+                  style={{ animationDelay: `${i * 150}ms` }}
+                  aria-hidden
+                />
+                {label}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : state.intakeFindings.length > 0 ? (
+        <section className="space-y-4">
+          <div className="flex items-end justify-between gap-3 flex-wrap">
+            <div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-hbc-gold-readable">
+                Review & Approve
+              </div>
+              <h3 className="font-display text-2xl text-hbc-navy mt-1">
+                What the AI Found
+              </h3>
+            </div>
+            <Button
+              type="button"
+              onClick={handleContinue}
+              disabled={!canContinue}
+              className="min-h-[44px] bg-hbc-navy text-white hover:bg-[hsl(var(--hbc-navy)/0.92)]"
+            >
+              Approve & Build TOC →
+            </Button>
           </div>
-        )}
-
-        {state.intakeFindings.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {analyzeError && (
+            <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs font-sans text-destructive">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden />
+              <span>{analyzeError}</span>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {state.intakeFindings.map((finding) => {
               const meta = findingLabels[finding.category];
               return (
-                <Card key={finding.category} className="p-4 space-y-2">
+                <div
+                  key={finding.category}
+                  className="rounded-lg border border-hbc-border bg-white p-5 space-y-2"
+                >
                   <div>
-                    <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                      {meta?.title ?? finding.category}
-                    </div>
-                    <div className="text-sm font-sans font-semibold text-foreground">
+                    <div className="text-sm font-sans font-semibold text-hbc-navy">
                       {finding.title}
                     </div>
                     {meta?.helper && (
-                      <p className="text-[11px] font-sans text-muted-foreground mt-1">
+                      <p className="text-[11px] font-sans text-hbc-grey mt-0.5">
                         {meta.helper}
                       </p>
                     )}
@@ -679,26 +713,57 @@ export function Step1Intake() {
                     <ul className="space-y-1 text-xs font-sans text-foreground">
                       {finding.bullets.map((b, i) => (
                         <li key={i} className="flex gap-2">
-                          <span className="text-primary" aria-hidden>
-                            •
+                          <span className="text-hbc-gold-readable" aria-hidden>
+                            ·
                           </span>
                           <span>{b}</span>
                         </li>
                       ))}
                     </ul>
                   )}
-                </Card>
+                </div>
               );
             })}
           </div>
-        )}
-
-        <AIClarifyingQuestions
-          questions={state.clarifyingQuestions}
-          answers={state.clarifyingAnswers}
-          onAnswer={answerClarifyingQuestion}
-        />
-      </Card>
+          <AIClarifyingQuestions
+            questions={state.clarifyingQuestions}
+            answers={state.clarifyingAnswers}
+            onAnswer={answerClarifyingQuestion}
+          />
+        </section>
+      ) : (
+        <section className="rounded-lg border border-hbc-border bg-white p-6">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-hbc-gold-readable">
+                {hasAnyIntake ? "Ready to Analyze" : "Waiting on Intake"}
+              </div>
+              <h3 className="font-display text-2xl text-hbc-navy mt-1">
+                {hasAnyIntake ? "All inputs received" : "Add intake materials above"}
+              </h3>
+              <p className="text-xs font-sans text-hbc-grey mt-1">
+                {hasAnyIntake
+                  ? "Click to extract everything the AI can see."
+                  : "Drop at least one file or write discovery notes, then run the analyzer."}
+              </p>
+              {analyzeError && (
+                <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs font-sans text-destructive mt-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden />
+                  <span>{analyzeError}</span>
+                </div>
+              )}
+            </div>
+            <Button
+              type="button"
+              onClick={runAIAnalysis}
+              disabled={!hasAnyIntake}
+              className="min-h-[44px] bg-hbc-gold text-white hover:bg-[hsl(var(--hbc-gold)/0.92)]"
+            >
+              Run AI Analysis →
+            </Button>
+          </div>
+        </section>
+      )}
 
       <WizardNavigation
         onNext={handleContinue}
