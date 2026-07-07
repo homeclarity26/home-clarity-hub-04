@@ -66,7 +66,181 @@ interface RecurringServicesRegisterBlockProps {
   onChange?: (content: RecurringServicesRegisterContent) => void;
 }
 
+// ─── Client viewer (prototype screens 29-30) ──────────────────────────
+// Flat register: three stat cards, navy HBC Concierge pitch card, and a
+// single flat table (SERVICE | VENDOR | FREQUENCY | NEXT DUE | $/MO) with
+// overdue service names flagged rust + underlined. Page-level header
+// (eyebrow / H1 / intro) is owned by StrategyTemplatePage.
+
+// Locked honest framing: Concierge buys back coordination time; it never
+// claims to save money.
+const DEFAULT_CONCIERGE_HEADING = "Let us run all of this for you";
+const DEFAULT_CONCIERGE_BODY =
+  "One monthly fee. One bill. One phone number. We coordinate every vendor, hold every record, and Bobby handles the routine questions automatically. The plan costs more than managing it yourself; what it buys back is your time, and you stop losing track of what's overdue.";
+const DEFAULT_CONCIERGE_CTA = "See Concierge plans →";
+
+// Format an ISO date (YYYY-MM-DD) as "April 26, 2026"; pass through any
+// other string untouched so display-ready values also work.
+const fmtDueDate = (d?: string) => {
+  if (!d) return "Not scheduled";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+    return new Date(`${d}T00:00:00`).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+  return d;
+};
+
+const RegisterViewer = ({ content }: { content: RecurringServicesRegisterContent }) => {
+  const services = content.services ?? [];
+  const totalMonthly = services.reduce((s, x) => s + (x.monthlyCost ?? 0), 0);
+  const overdueCount = services.filter((s) => s.status === "overdue").length;
+  const onTrackCount = services.length - overdueCount;
+
+  return (
+    <div className="space-y-5" data-block-type="recurring_services_register">
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <ViewerStatCard
+          label="Total Monthly"
+          value={fmtMoney(totalMonthly)}
+          caption="across all services"
+        />
+        <ViewerStatCard
+          label="Active Services"
+          value={String(services.length)}
+          caption={`${onTrackCount} on track`}
+        />
+        <ViewerStatCard
+          label="Overdue"
+          value={String(overdueCount)}
+          caption="needs attention now"
+        />
+      </div>
+
+      {/* HBC Concierge pitch — navy card */}
+      <div className="bg-hbc-navy rounded-lg p-6 sm:p-7">
+        <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-accent mb-2">
+          HBC Concierge
+        </div>
+        <div className="font-display text-2xl text-white mb-3">
+          {content.conciergeHeading ?? DEFAULT_CONCIERGE_HEADING}
+        </div>
+        <p
+          className="text-[13px] leading-relaxed mb-5 text-[hsl(var(--hbc-cream))]"
+          dangerouslySetInnerHTML={{
+            __html: content.conciergeBodyHtml ?? DEFAULT_CONCIERGE_BODY,
+          }}
+        />
+        <button
+          type="button"
+          className="bg-hbc-gold text-white text-[13px] font-medium rounded-md px-4 min-h-[44px] inline-flex items-center"
+        >
+          {content.conciergeCtaLabel ?? DEFAULT_CONCIERGE_CTA}
+        </button>
+      </div>
+
+      {/* Flat services table */}
+      <div className="bg-white border border-border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse min-w-[640px]">
+            <thead>
+              <tr className="bg-card border-b border-border">
+                <ViewerTh>Service</ViewerTh>
+                <ViewerTh>Vendor</ViewerTh>
+                <ViewerTh>Frequency</ViewerTh>
+                <ViewerTh>Next Due</ViewerTh>
+                <ViewerTh align="right">$/mo</ViewerTh>
+              </tr>
+            </thead>
+            <tbody>
+              {services.map((s, i) => {
+                const overdue = s.status === "overdue";
+                return (
+                  <tr key={s.id ?? `svc-${i}`} className="border-b border-border last:border-b-0">
+                    <td
+                      className={`px-4 py-3 text-[13px] font-medium ${
+                        overdue ? "text-destructive underline underline-offset-2" : "text-primary"
+                      }`}
+                    >
+                      {s.serviceName}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      {s.vendorName ?? "Not on file"}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      {FREQUENCY_LABELS[s.frequency] ?? s.frequency}
+                    </td>
+                    <td
+                      className={`px-4 py-3 text-xs ${
+                        overdue ? "text-destructive font-medium" : "text-foreground"
+                      }`}
+                    >
+                      {fmtDueDate(s.nextDueDate)}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-right text-foreground font-medium">
+                      {s.monthlyCost ? fmtMoney(s.monthlyCost) : "Included"}
+                    </td>
+                  </tr>
+                );
+              })}
+              {services.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-6 text-sm italic text-muted-foreground text-center">
+                    No services published yet
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ViewerStatCard = ({
+  label,
+  value,
+  caption,
+}: {
+  label: string;
+  value: string;
+  caption: string;
+}) => (
+  <div className="bg-white border border-border rounded-lg p-5">
+    <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-accent mb-2">
+      {label}
+    </div>
+    <div className="font-display text-[32px] leading-none text-primary">{value}</div>
+    <div className="text-xs text-muted-foreground mt-2">{caption}</div>
+  </div>
+);
+
+const ViewerTh = ({ children, align }: { children: React.ReactNode; align?: "left" | "right" }) => (
+  <th
+    className={`px-4 py-3 font-mono text-[10px] uppercase tracking-[0.15em] font-normal text-muted-foreground ${
+      align === "right" ? "text-right" : "text-left"
+    }`}
+  >
+    {children}
+  </th>
+);
+
+// ─── Admin editor (unchanged behavior) ─────────────────────────────────
+
 const RecurringServicesRegisterBlock = ({
+  content,
+  editable,
+  onChange,
+}: RecurringServicesRegisterBlockProps) => {
+  if (!editable) return <RegisterViewer content={content} />;
+  return <RegisterEditor content={content} editable onChange={onChange} />;
+};
+
+const RegisterEditor = ({
   content,
   editable,
   onChange,
