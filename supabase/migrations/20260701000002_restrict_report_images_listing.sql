@@ -11,8 +11,15 @@
 -- VERIFY AFTER APPLY: log in to the portal and confirm report images still
 -- render, and confirm an anonymous storage `list` on report-images returns
 -- nothing.
+--
+-- Prod had TWO public-role SELECT policies from dashboard drift ("Anyone can
+-- view report images" AND "Public read report-images"); both must be dropped
+-- or anon listing survives. Idempotent: all DROPs are IF EXISTS and the new
+-- policy is dropped before re-create so this replays cleanly.
 
 DROP POLICY IF EXISTS "Anyone can view report images" ON storage.objects;
+DROP POLICY IF EXISTS "Public read report-images" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated can view report images" ON storage.objects;
 
 CREATE POLICY "Authenticated can view report images"
 ON storage.objects FOR SELECT
