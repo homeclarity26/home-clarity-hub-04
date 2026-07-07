@@ -9,11 +9,20 @@ import {
   useWizard,
   type PageAuthoring,
   type PageAuthoringStatus,
+  type PageStructuredData,
   type TocPage,
 } from "@/contexts/WizardContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { SideBySideEditor } from "./SideBySideEditor";
 import { AICoPilotPanel } from "./AICoPilotPanel";
+import {
+  ExecutiveSummaryEditor,
+  FieldGroup,
+  RoomStructuredEditor,
+  SystemStructuredEditor,
+  VisionStructuredEditor,
+} from "./StructuredPageEditors";
+import { seedStructuredForType } from "@/lib/wizardStructuredSeeds";
 
 // Step 3 — Authoring, prototype screens 8-15. Full-bleed layout:
 //   left: white pages rail (PAGES eyebrow, grouped list w/ status dots)
@@ -57,8 +66,18 @@ const STATUS_DOT_CLASS: Record<PageAuthoringStatus, string> = {
 const CONDITION_OPTIONS = ["Excellent", "Good", "Fair", "Poor", "Critical"];
 
 interface SelectedPage extends TocPage {
+  sectionKey: string;
   sectionLabel: string;
 }
+
+// Maps Step 3's local PageType onto the seed helper's argument. Appliance
+// pages read as "system" here; the seed shape is shared.
+const seedTypeFor = (pageType: PageType) =>
+  pageType === "room" || pageType === "system" || pageType === "vision"
+    ? pageType
+    : pageType === "executive_summary"
+      ? ("executive_summary" as const)
+      : null;
 
 interface Step3AuthoringProps {
   /** Dev-only (QA harness): suppress the on-mount bulk auto-draft pass. */
@@ -73,6 +92,7 @@ export function Step3Authoring({ qaMode = false }: Step3AuthoringProps) {
     setActivePageKey,
     upsertAuthoring,
     setPageSeeds,
+    setTocSections,
   } = useWizard();
   const [savingNotes, setSavingNotes] = useState(false);
 
@@ -81,7 +101,7 @@ export function Step3Authoring({ qaMode = false }: Step3AuthoringProps) {
     for (const section of state.tocSections) {
       for (const page of section.pages) {
         if (!page.selected) continue;
-        out.push({ ...page, sectionLabel: section.label });
+        out.push({ ...page, sectionKey: section.key, sectionLabel: section.label });
       }
     }
     return out;
@@ -287,6 +307,47 @@ export function Step3Authoring({ qaMode = false }: Step3AuthoringProps) {
   const updateAuthoring = (patch: Partial<PageAuthoring>) => {
     if (!state.activePageKey) return;
     upsertAuthoring(state.activePageKey, patch);
+  };
+
+  // Phase 5b — lazily seed the structured payload the first time a
+  // room / system / vision / exec-summary page becomes active. Initial
+  // values come from the Step 1 seed (specs_seed, replacement_briefing_stub,
+  // suggested_condition); pages the consultant already structured are
+  // never overwritten. Persists through the normal authoring autosave.
+  useEffect(() => {
+    if (!activePage || !state.activePageKey) return;
+    const seedType = seedTypeFor(inferPageType(activePage));
+    if (!seedType) return;
+    const existing = state.authoring[state.activePageKey];
+    if (existing?.structured) return;
+    const seed = state.pageSeeds.find(
+      (s) => s.page_key === state.activePageKey,
+    );
+    upsertAuthoring(state.activePageKey, {
+      structured: seedStructuredForType(seedType, seed),
+    });
+    // Only reseed when the active page changes; authoring updates from the
+    // seeding itself must not re-trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.activePageKey, activePage?.page_key]);
+
+  const updateStructured = (patch: Partial<PageStructuredData>) => {
+    if (!state.activePageKey) return;
+    const existing = state.authoring[state.activePageKey]?.structured ?? {};
+    updateAuthoring({ structured: { ...existing, ...patch } });
+  };
+
+  // Room Name edits rename the page across the wizard (rail, TOC, publish).
+  const renameActivePage = (title: string) => {
+    if (!state.activePageKey) return;
+    setTocSections(
+      state.tocSections.map((s) => ({
+        ...s,
+        pages: s.pages.map((p) =>
+          p.page_key === state.activePageKey ? { ...p, title } : p,
+        ),
+      })),
+    );
   };
 
   const activeBlocks = useMemo(
@@ -579,6 +640,13 @@ export function Step3Authoring({ qaMode = false }: Step3AuthoringProps) {
                 <div className="space-y-4">
                   <PageAdminEditor
                     pageType={pageType}
+                    isAppliance={(activePage.group || "")
+                      .toLowerCase()
+                      .startsWith("appliance")}
+                    structured={activeAuthoring?.structured}
+                    onChangeStructured={updateStructured}
+                    pageTitle={activePage.title}
+                    onRenamePage={renameActivePage}
                     narrative={activeNarrative}
                     observations={activeObservations}
                     onUpdateBlock={updateActiveBlock}
@@ -626,6 +694,11 @@ export function Step3Authoring({ qaMode = false }: Step3AuthoringProps) {
 
 interface PageAdminEditorProps {
   pageType: PageType;
+  isAppliance: boolean;
+  structured: PageStructuredData | undefined;
+  onChangeStructured: (patch: Partial<PageStructuredData>) => void;
+  pageTitle: string;
+  onRenamePage: (title: string) => void;
   narrative: string;
   observations: string;
   onUpdateBlock: (type: string, value: string) => void;
@@ -637,13 +710,59 @@ interface PageAdminEditorProps {
   savingNotes: boolean;
 }
 
+// The shared condition segmented control (word ratings only). Rooms show
+// it in a standalone LIFECYCLE group; systems embed it inside the
+// structured LIFECYCLE group next to lifespan + computed EOL.
+function ConditionControl({
+  condition,
+  onChangeCondition,
+}: {
+  condition: string;
+  onChangeCondition: (rating: string) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs font-sans text-hbc-grey">
+        Condition rating
+      </Label>
+      <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Condition rating">
+        {CONDITION_OPTIONS.map((opt) => {
+          const isActive = condition.toLowerCase() === opt.toLowerCase();
+          return (
+            <button
+              key={opt}
+              type="button"
+              role="radio"
+              aria-checked={isActive}
+              onClick={() => onChangeCondition(opt)}
+              className={`rounded-sm border px-3 py-2 text-xs font-sans min-h-[36px] transition-colors ${
+                isActive
+                  ? "border-hbc-navy bg-hbc-navy text-white"
+                  : "border-hbc-border bg-white text-foreground hover:bg-hbc-surface"
+              }`}
+            >
+              {opt}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // Grouped-field admin editor: gold mono group labels above white field
-// cards, prototype screens 8-15. Renders the same scaffold for every page
-// type; page-type-specific fields plug in here in a follow-up. Auto-save
-// lives at the WizardContext level — content updates flow through
-// onUpdateBlock.
+// cards, prototype screens 8-15. Per-page-type structured editors (Room /
+// System / Vision / Exec Summary) render first, followed by the shared
+// narrative / observations / notes scaffold. Auto-save lives at the
+// WizardContext level — content updates flow through onUpdateBlock and
+// onChangeStructured.
 function PageAdminEditor({
   pageType,
+  isAppliance,
+  structured,
+  onChangeStructured,
+  pageTitle,
+  onRenamePage,
   narrative,
   observations,
   onUpdateBlock,
@@ -654,24 +773,76 @@ function PageAdminEditor({
   onPersistNotes,
   savingNotes,
 }: PageAdminEditorProps) {
+  const isExec = pageType === "executive_summary";
+
   return (
     <div className="space-y-5">
-      <FieldGroup label="Narrative">
-        <div className="space-y-1.5">
-          <Label className="text-xs font-sans text-hbc-grey">
-            Page narrative
-          </Label>
-          <Textarea
-            value={narrative}
-            onChange={(e) => onUpdateBlock("narrative", e.target.value)}
-            rows={6}
-            placeholder="The big-picture summary the client reads first."
-            className="text-xs bg-white"
-          />
-        </div>
-      </FieldGroup>
+      {pageType === "room" && structured?.room && (
+        <RoomStructuredEditor
+          value={structured.room}
+          onChange={(room) => onChangeStructured({ room })}
+          roomName={pageTitle}
+          onRenameRoom={onRenamePage}
+        />
+      )}
 
-      {pageType !== "executive_summary" && (
+      {pageType === "system" && structured?.system && (
+        <SystemStructuredEditor
+          value={structured.system}
+          onChange={(system) => onChangeStructured({ system })}
+          showBriefing={!isAppliance}
+          conditionControl={
+            <ConditionControl
+              condition={condition}
+              onChangeCondition={onChangeCondition}
+            />
+          }
+        />
+      )}
+
+      {isExec && (
+        <ExecutiveSummaryEditor
+          personalNote={narrative}
+          onChangeNote={(v) => onUpdateBlock("narrative", v)}
+          topThemes={structured?.executiveSummary?.topThemes ?? ""}
+          onChangeThemes={(v) =>
+            onChangeStructured({
+              executiveSummary: {
+                ...(structured?.executiveSummary ?? {}),
+                topThemes: v,
+              },
+            })
+          }
+        />
+      )}
+
+      {!isExec && (
+        <FieldGroup label={pageType === "vision" ? "The Vision" : "Narrative"}>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-sans text-hbc-grey">
+              {pageType === "vision"
+                ? "The aspirational story of this project"
+                : "Page narrative"}
+            </Label>
+            <Textarea
+              value={narrative}
+              onChange={(e) => onUpdateBlock("narrative", e.target.value)}
+              rows={6}
+              placeholder="The big-picture summary the client reads first."
+              className="text-xs bg-white"
+            />
+          </div>
+        </FieldGroup>
+      )}
+
+      {pageType === "vision" && structured?.vision && (
+        <VisionStructuredEditor
+          value={structured.vision}
+          onChange={(vision) => onChangeStructured({ vision })}
+        />
+      )}
+
+      {!isExec && (
         <FieldGroup label="Observations">
           <div className="space-y-1.5">
             <Label className="text-xs font-sans text-hbc-grey">
@@ -688,35 +859,12 @@ function PageAdminEditor({
         </FieldGroup>
       )}
 
-      {pageType !== "executive_summary" && (
+      {!isExec && pageType !== "system" && (
         <FieldGroup label="Lifecycle">
-          <div className="space-y-1.5">
-            <Label className="text-xs font-sans text-hbc-grey">
-              Condition rating
-            </Label>
-            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Condition rating">
-              {CONDITION_OPTIONS.map((opt) => {
-                const isActive =
-                  condition.toLowerCase() === opt.toLowerCase();
-                return (
-                  <button
-                    key={opt}
-                    type="button"
-                    role="radio"
-                    aria-checked={isActive}
-                    onClick={() => onChangeCondition(opt)}
-                    className={`rounded-sm border px-3 py-2 text-xs font-sans min-h-[36px] transition-colors ${
-                      isActive
-                        ? "border-hbc-navy bg-hbc-navy text-white"
-                        : "border-hbc-border bg-white text-foreground hover:bg-hbc-surface"
-                    }`}
-                  >
-                    {opt}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <ConditionControl
+            condition={condition}
+            onChangeCondition={onChangeCondition}
+          />
         </FieldGroup>
       )}
 
@@ -748,25 +896,6 @@ function PageAdminEditor({
           </p>
         </div>
       </FieldGroup>
-    </div>
-  );
-}
-
-function FieldGroup({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-hbc-gold-readable">
-        {label}
-      </div>
-      <div className="rounded-lg border border-hbc-border bg-white p-4">
-        {children}
-      </div>
     </div>
   );
 }
