@@ -39,7 +39,11 @@
 ### Phase 2 — Client templates ✅ MERGED (resumed 2:35am; screens 23-28 pixel-verified via headless Chrome, checklist updated). Templates own page headers; blocks render flat viewer modes; em-dash sweep; price format unified; fixed invalid var(--hbc-gold) fallback bug.
 ### Phase 3 — Strategy pages ✅ MERGED (screens 29-32 pixel-verified; new StrategyTemplatePage; services register + 10-year Gantt match prototype; Concierge copy uses honest time-not-money framing per locked principle)
 ### Phase 4 — Photos/media — pending (deploy steps blocked on Supabase token)
-### Phase 5 — Admin builder visuals — IN PROGRESS (agent in isolated worktree, screens 1-20)
+### Phase 5 — Admin builder reskin ✅ MERGED (~4:20am; screens 1-20)
+- Navy wizard shell, Step 1 upload cards + findings, Step 2 TOC grids, Step 3 split editor + AI Co-Pilot panel, Step 4 sequencing + Gantt, Step 5 publish stats: pixel-verified (qa_wizard_step1..5.png in session scratchpad). Checklist rows 1-20 updated; transient states (analyzing) have no fixture.
+- Behavior preserved; flagged addition: condition segmented control writes pageSeeds.suggested_condition (the value publish already used).
+
+### Phase 5b — Per-type structured editors — IN PROGRESS (~4:25am; closes proto_08-15 gaps + Phase 1 missing-fields list; wires finishes/lifecycle/briefing/tier editors end to end into publish)
 ### Phase 6 — MCP bridge — pending (code overnight; deploy + connector = morning)
 ### Phase 7 — Migration + full QA — pending (live-DB parts blocked on credentials)
 ### Phase 8 — Beyond-prototype backlog — pending
