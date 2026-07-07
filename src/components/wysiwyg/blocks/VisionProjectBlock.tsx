@@ -15,10 +15,12 @@ interface VisionProjectBlockProps {
   onChange?: (content: VisionProjectContent) => void;
 }
 
+// Price ranges are hyphen-formatted ("$14,000 - $18,000") per locked copy
+// discipline — never the word "to", never an em-dash.
 function fmtRange(low?: number, high?: number): string {
   if (low == null && high == null) return "Pricing pending";
   const fmt = (n: number) => "$" + n.toLocaleString();
-  if (low != null && high != null) return `${fmt(low)} to ${fmt(high)}`;
+  if (low != null && high != null) return `${fmt(low)} - ${fmt(high)}`;
   if (low != null) return `from ${fmt(low)}`;
   return `up to ${fmt(high!)}`;
 }
@@ -97,7 +99,7 @@ const InvestmentTier = ({
           />
         </div>
       ) : (
-        <div className="font-display text-base mt-1.5" style={{ color: NAVY }}>
+        <div className="font-display text-lg mt-1.5" style={{ color: NAVY }}>
           {fmtRange(tier.priceLow, tier.priceHigh)}
         </div>
       )}
@@ -149,9 +151,13 @@ const VisionProjectBlock = ({ content, editable, onChange }: VisionProjectBlockP
   const defaultExecutionPath =
     "When you are ready to start, this can be executed through <strong>AK Renovations</strong>, our in-house remodeling division. AK Renovations is openly owned by Adam and is a transparent partner in the HBC ecosystem. If you would prefer a different contractor, we will connect you with a vetted HBC trade partner. The choice is always yours.";
 
+  // Viewer mode renders flat on the page background — VisionTemplatePage
+  // owns the navy hero (eyebrow, title, category/priority pills), so the
+  // block contributes only the body sections per prototype screens 27-28.
   return (
-    <div className="bg-card border border-border rounded-lg overflow-hidden">
-      {/* Hero with navy gradient */}
+    <div className={editable ? "bg-card border border-border rounded-lg overflow-hidden" : ""}>
+      {/* Hero — editable mode only; the page template owns the navy hero */}
+      {editable && (
       <div
         className="relative px-6 sm:px-8 py-7 flex flex-col justify-end min-h-[180px]"
         style={{
@@ -223,9 +229,10 @@ const VisionProjectBlock = ({ content, editable, onChange }: VisionProjectBlockP
           )}
         </div>
       </div>
+      )}
 
       {/* Body */}
-      <div className="px-6 sm:px-8 py-6 space-y-6">
+      <div className={editable ? "px-6 sm:px-8 py-6 space-y-6" : "space-y-6"}>
         {/* The Vision narrative */}
         <section>
           <SectionEyebrow>The Vision</SectionEyebrow>
@@ -296,7 +303,10 @@ const VisionProjectBlock = ({ content, editable, onChange }: VisionProjectBlockP
                   dangerouslySetInnerHTML={{ __html: content.designFeeEducationHtml }}
                 />
               )}
-              {(content.designFeeLow != null || content.designFeeHigh != null) && (
+              {/* Standalone fee line only when the education prose (which
+                  carries the range inline per prototype) is absent */}
+              {!content.designFeeEducationHtml &&
+                (content.designFeeLow != null || content.designFeeHigh != null) && (
                 <div className="mt-3 text-sm font-medium" style={{ color: NAVY }}>
                   Design phase: {fmtRange(content.designFeeLow, content.designFeeHigh)}
                 </div>
