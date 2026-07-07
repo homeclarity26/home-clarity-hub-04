@@ -7,6 +7,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { pageAuthoringToBlocks, useWizard } from "@/contexts/WizardContext";
 import type { ReportBlock } from "@/components/wysiwyg/types";
+import {
+  buildStructuredPagePayload,
+  type StructuredPageColumns,
+} from "@/lib/wizardPublishMapping";
+import type { Database } from "@/integrations/supabase/types";
+
+type ReportPageInsert = Database["public"]["Tables"]["report_pages"]["Insert"];
 import { WizardNavigation } from "./WizardNavigation";
 import { AIQualityGate } from "./AIQualityGate";
 import { IntakeUploadCard } from "./IntakeUploadCard";
@@ -103,7 +110,28 @@ export function Step5Publish() {
               is_featured: false,
               content: [],
             };
-          const pageBlocks = pageAuthoringToBlocks(authoring);
+          const pageSeed = state.pageSeeds.find(
+            (s) => s.page_key === page.page_key,
+          );
+
+          // Phase 1 structured contract: room / system / appliance / vision
+          // pages publish typed blocks (room_record, system_record +
+          // replacement_briefing, vision_project) plus structured columns,
+          // validated through src/lib/reportPageSchemas. Generic pages
+          // (information + strategy standing pages) keep the block path.
+          const structuredPayload = buildStructuredPagePayload({
+            page,
+            sectionKey: section.key,
+            sectionLabel: section.label,
+            authoring,
+            seed: pageSeed,
+            now,
+          });
+          const structured: StructuredPageColumns | null =
+            structuredPayload?.columns ?? null;
+          const pageBlocks = structuredPayload
+            ? structuredPayload.blocks
+            : pageAuthoringToBlocks(authoring);
 
           // Inject structured strategy blocks for matching pages
           const makeId = () =>
@@ -183,37 +211,61 @@ export function Step5Publish() {
 
           const sortOrder = sectionIndex * 100 + pageIndex;
 
-          // Pull structured data from page seeds (AI-generated during intake)
-          const seed = state.pageSeeds.find((s) => s.page_key === page.page_key);
-          const conditionRating = seed?.suggested_condition || null;
-          const specs = seed?.specs_seed && seed.specs_seed.length > 0
-            ? seed.specs_seed
-            : null;
-          const keyObservations = seed?.key_observations && seed.key_observations.length > 0
-            ? seed.key_observations
-            : null;
+          // Column values: structured pages come from the validated payload;
+          // generic pages fall back to the raw AI seed hints as before.
+          const conditionRating = structured
+            ? structured.condition_rating
+            : pageSeed?.suggested_condition || null;
+          const specs = structured
+            ? structured.specs
+            : pageSeed?.specs_seed && pageSeed.specs_seed.length > 0
+              ? pageSeed.specs_seed
+              : null;
+          const keyObservations = structured
+            ? structured.key_observations
+            : pageSeed?.key_observations && pageSeed.key_observations.length > 0
+              ? pageSeed.key_observations
+              : null;
 
           // Step 1 — upsert the row. onConflict on (report_id, page_key)
           // means re-publishing the same wizard run updates in place.
+          // Optional structured columns (tiers, lifecycle, maintenance,
+          // images) are only written when the wizard actually captured
+          // them so a republish never wipes data filled by other flows
+          // (e.g. photo auto-routing writes images after this).
+          const upsertRow: ReportPageInsert = {
+            report_id: state.reportId,
+            page_key: page.page_key,
+            title: page.title,
+            group_name: section.label,
+            narrative: pageBlocks as never,
+            condition_rating: conditionRating,
+            specs: specs as never,
+            key_observations: keyObservations as never,
+            status: authoring.status,
+            sort_order: sortOrder,
+            is_complete: authoring.status === "complete",
+            updated_at: now,
+          };
+          if (structured) {
+            if (structured.tiers) upsertRow.tiers = structured.tiers as never;
+            if (structured.current_age_years !== null) {
+              upsertRow.current_age_years = structured.current_age_years;
+            }
+            if (structured.expected_lifespan_years !== null) {
+              upsertRow.expected_lifespan_years =
+                structured.expected_lifespan_years;
+            }
+            if (structured.maintenance) {
+              upsertRow.maintenance = structured.maintenance as never;
+            }
+            if (structured.images) {
+              upsertRow.images = structured.images as never;
+            }
+          }
           const { error: upErr } = await supabase
             .from("report_pages")
-            .upsert(
-              {
-                report_id: state.reportId,
-                page_key: page.page_key,
-                title: page.title,
-                group_name: section.label,
-                narrative: pageBlocks as never,
-                condition_rating: conditionRating,
-                specs: specs as never,
-                key_observations: keyObservations as never,
-                status: authoring.status,
-                sort_order: sortOrder,
-                is_complete: authoring.status === "complete",
-                updated_at: now,
-              },
-              { onConflict: "report_id,page_key" },
-            );
+            .upsert(upsertRow, { onConflict: "report_id,page_key" });
           if (upErr) throw upErr;
 
           // Step 2 (running) — append a chapter_header + the page's blocks
