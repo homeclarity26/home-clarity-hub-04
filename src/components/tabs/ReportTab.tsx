@@ -12,6 +12,7 @@ import ReportHome from "@/components/portal/report/ReportHome";
 import RoomTemplatePage from "@/components/report/templates/RoomTemplatePage";
 import SystemTemplatePage from "@/components/report/templates/SystemTemplatePage";
 import VisionTemplatePage from "@/components/report/templates/VisionTemplatePage";
+import StrategyTemplatePage from "@/components/report/templates/StrategyTemplatePage";
 import FindingsTable, { type Finding } from "@/components/report/FindingsTable";
 import LifespanBar from "@/components/report/LifespanBar";
 import InvestmentSummary from "@/components/report/InvestmentSummary";
@@ -38,7 +39,7 @@ import {
 function pickTemplate(
   page: ReportPageData,
   group: PortalGroup | undefined,
-): "room" | "system" | "appliance" | "vision" | "generic" {
+): "room" | "system" | "appliance" | "vision" | "strategy" | "generic" {
   const groupId = group?.id ?? "";
   if (groupId === "appliances") return "appliance";
   if (groupId.startsWith("systems-") || groupId === "safety-detection" || groupId === "systems-and-appliances") return "system";
@@ -47,6 +48,10 @@ function pickTemplate(
     const hasVisionKey = page.id?.includes("vision");
     const hasTiers = !!(page.tiers?.essential || page.tiers?.enhanced || page.tiers?.signature);
     if (hasVisionKey || hasTiers) return "vision";
+    // Standing Strategy pages (Recurring Services, Strategy & Roadmap,
+    // Maintenance Calendar) get the strategy template: eyebrow + Cormorant
+    // H1 header owned by the template, blocks rendered flat beneath.
+    return "strategy";
   }
   return "generic";
 }
@@ -254,6 +259,36 @@ const ReportTab = ({
               onBackToHome={() => onNavigate?.("")}
             />
             <VisionTemplatePage
+              page={page}
+              group={group}
+              blocks={sortedBlocks}
+              images={images}
+              prevPage={prevPage}
+              nextPage={nextPage}
+              prevPageId={prevPageId}
+              nextPageId={nextPageId}
+              onNavigate={onNavigate}
+              propertyAddress={propertyAddress}
+              propertyId={propertyId}
+              reportId={reportId}
+            />
+          </div>
+        );
+      }
+
+      if (template === "strategy") {
+        return (
+          <div>
+            <ReportChapterNav
+              groups={reportGroups}
+              pages={reportPages}
+              activeChapter={resolvedChapter}
+              activePageId={activePageId}
+              onChapterChange={handleChapterChange}
+              onPageSelect={handlePageSelect}
+              onBackToHome={() => onNavigate?.("")}
+            />
+            <StrategyTemplatePage
               page={page}
               group={group}
               blocks={sortedBlocks}
