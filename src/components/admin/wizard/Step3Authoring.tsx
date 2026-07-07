@@ -433,7 +433,7 @@ export function Step3Authoring({ qaMode = false }: Step3AuthoringProps) {
             Pages
           </div>
           <div className="text-[11px] font-sans text-hbc-grey mt-1">
-            {reviewedCount} of {selectedPages.length} reviewed
+            {selectedPages.length} page{selectedPages.length === 1 ? "" : "s"} included
           </div>
         </div>
         <nav>

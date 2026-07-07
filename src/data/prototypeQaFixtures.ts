@@ -407,3 +407,370 @@ export const reportHomeProps = {
   propertyAddress: "The Caldwell Residence",
   completionPercent: 100,
 };
+
+// ─── Admin wizard (screens 1-20) ─────────────────────────────────────────
+// In-memory state the /dev/prototype-qa harness pushes through the REAL
+// WizardContext setters so the actual WizardShell + step components render
+// with representative Caldwell data (qaMode suppresses network calls).
+
+import type {
+  ClientFormData,
+  IntakeUploads,
+  IntakeFinding,
+  PageSeed,
+  TocSection,
+  CapitalPlan,
+  MaintenanceCalendar,
+  RecurringServicePreview,
+} from "@/contexts/WizardContext";
+
+export const wizardQaClient: Partial<ClientFormData> = {
+  fullName: "Mark and Jennifer Caldwell",
+  email: "jen@caldwell.com",
+  phone: "(330) 555-0142",
+  address: "2847 Stoneybrook Lane, Hudson",
+  city: "Hudson",
+  state: "OH",
+  zip: "44236",
+  county: "Summit County",
+  propertyName: "Caldwell Residence",
+  propertyType: "single_family",
+  relationshipType: "premium",
+  yearBuilt: "1998",
+  sqft: "5,240",
+  bedrooms: "5",
+  bathrooms: "4.5",
+  discoveryNotes:
+    "Two-plus hours on site with Mark and Jennifer. HVAC age is the top infrastructure concern; the primary bath and screened porch are the two highest-impact lifestyle upgrades. Kitchen was fully remodeled in 2017 and only needs refinement.",
+};
+
+const qaFile = (
+  id: string,
+  name: string,
+  size: number,
+  mime: string,
+) => ({
+  id,
+  name,
+  size,
+  mime,
+  storage_path: `qa/${id}/${name}`,
+  bucket: "wizard-uploads",
+});
+
+export const wizardQaUploads: IntakeUploads = {
+  transcript: [
+    qaFile("t1", "Caldwell_walkthrough_2026-04-22.txt", 32 * 1024, "text/plain"),
+  ],
+  site_notes: [qaFile("n1", "caldwell_notes.md", 8 * 1024, "text/markdown")],
+  photos: [
+    qaFile("p1", "furnace_main_serialplate.jpg", 2.1 * 1024 * 1024, "image/jpeg"),
+    qaFile("p2", "kitchen_overview.jpg", 1.8 * 1024 * 1024, "image/jpeg"),
+    qaFile("p3", "roof_south_face.jpg", 2.4 * 1024 * 1024, "image/jpeg"),
+  ],
+  hover: [qaFile("h1", "hover_measurements_3246434.pdf", 4.2 * 1024 * 1024, "application/pdf")],
+  iguide: [qaFile("g1", "iguide_caldwell_2847.pdf", 6.8 * 1024 * 1024, "application/pdf")],
+};
+
+export const wizardQaHoverUrl = "https://hover.to/model/3246434";
+export const wizardQaIguideUrl = "https://youriguide.com/caldwell_2847";
+
+export const wizardQaFindings: IntakeFinding[] = [
+  {
+    category: "spaces",
+    title: "33 Spaces Identified",
+    bullets: [
+      "Kitchen, walk-in pantry, and breakfast nook discussed at length",
+      "Primary suite: bedroom, bathroom, walk-in closet",
+      "Finished basement with home gym and sauna",
+    ],
+  },
+  {
+    category: "systems_appliances",
+    title: "11 Systems + 17 Appliances",
+    bullets: [
+      "Two Lennox furnaces, both installed 2009",
+      "Sub-Zero refrigerator, Wolf range from 2017 remodel",
+      "200-amp Square D QO panel, 1998 original",
+    ],
+  },
+  {
+    category: "vision_projects",
+    title: "6 Vision Projects",
+    bullets: [
+      "Primary bath spa conversion (Jennifer's top ask)",
+      "4-season screened porch",
+      "Kitchen counter and backsplash refresh",
+    ],
+  },
+  {
+    category: "recurring_services",
+    title: "9 Recurring Services",
+    bullets: [
+      "Lawn care, gutter cleaning, HVAC service plan",
+      "Scattered across many vendors; consolidation opportunity",
+    ],
+  },
+  {
+    category: "family_priorities",
+    title: "Family Priorities",
+    bullets: [
+      "Predictability over speed; no January furnace surprises",
+      "Design-forward finishes in the primary bath",
+    ],
+  },
+  {
+    category: "sequence_risk",
+    title: "2 Sequence Risks",
+    bullets: [
+      "Furnace: Main Floor Zone is 17 years old against a 20-year lifespan",
+      "Roof approaching year 28 of a 30-year shingle",
+    ],
+  },
+];
+
+const tocPage = (
+  page_key: string,
+  title: string,
+  group: string,
+  reason?: string,
+  is_featured = false,
+) => ({
+  page_key,
+  title,
+  group,
+  selected: true,
+  ai_recommended: true,
+  is_custom: false,
+  is_featured,
+  reason,
+});
+
+export const wizardQaTocSections: TocSection[] = [
+  {
+    key: "information",
+    label: "Information",
+    pages: [
+      tocPage("welcome-letter", "Welcome Letter from Adam", "Information", "Personal introduction"),
+      tocPage("executive-summary", "Executive Summary", "Information", "Top priorities and themes"),
+      tocPage("home-at-a-glance", "Your Home At-a-Glance", "Information", "Specs, permits, sales history"),
+      tocPage("project-vision-inventory", "Project Vision Inventory", "Information", "Everything Mark and Jennifer mentioned"),
+      tocPage("top-priorities", "Top Priorities", "Information", "3-5 highest-priority items"),
+      tocPage("how-to-use", "How to Use This Report", "Information", "Navigation guide"),
+    ],
+  },
+  {
+    key: "spaces",
+    label: "Spaces",
+    pages: [
+      tocPage("foyer", "Foyer", "Spaces"),
+      tocPage("formal-living-room", "Formal Living Room", "Spaces"),
+      tocPage("dining-room", "Dining Room", "Spaces"),
+      tocPage("kitchen", "Kitchen", "Spaces", undefined, true),
+      tocPage("walk-in-pantry", "Walk-in Pantry", "Spaces"),
+      tocPage("breakfast-nook", "Breakfast Nook", "Spaces"),
+      tocPage("family-room", "Family Room", "Spaces", undefined, true),
+      tocPage("office-study", "Office / Study", "Spaces"),
+      tocPage("mudroom", "Mudroom", "Spaces"),
+      tocPage("laundry-room", "Laundry Room", "Spaces"),
+      tocPage("powder-room", "Powder Room", "Spaces"),
+      tocPage("primary-bedroom", "Primary Bedroom", "Spaces", undefined, true),
+      tocPage("primary-bathroom", "Primary Bathroom", "Spaces", undefined, true),
+      tocPage("home-gym-sauna", "Home Gym + Sauna", "Spaces"),
+      tocPage("outdoor-kitchen", "Outdoor Kitchen", "Spaces"),
+    ],
+  },
+  {
+    key: "systems_appliances",
+    label: "Systems & Appliances",
+    pages: [
+      tocPage("furnace-main", "Furnace: Main Floor Zone", "Systems"),
+      tocPage("ac-condenser-main", "AC Condenser: Main Zone", "Systems"),
+      tocPage("water-heater", "Water Heater", "Systems"),
+      tocPage("electrical-panel", "Electrical Panel", "Systems"),
+      tocPage("sump-pump", "Sump Pump", "Systems"),
+      tocPage("roof-system", "Roof System", "Systems"),
+      tocPage("refrigerator-subzero", "Refrigerator: Sub-Zero", "Appliances"),
+      tocPage("range-wolf", "Range: Wolf", "Appliances"),
+      tocPage("washer-dryer", "Washer + Dryer", "Appliances"),
+    ],
+  },
+  {
+    key: "strategy",
+    label: "Strategy",
+    pages: [
+      tocPage("vision-primary-bath", "Vision: Primary Bath Spa Conversion", "Strategy"),
+      tocPage("vision-hvac-replacement", "Vision: HVAC Replacement", "Strategy"),
+      tocPage("vision-screened-porch", "Vision: 4-Season Screened Porch", "Strategy"),
+      tocPage("recurring-services", "Recurring Services Register", "Strategy"),
+      tocPage("capital-plan-10yr", "10-Year Capital Plan", "Strategy"),
+    ],
+  },
+];
+
+export const wizardQaPageSeeds: PageSeed[] = [
+  {
+    page_key: "kitchen",
+    title: "Kitchen",
+    group: "Spaces",
+    suggested_condition: "Excellent",
+    narrative_seed:
+      "Your kitchen was fully remodeled in 2017 with a high-end Sub-Zero, Wolf, and Cove appliance package. The space is in excellent condition overall. Quartz counters show minor edge wear at the sink. The backsplash is small-format, and Jennifer mentioned wanting a counter and backsplash refresh rather than another full remodel.",
+    key_observations: [
+      "Quartz counters: minor edge wear at sink",
+      "Sub-Zero, Wolf, Cove package from 2017 remodel",
+      "Backsplash is small-format tile; refresh candidate",
+    ],
+    specs_seed: [
+      { label: "Dimensions", value: "18 x 22" },
+      { label: "Floor sqft", value: "396" },
+      { label: "Ceiling", value: "10ft" },
+    ],
+  },
+  {
+    page_key: "primary-bathroom",
+    title: "Primary Bathroom",
+    group: "Spaces",
+    suggested_condition: "Excellent",
+    narrative_seed:
+      "Room in good overall condition. No active issues. Jennifer brought up the spa conversion explicitly during the walkthrough; the linked vision project covers the wet-room shower, heated tile floors, and digital shower system.",
+    key_observations: ["No active issues", "Linked vision project: spa conversion"],
+    specs_seed: [
+      { label: "Dimensions", value: "18 x 20" },
+      { label: "Ceiling", value: "11ft tray" },
+    ],
+  },
+  {
+    page_key: "furnace-main",
+    title: "Furnace: Main Floor Zone",
+    group: "Systems",
+    suggested_condition: "Fair",
+    priority: true,
+    narrative_seed:
+      "This system is 17 years old, with a typical lifespan of 20 years. Now is the right time to start planning replacement on your terms, not on a January night when it fails. The Replacement Briefing below tells our HVAC partner exactly what to bring on the first visit.",
+    key_observations: [
+      "Lennox SLP99V-090, installed 2009-08",
+      "Serial 5818H45821 photographed on site",
+      "Approaching end-of-life: plan replacement in year 1-2",
+    ],
+    specs_seed: [
+      { label: "Make", value: "Lennox" },
+      { label: "Model", value: "SLP99V-090" },
+      { label: "Installed", value: "2009-08" },
+    ],
+    replacement_briefing_stub: {
+      required_capacity: "90,000 BTU input, 75,000 output",
+      voltage: "120V available, 240V on adjacent circuit",
+    },
+  },
+  {
+    page_key: "roof-system",
+    title: "Roof System",
+    group: "Systems",
+    suggested_condition: "Good",
+    priority: true,
+    narrative_seed:
+      "30-year architectural shingle installed with the 1998 build. South face shows expected granule loss for its age. Budget for replacement inside the 10-year window.",
+    key_observations: ["Granule loss on south face", "Flashing sound at chimney"],
+    specs_seed: [{ label: "Age", value: "28 years" }],
+  },
+  {
+    page_key: "vision-primary-bath",
+    title: "Vision: Primary Bath Spa Conversion",
+    group: "Strategy",
+    suggested_condition: "Good",
+    narrative_seed:
+      "Remove dated soaking tub, expand shower to wet-room with linear drain, heated tile floors, digital shower system. Mark and Jennifer brought this up explicitly during the walkthrough; Jennifer especially. The vision is a more refined daily experience that fits how the family actually lives.",
+    key_observations: ["Jennifer's top lifestyle ask", "Year 1-2 priority"],
+  },
+  {
+    page_key: "vision-hvac-replacement",
+    title: "Vision: HVAC Replacement",
+    group: "Strategy",
+    narrative_seed:
+      "Both zones replaced on your schedule with high-efficiency variable-speed equipment, sized from the Hover measurements and the existing duct layout.",
+    key_observations: ["Pair with furnace end-of-life window"],
+  },
+  {
+    page_key: "vision-screened-porch",
+    title: "Vision: 4-Season Screened Porch",
+    group: "Strategy",
+    narrative_seed:
+      "Convert the rear screened porch to a true 4-season room with insulated glazing and a dedicated mini-split.",
+    key_observations: ["Year 2-5 window"],
+  },
+];
+
+export const wizardQaCapitalPlan: CapitalPlan = {
+  years: [
+    { year: 1, phase: "offense", project: "Primary Bath", ballpark_low: 78000, ballpark_high: 95000, rationale: "Jennifer's top lifestyle ask; design phase first." },
+    { year: 1, phase: "defense", project: "HVAC Replacement", ballpark_low: 22000, ballpark_high: 28000, rationale: "Both furnaces at year 17 of a 20-year lifespan." },
+    { year: 2, phase: "offense", project: "Kitchen Refresh", ballpark_low: 20000, ballpark_high: 35000, rationale: "Counters and backsplash only; 2017 remodel holds." },
+    { year: 2, phase: "expansion", project: "Screened Porch", ballpark_low: 45000, ballpark_high: 65000, rationale: "4-season conversion with dedicated mini-split." },
+    { year: 3, phase: "expansion", project: "Driveway Replacement", ballpark_low: 18000, ballpark_high: 25000, rationale: "Surface cracking; sequence after porch staging." },
+    { year: 4, phase: "defense", project: "Roof Replacement", ballpark_low: 32000, ballpark_high: 45000, rationale: "30-year shingle reaches end-of-life." },
+  ],
+  total_low: 215000,
+  total_high: 293000,
+};
+
+export const wizardQaMaintenanceCalendar: MaintenanceCalendar = {
+  winter: [
+    { task: "Furnace filter change", system: "HVAC", frequency: "Quarterly" },
+    { task: "Sump pump test", system: "Plumbing", frequency: "Annual" },
+  ],
+  spring: [
+    { task: "AC condenser service", system: "HVAC", frequency: "Annual" },
+    { task: "Gutter cleaning", system: "Exterior", frequency: "Semi-annual" },
+  ],
+  summer: [
+    { task: "Deck and porch inspection", system: "Exterior", frequency: "Annual" },
+    { task: "Irrigation check", system: "Exterior", frequency: "Annual" },
+  ],
+  fall: [
+    { task: "Furnace tune-up", system: "HVAC", frequency: "Annual" },
+    { task: "Roof and flashing inspection", system: "Roof", frequency: "Annual" },
+  ],
+};
+
+export const wizardQaRecurringServices: RecurringServicePreview[] = [
+  { category: "Grounds", service_name: "Lawn Care", vendor_name: "GreenScape Hudson", frequency: "Weekly, Apr-Oct", cost_per_visit: 65, annual_cost: 1820, hbc_managed: true },
+  { category: "HVAC", service_name: "HVAC Service Plan", vendor_name: "Summit Comfort", frequency: "Semi-annual", cost_per_visit: 189, annual_cost: 378, hbc_managed: true },
+  { category: "Exterior", service_name: "Gutter Cleaning", vendor_name: null, frequency: "Semi-annual", cost_per_visit: 220, annual_cost: 440, hbc_managed: false },
+  { category: "Pest", service_name: "Pest Control", vendor_name: "Buckeye Pest", frequency: "Quarterly", cost_per_visit: 110, annual_cost: 440, hbc_managed: false },
+  { category: "Exterior", service_name: "Window Washing", vendor_name: null, frequency: "Annual", cost_per_visit: 380, annual_cost: 380, hbc_managed: false },
+  { category: "Water", service_name: "Water Treatment Service", vendor_name: "ClearFlow", frequency: "Annual", cost_per_visit: 260, annual_cost: 260, hbc_managed: true },
+];
+
+// Default structured seeds for every spaces/systems page that doesn't have
+// a hand-written one above, so the Step 5 structured-content audit reflects
+// a report that was actually authored (matching prototype screen 20) rather
+// than flooding the gate with 20 identical blocking questions. The
+// project-vision-inventory page reads as a vision page to the audit, so it
+// carries observations too.
+const seededKeys = new Set(wizardQaPageSeeds.map((s) => s.page_key));
+for (const section of wizardQaTocSections) {
+  if (section.key !== "spaces" && section.key !== "systems_appliances") continue;
+  for (const page of section.pages) {
+    if (seededKeys.has(page.page_key)) continue;
+    wizardQaPageSeeds.push({
+      page_key: page.page_key,
+      title: page.title,
+      group: page.group,
+      suggested_condition: "Good",
+      key_observations: ["No active issues noted on the walkthrough"],
+      narrative_seed: `${page.title} is in good overall condition. No active issues noted on the walkthrough.`,
+      specs_seed: [{ label: "Reviewed", value: "2026 walkthrough" }],
+    });
+  }
+}
+wizardQaPageSeeds.push({
+  page_key: "project-vision-inventory",
+  title: "Project Vision Inventory",
+  group: "Information",
+  key_observations: [
+    "Six vision projects captured from the walkthrough conversation",
+  ],
+  narrative_seed:
+    "Every project idea Mark and Jennifer mentioned, captured in one inventory with rough sequencing.",
+});

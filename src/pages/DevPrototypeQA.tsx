@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import ReportHome from "@/components/portal/report/ReportHome";
 import RoomTemplatePage from "@/components/report/templates/RoomTemplatePage";
 import SystemTemplatePage from "@/components/report/templates/SystemTemplatePage";
@@ -21,7 +21,23 @@ import {
   roadmapPage,
   roadmapBlocks,
   reportHomeProps,
+  wizardQaClient,
+  wizardQaUploads,
+  wizardQaHoverUrl,
+  wizardQaIguideUrl,
+  wizardQaFindings,
+  wizardQaTocSections,
+  wizardQaPageSeeds,
+  wizardQaCapitalPlan,
+  wizardQaMaintenanceCalendar,
+  wizardQaRecurringServices,
 } from "@/data/prototypeQaFixtures";
+import {
+  WizardProvider,
+  useWizard,
+  type WizardStepKey,
+} from "@/contexts/WizardContext";
+import { WizardShell } from "@/components/admin/wizard/WizardShell";
 
 /**
  * Developer-only visual QA harness — renders the REAL client report
@@ -36,7 +52,13 @@ type ScenarioId =
   | "system-furnace"
   | "vision-bath"
   | "recurring-services"
-  | "strategy-roadmap";
+  | "strategy-roadmap"
+  | "wizard-step1-empty"
+  | "wizard-step1"
+  | "wizard-step2"
+  | "wizard-step3"
+  | "wizard-step4"
+  | "wizard-step5";
 
 const SCENARIOS: { id: ScenarioId; label: string; sublabel: string }[] = [
   { id: "report-home", label: "Report Home", sublabel: "Chapter navigation" },
@@ -45,7 +67,98 @@ const SCENARIOS: { id: ScenarioId; label: string; sublabel: string }[] = [
   { id: "vision-bath", label: "Vision: Primary Bath", sublabel: "Spa conversion project" },
   { id: "recurring-services", label: "Recurring Services", sublabel: "20-service register" },
   { id: "strategy-roadmap", label: "Strategy: 10-Year Plan", sublabel: "Phases + capital plan" },
+  { id: "wizard-step1-empty", label: "Wizard 1: Intake (empty)", sublabel: "Screen 1" },
+  { id: "wizard-step1", label: "Wizard 1: Intake (findings)", sublabel: "Screens 2 + 4" },
+  { id: "wizard-step2", label: "Wizard 2: TOC Proposal", sublabel: "Screens 5-7" },
+  { id: "wizard-step3", label: "Wizard 3: Page Authoring", sublabel: "Screens 8-15" },
+  { id: "wizard-step4", label: "Wizard 4: Strategy", sublabel: "Screens 16-19" },
+  { id: "wizard-step5", label: "Wizard 5: Publish", sublabel: "Screen 20" },
 ];
+
+// ─── Wizard harness ───────────────────────────────────────────────────────
+// Seeds the REAL WizardContext through its public setters (no network:
+// there is no signed-in user so autosave/persist no-op, and qaMode
+// suppresses the steps' on-mount edge-function calls), then mounts the
+// real WizardShell.
+
+interface WizardSeed {
+  step: WizardStepKey;
+  /** Screen 1 variant: client only, nothing uploaded yet. */
+  empty?: boolean;
+}
+
+function WizardSeeder({ seed, children }: { seed: WizardSeed; children: ReactNode }) {
+  const {
+    setClient,
+    setIntakeUploads,
+    setHoverUrl,
+    setIguideUrl,
+    setFindings,
+    setPageSeeds,
+    setTocSections,
+    upsertAuthoring,
+    setActivePageKey,
+    setCapitalPlan,
+    setMaintenanceCalendar,
+    setRecurringServicesPreview,
+    goToStep,
+  } = useWizard();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    setClient(wizardQaClient);
+    if (!seed.empty) {
+      for (const key of Object.keys(wizardQaUploads) as (keyof typeof wizardQaUploads)[]) {
+        setIntakeUploads(key, wizardQaUploads[key]);
+      }
+      setHoverUrl(wizardQaHoverUrl);
+      setIguideUrl(wizardQaIguideUrl);
+      setFindings(wizardQaFindings);
+      setPageSeeds(wizardQaPageSeeds);
+      setTocSections(wizardQaTocSections);
+      // Pre-author a few pages so the Step 3 rail shows mixed statuses.
+      upsertAuthoring("welcome-letter", {
+        content: [{ type: "narrative", value: "Mark, Jennifer, Olivia, and Jack: thank you for inviting me into your home." }],
+        status: "reviewed",
+      });
+      upsertAuthoring("executive-summary", {
+        content: [{ type: "narrative", value: "Your home is in excellent overall condition. The bones are solid. Your HVAC is the highest-priority infrastructure concern." }],
+        status: "reviewed",
+      });
+      setActivePageKey("kitchen");
+      setCapitalPlan(wizardQaCapitalPlan);
+      setMaintenanceCalendar(wizardQaMaintenanceCalendar);
+      setRecurringServicesPreview(wizardQaRecurringServices);
+    }
+    if (seed.step !== "intake") {
+      void goToStep(seed.step);
+    }
+    setReady(true);
+    // Seed exactly once per mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return ready ? <>{children}</> : null;
+}
+
+function WizardScenario({ seed }: { seed: WizardSeed }) {
+  return (
+    <WizardProvider>
+      <WizardSeeder seed={seed}>
+        <WizardShell qaMode />
+      </WizardSeeder>
+    </WizardProvider>
+  );
+}
+
+const WIZARD_SCENARIO_SEEDS: Partial<Record<ScenarioId, WizardSeed>> = {
+  "wizard-step1-empty": { step: "intake", empty: true },
+  "wizard-step1": { step: "intake" },
+  "wizard-step2": { step: "toc" },
+  "wizard-step3": { step: "authoring" },
+  "wizard-step4": { step: "strategy" },
+  "wizard-step5": { step: "publish" },
+};
 
 const noop = () => undefined;
 
@@ -168,6 +281,10 @@ const DevPrototypeQA = () => {
             prevPageId={null}
             nextPageId={null}
           />
+        )}
+        {WIZARD_SCENARIO_SEEDS[active] && (
+          // Key by scenario so switching remounts a fresh provider + seed.
+          <WizardScenario key={active} seed={WIZARD_SCENARIO_SEEDS[active]!} />
         )}
       </main>
     </div>
