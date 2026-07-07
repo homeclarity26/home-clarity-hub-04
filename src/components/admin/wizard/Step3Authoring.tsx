@@ -22,7 +22,17 @@ import {
   SystemStructuredEditor,
   VisionStructuredEditor,
 } from "./StructuredPageEditors";
+import {
+  ExecutiveSummaryPreview,
+  StructuredPagePreview,
+} from "./StructuredPagePreview";
 import { seedStructuredForType } from "@/lib/wizardStructuredSeeds";
+
+// "Mark and Jennifer Caldwell" → "Caldwell" for the exec-summary hero.
+const deriveFamilyName = (fullName: string): string => {
+  const parts = fullName.trim().split(/\s+/);
+  return parts.length > 0 ? parts[parts.length - 1] : "";
+};
 
 // Step 3 — Authoring, prototype screens 8-15. Full-bleed layout:
 //   left: white pages rail (PAGES eyebrow, grouped list w/ status dots)
@@ -671,12 +681,46 @@ export function Step3Authoring({ qaMode = false }: Step3AuthoringProps) {
                 </div>
               }
               preview={
-                <PageClientPreview
-                  pageTitle={activePage.title}
-                  sectionLabel={activePage.sectionLabel}
-                  condition={activeCondition}
-                  authoring={activeAuthoring}
-                />
+                pageType === "executive_summary" ? (
+                  <ExecutiveSummaryPreview
+                    familyName={deriveFamilyName(state.client.fullName)}
+                    addressLine={[state.client.address, state.client.city]
+                      .filter(Boolean)
+                      .join(" · ")}
+                    personalNote={activeNarrative}
+                    topThemes={
+                      activeAuthoring?.structured?.executiveSummary
+                        ?.topThemes ?? ""
+                    }
+                  />
+                ) : pageType === "room" ||
+                  pageType === "system" ||
+                  pageType === "vision" ? (
+                  <StructuredPagePreview
+                    pageKey={activePage.page_key}
+                    title={activePage.title}
+                    group={activePage.group}
+                    sectionKey={activePage.sectionKey}
+                    sectionLabel={activePage.sectionLabel}
+                    authoring={activeAuthoring}
+                    seed={activeSeed}
+                    fallback={
+                      <PageClientPreview
+                        pageTitle={activePage.title}
+                        sectionLabel={activePage.sectionLabel}
+                        condition={activeCondition}
+                        authoring={activeAuthoring}
+                      />
+                    }
+                  />
+                ) : (
+                  <PageClientPreview
+                    pageTitle={activePage.title}
+                    sectionLabel={activePage.sectionLabel}
+                    condition={activeCondition}
+                    authoring={activeAuthoring}
+                  />
+                )
               }
             />
           ) : (
