@@ -3,6 +3,7 @@ import ReportHome from "@/components/portal/report/ReportHome";
 import RoomTemplatePage from "@/components/report/templates/RoomTemplatePage";
 import SystemTemplatePage from "@/components/report/templates/SystemTemplatePage";
 import VisionTemplatePage from "@/components/report/templates/VisionTemplatePage";
+import StrategyTemplatePage from "@/components/report/templates/StrategyTemplatePage";
 import { reportGroups, reportPages } from "@/data/reportContent";
 import {
   kitchenGroup,
@@ -14,6 +15,11 @@ import {
   visionBathGroup,
   visionBathPage,
   visionBathBlocks,
+  strategyGroup,
+  servicesPage,
+  servicesBlocks,
+  roadmapPage,
+  roadmapBlocks,
   reportHomeProps,
 } from "@/data/prototypeQaFixtures";
 
@@ -24,13 +30,21 @@ import {
  * /dev/prototype-qa next to /dev/portal-qa.
  */
 
-type ScenarioId = "report-home" | "room-kitchen" | "system-furnace" | "vision-bath";
+type ScenarioId =
+  | "report-home"
+  | "room-kitchen"
+  | "system-furnace"
+  | "vision-bath"
+  | "recurring-services"
+  | "strategy-roadmap";
 
 const SCENARIOS: { id: ScenarioId; label: string; sublabel: string }[] = [
   { id: "report-home", label: "Report Home", sublabel: "Chapter navigation" },
   { id: "room-kitchen", label: "Room: Kitchen", sublabel: "Evolving record example" },
   { id: "system-furnace", label: "System: Furnace", sublabel: "With Replacement Briefing" },
   { id: "vision-bath", label: "Vision: Primary Bath", sublabel: "Spa conversion project" },
+  { id: "recurring-services", label: "Recurring Services", sublabel: "20-service register" },
+  { id: "strategy-roadmap", label: "Strategy: 10-Year Plan", sublabel: "Phases + capital plan" },
 ];
 
 const noop = () => undefined;
@@ -124,6 +138,30 @@ const DevPrototypeQA = () => {
             page={visionBathPage}
             group={visionBathGroup}
             blocks={visionBathBlocks}
+            images={[]}
+            prevPage={null}
+            nextPage={null}
+            prevPageId={null}
+            nextPageId={null}
+          />
+        )}
+        {active === "recurring-services" && (
+          <StrategyTemplatePage
+            page={servicesPage}
+            group={strategyGroup}
+            blocks={servicesBlocks}
+            images={[]}
+            prevPage={null}
+            nextPage={null}
+            prevPageId={null}
+            nextPageId={null}
+          />
+        )}
+        {active === "strategy-roadmap" && (
+          <StrategyTemplatePage
+            page={roadmapPage}
+            group={strategyGroup}
+            blocks={roadmapBlocks}
             images={[]}
             prevPage={null}
             nextPage={null}
