@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { pageAuthoringToBlocks, useWizard } from "@/contexts/WizardContext";
 import type { ReportBlock } from "@/components/wysiwyg/types";
 import {
+  buildExecutiveSummaryBlocks,
   buildStructuredPagePayload,
   type StructuredPageColumns,
 } from "@/lib/wizardPublishMapping";
@@ -162,9 +163,18 @@ export function Step5Publish({ qaMode = false }: Step5PublishProps) {
           });
           const structured: StructuredPageColumns | null =
             structuredPayload?.columns ?? null;
+          // Executive Summary (generic type) still publishes structured
+          // content: welcome note paragraphs + ordered top-themes list
+          // from the Step 3 exec editor (Phase 5b).
+          const execBlocks =
+            page.page_key === "executive-summary"
+              ? buildExecutiveSummaryBlocks(authoring, now)
+              : null;
           const pageBlocks = structuredPayload
             ? structuredPayload.blocks
-            : pageAuthoringToBlocks(authoring);
+            : execBlocks && execBlocks.length > 0
+              ? execBlocks
+              : pageAuthoringToBlocks(authoring);
 
           // Inject structured strategy blocks for matching pages
           const makeId = () =>

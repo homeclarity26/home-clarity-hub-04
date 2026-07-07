@@ -27,10 +27,15 @@ import {
   roomPageContentSchema,
   specItemSchema,
   systemPageContentSchema,
+  tierSetSchema,
   visionPageContentSchema,
+  type ReplacementBriefing,
+  type RoomPageContent,
   type SpecItem,
   type StructuredPageType,
+  type SystemPageContent,
   type TierSet,
+  type VisionPageContent,
 } from "@/lib/reportPageSchemas";
 
 // ─── Page-type inference ──────────────────────────────────────────────────
@@ -192,6 +197,74 @@ function readBriefingStub(
   return stub as ReplacementBriefingStub;
 }
 
+// ─── Structured-editor value cleanup (Phase 5b) ───────────────────────────
+// The Step 3 editors keep empty strings while the consultant types; publish
+// treats those as "Not yet documented" (undefined), never empty strings.
+
+function cleanString(value: string | undefined): string | undefined {
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function cleanPositive(value: number | undefined): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) && value > 0
+    ? value
+    : undefined;
+}
+
+function cleanNonNegative(value: number | undefined): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? value
+    : undefined;
+}
+
+// Validates an in-progress tier set. Only a fully-priced, fully-described
+// Essential/Enhanced/Signature triple publishes; partial tiers are worse
+// than none (locked principle: no invented pricing). Returns null when the
+// set isn't complete yet.
+export function cleanTierSet(tiers: TierSet | undefined): TierSet | null {
+  if (!tiers) return null;
+  const trim = (t: TierSet[keyof TierSet]) => ({
+    ...t,
+    description: (t?.description ?? "").trim(),
+  });
+  const candidate = {
+    essential: trim(tiers.essential),
+    enhanced: trim(tiers.enhanced),
+    signature: trim(tiers.signature),
+  };
+  const parsed = tierSetSchema.safeParse(candidate);
+  if (!parsed.success) return null;
+  // priceLow/priceHigh of 0 means "not priced yet" in the editor.
+  const priced = Object.values(parsed.data).every(
+    (t) => t.priceLow > 0 && t.priceHigh > 0,
+  );
+  return priced ? parsed.data : null;
+}
+
+// Maps the schema TierSet onto the block-level tier array shape shared by
+// replacement_briefing and vision_project (ReplacementBriefingTier).
+export function tierSetToBlockTiers(
+  tiers: TierSet,
+): Array<Record<string, unknown>> {
+  const entries: Array<[string, string]> = [
+    ["essential", "Essential"],
+    ["enhanced", "Enhanced"],
+    ["signature", "Signature"],
+  ];
+  return entries.map(([id, label]) => {
+    const tier = tiers[id as keyof TierSet];
+    return {
+      id,
+      label,
+      priceLow: tier.priceLow,
+      priceHigh: tier.priceHigh,
+      scopeHtml: escapeHtml(tier.description),
+      recommended: Boolean(tier.recommended),
+    };
+  });
+}
+
 function prettifySystemType(systemType: string | undefined): string | undefined {
   if (!systemType) return undefined;
   const cleaned = systemType.replace(/_/g, " ").trim();
@@ -253,18 +326,56 @@ export function buildStructuredPagePayload(
   if (pageType === "generic") return null;
 
   const now = input.now ?? new Date().toISOString();
+  const structured = authoring.structured;
   const { narrativeParagraphs, observationLines } = extractAuthoredText(authoring);
   const bullets =
     observationLines.length > 0 ? observationLines : seedObservations(seed);
   const conditionRating = normalizeConditionRating(seed?.suggested_condition);
-  const specs = cleanSpecs(seed);
+  const seedSpecs = cleanSpecs(seed);
 
   if (pageType === "room") {
+    const room: Partial<RoomPageContent> = structured?.room ?? {};
+    const dims = cleanString(room.dims);
+    const floorSqft = cleanPositive(room.floorSqft);
+    const ceiling = cleanString(room.ceiling);
+    const floorLevel = cleanString(room.floorLevel);
+    const finishes = {
+      wallPaint: cleanString(room.finishes?.wallPaint),
+      trimPaint: cleanString(room.finishes?.trimPaint),
+      ceilingPaint: cleanString(room.finishes?.ceilingPaint),
+      flooring: cleanString(room.finishes?.flooring),
+    };
+    const fixtures = {
+      lighting: cleanString(room.fixtures?.lighting),
+      outlets: cleanString(room.fixtures?.outlets),
+      windows: cleanString(room.fixtures?.windows),
+      doors: cleanString(room.fixtures?.doors),
+    };
+
+    // Metadata-strip specs derive from the structured dims when present
+    // (Dimensions / Floor Area / Ceiling / Level, matching the room
+    // template's plain-value strip); otherwise the AI seed specs stand.
+    const derivedSpecs: SpecItem[] = [];
+    if (dims) derivedSpecs.push({ label: "Dimensions", value: dims });
+    if (floorSqft) {
+      derivedSpecs.push({ label: "Floor Area", value: `${floorSqft} sqft` });
+    }
+    if (ceiling) derivedSpecs.push({ label: "Ceiling", value: ceiling });
+    if (floorLevel) derivedSpecs.push({ label: "Level", value: floorLevel });
+    const specs = derivedSpecs.length > 0 ? derivedSpecs : seedSpecs;
+
     // Narrative prose becomes the observations array, never a text block.
     const observations = [...narrativeParagraphs, ...bullets];
     const content = roomPageContentSchema.parse({
+      dims,
+      floorSqft,
+      ceiling,
+      floorLevel,
+      finishes,
+      fixtures,
       observations,
-      conditionRating,
+      conditionRating:
+        normalizeConditionRating(room.conditionRating) ?? conditionRating,
       specs,
       linkedVisionProjects: [],
     });
@@ -276,6 +387,18 @@ export function buildStructuredPagePayload(
         {
           roomName: page.title,
           roomGroup: sectionLabel,
+          floorLabel: content.floorLevel,
+          dimensions: content.dims,
+          floorSqft: content.floorSqft,
+          ceiling: content.ceiling,
+          wallPaint: content.finishes?.wallPaint,
+          trimPaint: content.finishes?.trimPaint,
+          ceilingPaint: content.finishes?.ceilingPaint,
+          flooring: content.finishes?.flooring,
+          lightFixtures: content.fixtures?.lighting,
+          outlets: content.fixtures?.outlets,
+          windows: content.fixtures?.windows,
+          doors: content.fixtures?.doors,
           conditionRating: content.conditionRating,
           observationsHtml: observationsHtml || undefined,
           linkedVisionProjects: [],
@@ -297,18 +420,95 @@ export function buildStructuredPagePayload(
   }
 
   if (pageType === "system" || pageType === "appliance") {
+    const system: Partial<SystemPageContent> = structured?.system ?? {};
     const stub = readBriefingStub(seed);
-    const make = stub?.unit_make?.trim() || undefined;
-    const model = stub?.unit_model?.trim() || undefined;
-    const installYear =
+    const stubInstallYear =
       typeof stub?.install_year === "number" && Number.isFinite(stub.install_year)
         ? stub.install_year
         : undefined;
-    const installDate = installYear ? String(installYear) : undefined;
-    const currentAgeYears = installYear
-      ? Math.max(0, new Date().getFullYear() - installYear)
-      : undefined;
+
+    // Structured editor values win; the Step 1 stub backfills anything the
+    // consultant hasn't touched.
+    const make = cleanString(system.make) ?? cleanString(stub?.unit_make ?? undefined);
+    const model =
+      cleanString(system.model) ?? cleanString(stub?.unit_model ?? undefined);
+    const serial = cleanString(system.serial);
+    const installDate =
+      cleanString(system.installDate) ??
+      (stubInstallYear ? String(stubInstallYear) : undefined);
+    const lifespanYears = cleanPositive(system.lifespanYears);
+    const installYear = installDate
+      ? Number.parseInt(installDate.slice(0, 4), 10)
+      : Number.NaN;
+    const currentAgeYears =
+      cleanNonNegative(system.currentAgeYears) ??
+      (Number.isFinite(installYear)
+        ? Math.max(0, new Date().getFullYear() - installYear)
+        : undefined);
+    const statusFlags = (system.statusFlags ?? [])
+      .map((f) => f.trim())
+      .filter((f) => f.length > 0);
     const observations = [...narrativeParagraphs, ...bullets];
+
+    // Replacement briefing (systems only): cleaned structured fields +
+    // a fully-priced tier set when one exists.
+    const briefingIn = system.replacementBriefing;
+    const briefingTiers =
+      pageType === "system" ? cleanTierSet(briefingIn?.tiers) : null;
+    const briefing: ReplacementBriefing | undefined =
+      pageType === "system" && briefingIn
+        ? {
+            capacity: cleanString(briefingIn.capacity),
+            voltage: cleanString(briefingIn.voltage),
+            gasLine: cleanString(briefingIn.gasLine),
+            condensate: cleanString(briefingIn.condensate),
+            ductworkNotes: cleanString(briefingIn.ductworkNotes),
+            accessNotes: cleanString(briefingIn.accessNotes),
+            tiers: briefingTiers ?? undefined,
+          }
+        : undefined;
+    const briefingHasContent = Boolean(
+      briefing &&
+        (briefing.capacity ||
+          briefing.voltage ||
+          briefing.gasLine ||
+          briefing.condensate ||
+          briefing.ductworkNotes ||
+          briefing.accessNotes ||
+          briefing.tiers),
+    );
+
+    // Spec grid rows derive from the structured identity fields (matching
+    // the system template's mono-label grid); seed specs fill any labels
+    // the structured data doesn't cover.
+    const derivedSpecs: SpecItem[] = [];
+    if (make) derivedSpecs.push({ label: "Make", value: make });
+    if (model) derivedSpecs.push({ label: "Model", value: model });
+    if (serial) derivedSpecs.push({ label: "Serial Number", value: serial });
+    if (installDate) {
+      derivedSpecs.push({ label: "Installed", value: installDate });
+    }
+    if (pageType === "system" && lifespanYears) {
+      derivedSpecs.push({
+        label: "Typical Lifespan",
+        value: `${lifespanYears} years`,
+      });
+    }
+    if (pageType === "system" && typeof currentAgeYears === "number") {
+      derivedSpecs.push({
+        label: "Current Age",
+        value: `${currentAgeYears} years`,
+      });
+    }
+    const coveredLabels =
+      /make|model|serial|install|lifespan|age/i;
+    const specs =
+      derivedSpecs.length > 0
+        ? [
+            ...derivedSpecs,
+            ...seedSpecs.filter((s) => !coveredLabels.test(s.label)),
+          ]
+        : seedSpecs;
 
     const schema =
       pageType === "appliance"
@@ -317,9 +517,18 @@ export function buildStructuredPagePayload(
     const content = schema.parse({
       make,
       model,
+      serial,
       installDate,
-      ...(pageType === "system" ? { currentAgeYears, statusFlags: [] } : {}),
-      conditionRating,
+      ...(pageType === "system"
+        ? {
+            lifespanYears,
+            currentAgeYears,
+            statusFlags,
+            replacementBriefing: briefingHasContent ? briefing : undefined,
+          }
+        : {}),
+      conditionRating:
+        normalizeConditionRating(system.conditionRating) ?? conditionRating,
       specs,
       observations,
     });
@@ -331,10 +540,14 @@ export function buildStructuredPagePayload(
         {
           systemName: page.title,
           isAppliance: pageType === "appliance",
+          status: statusFlags[0],
           conditionRating: content.conditionRating,
           make: content.make,
           model: content.model,
+          serial,
           installDate: content.installDate,
+          typicalLifespanYears:
+            pageType === "system" ? lifespanYears : undefined,
           specifications: content.specs,
           maintenanceLog: [],
           routineCareItems: [],
@@ -344,12 +557,26 @@ export function buildStructuredPagePayload(
       ),
     ];
 
-    if (pageType === "system" && stub?.needs_briefing) {
-      // Scaffold only: labels and locked copy from the block template, no
-      // invented prices. Tier pricing is Phase 5 admin-form work.
+    if (pageType === "system" && (stub?.needs_briefing || briefingHasContent)) {
+      // Template defaults carry the locked headline/intro/CTA copy; the
+      // structured briefing overlays real tier pricing plus the trade-
+      // partner detail fields (capacity, voltage, gas, condensate,
+      // ductwork, access). No invented prices: tiers only publish when
+      // the full Essential/Enhanced/Signature triple is priced.
       const briefingContent = templateDefaultContent("replacement_briefing");
       briefingContent.systemType =
-        prettifySystemType(stub.system_type) ?? page.title;
+        prettifySystemType(stub?.system_type) ?? page.title;
+      if (briefingTiers) {
+        briefingContent.tiers = tierSetToBlockTiers(briefingTiers);
+      }
+      if (briefing?.capacity) briefingContent.requiredCapacity = briefing.capacity;
+      if (briefing?.voltage) briefingContent.voltageAvailable = briefing.voltage;
+      if (briefing?.gasLine) briefingContent.gasLine = briefing.gasLine;
+      if (briefing?.condensate) briefingContent.condensate = briefing.condensate;
+      if (briefing?.ductworkNotes) {
+        briefingContent.ductworkNotes = briefing.ductworkNotes;
+      }
+      if (briefing?.accessNotes) briefingContent.accessNotes = briefing.accessNotes;
       blocks.push(makeBlock("replacement_briefing", 1, briefingContent, now));
     }
 
@@ -362,38 +589,80 @@ export function buildStructuredPagePayload(
         specs: content.specs.length > 0 ? content.specs : null,
         key_observations:
           content.observations.length > 0 ? content.observations : null,
+        tiers: briefingTiers,
         current_age_years:
           pageType === "system" && typeof currentAgeYears === "number"
             ? currentAgeYears
             : null,
+        expected_lifespan_years:
+          pageType === "system" && lifespanYears ? lifespanYears : null,
       },
     };
   }
 
   // Vision
+  const vision: Partial<VisionPageContent> = structured?.vision ?? {};
   const visionText = narrativeParagraphs.join("\n\n");
   const visionDefaults = templateDefaultContent("vision_project");
-  const executionPathHtml =
+  const defaultExecutionPathHtml =
     typeof visionDefaults.executionPathHtml === "string"
       ? visionDefaults.executionPathHtml
       : undefined;
+  const whyDesignFirst = cleanString(vision.whyDesignFirst);
+  const designPhaseWeeks = cleanPositive(vision.designPhaseWeeks);
+  const designPhaseCost = cleanNonNegative(vision.designPhaseCost);
+  const visionTiers = cleanTierSet(vision.tiers);
+  const priorityWindow = cleanString(vision.priorityWindow);
+  const category = cleanString(vision.category);
+  const executionPathHtml =
+    cleanString(vision.executionPath) ?? defaultExecutionPathHtml;
+
   const content = visionPageContentSchema.parse({
-    vision: visionText || undefined,
+    vision: cleanString(vision.vision) ?? (visionText || undefined),
+    whyDesignFirst,
+    designPhaseWeeks,
+    designPhaseCost,
+    tiers: visionTiers ?? undefined,
     executionPath: executionPathHtml,
+    priorityWindow,
+    category,
     observations: bullets,
   });
+
+  // whyDesignFirst prose carries the design-phase range inline per the
+  // prototype; when it's absent, designFeeLow lets the block render its
+  // factual "Design phase: from $X" fallback line instead.
+  const whyDesignFirstParagraphs = whyDesignFirst
+    ? whyDesignFirst
+        .split(/\n{2,}/)
+        .map((p) => p.replace(/\n/g, " ").trim())
+        .filter((p) => p.length > 0)
+    : [];
   const blocks: ReportBlock[] = [
     makeBlock(
       "vision_project",
       0,
       {
         projectTitle: page.title,
+        category: content.category,
+        priority: content.priorityWindow,
         visionNarrativeHtml:
           narrativeParagraphs.length > 0
             ? paragraphsToHtml(narrativeParagraphs)
+            : content.vision
+              ? paragraphsToHtml([content.vision])
+              : undefined,
+        designFeeEducationHtml:
+          whyDesignFirstParagraphs.length > 0
+            ? paragraphsToHtml(whyDesignFirstParagraphs)
             : undefined,
-        // Tier scaffolding from the template (ids + labels only, no prices).
-        tiers: visionDefaults.tiers ?? [],
+        designFeeLow: designPhaseCost,
+        designPhaseWeeks,
+        // Priced tiers when the full triple exists; otherwise the template
+        // scaffolding (ids + labels only, no prices).
+        tiers: visionTiers
+          ? tierSetToBlockTiers(visionTiers)
+          : (visionDefaults.tiers ?? []),
         executionPathHtml,
         akrDisclosed: true,
       },
@@ -408,8 +677,55 @@ export function buildStructuredPagePayload(
       condition_rating: conditionRating ?? null,
       key_observations:
         content.observations.length > 0 ? content.observations : null,
+      tiers: visionTiers,
     },
   };
+}
+
+// ─── Executive Summary blocks (Phase 5b, prototype screen 15) ─────────────
+// The exec summary is a "generic" page type (no structured schema), but its
+// Step 3 editor captures a welcome personal note (narrative row) and 3-5 top
+// themes. Publish renders those as real content: a welcome paragraph block
+// plus an ordered theme list, instead of one flat text dump.
+
+export function buildExecutiveSummaryBlocks(
+  authoring: PageAuthoring,
+  nowIn?: string,
+): ReportBlock[] {
+  const now = nowIn ?? new Date().toISOString();
+  const { narrativeParagraphs } = extractAuthoredText(authoring);
+  const themesRaw = authoring.structured?.executiveSummary?.topThemes ?? "";
+  const themes = themesRaw
+    .split(/\n+/)
+    .map((line) => line.replace(/^\s*(?:\d+[.)]\s*|[-•*]\s*)/, "").trim())
+    .filter((line) => line.length > 0);
+
+  const blocks: ReportBlock[] = [];
+  if (narrativeParagraphs.length > 0) {
+    blocks.push(
+      makeBlock(
+        "text",
+        blocks.length,
+        { html: paragraphsToHtml(narrativeParagraphs) },
+        now,
+      ),
+    );
+  }
+  if (themes.length > 0) {
+    blocks.push(
+      makeBlock(
+        "text",
+        blocks.length,
+        {
+          html: `<h3>Top themes</h3><ol>${themes
+            .map((t) => `<li>${escapeHtml(t)}</li>`)
+            .join("")}</ol>`,
+        },
+        now,
+      ),
+    );
+  }
+  return blocks;
 }
 
 // ─── Publish QA audit (Phase 1, commit 3) ─────────────────────────────────
