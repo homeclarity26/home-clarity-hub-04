@@ -266,9 +266,147 @@ async function persistDragChange(items: CapitalPlanItem[]) {
   );
 }
 
+// ─── Client viewer (prototype screens 31-32) ────────────────────────────
+// Flat 10-year plan: three phase cards with colored TOP borders (Defense =
+// rust, Offense = gold, Expansion = navy), a "Capital plan" heading, a
+// static Gantt (mono year headers, P1-P6 rows, gold bars with white labels,
+// cream empty cells), and a phase cost-range footer row. Per the locked
+// spec the plan is NEVER summed to a grand total. Page-level header
+// (eyebrow / H1) is owned by StrategyTemplatePage.
+
+const VIEWER_PHASE_ACCENTS: Record<CapitalPlanPhase, string> = {
+  defense: "hsl(var(--hbc-rust))",
+  offense: "hsl(var(--hbc-gold))",
+  expansion: "hsl(var(--hbc-navy))",
+};
+
+const CapitalPlanViewer = ({ content }: { content: CapitalPlanContent }) => {
+  const items = content.items ?? [];
+  const startYear = content.startYear ?? new Date().getFullYear();
+  const years = Array.from({ length: HORIZON_YEARS }, (_, i) => startYear + i);
+  const phaseCards = content.phaseCards ?? [];
+  const phaseFooter = content.phaseFooter ?? [];
+  const gridTemplate = `44px repeat(${HORIZON_YEARS}, 1fr)`;
+
+  return (
+    <div className="space-y-7" data-block-type="capital_plan">
+      {/* Phase cards */}
+      {phaseCards.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {phaseCards.map((card) => (
+            <div
+              key={card.title}
+              className="bg-white border border-border rounded-lg p-5"
+              style={{ borderTop: `3px solid ${VIEWER_PHASE_ACCENTS[card.phase]}` }}
+            >
+              <div
+                className="font-mono text-[10px] uppercase tracking-[0.15em] mb-1.5"
+                style={{ color: VIEWER_PHASE_ACCENTS[card.phase] }}
+              >
+                {card.yearLabel}
+              </div>
+              <div className="font-display text-2xl text-primary mb-3">{card.title}</div>
+              <ul className="space-y-1.5">
+                {card.bullets.map((b, i) => (
+                  <li key={i} className="flex gap-2 text-[13px] text-foreground leading-snug">
+                    <span aria-hidden className="text-accent">·</span>
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Capital plan Gantt */}
+      <div>
+        <h2 className="font-display text-[26px] text-primary mb-4">
+          {content.ganttHeading ?? "Capital plan"}
+        </h2>
+        <div className="bg-white border border-border rounded-lg p-5 overflow-x-auto">
+          <div style={{ minWidth: 760 }}>
+            {/* Year header row */}
+            <div className="grid gap-1.5 mb-2" style={{ gridTemplateColumns: gridTemplate }}>
+              <div />
+              {years.map((y) => (
+                <div
+                  key={y}
+                  className="font-mono text-[10px] text-center text-muted-foreground py-1"
+                >
+                  {y}
+                </div>
+              ))}
+            </div>
+
+            {/* Project rows */}
+            {items.map((item, i) => (
+              <div
+                key={item.id ?? `${item.projectName}-${i}`}
+                className="grid gap-1.5 mb-1.5 items-center"
+                style={{ gridTemplateColumns: gridTemplate }}
+              >
+                <div className="font-mono text-[10px] text-muted-foreground pr-2">
+                  P{i + 1}
+                </div>
+                {years.map((y) => {
+                  const inSpan = y >= item.yearStart && y <= item.yearEnd;
+                  const isStart = y === item.yearStart;
+                  return (
+                    <div
+                      key={y}
+                      className={`h-8 rounded relative ${inSpan ? "bg-hbc-gold" : "bg-card"}`}
+                    >
+                      {isStart && (
+                        <div className="absolute inset-0 flex items-center pl-2 text-[10px] font-medium text-white whitespace-nowrap overflow-hidden">
+                          {item.projectName}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+
+            {/* Phase cost-range footer — per-phase ranges only, never a grand total */}
+            {phaseFooter.length > 0 && (
+              <>
+                <div className="h-px bg-border my-4" />
+                <div className="grid grid-cols-3 gap-4">
+                  {phaseFooter.map((cell) => (
+                    <div key={cell.label}>
+                      <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-1">
+                        {cell.label}
+                      </div>
+                      <div className="text-sm text-primary">{cell.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Main block ─────────────────────────────────────────────────────────
 
-const CapitalPlanBlock = ({ content, editable, onChange }: CapitalPlanBlockProps) => {
+const CapitalPlanBlock = ({ content, editable, onChange, reportId, propertyId }: CapitalPlanBlockProps) => {
+  if (!editable) return <CapitalPlanViewer content={content} />;
+  return (
+    <CapitalPlanEditor
+      content={content}
+      editable
+      onChange={onChange}
+      reportId={reportId}
+      propertyId={propertyId}
+    />
+  );
+};
+
+const CapitalPlanEditor = ({ content, editable, onChange }: CapitalPlanBlockProps) => {
   const update = (patch: Partial<CapitalPlanContent>) => onChange?.({ ...content, ...patch });
   const items = content.items ?? [];
 
