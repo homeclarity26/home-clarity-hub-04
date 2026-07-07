@@ -43,7 +43,7 @@
 - Navy wizard shell, Step 1 upload cards + findings, Step 2 TOC grids, Step 3 split editor + AI Co-Pilot panel, Step 4 sequencing + Gantt, Step 5 publish stats: pixel-verified (qa_wizard_step1..5.png in session scratchpad). Checklist rows 1-20 updated; transient states (analyzing) have no fixture.
 - Behavior preserved; flagged addition: condition segmented control writes pageSeeds.suggested_condition (the value publish already used).
 
-### Phase 5b — Per-type structured editors — IN PROGRESS (~4:25am; closes proto_08-15 gaps + Phase 1 missing-fields list; wires finishes/lifecycle/briefing/tier editors end to end into publish)
+### Phase 5b — Per-type structured editors — IN PROGRESS (re-dispatched Tue 7:35pm; the 4:30am agent died at spawn on a second session-limit hit, no work lost; closes proto_08-15 gaps + Phase 1 missing-fields list). NOTE Tue evening: found and deleted untracked supabase/config.toml.backup in the main checkout containing the FORBIDDEN ref abarpsxwglxuessimrkk (drift landmine); live supabase/config.toml verified on approved ref.
 ### Phase 6 — MCP bridge — pending (code overnight; deploy + connector = morning)
 ### Phase 7 — Migration + full QA — pending (live-DB parts blocked on credentials)
 ### Phase 8 — Beyond-prototype backlog — pending
