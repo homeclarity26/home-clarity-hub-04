@@ -36,8 +36,8 @@
 - Merged `main` into branch (security remediation #205 + `scripts/backfill-page-structured-data.ts` from #204, useful for Phase 7).
 
 ### Phase 1 — Structured content contract ✅ MERGED (3877f8b) (agent in isolated worktree)
-### Phase 2 — Client report templates — pending
-### Phase 3 — Strategy pages — pending
+### Phase 2 — Client templates ✅ MERGED (resumed 2:35am; screens 23-28 pixel-verified via headless Chrome, checklist updated). Templates own page headers; blocks render flat viewer modes; em-dash sweep; price format unified; fixed invalid var(--hbc-gold) fallback bug.
+### Phase 3 — Strategy pages — IN PROGRESS (agent in worktree, screens 29-32)
 ### Phase 4 — Photos/media — pending (deploy steps blocked on Supabase token)
 ### Phase 5 — Admin builder visuals — IN PROGRESS (agent in isolated worktree, screens 1-20)
 ### Phase 6 — MCP bridge — pending (code overnight; deploy + connector = morning)
@@ -65,7 +65,7 @@ Account usage limit hit ~22:45 Mon; resets Tue 2:20am ET. All three in-flight ag
 - ✅ Phase 0 baseline + 38-screen checklist (docs/VISUAL_QA_CHECKLIST.md)
 - ✅ Phase 0.5 /dev/prototype-qa harness (real templates + Caldwell fixtures, no auth needed)
 - ✅ Phase 1 structured content contract (schemas + structured publish + QA gate + legacy read-path upgrade), 30/30 tests, build+tsc clean
-- ⛔ Phase 2 (screens 23-28), Phase 3 (29-32), Phase 5 (1-20): NOT started in code; full agent briefs exist in the session transcript; gap lists are in this report + checklist
+- (superseded 3:15am: Phase 2 done+merged; Phase 3 running) ⛔ Phase 5 (1-20): NOT started in code; full agent briefs exist in the session transcript; gap lists are in this report + checklist
 - Pending after those: Phase 4 (photos/media), Phase 6 (MCP server+skills), Phase 7 (backfill via scripts/backfill-page-structured-data.ts from #204 + full QA), Phase 8 (backlog)
 
 ### Resume instructions (for the 2:25am wakeup or any fresh session)
