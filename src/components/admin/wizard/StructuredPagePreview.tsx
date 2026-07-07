@@ -1,4 +1,10 @@
-import { useMemo, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import RoomTemplatePage from "@/components/report/templates/RoomTemplatePage";
 import SystemTemplatePage from "@/components/report/templates/SystemTemplatePage";
 import VisionTemplatePage from "@/components/report/templates/VisionTemplatePage";
@@ -15,6 +21,51 @@ import type { PortalGroup } from "@/hooks/useClientPortal";
 // publish time and feeds the resulting typed blocks into the REAL client
 // templates (RoomTemplatePage / SystemTemplatePage / VisionTemplatePage),
 // so the preview is the publish pipeline, not a mock.
+
+// The client templates are designed for a full-width portal viewport; the
+// preview pane is narrower. Render them at a representative client width
+// and scale the whole page down to fit the pane (a live miniature, exactly
+// like the prototype's CLIENT PREVIEW column). Layout height is measured
+// pre-transform, so the wrapper reserves the scaled height with no clipped
+// or clamped prose.
+const PREVIEW_BASE_WIDTH = 640;
+
+function ScaledClientPreview({ children }: { children: ReactNode }) {
+  const outerRef = useRef<HTMLDivElement | null>(null);
+  const innerRef = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState(1);
+  const [height, setHeight] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    const measure = () => {
+      const paneWidth = outerRef.current?.clientWidth ?? PREVIEW_BASE_WIDTH;
+      const nextScale = Math.min(1, paneWidth / PREVIEW_BASE_WIDTH);
+      const layoutHeight = innerRef.current?.offsetHeight ?? 0;
+      setScale(nextScale);
+      setHeight(layoutHeight > 0 ? layoutHeight * nextScale : undefined);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    if (outerRef.current) observer.observe(outerRef.current);
+    if (innerRef.current) observer.observe(innerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={outerRef} style={{ height }}>
+      <div
+        ref={innerRef}
+        style={{
+          width: PREVIEW_BASE_WIDTH,
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
 
 interface StructuredPagePreviewProps {
   pageKey: string;
@@ -91,24 +142,28 @@ export function StructuredPagePreview({
 
   return (
     <div className="rounded-lg bg-background shadow-hbc-sm overflow-hidden border border-hbc-border">
-      {pageType === "room" && <RoomTemplatePage page={basePage} {...shared} />}
-      {(pageType === "system" || pageType === "appliance") && (
-        <SystemTemplatePage
-          page={
-            {
-              ...basePage,
-              expected_lifespan_years:
-                columns.expected_lifespan_years ?? undefined,
-              current_age_years: columns.current_age_years ?? undefined,
-            } as ReportPageData
-          }
-          simplified={pageType === "appliance"}
-          {...shared}
-        />
-      )}
-      {pageType === "vision" && (
-        <VisionTemplatePage page={basePage} {...shared} />
-      )}
+      <ScaledClientPreview>
+        {pageType === "room" && (
+          <RoomTemplatePage page={basePage} {...shared} />
+        )}
+        {(pageType === "system" || pageType === "appliance") && (
+          <SystemTemplatePage
+            page={
+              {
+                ...basePage,
+                expected_lifespan_years:
+                  columns.expected_lifespan_years ?? undefined,
+                current_age_years: columns.current_age_years ?? undefined,
+              } as ReportPageData
+            }
+            simplified={pageType === "appliance"}
+            {...shared}
+          />
+        )}
+        {pageType === "vision" && (
+          <VisionTemplatePage page={basePage} {...shared} />
+        )}
+      </ScaledClientPreview>
     </div>
   );
 }

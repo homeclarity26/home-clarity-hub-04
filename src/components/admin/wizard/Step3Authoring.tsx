@@ -684,9 +684,14 @@ export function Step3Authoring({ qaMode = false }: Step3AuthoringProps) {
                 pageType === "executive_summary" ? (
                   <ExecutiveSummaryPreview
                     familyName={deriveFamilyName(state.client.fullName)}
-                    addressLine={[state.client.address, state.client.city]
-                      .filter(Boolean)
-                      .join(" · ")}
+                    addressLine={
+                      state.client.city &&
+                      !state.client.address
+                        .toLowerCase()
+                        .includes(state.client.city.toLowerCase())
+                        ? `${state.client.address} · ${state.client.city}`
+                        : state.client.address
+                    }
                     personalNote={activeNarrative}
                     topThemes={
                       activeAuthoring?.structured?.executiveSummary
