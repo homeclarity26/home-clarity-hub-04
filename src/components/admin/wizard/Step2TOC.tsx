@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Loader2, Sparkles, Star, Plus, AlertCircle } from "lucide-react";
+import { Loader2, Sparkles, Star, Plus, AlertCircle, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -11,15 +9,18 @@ import {
   type TocSection,
   type TocSectionKey,
 } from "@/contexts/WizardContext";
-import { WizardNavigation } from "./WizardNavigation";
 import { CustomPageDialog } from "./CustomPageDialog";
 import { CustomSectionDialog } from "./CustomSectionDialog";
+import { WizardStepHeader } from "./WizardShell";
 
-// Step 2 — TOC Proposal. Four canonical sections (Information / Spaces /
-// Systems & Appliances / Strategy) plus any custom sections the admin has
-// added. Source: recommend-report-pages (E8 already returns four-section
-// grouping). Toggling, featuring, and add-custom flows are all local-state
-// — the actual report_pages INSERTs land on Step 2 → Step 3 transition.
+// Step 2 — TOC Proposal, prototype screens 5-7. Four canonical sections
+// (Information / Spaces / Systems & Appliances / Strategy) plus any custom
+// sections the admin has added: section summary cards up top, then a
+// 3-col grid of checkbox page cards per section (gold border when
+// included). Source: recommend-report-pages (E8 already returns
+// four-section grouping). Toggling, featuring, and add-custom flows are
+// all local-state — the actual report_pages INSERTs land on Step 2 →
+// Step 3 transition.
 
 interface CanonicalSection {
   key: TocSectionKey;
@@ -210,43 +211,86 @@ export function Step2TOC() {
   };
 
   return (
-    <div className="space-y-5">
-      <Card className="p-6 space-y-3">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <h3 className="text-base font-sans font-semibold text-foreground">
-              Adjust which pages you want to include
-            </h3>
-            <p className="text-xs font-sans text-muted-foreground mt-1">
-              We grouped your report into four sections. Toggle pages, mark
-              favorites with the star, or add a custom page or section.
-            </p>
-          </div>
-          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-            {totalSelected} pages selected
-          </div>
-        </div>
-        {state.tocReasoning && (
-          <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/[0.04] px-3 py-2">
-            <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" aria-hidden />
-            <p className="text-xs font-sans text-foreground">{state.tocReasoning}</p>
-          </div>
-        )}
-        {error && (
-          <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2">
-            <AlertCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" aria-hidden />
-            <p className="text-xs font-sans text-destructive">{error}</p>
-          </div>
-        )}
-      </Card>
+    <div className="space-y-6">
+      <WizardStepHeader
+        step={2}
+        title="Proposed Table of Contents"
+        description={`The AI proposed every page based on what it found in the intake. Toggle off anything you don't want, add custom pages, or rearrange. ${totalSelected} page${totalSelected === 1 ? "" : "s"} currently included.`}
+        actions={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => goToStep("intake")}
+              className="min-h-[44px] border-hbc-border bg-white text-hbc-navy"
+            >
+              ← Back
+            </Button>
+            <Button
+              type="button"
+              onClick={handleContinue}
+              disabled={loading || totalSelected === 0}
+              className="min-h-[44px] bg-hbc-navy text-white hover:bg-[hsl(var(--hbc-navy)/0.92)]"
+            >
+              Approve & Author Pages →
+            </Button>
+          </>
+        }
+      />
 
+      {state.tocReasoning && (
+        <div className="flex items-start gap-2 rounded-md border border-hbc-border bg-white px-4 py-3">
+          <Sparkles className="w-4 h-4 text-hbc-gold-readable mt-0.5 shrink-0" aria-hidden />
+          <p className="text-xs font-sans text-foreground">{state.tocReasoning}</p>
+        </div>
+      )}
+      {error && (
+        <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3">
+          <AlertCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" aria-hidden />
+          <p className="text-xs font-sans text-destructive">{error}</p>
+        </div>
+      )}
+
+      {loading && (
+        <div className="rounded-lg border border-hbc-border bg-white p-8 flex items-center justify-center gap-2 text-xs font-sans text-hbc-grey">
+          <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+          Loading recommendations...
+        </div>
+      )}
+
+      {/* Section summary cards */}
+      {!loading && state.tocSections.length > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {state.tocSections.map((section, i) => {
+            const selected = section.pages.filter((p) => p.selected).length;
+            return (
+              <div
+                key={section.key}
+                className="rounded-lg border border-hbc-border bg-white p-4"
+              >
+                <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-hbc-gold-readable">
+                  Section {i + 1}
+                </div>
+                <div className="font-display text-lg text-hbc-navy mt-1 leading-tight">
+                  {section.label}
+                </div>
+                <div className="text-[11px] font-sans text-hbc-grey mt-1">
+                  {selected} of {section.pages.length} pages included
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Bulk selection helpers */}
       {!loading && state.tocSections.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="min-h-[36px] text-[11px]"
+            className="min-h-[36px] text-[11px] border-hbc-border bg-white"
             onClick={() => {
               setTocSections(
                 state.tocSections.map((s) => ({
@@ -262,7 +306,7 @@ export function Step2TOC() {
             type="button"
             variant="outline"
             size="sm"
-            className="min-h-[36px] text-[11px]"
+            className="min-h-[36px] text-[11px] border-hbc-border bg-white"
             onClick={() => {
               setTocSections(
                 state.tocSections.map((s) => ({
@@ -281,7 +325,7 @@ export function Step2TOC() {
             type="button"
             variant="outline"
             size="sm"
-            className="min-h-[36px] text-[11px]"
+            className="min-h-[36px] text-[11px] border-hbc-border bg-white"
             onClick={() => {
               setTocSections(
                 state.tocSections.map((s) => ({
@@ -296,27 +340,20 @@ export function Step2TOC() {
         </div>
       )}
 
-      {loading && (
-        <Card className="p-8 flex items-center justify-center gap-2 text-xs font-sans text-muted-foreground">
-          <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-          Loading recommendations...
-        </Card>
-      )}
-
       {!loading &&
         state.tocSections.map((section) => {
           const selected = section.pages.filter((p) => p.selected).length;
           const isCanonical = CANONICAL_SECTIONS.some((c) => c.key === section.key);
           return (
-            <Card key={section.key} className="p-5 space-y-3">
-              <div className="flex items-start justify-between gap-3 flex-wrap">
-                <div>
-                  <h4 className="text-sm font-sans font-semibold text-foreground">
+            <section key={section.key} className="space-y-3">
+              <div className="flex items-end justify-between gap-3 flex-wrap">
+                <div className="flex items-baseline gap-3">
+                  <h4 className="font-display text-2xl text-hbc-navy">
                     {section.label}
                   </h4>
-                  <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                    {selected} of {section.pages.length} selected
-                  </p>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-hbc-gold-readable">
+                    {selected} included
+                  </span>
                 </div>
                 {isCanonical && (
                   <Button
@@ -327,51 +364,39 @@ export function Step2TOC() {
                       setCustomPageSection(section.key);
                       setCustomPageOpen(true);
                     }}
-                    className="min-h-[44px]"
+                    className="min-h-[36px] text-[11px] border-hbc-border bg-white"
                   >
-                    <Plus className="w-4 h-4 mr-1" aria-hidden />
+                    <Plus className="w-3.5 h-3.5 mr-1" aria-hidden />
                     Add custom page
                   </Button>
                 )}
               </div>
               {section.pages.length === 0 ? (
-                <p className="text-xs font-sans text-muted-foreground">
+                <p className="text-xs font-sans text-hbc-grey">
                   No pages in this section yet. Use Add custom page to add one.
                 </p>
               ) : (
-                <ul className="space-y-1.5">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {section.pages.map((page) => (
-                    <li
+                    <div
                       key={page.page_key}
-                      className="flex items-center gap-3 rounded-md border border-border bg-background px-3 py-2"
+                      className={`flex items-start gap-3 rounded-md border bg-white px-4 py-3 ${
+                        page.selected ? "border-hbc-gold" : "border-hbc-border"
+                      }`}
                     >
-                      <Switch
-                        checked={page.selected}
-                        onCheckedChange={() => togglePage(page.page_key)}
-                        aria-label={`Toggle ${page.title}`}
-                      />
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-sans text-foreground truncate">
+                        <div className="text-sm font-sans font-semibold text-hbc-navy">
                           {page.title}
                         </div>
-                        {page.reason && (
-                          <div className="text-[11px] font-sans text-muted-foreground truncate">
-                            {page.reason}
+                        {(page.is_featured || page.reason) && (
+                          <div className="text-[11px] font-sans text-hbc-grey mt-0.5">
+                            {page.is_featured ? "Featured" : page.reason}
                           </div>
                         )}
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
-                        {page.ai_recommended && (
-                          <span
-                            className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider text-primary"
-                            title="AI recommended"
-                          >
-                            <Sparkles className="w-3 h-3" aria-hidden />
-                            AI
-                          </span>
-                        )}
                         {page.is_custom && (
-                          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[9px] font-mono uppercase tracking-wider text-muted-foreground">
                             Custom
                           </span>
                         )}
@@ -383,19 +408,35 @@ export function Step2TOC() {
                           aria-label={
                             page.is_featured ? "Unfeature page" : "Feature page"
                           }
-                          className="min-h-[36px] min-w-[36px]"
+                          className="min-h-[36px] min-w-[36px] px-1"
                         >
                           <Star
-                            className={`w-4 h-4 ${page.is_featured ? "fill-primary text-primary" : "text-muted-foreground"}`}
+                            className={`w-4 h-4 ${page.is_featured ? "fill-hbc-gold text-hbc-gold" : "text-hbc-grey/50"}`}
                             aria-hidden
                           />
                         </Button>
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={page.selected}
+                          aria-label={`Toggle ${page.title}`}
+                          onClick={() => togglePage(page.page_key)}
+                          className={`flex h-6 w-6 items-center justify-center rounded-sm border transition-colors ${
+                            page.selected
+                              ? "border-hbc-gold bg-hbc-gold text-white"
+                              : "border-hbc-border bg-white"
+                          }`}
+                        >
+                          {page.selected && (
+                            <Check className="h-4 w-4" aria-hidden />
+                          )}
+                        </button>
                       </div>
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
-            </Card>
+            </section>
           );
         })}
 
@@ -405,19 +446,13 @@ export function Step2TOC() {
             type="button"
             variant="outline"
             onClick={() => setCustomSectionOpen(true)}
-            className="min-h-[44px]"
+            className="min-h-[44px] border-hbc-border bg-white"
           >
             <Plus className="w-4 h-4 mr-1" aria-hidden />
             Add custom section
           </Button>
         </div>
       )}
-
-      <WizardNavigation
-        onBack={() => goToStep("intake")}
-        onNext={handleContinue}
-        nextDisabled={loading || totalSelected === 0}
-      />
 
       <CustomPageDialog
         open={customPageOpen}

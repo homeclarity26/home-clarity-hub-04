@@ -1,29 +1,29 @@
 import { useRef, useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Upload,
   X,
-  FileText,
-  Image as ImageIcon,
-  FileAudio,
-  FileVideo,
-  File,
+  Check,
   Link as LinkIcon,
   Loader2,
   AlertCircle,
+  Plus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWizard, type IntakeFileRef } from "@/contexts/WizardContext";
 import { toast } from "@/hooks/use-toast";
 
-// Per-card intake control. Files are uploaded to the private
-// `wizard-uploads` bucket immediately on add — never held only in React
-// state — so a crash, refresh, or 500 from the analyzer doesn't lose the
-// recording the consultant just spent 90 minutes capturing.
+// Per-card intake control, prototype screens 1-2: white card with title +
+// muted subtitle and a full-width "+ Add" outline button; once a file is
+// in, the card border flips gold, a green "UPLOADED" mono pill appears,
+// and each file renders as a cream chip with a gold left edge.
+//
+// Files are uploaded to the private `wizard-uploads` bucket immediately on
+// add — never held only in React state — so a crash, refresh, or 500 from
+// the analyzer doesn't lose the recording the consultant just spent 90
+// minutes capturing.
 //
 // Path layout: {creator_id}/{draft_id}/{card_key}/{file_id}-{filename}.
 // The first segment matches storage RLS so creators only ever touch
@@ -52,14 +52,6 @@ interface IntakeUploadCardProps {
     placeholder?: string;
   };
 }
-
-const fileIcon = (mime: string) => {
-  if (mime.startsWith("image/")) return ImageIcon;
-  if (mime.startsWith("audio/")) return FileAudio;
-  if (mime.startsWith("video/")) return FileVideo;
-  if (mime === "application/pdf") return FileText;
-  return File;
-};
 
 const fmtSize = (n: number): string => {
   if (n < 1024) return `${n} B`;
@@ -165,50 +157,55 @@ export function IntakeUploadCard({
     onChange(files.filter((f) => f.id !== file.id));
   };
 
+  const hasFiles = files.length > 0;
+
   return (
-    <Card className="p-4 space-y-3">
+    <div
+      className={`rounded-lg border bg-white p-5 space-y-3 ${
+        hasFiles
+          ? "border-hbc-gold"
+          : "border-hbc-border"
+      }`}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => {
+        e.preventDefault();
+        void handleAdd(e.dataTransfer?.files ?? null);
+      }}
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h4 className="text-sm font-sans font-semibold text-foreground">
+          <h4 className="text-sm font-sans font-semibold text-hbc-navy">
             {title}
           </h4>
-          <p className="text-xs font-sans text-muted-foreground mt-0.5">
+          <p className="text-xs font-sans text-hbc-grey mt-0.5">
             {description}
           </p>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => inputRef.current?.click()}
-          disabled={busy}
-          className="min-h-[44px] shrink-0"
-        >
-          {busy ? (
-            <Loader2 className="w-4 h-4 mr-1.5 animate-spin" aria-hidden />
-          ) : (
-            <Upload className="w-4 h-4 mr-1.5" aria-hidden />
-          )}
-          {busy ? "Uploading..." : "Add files"}
-        </Button>
-        <input
-          ref={inputRef}
-          type="file"
-          multiple
-          accept={accept}
-          className="hidden"
-          onChange={(e) => {
-            void handleAdd(e.target.files);
-            // Reset so re-adding the same filename works.
-            if (inputRef.current) inputRef.current.value = "";
-          }}
-        />
+        {hasFiles && (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-sm bg-emerald-50 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-emerald-700">
+            <Check className="h-3 w-3" aria-hidden />
+            Uploaded
+          </span>
+        )}
       </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        accept={accept}
+        className="hidden"
+        onChange={(e) => {
+          void handleAdd(e.target.files);
+          // Reset so re-adding the same filename works.
+          if (inputRef.current) inputRef.current.value = "";
+        }}
+      />
 
       {url && (
         <div className="space-y-1.5">
-          <Label className="text-xs font-sans flex items-center gap-1.5">
-            <LinkIcon className="w-3.5 h-3.5 text-muted-foreground" aria-hidden />
+          <Label className="text-xs font-sans flex items-center gap-1.5 text-hbc-grey">
+            <LinkIcon className="w-3.5 h-3.5" aria-hidden />
             {url.label}
           </Label>
           <Input
@@ -216,14 +213,14 @@ export function IntakeUploadCard({
             value={url.value}
             onChange={(e) => url.onChange(e.target.value)}
             placeholder={url.placeholder ?? "https://"}
-            className="text-xs"
+            className="text-xs bg-white"
           />
           {url.value && (
             <a
               href={url.value}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[11px] font-mono text-accent hover:underline break-all"
+              className="text-[11px] font-mono text-hbc-gold-readable hover:underline break-all"
             >
               Open link →
             </a>
@@ -238,51 +235,52 @@ export function IntakeUploadCard({
         </div>
       )}
 
-      {files.length === 0 ? (
-        <div
-          className="rounded-md border border-dashed border-border bg-muted/30 px-4 py-6 text-xs font-sans text-muted-foreground text-center"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            void handleAdd(e.dataTransfer?.files ?? null);
-          }}
-        >
-          Drop files here, or click Add files
-        </div>
-      ) : (
+      {hasFiles && (
         <ul className="space-y-1.5">
-          {files.map((f) => {
-            const Icon = fileIcon(f.mime);
-            return (
-              <li
-                key={f.id}
-                className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2"
-              >
-                <Icon className="w-4 h-4 shrink-0 text-muted-foreground" aria-hidden />
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-sans font-medium text-foreground truncate">
-                    {f.name}
-                  </div>
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                    {fmtSize(f.size)}
-                    {f.storage_path ? " • saved" : " • pending"}
-                  </div>
+          {files.map((f) => (
+            <li
+              key={f.id}
+              className="flex items-center gap-2 rounded-sm border-l-2 border-hbc-gold bg-hbc-surface px-3 py-2"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-sans font-semibold text-hbc-navy truncate">
+                  {f.name}
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => void handleRemove(f)}
-                  className="min-h-[36px] min-w-[36px]"
-                  aria-label={`Remove ${f.name}`}
-                >
-                  <X className="w-4 h-4" aria-hidden />
-                </Button>
-              </li>
-            );
-          })}
+                <div className="text-[10px] font-sans text-hbc-grey mt-0.5">
+                  {fmtSize(f.size)}
+                  {f.storage_path ? " · saved" : " · pending"}
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => void handleRemove(f)}
+                className="min-h-[36px] min-w-[36px] text-hbc-grey"
+                aria-label={`Remove ${f.name}`}
+              >
+                <X className="w-4 h-4" aria-hidden />
+              </Button>
+            </li>
+          ))}
         </ul>
       )}
-    </Card>
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => inputRef.current?.click()}
+        disabled={busy}
+        className="min-h-[44px] w-full border-hbc-border text-hbc-navy"
+      >
+        {busy ? (
+          <Loader2 className="w-4 h-4 mr-1.5 animate-spin" aria-hidden />
+        ) : (
+          <Plus className="w-4 h-4 mr-1.5" aria-hidden />
+        )}
+        {busy ? "Uploading..." : hasFiles ? "Add more" : "Add"}
+      </Button>
+    </div>
   );
 }
