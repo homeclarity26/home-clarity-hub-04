@@ -1,12 +1,11 @@
-// Dual-mode: hit by Supabase pg_cron (with the x-supabase-cron-secret
-// header) AND by the admin "Send Reminders Now" button (with a creator JWT).
-// It sweeps schedule_events for upcoming items, emails each affected client,
-// and flips reminder_sent=true so the same event isn't emailed twice.
+// NO AUTH: cron job. This function is meant to be hit by Supabase
+// scheduled jobs and by the admin "Send Reminders Now" button. It
+// sweeps schedule_events for upcoming items, emails each affected
+// client, and flips reminder_sent=true so the same event isn't
+// emailed twice.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { hasValidCronSecret } from "../_shared/cron-auth.ts";
-import { requireRole } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -78,13 +77,6 @@ function buildEmailBody(clientName: string, items: ScheduleEvent[]): { subject: 
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
-  // Accept either the cron secret (scheduled run) or an authenticated creator
-  // (the admin "Send Reminders Now" button). Anonymous callers are rejected.
-  if (!hasValidCronSecret(req)) {
-    const auth = await requireRole(req, ["creator"]);
-    if ("error" in auth) return auth.error;
-  }
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");

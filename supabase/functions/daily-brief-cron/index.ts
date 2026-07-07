@@ -27,7 +27,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { callAI, parseJSON } from "../_shared/ai-client.ts";
-import { requireCron } from "../_shared/cron-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -393,8 +392,14 @@ serve(async (req) => {
 
   // Auth: x-supabase-cron-secret header must match the configured secret.
   // verify_jwt is false on this function, so this is the only gate.
-  const denied = requireCron(req);
-  if (denied) return denied;
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  const providedSecret = req.headers.get("x-supabase-cron-secret");
+  if (!cronSecret || providedSecret !== cronSecret) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
