@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireAuth } from "../_shared/auth.ts";
+import { rateLimit, getClientIP, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +12,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Authenticated + rate-limited: each Rentcast call is paid.
+  if (!rateLimit(getClientIP(req), 10)) return rateLimitResponse(corsHeaders);
+  const auth = await requireAuth(req);
+  if ("error" in auth) return auth.error;
 
   try {
     const RENTCAST_API_KEY = Deno.env.get("RENTCAST_API_KEY");
@@ -27,6 +34,22 @@ Deno.serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Caller must be a creator or own this property.
+    if (!auth.roles.includes("creator")) {
+      const { data: owned } = await supabase
+        .from("properties")
+        .select("id")
+        .eq("id", property_id)
+        .eq("client_user_id", auth.user.id)
+        .maybeSingle();
+      if (!owned) {
+        return new Response(JSON.stringify({ error: "Forbidden: no access to property" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Check cache (30-day window) unless force refresh

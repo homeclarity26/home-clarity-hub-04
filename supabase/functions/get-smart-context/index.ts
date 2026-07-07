@@ -1,25 +1,51 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { requireAuth, corsHeaders, json } from "../_shared/auth.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  try {
-    const { role, userId, entityType, entityId, propertyId, pageKey } = await req.json();
+  // Identity comes from the verified JWT, never from the request body. A
+  // previous version read { role, userId } off the body with no auth, which
+  // let any anonymous caller read a creator's advisor patterns.
+  const auth = await requireAuth(req);
+  if ("error" in auth) return auth.error;
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceKey);
+  try {
+    const { propertyId } = await req.json().catch(() => ({}));
+
+    const userId = auth.user.id;
+    const role: "creator" | "client" | null = auth.roles.includes("creator")
+      ? "creator"
+      : auth.roles.includes("client")
+        ? "client"
+        : null;
+
+    // Service-role client is safe here only because every query below is
+    // scoped to the authenticated userId (or to a property we verify the
+    // caller owns). It is used for the aggregate insight tables that have no
+    // per-row RLS of their own.
+    const supabase = auth.adminSupabase;
+
+    // For clients, only trust a propertyId they actually own. Creators have
+    // global access. An unowned/absent property just omits property insights.
+    let scopedPropertyId: string | null = null;
+    if (propertyId) {
+      if (role === "creator") {
+        scopedPropertyId = propertyId;
+      } else if (role === "client") {
+        const { data: owned } = await supabase
+          .from("properties")
+          .select("id")
+          .eq("id", propertyId)
+          .eq("client_user_id", userId)
+          .maybeSingle();
+        if (owned) scopedPropertyId = propertyId;
+      }
+    }
 
     const context: Record<string, any> = {};
 
-    if (role === "creator" && userId) {
+    if (role === "creator") {
       // ── Advisor patterns ──
       const { data: patterns } = await supabase
         .from("advisor_patterns")
@@ -49,7 +75,7 @@ serve(async (req) => {
 
       if (outcomes && outcomes.length > 0) {
         const byType = new Map<string, { accepted: number; edited: number; rejected: number }>();
-        for (const o of outcomes) {
+        for (const o of (outcomes as any[])) {
           if (!byType.has(o.suggestion_type)) byType.set(o.suggestion_type, { accepted: 0, edited: 0, rejected: 0 });
           const counts = byType.get(o.suggestion_type)!;
           if (o.outcome === "accepted") counts.accepted++;
@@ -66,15 +92,16 @@ serve(async (req) => {
       }
 
       // ── Cross-client insights relevant to this property ──
-      if (propertyId) {
+      if (scopedPropertyId) {
         const { data: prop } = await supabase
           .from("properties")
           .select("metadata")
-          .eq("id", propertyId)
+          .eq("id", scopedPropertyId)
           .single();
 
-        if (prop?.metadata?.year_built) {
-          const decade = `${Math.floor(Number(prop.metadata.year_built) / 10) * 10}s`;
+        const meta = (prop?.metadata ?? {}) as Record<string, unknown>;
+        if (meta.year_built) {
+          const decade = `${Math.floor(Number(meta.year_built) / 10) * 10}s`;
           const { data: insights } = await supabase
             .from("cross_client_insights")
             .select("insight_type, insight_key, insight_data, confidence")
@@ -89,7 +116,7 @@ serve(async (req) => {
       }
     }
 
-    if (role === "client" && userId) {
+    if (role === "client") {
       // ── Client behavior profile ──
       const { data: profile } = await supabase
         .from("client_behavior_profiles")
@@ -108,15 +135,16 @@ serve(async (req) => {
       }
 
       // ── Cross-client insights relevant to their home ──
-      if (propertyId) {
+      if (scopedPropertyId) {
         const { data: prop } = await supabase
           .from("properties")
           .select("metadata")
-          .eq("id", propertyId)
+          .eq("id", scopedPropertyId)
           .single();
 
-        if (prop?.metadata?.year_built) {
-          const decade = `${Math.floor(Number(prop.metadata.year_built) / 10) * 10}s`;
+        const meta = (prop?.metadata ?? {}) as Record<string, unknown>;
+        if (meta.year_built) {
+          const decade = `${Math.floor(Number(meta.year_built) / 10) * 10}s`;
           const { data: insights } = await supabase
             .from("cross_client_insights")
             .select("insight_type, insight_key, insight_data")
@@ -130,15 +158,12 @@ serve(async (req) => {
       }
     }
 
-    return new Response(
-      JSON.stringify(context),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json(context);
   } catch (err) {
     console.error("get-smart-context error:", err);
-    return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    return json(
+      { error: err instanceof Error ? err.message : "Internal error" },
+      { status: 500 },
     );
   }
 });

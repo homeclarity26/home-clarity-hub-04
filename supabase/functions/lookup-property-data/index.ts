@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireAuth } from "../_shared/auth.ts";
+import { rateLimit, getClientIP, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,6 +29,11 @@ export interface PropertyLookupResult {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // Authenticated + tightly rate-limited: each call spends a paid Rentcast credit.
+  if (!rateLimit(getClientIP(req), 10)) return rateLimitResponse(corsHeaders);
+  const auth = await requireAuth(req);
+  if ("error" in auth) return auth.error;
 
   try {
     const { address, city, state, zip }: { address: string; city?: string; state?: string; zip?: string } = await req.json();

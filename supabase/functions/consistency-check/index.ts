@@ -79,6 +79,21 @@ const buildPrePublishQuestions = (pages: PageInput[]): PrePublishQuestion[] => {
     const pageType = (page.page_type || page.group || "").toLowerCase();
     const specs = (page.specs ?? {}) as Record<string, unknown>;
 
+    // 1) Basic completeness — high. A page with no condition rating or no
+    // narrative must never be published; this is the floor of the quality
+    // gate. Accept either camelCase or snake_case condition-rating keys.
+    const conditionRating =
+      page.conditionRating ?? (page as Record<string, unknown>).condition_rating;
+    if (!hasValue(conditionRating) || !hasValue(narrative)) {
+      out.push({
+        id: `incomplete_page_${key}`,
+        severity: "high",
+        page_key: page.page_key,
+        question: `${title} is missing a condition rating or narrative. Complete it before publishing?`,
+        actions: [{ id: "edit_page", label: "Edit page" }, ACK_ACTION],
+      });
+    }
+
     // 2) System page with a stub but no full replacement briefing — high.
     if (pageType.includes("system") && hasValue(page.replacement_briefing_stub) && !hasValue(page.replacement_briefing)) {
       out.push({

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { rateLimit, getClientIP, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +11,10 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Public by design (prospects click referral links before signing up), but
+  // rate-limited per IP to stop enumeration / write-spam of the referral table.
+  if (!rateLimit(getClientIP(req), 15)) return rateLimitResponse(corsHeaders);
 
   try {
     const { referral_code, redirect_url } = await req.json();
