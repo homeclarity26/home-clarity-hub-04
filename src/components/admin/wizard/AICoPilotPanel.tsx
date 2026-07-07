@@ -4,10 +4,8 @@
 // message to hbc-agent with the current page as enrichment context, and the
 // reply lands in a preview the editor can append, replace, or discard.
 
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Loader2, Mic, MicOff } from "lucide-react";
+import { Loader2, Mic, MicOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -325,60 +323,63 @@ export function AICoPilotPanel({
 
   const isWorking = working !== null;
 
+  // Dark navy co-pilot panel per prototype screen 12: gold eyebrow, white
+  // question line, gold WATCHING YOUR EDITS chip, one-tap action chips
+  // (first chip gold-highlighted as the primary), and a RESULT area for
+  // the freeform reply.
+  const darkChip =
+    "min-h-[40px] rounded-sm border border-white/25 bg-white/5 px-3 text-xs font-sans text-white/90 hover:bg-white/10 hover:text-white";
+  const goldChip =
+    "min-h-[40px] rounded-sm border border-transparent bg-hbc-gold px-3 text-xs font-sans text-white hover:bg-[hsl(var(--hbc-gold)/0.92)]";
+
   return (
-    <Card className="p-4 space-y-3 border-primary/20 bg-primary/[0.02]">
-      <div className="flex items-center gap-2">
-        <Sparkles className="w-4 h-4 text-primary" aria-hidden />
-        <h4 className="text-sm font-sans font-semibold text-foreground">AI Co-Pilot</h4>
-        {pageTitle && (
-          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-            {pageTitle}
-          </span>
-        )}
+    <div className="rounded-lg bg-hbc-navy p-5 space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-hbc-gold">
+            AI Co-Pilot
+          </div>
+          <h4 className="text-sm font-sans font-semibold text-white mt-1">
+            What can I do for this page?
+          </h4>
+        </div>
+        <span className="inline-flex shrink-0 items-center rounded-sm bg-hbc-gold px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-white">
+          Watching Your Edits
+        </span>
       </div>
-      <p className="text-[11px] font-sans text-muted-foreground">
-        Quick actions rewrite the narrative in place. Free-form questions go to the HBC agent;
-        you choose what to keep.
-      </p>
       <div className="flex flex-wrap gap-2">
-        {QUICK_ACTIONS.map(({ mode, label, doingLabel }) => (
-          <Button
+        {QUICK_ACTIONS.map(({ mode, label, doingLabel }, i) => (
+          <button
             key={mode}
             type="button"
-            variant="outline"
-            size="sm"
             onClick={() => void runMode(mode)}
             disabled={isWorking || !narrative.trim()}
-            className="min-h-[44px]"
+            className={`${i === 0 ? goldChip : darkChip} disabled:opacity-50 disabled:pointer-events-none`}
           >
             {working === mode && (
-              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" aria-hidden />
+              <Loader2 className="w-3.5 h-3.5 mr-1.5 inline animate-spin" aria-hidden />
             )}
             {working === mode ? doingLabel : label}
-          </Button>
+          </button>
         ))}
         {pageType !== "executive_summary" && (
-          <Button
+          <button
             type="button"
-            variant="outline"
-            size="sm"
             onClick={() => setPrompt(getDraftObservationsPrompt(pageKey ?? ""))}
             disabled={isWorking}
-            className="min-h-[44px]"
+            className={`${darkChip} disabled:opacity-50 disabled:pointer-events-none`}
           >
             Draft observations
-          </Button>
+          </button>
         )}
         {previousNarrative != null && !isWorking && (
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
             onClick={undoNarrative}
-            className="min-h-[44px] text-muted-foreground"
+            className={darkChip}
           >
             Undo
-          </Button>
+          </button>
         )}
       </div>
       <div className="space-y-2">
@@ -387,17 +388,15 @@ export function AICoPilotPanel({
           onChange={(e) => setPrompt(e.target.value)}
           rows={2}
           placeholder="Ask the co-pilot something specific (it can see this page's title and narrative)..."
-          className="text-xs"
+          className="text-xs bg-white/10 border-white/20 text-white placeholder:text-white/40"
           disabled={isWorking}
         />
         <div className="flex justify-end items-center gap-2">
-          <Button
+          <button
             type="button"
-            variant={listening ? "destructive" : "outline"}
-            size="sm"
             onClick={toggleVoice}
             disabled={isWorking}
-            className="min-h-[40px] gap-1.5"
+            className={`${listening ? "min-h-[40px] rounded-sm bg-destructive px-3 text-xs font-sans text-white" : darkChip} disabled:opacity-50 disabled:pointer-events-none inline-flex items-center gap-1.5`}
             title={listening ? "Stop listening" : "Talk to the co-pilot"}
             aria-pressed={listening}
           >
@@ -407,52 +406,53 @@ export function AICoPilotPanel({
               <Mic className="w-3.5 h-3.5" aria-hidden />
             )}
             {listening ? "Listening..." : "Voice"}
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            size="sm"
             disabled={!prompt.trim() || isWorking}
             onClick={() => void askCoPilot()}
-            className="min-h-[40px]"
+            className={`${goldChip} disabled:opacity-50 disabled:pointer-events-none inline-flex items-center`}
           >
             {working === "freeform" && (
               <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" aria-hidden />
             )}
             {working === "freeform" ? "Asking..." : "Send"}
-          </Button>
+          </button>
         </div>
       </div>
       {reply && (
-        <div className="space-y-2 border border-border rounded-md p-3 bg-background">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-            Co-pilot reply
+        <div className="space-y-2 rounded-md border border-white/15 bg-white/5 p-3">
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-hbc-gold">
+            Result
           </div>
-          <p className="text-xs font-sans text-foreground whitespace-pre-line">{reply}</p>
+          <p className="text-xs font-sans text-white/90 whitespace-pre-line leading-relaxed">
+            {reply}
+          </p>
           <div className="flex justify-end gap-2 flex-wrap">
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
               onClick={() => setReply(null)}
-              className="text-xs text-muted-foreground"
+              className="min-h-[36px] px-2 text-xs font-sans text-white/60 hover:text-white"
             >
               Discard
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
-              variant="outline"
-              size="sm"
               onClick={replaceWithReply}
-              className="text-xs"
+              className={`${darkChip} min-h-[36px]`}
             >
               Replace narrative
-            </Button>
-            <Button type="button" size="sm" onClick={appendReply} className="text-xs">
+            </button>
+            <button
+              type="button"
+              onClick={appendReply}
+              className={`${goldChip} min-h-[36px]`}
+            >
               Append to narrative
-            </Button>
+            </button>
           </div>
         </div>
       )}
-    </Card>
+    </div>
   );
 }
