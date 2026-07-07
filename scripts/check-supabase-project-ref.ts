@@ -104,6 +104,9 @@ function checkConfigToml(findings: Finding[]): void {
 const SKIP_DIRS = new Set([
   "node_modules",
   ".git",
+  // Agent worktrees are full repo copies; scanning them double-reports the
+  // guard's own blocklist files under a path the allowlist doesn't cover.
+  ".claude",
   "dist",
   "dist-ssr",
   ".next",

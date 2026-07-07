@@ -72,6 +72,14 @@ const SystemTemplatePage = ({
   const specs = (ext.specs as { label: string; value: string }[]) || [];
   const lifespanYears = ext.expected_lifespan_years as number | undefined;
   const currentAge = ext.current_age_years as number | undefined;
+  // Observations array (Phase 1 structured contract): authored narrative
+  // prose lands in key_observations for system pages; render it as a
+  // labeled Observations section, never bare page-level paragraphs.
+  const keyObservations = Array.isArray(ext.key_observations)
+    ? (ext.key_observations as unknown[]).filter(
+        (o): o is string => typeof o === "string" && o.trim().length > 0,
+      )
+    : [];
 
   const showLifespan = !simplified && lifespanYears && currentAge;
   const urgency = currentAge && lifespanYears ? deriveUrgency(currentAge, lifespanYears) : "well_within_life";
@@ -166,6 +174,22 @@ const SystemTemplatePage = ({
       )}
 
       <hr className="border-border mb-8" />
+
+      {/* Observations */}
+      {keyObservations.length > 0 && (
+        <div className="mb-10">
+          <h3 className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent mb-4">
+            Observations
+          </h3>
+          <div className="space-y-3">
+            {keyObservations.map((obs, i) => (
+              <p key={i} className="text-sm text-foreground leading-relaxed">
+                {obs}
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Narrative blocks */}
       {blocks.length > 0 && (
