@@ -37,7 +37,7 @@
 
 ### Phase 1 — Structured content contract ✅ MERGED (3877f8b) (agent in isolated worktree)
 ### Phase 2 — Client templates ✅ MERGED (resumed 2:35am; screens 23-28 pixel-verified via headless Chrome, checklist updated). Templates own page headers; blocks render flat viewer modes; em-dash sweep; price format unified; fixed invalid var(--hbc-gold) fallback bug.
-### Phase 3 — Strategy pages — IN PROGRESS (agent in worktree, screens 29-32)
+### Phase 3 — Strategy pages ✅ MERGED (screens 29-32 pixel-verified; new StrategyTemplatePage; services register + 10-year Gantt match prototype; Concierge copy uses honest time-not-money framing per locked principle)
 ### Phase 4 — Photos/media — pending (deploy steps blocked on Supabase token)
 ### Phase 5 — Admin builder visuals — IN PROGRESS (agent in isolated worktree, screens 1-20)
 ### Phase 6 — MCP bridge — pending (code overnight; deploy + connector = morning)
