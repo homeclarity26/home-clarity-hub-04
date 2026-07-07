@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { callAI, parseJSON } from "../_shared/ai-client.ts";
+import { requireAuth } from "../_shared/auth.ts";
+import { rateLimit, getClientIP, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,6 +10,11 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // Authenticated + rate-limited: this spends AI credits on caller input.
+  if (!rateLimit(getClientIP(req), 20)) return rateLimitResponse(corsHeaders);
+  const auth = await requireAuth(req);
+  if ("error" in auth) return auth.error;
 
   try {
     const { project, vendors, clientLocation } = await req.json();

@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+# Pre-commit guard against Supabase project-ref drift.
+#
+# Enable once per clone:  git config core.hooksPath .githooks
+#
+# Blocks a commit that would repoint the app at a non-approved Supabase
+# project (mirrors the supabase-ref-guard CI job, but catches it locally
+# before the commit is even created).
+
+if command -v bun >/dev/null 2>&1; then
+  bun scripts/check-supabase-project-ref.ts || {
+    echo ""
+    echo "✗ Commit blocked: Supabase project-ref check failed (see above)."
+    echo "  If this is an intentional migration, update"
+    echo "  src/integrations/supabase/project-ref.ts in the same commit."
+    exit 1
+  }
+else
+  echo "warning: bun not found; skipping Supabase project-ref pre-commit check."
+fi

@@ -1,0 +1,25 @@
+name: supabase-ref-guard
+
+# Fails any PR or push that repoints the app at a non-approved Supabase project
+# (see src/integrations/supabase/project-ref.ts). This is the CI backstop for
+# the project-ref drift that hit this repo before; it cross-checks .env,
+# supabase/config.toml, and scans the tree for any blocked ref.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ref-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Validate Supabase project ref
+        run: bun scripts/check-supabase-project-ref.ts
