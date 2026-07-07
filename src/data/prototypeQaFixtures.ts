@@ -418,6 +418,7 @@ import type {
   IntakeUploads,
   IntakeFinding,
   PageSeed,
+  PageStructuredData,
   TocSection,
   CapitalPlan,
   MaintenanceCalendar,
@@ -774,3 +775,121 @@ wizardQaPageSeeds.push({
   narrative_seed:
     "Every project idea Mark and Jennifer mentioned, captured in one inventory with rough sequencing.",
 });
+
+// ─── Phase 5b — structured authoring payloads (screens 8-15) ─────────────
+// Applied through upsertAuthoring so the Step 3 per-type editors and the
+// live client preview render fully populated Kitchen / Furnace / Vision /
+// Exec Summary states matching the prototype.
+
+export const wizardQaStructuredAuthoring: Record<string, PageStructuredData> = {
+  kitchen: {
+    room: {
+      dims: "18 x 22",
+      floorSqft: 396,
+      ceiling: "10ft",
+      floorLevel: "Floor 1",
+      finishes: {
+        wallPaint: "Benjamin Moore Revere Pewter HC-172",
+        trimPaint: "Benjamin Moore Simply White OC-117",
+        ceilingPaint: "",
+        flooring: '3/4" Solid Oak, Natural Stain',
+      },
+      fixtures: {
+        lighting: "2x pendant + 6x recessed LED",
+        outlets: "9 total (2 GFCI)",
+        windows: "3 double-hung, 36 x 60",
+        doors: "2 swing + 1 pocket",
+      },
+      observations: [],
+      conditionRating: "Excellent",
+      specs: [],
+      linkedVisionProjects: [],
+    },
+  },
+  "furnace-main": {
+    system: {
+      make: "Lennox",
+      model: "SLP99V-090",
+      serial: "5818H45821",
+      installDate: "2009-08",
+      lifespanYears: 20,
+      currentAgeYears: 17,
+      conditionRating: "Fair",
+      statusFlags: ["Approaching End-of-Life"],
+      specs: [],
+      observations: [],
+      replacementBriefing: {
+        capacity: "90,000 BTU input, 75,000 output",
+        voltage: "120V available, 240V on adjacent circuit",
+        gasLine: '3/4" black iron, in place',
+        condensate: "Routes to floor drain 8ft away",
+        ductworkNotes: "Existing supply trunk 16x8, return 18x10. Both serviceable.",
+        accessNotes: "Mechanical room is 12 x 18, full access from garage.",
+        tiers: {
+          essential: {
+            priceLow: 14000,
+            priceHigh: 18000,
+            description:
+              "Like-for-like replacement, single-stage 80% efficiency, reliable but no comfort upgrades",
+          },
+          enhanced: {
+            priceLow: 22000,
+            priceHigh: 28000,
+            description:
+              "2-stage 96% efficiency, variable speed blower, smart thermostat; quieter, lower bills",
+            recommended: true,
+          },
+          signature: {
+            priceLow: 32000,
+            priceHigh: 42000,
+            description:
+              "Modulating gas valve, inverter-driven AC, MERV 13 filtration, room sensors; comfort suite",
+          },
+        },
+      },
+    },
+  },
+  "vision-primary-bath": {
+    vision: {
+      whyDesignFirst:
+        "Every successful renovation begins with design. For a project of this scope, we recommend a design phase of 4-6 weeks at $4,500 - $8,500. This covers site measurement, design conversations, materials and finishes, lighting selection, and detailed construction drawings. Design fees protect your investment by surfacing every decision before construction starts.",
+      designPhaseWeeks: 5,
+      designPhaseCost: 4500,
+      tiers: {
+        essential: {
+          priceLow: 48000,
+          priceHigh: 62000,
+          description:
+            "The pragmatic version; solves the functional issues, keeps existing layout where possible.",
+        },
+        enhanced: {
+          priceLow: 78000,
+          priceHigh: 95000,
+          description:
+            "Recommended; full transformation, design-forward, premium materials throughout.",
+          recommended: true,
+        },
+        signature: {
+          priceLow: 120000,
+          priceHigh: 145000,
+          description:
+            "The fully realized vision; every premium upgrade, design-led from start to finish.",
+        },
+      },
+      priorityWindow: "Year 1-2",
+      category: "Lifestyle",
+      observations: [],
+    },
+  },
+  "executive-summary": {
+    executiveSummary: {
+      topThemes: [
+        "1. Your home is in excellent overall condition. The bones are solid.",
+        "2. Your HVAC is the highest-priority infrastructure concern. Both furnaces are 17 years old.",
+        "3. Your kitchen renovation in 2017 was excellent and doesn't need redoing; just refinement.",
+        "4. The primary bath and the screened porch are the two highest-impact lifestyle upgrades.",
+        "5. Recurring services are scattered across many vendors. There's a clear opportunity to consolidate.",
+      ].join("\n"),
+    },
+  },
+};
