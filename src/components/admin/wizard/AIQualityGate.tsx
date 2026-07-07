@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,11 +6,17 @@ import { AlertTriangle, AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useWizard, type QualityGateAck } from "@/contexts/WizardContext";
+import { auditStructuredPages } from "@/lib/wizardPublishMapping";
 
 // AI quality gate that fronts Step 5 — Publish. Runs consistency-check on
 // mount, renders pre_publish_questions; severity:high questions block
 // Publish until acknowledged. Acknowledgments persist on
 // properties.qa_acknowledgments JSONB (per Master Spec 5.4.4).
+//
+// Phase 1 addition: a local (non-AI) structured-content audit. Any room /
+// system / appliance / vision page that would publish with zero structured
+// fields is flagged as a blocking question listing the missing fields, so
+// a wall-of-text page can never ship silently.
 
 type Severity = "high" | "medium" | "low";
 
@@ -114,10 +120,32 @@ export function AIQualityGate({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Local structured-content audit. Deterministic, no network call, so it
+  // works even when consistency-check errors out.
+  const structuredQuestions = useMemo<PrePublishQuestion[]>(() => {
+    const issues = auditStructuredPages({
+      tocSections: state.tocSections,
+      authoring: state.authoring,
+      pageSeeds: state.pageSeeds,
+    });
+    return issues.map((issue) => ({
+      id: `structured-content-${issue.page_key}`,
+      severity: "high" as const,
+      question: issue.message,
+      page_key: issue.page_key,
+      actions: [],
+    }));
+  }, [state.tocSections, state.authoring, state.pageSeeds]);
+
+  const allQuestions = useMemo(
+    () => [...structuredQuestions, ...questions],
+    [structuredQuestions, questions],
+  );
+
   const acknowledgedIds = new Set(
     state.qaAcknowledgments.map((a) => a.question_id),
   );
-  const highQuestions = questions.filter((q) => q.severity === "high");
+  const highQuestions = allQuestions.filter((q) => q.severity === "high");
   const allHighsOk =
     highQuestions.length === 0 ||
     highQuestions.every((q) => acknowledgedIds.has(q.id));
@@ -170,7 +198,9 @@ export function AIQualityGate({
     );
   }
 
-  if (error) {
+  // When the AI check errors but the local audit found blocking issues,
+  // fall through so those issues still render and gate Publish.
+  if (error && structuredQuestions.length === 0) {
     return (
       <Card className="p-6">
         <div className="flex items-start gap-2 text-xs font-sans text-destructive">
@@ -181,7 +211,7 @@ export function AIQualityGate({
     );
   }
 
-  if (questions.length === 0) {
+  if (allQuestions.length === 0) {
     return (
       <Card className="p-5">
         <div className="flex items-center gap-2">
@@ -204,8 +234,14 @@ export function AIQualityGate({
           High-severity items block Publish until acknowledged.
         </p>
       </div>
+      {error && (
+        <div className="flex items-start gap-2 text-xs font-sans text-destructive">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden />
+          <span>AI quality check failed: {error}</span>
+        </div>
+      )}
       <ul className="space-y-3">
-        {questions.map((q) => {
+        {allQuestions.map((q) => {
           const meta = SEVERITY_META[q.severity];
           const Icon = meta.Icon;
           const isAck = acknowledgedIds.has(q.id);

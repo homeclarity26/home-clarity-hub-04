@@ -19,6 +19,7 @@ import type {
   PageAuthoring,
   PageSeed,
   TocPage,
+  TocSection,
 } from "@/contexts/WizardContext";
 import {
   appliancePageContentSchema,
@@ -409,4 +410,116 @@ export function buildStructuredPagePayload(
         content.observations.length > 0 ? content.observations : null,
     },
   };
+}
+
+// ─── Publish QA audit (Phase 1, commit 3) ─────────────────────────────────
+// Flags any structured-type page that would publish with zero structured
+// fields, meaning it would render as bare paragraphs or an empty shell.
+// The message lists the missing fields so the fix is actionable.
+
+export interface StructuredContentIssue {
+  page_key: string;
+  title: string;
+  pageType: StructuredPageType;
+  missingFields: string[];
+  message: string;
+}
+
+export interface AuditStructuredPagesInput {
+  tocSections: Array<Pick<TocSection, "key" | "label" | "pages">>;
+  authoring: Record<string, PageAuthoring>;
+  pageSeeds: PageSeed[];
+}
+
+export function auditStructuredPages(
+  input: AuditStructuredPagesInput,
+): StructuredContentIssue[] {
+  const issues: StructuredContentIssue[] = [];
+  for (const section of input.tocSections) {
+    for (const page of section.pages) {
+      if (!page.selected) continue;
+      const authoring: PageAuthoring = input.authoring[page.page_key] ?? {
+        page_key: page.page_key,
+        status: "draft",
+        is_featured: false,
+        content: [],
+      };
+      const seed = input.pageSeeds.find((s) => s.page_key === page.page_key);
+      let payload: StructuredPagePayload | null = null;
+      try {
+        payload = buildStructuredPagePayload({
+          page,
+          sectionKey: section.key,
+          sectionLabel: section.label,
+          authoring,
+          seed,
+        });
+      } catch {
+        // A payload that fails schema validation is itself a blocking issue.
+        issues.push({
+          page_key: page.page_key,
+          title: page.title,
+          pageType: inferStructuredPageType(page, section.key) as StructuredPageType,
+          missingFields: [],
+          message: `"${page.title}" has content that fails the structured page schema. Review this page in Step 3 before publishing.`,
+        });
+        continue;
+      }
+      if (!payload) continue; // generic pages keep the block path
+
+      const { columns, blocks, pageType } = payload;
+      const primary = (blocks[0]?.content ?? {}) as Record<string, unknown>;
+      const hasObservations =
+        Array.isArray(columns.key_observations) &&
+        columns.key_observations.length > 0;
+      const hasCondition = typeof columns.condition_rating === "string";
+      const hasSpecs = Array.isArray(columns.specs) && columns.specs.length > 0;
+      const missingFields: string[] = [];
+      let hasAnyStructuredField = false;
+
+      if (pageType === "vision") {
+        const hasVision =
+          typeof primary.visionNarrativeHtml === "string" &&
+          primary.visionNarrativeHtml.length > 0;
+        const tiers = primary.tiers as
+          | Array<{ priceLow?: unknown; priceHigh?: unknown }>
+          | undefined;
+        const hasPricedTiers = Boolean(
+          tiers?.some(
+            (t) =>
+              typeof t?.priceLow === "number" ||
+              typeof t?.priceHigh === "number",
+          ),
+        );
+        if (!hasVision) missingFields.push("vision narrative");
+        if (!hasPricedTiers) missingFields.push("priced investment tiers");
+        if (!hasObservations) missingFields.push("key observations");
+        hasAnyStructuredField = hasVision || hasPricedTiers || hasObservations;
+      } else {
+        if (!hasCondition) missingFields.push("condition rating");
+        if (!hasObservations) missingFields.push("key observations");
+        if (!hasSpecs) missingFields.push("specs");
+        let hasIdentity = false;
+        if (pageType === "system" || pageType === "appliance") {
+          hasIdentity = [primary.make, primary.model, primary.installDate].some(
+            (v) => typeof v === "string" && v.length > 0,
+          );
+          if (!hasIdentity) missingFields.push("make, model, or install year");
+        }
+        hasAnyStructuredField =
+          hasCondition || hasObservations || hasSpecs || hasIdentity;
+      }
+
+      if (!hasAnyStructuredField) {
+        issues.push({
+          page_key: page.page_key,
+          title: page.title,
+          pageType,
+          missingFields,
+          message: `"${page.title}" has no structured content and would publish as bare paragraphs or an empty page. Add at least one of the following before publishing: ${missingFields.join(", ")}.`,
+        });
+      }
+    }
+  }
+  return issues;
 }
