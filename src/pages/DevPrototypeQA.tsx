@@ -28,6 +28,7 @@ import {
   wizardQaFindings,
   wizardQaTocSections,
   wizardQaPageSeeds,
+  wizardQaStructuredAuthoring,
   wizardQaCapitalPlan,
   wizardQaMaintenanceCalendar,
   wizardQaRecurringServices,
@@ -57,6 +58,9 @@ type ScenarioId =
   | "wizard-step1"
   | "wizard-step2"
   | "wizard-step3"
+  | "wizard-step3-system"
+  | "wizard-step3-vision"
+  | "wizard-step3-exec"
   | "wizard-step4"
   | "wizard-step5";
 
@@ -70,7 +74,10 @@ const SCENARIOS: { id: ScenarioId; label: string; sublabel: string }[] = [
   { id: "wizard-step1-empty", label: "Wizard 1: Intake (empty)", sublabel: "Screen 1" },
   { id: "wizard-step1", label: "Wizard 1: Intake (findings)", sublabel: "Screens 2 + 4" },
   { id: "wizard-step2", label: "Wizard 2: TOC Proposal", sublabel: "Screens 5-7" },
-  { id: "wizard-step3", label: "Wizard 3: Page Authoring", sublabel: "Screens 8-15" },
+  { id: "wizard-step3", label: "Wizard 3: Room (Kitchen)", sublabel: "Screens 8-9" },
+  { id: "wizard-step3-system", label: "Wizard 3: System (Furnace)", sublabel: "Screens 10-12" },
+  { id: "wizard-step3-vision", label: "Wizard 3: Vision (Bath)", sublabel: "Screens 13-14" },
+  { id: "wizard-step3-exec", label: "Wizard 3: Exec Summary", sublabel: "Screen 15" },
   { id: "wizard-step4", label: "Wizard 4: Strategy", sublabel: "Screens 16-19" },
   { id: "wizard-step5", label: "Wizard 5: Publish", sublabel: "Screen 20" },
 ];
@@ -85,6 +92,8 @@ interface WizardSeed {
   step: WizardStepKey;
   /** Screen 1 variant: client only, nothing uploaded yet. */
   empty?: boolean;
+  /** Step 3 variants: which page starts active (default kitchen). */
+  activePage?: string;
 }
 
 function WizardSeeder({ seed, children }: { seed: WizardSeed; children: ReactNode }) {
@@ -122,10 +131,17 @@ function WizardSeeder({ seed, children }: { seed: WizardSeed; children: ReactNod
         status: "reviewed",
       });
       upsertAuthoring("executive-summary", {
-        content: [{ type: "narrative", value: "Your home is in excellent overall condition. The bones are solid. Your HVAC is the highest-priority infrastructure concern." }],
+        content: [{ type: "narrative", value: "Mark, Jennifer, Olivia, and Jack: thank you for inviting me into your home. After two-plus hours together and a thorough scan of every space and system, I've put together what I believe is the most accurate and useful picture of your home that exists anywhere." }],
         status: "reviewed",
       });
-      setActivePageKey("kitchen");
+      // Phase 5b — structured payloads for the per-type Step 3 editors
+      // (Kitchen room, Furnace system + briefing, Vision tiers, Exec themes).
+      for (const [pageKey, structured] of Object.entries(
+        wizardQaStructuredAuthoring,
+      )) {
+        upsertAuthoring(pageKey, { structured });
+      }
+      setActivePageKey(seed.activePage ?? "kitchen");
       setCapitalPlan(wizardQaCapitalPlan);
       setMaintenanceCalendar(wizardQaMaintenanceCalendar);
       setRecurringServicesPreview(wizardQaRecurringServices);
@@ -156,6 +172,9 @@ const WIZARD_SCENARIO_SEEDS: Partial<Record<ScenarioId, WizardSeed>> = {
   "wizard-step1": { step: "intake" },
   "wizard-step2": { step: "toc" },
   "wizard-step3": { step: "authoring" },
+  "wizard-step3-system": { step: "authoring", activePage: "furnace-main" },
+  "wizard-step3-vision": { step: "authoring", activePage: "vision-primary-bath" },
+  "wizard-step3-exec": { step: "authoring", activePage: "executive-summary" },
   "wizard-step4": { step: "strategy" },
   "wizard-step5": { step: "publish" },
 };
