@@ -54,7 +54,11 @@
 - `docs/mcp/README.md` = architecture + DEPLOY RUNBOOK (db push, secrets set, functions deploy, connector setup for claude.ai and Claude Code). `docs/mcp/skills/` = 5 paste-in skills (hcr-intake, hcr-author-space/system/vision, hcr-publish-qa).
 - Design note for you: MCP publish_report promotes ALL pages (wizard promotes only consultant-marked-complete); documented in README.
 
-### Phase 4 — Photo pipeline — IN PROGRESS (Tue ~8:55pm; Step 3 PHOTOS group w/ REQUIRED slots, assignment picker, suggestion engine, publish mapping to report_pages.images, harness render check)
+### Phase 4 — Photo pipeline ✅ MERGED (Tue ~9:20pm)
+- Step 3 PHOTOS group with system slot rows (Unit/Serial Plate REQUIRED/Install Location) per proto_10/11; assignment picker over intake photos; filename-based "Suggest assignments" engine (18 tests); publish migrates intake files to public report-images and writes report_pages.images + captioned photo_gallery blocks; unit photo = hero. Auto-routing never overwrites manual assignments. vitest 100/100.
+- Residuals noted: Step 3 preview can't show pre-publish photos (private bucket; would need signed URLs); categorize-photo results not yet threaded into suggestion input (engine accepts aiCategory when wired).
+
+### Final sweep — IN PROGRESS (Tue ~9:25pm; portal home + Bobby panel harness verification vs proto_21/22/33/34, room-to-vision link authoring, Co-Pilot RESULT fixture, repo-wide client-copy em-dash audit, full checklist audit to handoff state)
 ### Phase 6 — MCP bridge — pending (code overnight; deploy + connector = morning)
 ### Phase 7 — Migration + full QA — pending (live-DB parts blocked on credentials)
 ### Phase 8 — Beyond-prototype backlog — pending
