@@ -40,6 +40,11 @@ interface AICoPilotPanelProps {
   onUpdateNarrative: (next: string) => void;
   /** Property id (used as enrichment context for hbc-agent). */
   propertyId?: string | null;
+  /**
+   * Dev-only (QA harness): pre-seeds the RESULT area with a canned reply
+   * so prototype screen 12 renders without a live edge-function call.
+   */
+  initialReply?: string;
 }
 
 const QUICK_ACTIONS: Array<{ mode: AiMode; label: string; doingLabel: string }> = [
@@ -58,13 +63,14 @@ export function AICoPilotPanel({
   observations,
   onUpdateNarrative,
   propertyId,
+  initialReply,
 }: AICoPilotPanelProps) {
   const { user } = useAuth();
   const [working, setWorking] = useState<AiMode | "freeform" | null>(null);
   const [previousNarrative, setPreviousNarrative] = useState<string | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [prompt, setPrompt] = useState("");
-  const [reply, setReply] = useState<string | null>(null);
+  const [reply, setReply] = useState<string | null>(initialReply ?? null);
   // Web Speech API state for voice-to-text on the prompt textarea.
   // Browser-only, no backend needed. Chrome and Edge support out of
   // the box; Safari/Firefox surface an empty constructor and we toast
@@ -143,16 +149,18 @@ export function AICoPilotPanel({
     [],
   );
 
-  // Reset transient panel state when the active page changes.
+  // Reset transient panel state when the active page changes. The QA
+  // harness's canned reply (initialReply) survives the reset so the
+  // RESULT area stays rendered per prototype screen 12.
   useEffect(() => {
-    setReply(null);
+    setReply(initialReply ?? null);
     setPrompt("");
     setPreviousNarrative(null);
     if (undoTimerRef.current) {
       clearTimeout(undoTimerRef.current);
       undoTimerRef.current = null;
     }
-  }, [pageTitle]);
+  }, [pageTitle, initialReply]);
 
   const armUndo = (prior: string) => {
     setPreviousNarrative(prior);

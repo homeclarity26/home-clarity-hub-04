@@ -81,6 +81,17 @@ const STATUS_DOT_CLASS: Record<PageAuthoringStatus, string> = {
 
 const CONDITION_OPTIONS = ["Excellent", "Good", "Fair", "Poor", "Critical"];
 
+// Dev-only (qaMode): canned co-pilot replies per page type so the RESULT
+// area renders in /dev/prototype-qa without a live edge-function call
+// (prototype screen 12). Admin-facing copy, never published to a client.
+const QA_COPILOT_RESULTS: Partial<Record<PageType, string>> = {
+  system:
+    "Replacement Briefing scope, drafted from this page: 90,000 BTU input two-stage gas furnace at 96% AFUE with a variable-speed blower, sized to the existing 16x8 supply trunk and 18x10 return. Reuse the 3/4 inch gas line and the floor-drain condensate route; confirm the adjacent 240V circuit if a heat pump coil is added later. Access through the garage mechanical room is clear.",
+  room: "Suggested observation: the 2017 remodel is holding up well. Note the quartz edge wear at the sink and the intermittent Sub-Zero water dispenser so the annual review tracks both.",
+  vision:
+    "Tier language check: Essential reads as the pragmatic fix, Enhanced carries the recommendation, and Signature is the fully realized vision. Pricing bands are internally consistent with the design-first callout.",
+};
+
 interface SelectedPage extends TocPage {
   sectionKey: string;
   sectionLabel: string;
@@ -753,6 +764,9 @@ export function Step3Authoring({ qaMode = false }: Step3AuthoringProps) {
                     observations={activeObservations}
                     onUpdateNarrative={(next) => updateActiveBlock("narrative", next)}
                     propertyId={state.propertyId}
+                    initialReply={
+                      qaMode ? QA_COPILOT_RESULTS[pageType] : undefined
+                    }
                   />
                 </div>
               }
