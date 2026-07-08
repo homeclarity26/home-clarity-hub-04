@@ -354,6 +354,7 @@ export function SystemStructuredEditor({
   onChange,
   conditionControl,
   showBriefing,
+  photosGroup,
 }: {
   value: SystemPageContent;
   onChange: (next: SystemPageContent) => void;
@@ -361,6 +362,11 @@ export function SystemStructuredEditor({
   conditionControl: ReactNode;
   /** Appliances share this editor but skip the replacement briefing. */
   showBriefing: boolean;
+  /**
+   * Phase 4 — the PHOTOS (REQUIRED) field group, rendered between
+   * LIFECYCLE and the replacement briefing per prototype screens 10-11.
+   */
+  photosGroup?: ReactNode;
 }) {
   const patch = (p: Partial<SystemPageContent>) => onChange({ ...value, ...p });
   const patchBriefing = (p: Partial<ReplacementBriefing>) =>
@@ -416,6 +422,8 @@ export function SystemStructuredEditor({
           {conditionControl}
         </div>
       </FieldGroup>
+
+      {photosGroup}
 
       {showBriefing && (
         <FieldGroup label="Replacement Briefing Package">

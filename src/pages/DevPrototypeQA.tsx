@@ -9,9 +9,11 @@ import {
   kitchenGroup,
   kitchenPage,
   kitchenBlocks,
+  kitchenImages,
   furnaceGroup,
   furnacePage,
   furnaceBlocks,
+  furnaceImages,
   visionBathGroup,
   visionBathPage,
   visionBathBlocks,
@@ -29,6 +31,7 @@ import {
   wizardQaTocSections,
   wizardQaPageSeeds,
   wizardQaStructuredAuthoring,
+  wizardQaPageImages,
   wizardQaCapitalPlan,
   wizardQaMaintenanceCalendar,
   wizardQaRecurringServices,
@@ -141,6 +144,10 @@ function WizardSeeder({ seed, children }: { seed: WizardSeed; children: ReactNod
       )) {
         upsertAuthoring(pageKey, { structured });
       }
+      // Phase 4 — page photo assignments (Step 3 PHOTOS group chips).
+      for (const [pageKey, images] of Object.entries(wizardQaPageImages)) {
+        upsertAuthoring(pageKey, { images });
+      }
       setActivePageKey(seed.activePage ?? "kitchen");
       setCapitalPlan(wizardQaCapitalPlan);
       setMaintenanceCalendar(wizardQaMaintenanceCalendar);
@@ -246,7 +253,7 @@ const DevPrototypeQA = () => {
             page={kitchenPage}
             group={kitchenGroup}
             blocks={kitchenBlocks}
-            images={[]}
+            images={kitchenImages}
             prevPage={null}
             nextPage={null}
             prevPageId={null}
@@ -258,7 +265,7 @@ const DevPrototypeQA = () => {
             page={furnacePage}
             group={furnaceGroup}
             blocks={furnaceBlocks}
-            images={[]}
+            images={furnaceImages}
             prevPage={null}
             nextPage={null}
             prevPageId={null}

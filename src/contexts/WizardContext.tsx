@@ -166,6 +166,17 @@ export interface ExecutiveSummaryStructured {
   topThemes?: string;
 }
 
+// Phase 4 — labeled photo slots for system pages (prototype screens 10-11:
+// Unit Photo / Serial Plate / Install Location). Each slot holds a reference
+// to an intake-uploaded photo; publish resolves the reference to the
+// migrated public URL and orders the slots first in report_pages.images
+// (unit photo becomes the hero).
+export type SystemPhotoSlotKey = "unit" | "serialPlate" | "installLocation";
+
+export type WizardPhotoSlots = Partial<
+  Record<SystemPhotoSlotKey, IntakeFileRef>
+>;
+
 // Phase 5b — optional per-page structured payload. Exactly one branch is
 // populated, matching the inferred page type. Room / system / vision reuse
 // the Phase 1 schema-inferred types from src/lib/reportPageSchemas (never
@@ -177,6 +188,10 @@ export interface PageStructuredData {
   system?: SystemPageContent;
   vision?: VisionPageContent;
   executiveSummary?: ExecutiveSummaryStructured;
+  // System-page photo slots (Phase 4). Lives alongside `system` in the
+  // structured payload; wizard-only shape (never sent through the zod
+  // page schemas), resolved to URLs by Step 5 publish.
+  photoSlots?: WizardPhotoSlots;
 }
 
 export interface PageAuthoring {
@@ -189,6 +204,10 @@ export interface PageAuthoring {
   // Phase 5b structured fields — persisted through the same draft
   // envelope as the rest of `authoring` (save + resume round-trip).
   structured?: PageStructuredData;
+  // Phase 4 — intake photos assigned to this page (beyond any system photo
+  // slots). Order matters: publish writes these to report_pages.images in
+  // this order, after the slots. Rides the same draft envelope.
+  images?: IntakeFileRef[];
 }
 
 // W4 — Strategy (light wrapper; child blocks own deep state).
