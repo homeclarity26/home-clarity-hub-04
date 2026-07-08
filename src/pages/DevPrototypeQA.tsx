@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import ReportHome from "@/components/portal/report/ReportHome";
+import { PortalHome } from "@/components/portal/home/PortalHome";
+import ConciergeBar from "@/components/portal/concierge/ConciergeBar";
 import RoomTemplatePage from "@/components/report/templates/RoomTemplatePage";
 import SystemTemplatePage from "@/components/report/templates/SystemTemplatePage";
 import VisionTemplatePage from "@/components/report/templates/VisionTemplatePage";
@@ -23,6 +25,7 @@ import {
   roadmapPage,
   roadmapBlocks,
   reportHomeProps,
+  portalHomeQaProps,
   wizardQaClient,
   wizardQaUploads,
   wizardQaHoverUrl,
@@ -51,6 +54,7 @@ import { WizardShell } from "@/components/admin/wizard/WizardShell";
  */
 
 type ScenarioId =
+  | "portal-home"
   | "report-home"
   | "room-kitchen"
   | "system-furnace"
@@ -68,6 +72,7 @@ type ScenarioId =
   | "wizard-step5";
 
 const SCENARIOS: { id: ScenarioId; label: string; sublabel: string }[] = [
+  { id: "portal-home", label: "Portal Home", sublabel: "Hero + media cards" },
   { id: "report-home", label: "Report Home", sublabel: "Chapter navigation" },
   { id: "room-kitchen", label: "Room: Kitchen", sublabel: "Evolving record example" },
   { id: "system-furnace", label: "System: Furnace", sublabel: "With Replacement Briefing" },
@@ -237,6 +242,25 @@ const DevPrototypeQA = () => {
 
       {/* Scenario canvas */}
       <main className="flex-1 min-w-0">
+        {active === "portal-home" && (
+          <div className="relative min-h-screen flex flex-col">
+            <div className="flex-1">
+              <PortalHome
+                onNavigate={noop}
+                propertyName={portalHomeQaProps.propertyName}
+                propertyAddress={portalHomeQaProps.propertyAddress}
+                heroImageUrl={portalHomeQaProps.heroImageUrl}
+                yearBuilt={portalHomeQaProps.yearBuilt}
+                hoverUrl={portalHomeQaProps.hoverUrl}
+                hoverMeta={portalHomeQaProps.hoverMeta}
+                iguideUrl={portalHomeQaProps.iguideUrl}
+                iguideMeta={portalHomeQaProps.iguideMeta}
+                isAdminPreview
+              />
+            </div>
+            <ConciergeBar />
+          </div>
+        )}
         {active === "report-home" && (
           <ReportHome
             groups={reportGroups}

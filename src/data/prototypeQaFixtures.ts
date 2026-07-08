@@ -435,6 +435,33 @@ export const reportHomeProps = {
   completionPercent: 100,
 };
 
+// ─── Portal Home (screens 21-22) ─────────────────────────────────────────
+// Feeds the REAL PortalHome component tree. Hero is a small SVG gradient
+// data URI (no network); Hover/iGUIDE meta lines match prototype screen 21.
+
+const portalHomeHeroDataUri = `data:image/svg+xml;utf8,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="640" viewBox="0 0 1440 640">` +
+    `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">` +
+    `<stop offset="0" stop-color="midnightblue"/>` +
+    `<stop offset="0.55" stop-color="darkslateblue"/>` +
+    `<stop offset="1" stop-color="darkslategray"/>` +
+    `</linearGradient></defs>` +
+    `<rect width="1440" height="640" fill="url(#sky)"/>` +
+    `<rect y="480" width="1440" height="160" fill="black" fill-opacity="0.35"/>` +
+    `</svg>`,
+)}`;
+
+export const portalHomeQaProps = {
+  propertyName: "The Caldwell Residence",
+  propertyAddress: "2847 Stoneybrook Lane · Hudson, OH",
+  yearBuilt: 1998,
+  heroImageUrl: portalHomeHeroDataUri,
+  hoverUrl: "https://hover.to/model/3246434",
+  hoverMeta: "Hover scan · 5,157 sqft roof · 4,831 sqft siding · 68 windows",
+  iguideUrl: "https://youriguide.com/caldwell_2847",
+  iguideMeta: "iGUIDE · 33 panoramic stops · every room",
+};
+
 // ─── Admin wizard (screens 1-20) ─────────────────────────────────────────
 // In-memory state the /dev/prototype-qa harness pushes through the REAL
 // WizardContext setters so the actual WizardShell + step components render

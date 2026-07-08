@@ -43,6 +43,10 @@ interface PortalHomeProps {
   estimatedValue?: number | null;
   isAdminPreview?: boolean;
   clientFirstName?: string | null;
+  /** Optional meta line under the Hover card title (e.g. roof/siding sqft). */
+  hoverMeta?: string | null;
+  /** Optional meta line under the iGUIDE card title (e.g. panoramic stop count). */
+  iguideMeta?: string | null;
 }
 
 const fadeUp = {
@@ -96,6 +100,53 @@ function QuickLinkCard({
   );
 }
 
+// Prototype screen 21 media card: thumbnail band with a navy badge pill,
+// then title + meta line + gold open button on white. The thumbnail is a
+// navy gradient stand-in (Hover/iGUIDE don't expose still images).
+function MediaTourCard({
+  badge,
+  title,
+  meta,
+  url,
+  cta,
+  emptyLabel,
+}: {
+  badge: string;
+  title: string;
+  meta: string;
+  url?: string | null;
+  cta: string;
+  emptyLabel: string;
+}) {
+  return (
+    <div className="bg-card border border-border rounded-lg overflow-hidden flex flex-col">
+      <div className="relative aspect-[16/9] bg-gradient-to-b from-primary/80 via-primary/50 to-primary/20">
+        <span className="absolute top-3 left-3 rounded bg-primary px-2 py-1 font-mono text-[9px] uppercase tracking-[0.18em] text-primary-foreground">
+          {badge}
+        </span>
+      </div>
+      <div className="p-5 space-y-1.5">
+        <p className="font-sans text-base font-semibold text-foreground">{title}</p>
+        <p className="font-sans text-xs text-muted-foreground">{meta}</p>
+        {url ? (
+          <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center min-h-[44px] mt-2 px-4 rounded-md bg-accent text-white font-sans text-sm font-medium transition-opacity hover:opacity-90"
+          >
+            {cta} ↗
+          </a>
+        ) : (
+          <p className="font-sans text-xs italic text-muted-foreground pt-3 pb-2">
+            {emptyLabel}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function PortalHome({
   onNavigate,
   propertyName = "Your Home",
@@ -111,6 +162,8 @@ export function PortalHome({
   estimatedValue,
   isAdminPreview = false,
   clientFirstName,
+  hoverMeta,
+  iguideMeta,
 }: PortalHomeProps) {
   const { user } = useAuth();
   const [customization, setCustomization] = useState<{
@@ -193,54 +246,22 @@ export function PortalHome({
             Your home, always available
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {hoverUrl ? (
-              <a
-                href={hoverUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="group relative bg-card border border-border rounded-lg overflow-hidden aspect-[4/3] flex items-center justify-center transition-all hover:shadow-hbc-md hover:-translate-y-0.5"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/90 to-primary/70" />
-                <div className="relative z-10 flex flex-col items-center gap-3">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
-                    Hover · 3D
-                  </span>
-                  <span className="font-display text-lg text-white">Exterior 3D Scan</span>
-                  <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-white/60 group-hover:text-accent transition-colors">
-                    Open tour ↗
-                  </span>
-                </div>
-              </a>
-            ) : (
-              <div className="bg-card border border-border rounded-lg aspect-[4/3] flex flex-col items-center justify-center text-center p-4">
-                <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-accent">Hover · 3D</span>
-                <span className="text-xs text-muted-foreground mt-2 italic">Hover scan not yet uploaded</span>
-              </div>
-            )}
-            {iguideUrl ? (
-              <a
-                href={iguideUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="group relative bg-card border border-border rounded-lg overflow-hidden aspect-[4/3] flex items-center justify-center transition-all hover:shadow-hbc-md hover:-translate-y-0.5"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/90 to-primary/70" />
-                <div className="relative z-10 flex flex-col items-center gap-3">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
-                    iGUIDE · 360
-                  </span>
-                  <span className="font-display text-lg text-white">Interior 360 Tour</span>
-                  <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-white/60 group-hover:text-accent transition-colors">
-                    Open tour ↗
-                  </span>
-                </div>
-              </a>
-            ) : (
-              <div className="bg-card border border-border rounded-lg aspect-[4/3] flex flex-col items-center justify-center text-center p-4">
-                <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-accent">iGUIDE · 360</span>
-                <span className="text-xs text-muted-foreground mt-2 italic">iGUIDE tour not yet uploaded</span>
-              </div>
-            )}
+            <MediaTourCard
+              badge="3D"
+              title="Exterior 3D Model"
+              meta={hoverMeta ?? "Hover scan"}
+              url={hoverUrl}
+              cta="Open 3D model"
+              emptyLabel="Hover scan not yet uploaded"
+            />
+            <MediaTourCard
+              badge="360"
+              title="Interior 360° Tour"
+              meta={iguideMeta ?? "iGUIDE"}
+              url={iguideUrl}
+              cta="Open tour"
+              emptyLabel="iGUIDE tour not yet uploaded"
+            />
           </div>
         </motion.section>
 
