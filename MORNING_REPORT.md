@@ -1,3 +1,19 @@
+
+## ✅ BUILD COMPLETE — WHAT YOU DO NEXT (Wed 1:30am)
+
+All overnight-buildable phases are DONE and merged on `feat/prototype-match` (build clean, tsc 0 errors, vitest 102/102, deno test 10/10). Every prototype screen that can render without live data is pixel-verified; screenshots in the session scratchpad, statuses in docs/VISUAL_QA_CHECKLIST.md.
+
+**Your runbook, in order:**
+1. **Eyeball it locally:** from the repo (branch feat/prototype-match): `bun run dev` then open http://localhost:8080/dev/prototype-qa — 18 scenarios (client pages + all 5 wizard steps + portal home + Bobby panel).
+2. **Review flagged decisions** (each is what the locked prototype specifies, but production-visible): Portal Home eyebrow is now always "Welcome home" (no first name); Bobby panel is white-themed with prompt chips always visible; MCP publish_report promotes ALL pages (wizard promotes only marked-complete); condition segmented control writes suggested_condition.
+3. **Merge** feat/prototype-match → main (Vercel auto-deploys).
+4. **Deploy the MCP bridge** (needs your Supabase access token, ~10 min): follow docs/mcp/README.md "Deploy runbook" — `supabase db push` (mcp_activity migration), `supabase secrets set HCR_MCP_TOKEN=<generate a long random string>`, `supabase functions deploy hcr-mcp --no-verify-jwt`, curl smoke test.
+5. **Connect Claude:** claude.ai custom connector or `claude mcp add` per the same README; paste the 5 skills from docs/mcp/skills/ into Claude.
+6. **Republish the demo report** through the wizard (now writes fully structured data + photos), or author a fresh one by talking to Claude via MCP — then walk the portal as the demo client and check the two live-only checklist rows (intake READY TO ANALYZE and ANALYZING states).
+7. **Backlog when ready (Phase 8):** Top Priorities strip on Report Home; "What changed since last visit" feed; contextual Bobby actions on overdue/aging items; PDF export; report-wide search; signed-URL photo previews in Step 3; thread categorize-photo results into photo suggestions.
+
+Session-limit note: the loop hit the account cap 3 times (Mon 10:45pm, Tue 4:30am, Tue ~10pm) and auto-recovered each time via the revival cron; total wall-clock lost ~9h, zero work lost.
+
 # MORNING REPORT — Overnight Prototype-Match Run
 
 **Run started:** 2026-07-06 ~22:00 (Adam asleep; autonomous /loop session, Fable 5)
@@ -58,7 +74,9 @@
 - Step 3 PHOTOS group with system slot rows (Unit/Serial Plate REQUIRED/Install Location) per proto_10/11; assignment picker over intake photos; filename-based "Suggest assignments" engine (18 tests); publish migrates intake files to public report-images and writes report_pages.images + captioned photo_gallery blocks; unit photo = hero. Auto-routing never overwrites manual assignments. vitest 100/100.
 - Residuals noted: Step 3 preview can't show pre-publish photos (private bucket; would need signed URLs); categorize-photo results not yet threaded into suggestion input (engine accepts aiCategory when wired).
 
-### Final sweep — IN PROGRESS (Tue ~9:25pm; portal home + Bobby panel harness verification vs proto_21/22/33/34, room-to-vision link authoring, Co-Pilot RESULT fixture, repo-wide client-copy em-dash audit, full checklist audit to handoff state)
+### Final sweep ✅ MERGED (Wed ~1:30am)
+- Portal Home + Bobby panel now match proto_21/22/33/34 (portal-home + bobby-panel harness scenarios; Bobby panel moved to locked white theme with persistent prompt chips). Room-to-vision link authoring added to Step 3 with publish mapping + tests. Co-Pilot RESULT renders per proto_12. ~160 client-copy em-dash fixes across 28 files. vitest 102/102.
+- VISUAL_QA_CHECKLIST final: 20 rows verified, 1 live-only intermediate state, 1 live-only transient state, cover-sheet rows N/A.
 ### Phase 6 — MCP bridge — pending (code overnight; deploy + connector = morning)
 ### Phase 7 — Migration + full QA — pending (live-DB parts blocked on credentials)
 ### Phase 8 — Beyond-prototype backlog — pending
