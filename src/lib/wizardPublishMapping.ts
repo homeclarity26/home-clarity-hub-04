@@ -681,6 +681,89 @@ export function buildStructuredPagePayload(
   };
 }
 
+// ─── Page photo publish (Phase 4) ──────────────────────────────────────────
+// Maps the wizard's page-assigned photos (plus system photo slots) onto the
+// publish shapes: report_pages.images (ordered URL array; images[0] is the
+// hero the templates render full-bleed) and a photo_gallery block whenever
+// the page carries more than one photo. Slots publish first in the locked
+// prototype order (unit, serial plate, install location) so a system page's
+// hero is always the unit photo; slot photos carry factual captions.
+
+export type PublishPhotoSlotKey = "unit" | "serialPlate" | "installLocation";
+
+export interface PublishPagePhoto {
+  url: string;
+  caption?: string;
+}
+
+const SLOT_ORDER: PublishPhotoSlotKey[] = [
+  "unit",
+  "serialPlate",
+  "installLocation",
+];
+
+const SLOT_CAPTIONS: Record<PublishPhotoSlotKey, string> = {
+  unit: "Unit photo",
+  serialPlate: "Serial plate",
+  installLocation: "Install location",
+};
+
+export interface PagePhotoPublishInput {
+  /** Page-assigned photos in assignment order (non-slot). */
+  photos: PublishPagePhoto[];
+  /** System photo slots; omit for rooms / vision / generic pages. */
+  slots?: Partial<Record<PublishPhotoSlotKey, PublishPagePhoto>>;
+  /** Block order for the gallery block within the page's block list. */
+  order?: number;
+  now?: string;
+}
+
+export interface PagePhotoPublishResult {
+  /** Ordered URLs for report_pages.images; index 0 is the hero. */
+  images: string[];
+  /** photo_gallery block when the page has 2+ photos, else null. */
+  galleryBlock: ReportBlock | null;
+}
+
+export function buildPagePhotoPublish(
+  input: PagePhotoPublishInput,
+): PagePhotoPublishResult {
+  const now = input.now ?? new Date().toISOString();
+  const ordered: PublishPagePhoto[] = [];
+  const seen = new Set<string>();
+
+  const push = (photo: PublishPagePhoto | undefined, caption?: string) => {
+    const url = photo?.url?.trim();
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    ordered.push({ url, caption: photo?.caption ?? caption });
+  };
+
+  for (const key of SLOT_ORDER) {
+    push(input.slots?.[key], SLOT_CAPTIONS[key]);
+  }
+  for (const photo of input.photos) {
+    push(photo);
+  }
+
+  const images = ordered.map((p) => p.url);
+  const galleryBlock =
+    ordered.length > 1
+      ? makeBlock(
+          "photo_gallery",
+          input.order ?? 0,
+          {
+            photos: ordered.map((p) =>
+              p.caption ? { url: p.url, caption: p.caption } : { url: p.url },
+            ),
+          },
+          now,
+        )
+      : null;
+
+  return { images, galleryBlock };
+}
+
 // ─── Executive Summary blocks (Phase 5b, prototype screen 15) ─────────────
 // The exec summary is a "generic" page type (no structured schema), but its
 // Step 3 editor captures a welcome personal note (narrative row) and 3-5 top

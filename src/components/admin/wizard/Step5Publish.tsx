@@ -5,11 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { pageAuthoringToBlocks, useWizard } from "@/contexts/WizardContext";
+import {
+  pageAuthoringToBlocks,
+  useWizard,
+  type IntakeFileRef,
+} from "@/contexts/WizardContext";
 import type { ReportBlock } from "@/components/wysiwyg/types";
 import {
   buildExecutiveSummaryBlocks,
+  buildPagePhotoPublish,
   buildStructuredPagePayload,
+  type PublishPagePhoto,
   type StructuredPageColumns,
 } from "@/lib/wizardPublishMapping";
 import type { Database } from "@/integrations/supabase/types";
@@ -59,8 +65,9 @@ export function Step5Publish({ qaMode = false }: Step5PublishProps) {
     for (const page of allPages) {
       const status = state.authoring[page.page_key]?.status ?? "draft";
       counts[status] = (counts[status] ?? 0) + 1;
-      const content = state.authoring[page.page_key]?.content ?? [];
-      const hasImage = content.some(
+      const authoring = state.authoring[page.page_key];
+      const content = authoring?.content ?? [];
+      const hasImageBlock = content.some(
         (b: unknown) =>
           b != null &&
           typeof b === "object" &&
@@ -68,7 +75,12 @@ export function Step5Publish({ qaMode = false }: Step5PublishProps) {
           ((b as { type: string }).type === "image" ||
             (b as { type: string }).type === "photo_grid"),
       );
-      if (!hasImage) missingPhotos++;
+      // Phase 4 — Step 3 photo assignments (page images + system slots)
+      // count as photos too.
+      const hasAssignedPhotos =
+        (authoring?.images?.length ?? 0) > 0 ||
+        Object.values(authoring?.structured?.photoSlots ?? {}).some(Boolean);
+      if (!hasImageBlock && !hasAssignedPhotos) missingPhotos++;
     }
     const featured = allPages.filter(
       (p) => p.is_featured || state.authoring[p.page_key]?.is_featured,
@@ -124,6 +136,96 @@ export function Step5Publish({ qaMode = false }: Step5PublishProps) {
       const now = new Date().toISOString();
       const reportBlocks: ReportBlock[] = [];
       let blockOrder = 0;
+
+      // Phase 4 — migrate intake files (photos, Hover/iGUIDE PDFs) from the
+      // private wizard-uploads bucket into the public report-images bucket +
+      // client_files BEFORE the page loop, so the photos the consultant
+      // assigned to pages in Step 3 resolve to public URLs and publish into
+      // report_pages.images below. Per-file failures are non-blocking.
+      const publicUrlByFileId: Record<string, string> = {};
+      const photoUrlEntries: { fileId: string; url: string }[] = [];
+      if (state.propertyId) {
+        const allIntakeFiles = [
+          ...state.intakeUploads.photos,
+          ...state.intakeUploads.hover,
+          ...state.intakeUploads.iguide,
+        ].filter((f) => f.storage_path && f.bucket);
+
+        for (const file of allIntakeFiles) {
+          try {
+            const { data: blob, error: dlErr } = await supabase.storage
+              .from(file.bucket!)
+              .download(file.storage_path!);
+            if (dlErr || !blob) continue;
+
+            const newPath = `${state.propertyId}/documents/${Date.now()}-${file.name}`;
+            const { error: upErr } = await supabase.storage
+              .from("report-images")
+              .upload(newPath, blob, {
+                contentType: file.mime,
+                upsert: false,
+              });
+            if (upErr) continue;
+
+            // Track public URLs for photos: manual Step 3 assignments
+            // resolve through publicUrlByFileId; anything unassigned goes
+            // to the AI auto-router after publish.
+            if (file.mime.startsWith("image/")) {
+              const { data: urlData } = supabase.storage
+                .from("report-images")
+                .getPublicUrl(newPath);
+              if (urlData?.publicUrl) {
+                publicUrlByFileId[file.id] = urlData.publicUrl;
+                photoUrlEntries.push({ fileId: file.id, url: urlData.publicUrl });
+              }
+            }
+
+            const lcName = file.name.toLowerCase();
+            let category = "General";
+            if (lcName.includes("hover")) category = "hover.to";
+            else if (lcName.includes("iguide")) category = "iGUIDE";
+            else if (file.mime.startsWith("image/")) category = "Interior Photos";
+
+            const fileType = file.mime.startsWith("image/")
+              ? "image"
+              : file.mime.startsWith("audio/")
+                ? "audio"
+                : file.mime === "application/pdf"
+                  ? "pdf"
+                  : "document";
+
+            const sizeStr =
+              file.size < 1024
+                ? `${file.size} B`
+                : file.size < 1048576
+                  ? `${(file.size / 1024).toFixed(1)} KB`
+                  : `${(file.size / 1048576).toFixed(1)} MB`;
+
+            await supabase.from("client_files").insert({
+              property_id: state.propertyId,
+              file_name: file.name,
+              category,
+              storage_path: newPath,
+              file_type: fileType,
+              file_size: sizeStr,
+            });
+          } catch (err) {
+            console.warn("[Step5Publish] intake file migration failed for", file.name, err);
+          }
+        }
+      }
+
+      // Photos explicitly assigned in Step 3 (page images + system slots).
+      // The AI auto-router only ever touches photos outside this set, and
+      // never overwrites a page that carries manual assignments.
+      const assignedFileIds = new Set<string>();
+      for (const a of Object.values(state.authoring)) {
+        for (const ref of a.images ?? []) assignedFileIds.add(ref.id);
+        for (const ref of Object.values(a.structured?.photoSlots ?? {})) {
+          if (ref) assignedFileIds.add(ref.id);
+        }
+      }
+      const manuallyAssignedPageKeys = new Set<string>();
 
       // Walk every selected page in TOC order. For each, build the per-page
       // ReportBlock array, upsert the report_pages row, and append the
@@ -252,6 +354,36 @@ export function Step5Publish({ qaMode = false }: Step5PublishProps) {
             });
           }
 
+          // Phase 4 — page-assigned photos → ordered images (hero first;
+          // unit photo for systems) + a photo_gallery block when 2+.
+          const toPublishPhoto = (
+            ref: IntakeFileRef | undefined,
+          ): PublishPagePhoto | undefined => {
+            const url = ref ? publicUrlByFileId[ref.id] : undefined;
+            return url ? { url } : undefined;
+          };
+          const slotRefs = authoring.structured?.photoSlots;
+          const photoPublish = buildPagePhotoPublish({
+            photos: (authoring.images ?? [])
+              .map((ref) => toPublishPhoto(ref))
+              .filter((p): p is PublishPagePhoto => Boolean(p)),
+            slots: slotRefs
+              ? {
+                  unit: toPublishPhoto(slotRefs.unit),
+                  serialPlate: toPublishPhoto(slotRefs.serialPlate),
+                  installLocation: toPublishPhoto(slotRefs.installLocation),
+                }
+              : undefined,
+            order: pageBlocks.length,
+            now,
+          });
+          if (photoPublish.galleryBlock) {
+            pageBlocks.push(photoPublish.galleryBlock);
+          }
+          if (photoPublish.images.length > 0) {
+            manuallyAssignedPageKeys.add(page.page_key);
+          }
+
           const sortOrder = sectionIndex * 100 + pageIndex;
 
           // Column values: structured pages come from the validated payload;
@@ -305,6 +437,11 @@ export function Step5Publish({ qaMode = false }: Step5PublishProps) {
             if (structured.images) {
               upsertRow.images = structured.images as never;
             }
+          }
+          // Manual Step 3 photo assignments always win over anything the
+          // structured payload carried.
+          if (photoPublish.images.length > 0) {
+            upsertRow.images = photoPublish.images as never;
           }
           const { error: upErr } = await supabase
             .from("report_pages")
@@ -390,79 +527,15 @@ export function Step5Publish({ qaMode = false }: Step5PublishProps) {
         if (urlErr) console.warn("[Step5Publish] hover/iguide URL persist failed", urlErr);
       }
 
-      // Migrate intake files (Hover/iGUIDE PDFs, photos) from the private
-      // wizard-uploads bucket into the public report-images bucket +
-      // client_files table. Track photo public URLs for auto-routing.
-      const photoPublicUrls: string[] = [];
-      if (state.propertyId) {
-        const allIntakeFiles = [
-          ...state.intakeUploads.photos,
-          ...state.intakeUploads.hover,
-          ...state.intakeUploads.iguide,
-        ].filter((f) => f.storage_path && f.bucket);
-
-        for (const file of allIntakeFiles) {
-          try {
-            const { data: blob, error: dlErr } = await supabase.storage
-              .from(file.bucket!)
-              .download(file.storage_path!);
-            if (dlErr || !blob) continue;
-
-            const newPath = `${state.propertyId}/documents/${Date.now()}-${file.name}`;
-            const { error: upErr } = await supabase.storage
-              .from("report-images")
-              .upload(newPath, blob, {
-                contentType: file.mime,
-                upsert: false,
-              });
-            if (upErr) continue;
-
-            // Collect public URLs for photos (used for auto-routing below)
-            if (file.mime.startsWith("image/")) {
-              const { data: urlData } = supabase.storage
-                .from("report-images")
-                .getPublicUrl(newPath);
-              if (urlData?.publicUrl) photoPublicUrls.push(urlData.publicUrl);
-            }
-
-            const lcName = file.name.toLowerCase();
-            let category = "General";
-            if (lcName.includes("hover")) category = "hover.to";
-            else if (lcName.includes("iguide")) category = "iGUIDE";
-            else if (file.mime.startsWith("image/")) category = "Interior Photos";
-
-            const fileType = file.mime.startsWith("image/")
-              ? "image"
-              : file.mime.startsWith("audio/")
-                ? "audio"
-                : file.mime === "application/pdf"
-                  ? "pdf"
-                  : "document";
-
-            const sizeStr =
-              file.size < 1024
-                ? `${file.size} B`
-                : file.size < 1048576
-                  ? `${(file.size / 1024).toFixed(1)} KB`
-                  : `${(file.size / 1048576).toFixed(1)} MB`;
-
-            await supabase.from("client_files").insert({
-              property_id: state.propertyId,
-              file_name: file.name,
-              category,
-              storage_path: newPath,
-              file_type: fileType,
-              file_size: sizeStr,
-            });
-          } catch (err) {
-            console.warn("[Step5Publish] intake file migration failed for", file.name, err);
-          }
-        }
-      }
-
       // W7 — Auto-route photos to report pages via AI categorization.
-      // Non-blocking: failures are logged but don't prevent publish.
-      if (photoPublicUrls.length > 0 && state.reportId) {
+      // Phase 4: only photos the consultant did NOT assign in Step 3 are
+      // eligible, and pages that carry manual assignments are never
+      // overwritten. Non-blocking: failures are logged but don't prevent
+      // publish.
+      const unassignedPhotoUrls = photoUrlEntries
+        .filter((e) => !assignedFileIds.has(e.fileId))
+        .map((e) => e.url);
+      if (unassignedPhotoUrls.length > 0 && state.reportId) {
         try {
           const availablePages = state.tocSections
             .flatMap((s) => s.pages.filter((p) => p.selected))
@@ -470,8 +543,8 @@ export function Step5Publish({ qaMode = false }: Step5PublishProps) {
 
           const assignments: Record<string, string[]> = {};
           const PHOTO_BATCH = 3;
-          for (let i = 0; i < photoPublicUrls.length; i += PHOTO_BATCH) {
-            const batch = photoPublicUrls.slice(i, i + PHOTO_BATCH);
+          for (let i = 0; i < unassignedPhotoUrls.length; i += PHOTO_BATCH) {
+            const batch = unassignedPhotoUrls.slice(i, i + PHOTO_BATCH);
             const results = await Promise.allSettled(
               batch.map((url) =>
                 supabase.functions.invoke("categorize-photo", {
@@ -488,8 +561,9 @@ export function Step5Publish({ qaMode = false }: Step5PublishProps) {
             }
           }
 
-          // Write images to report_pages
+          // Write images to report_pages, skipping manually-assigned pages.
           for (const [pageKey, urls] of Object.entries(assignments)) {
+            if (manuallyAssignedPageKeys.has(pageKey)) continue;
             await supabase
               .from("report_pages")
               .update({ images: urls as never })

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildExecutiveSummaryBlocks,
+  buildPagePhotoPublish,
   buildStructuredPagePayload,
   cleanTierSet,
   tierSetToBlockTiers,
@@ -397,5 +398,121 @@ describe("buildExecutiveSummaryBlocks", () => {
     expect(buildExecutiveSummaryBlocks(authoringWith(undefined), NOW)).toEqual(
       [],
     );
+  });
+});
+
+// ─── Phase 4 — page photo publish mapping ──────────────────────────────────
+
+describe("buildPagePhotoPublish", () => {
+  const photo = (n: number) => ({ url: `https://cdn.example.com/p${n}.jpg` });
+
+  it("returns empty images and no gallery for a page with no photos", () => {
+    const result = buildPagePhotoPublish({ photos: [], now: NOW });
+    expect(result.images).toEqual([]);
+    expect(result.galleryBlock).toBeNull();
+  });
+
+  it("publishes a single photo as the hero with no gallery block", () => {
+    const result = buildPagePhotoPublish({ photos: [photo(1)], now: NOW });
+    expect(result.images).toEqual(["https://cdn.example.com/p1.jpg"]);
+    expect(result.galleryBlock).toBeNull();
+  });
+
+  it("emits a photo_gallery block when a page has 2+ photos", () => {
+    const result = buildPagePhotoPublish({
+      photos: [photo(1), photo(2)],
+      now: NOW,
+    });
+    expect(result.images).toHaveLength(2);
+    expect(result.galleryBlock?.type).toBe("photo_gallery");
+    const content = result.galleryBlock?.content as {
+      photos: { url: string; caption?: string }[];
+    };
+    expect(content.photos.map((p) => p.url)).toEqual([
+      "https://cdn.example.com/p1.jpg",
+      "https://cdn.example.com/p2.jpg",
+    ]);
+  });
+
+  it("orders system slots first: unit photo becomes the hero", () => {
+    const result = buildPagePhotoPublish({
+      photos: [photo(9)],
+      slots: {
+        installLocation: photo(3),
+        serialPlate: photo(2),
+        unit: photo(1),
+      },
+      now: NOW,
+    });
+    expect(result.images).toEqual([
+      "https://cdn.example.com/p1.jpg",
+      "https://cdn.example.com/p2.jpg",
+      "https://cdn.example.com/p3.jpg",
+      "https://cdn.example.com/p9.jpg",
+    ]);
+  });
+
+  it("captions slot photos factually in the gallery block", () => {
+    const result = buildPagePhotoPublish({
+      photos: [],
+      slots: { unit: photo(1), serialPlate: photo(2) },
+      now: NOW,
+    });
+    const content = result.galleryBlock?.content as {
+      photos: { url: string; caption?: string }[];
+    };
+    expect(content.photos[0].caption).toBe("Unit photo");
+    expect(content.photos[1].caption).toBe("Serial plate");
+  });
+
+  it("keeps an explicit caption over the slot default", () => {
+    const result = buildPagePhotoPublish({
+      photos: [],
+      slots: {
+        unit: { url: "https://cdn.example.com/p1.jpg", caption: "Furnace" },
+        serialPlate: photo(2),
+      },
+      now: NOW,
+    });
+    const content = result.galleryBlock?.content as {
+      photos: { url: string; caption?: string }[];
+    };
+    expect(content.photos[0].caption).toBe("Furnace");
+  });
+
+  it("dedupes a photo that is both slotted and in the assigned list", () => {
+    const result = buildPagePhotoPublish({
+      photos: [photo(1), photo(2)],
+      slots: { serialPlate: photo(1) },
+      now: NOW,
+    });
+    expect(result.images).toEqual([
+      "https://cdn.example.com/p1.jpg",
+      "https://cdn.example.com/p2.jpg",
+    ]);
+    const content = result.galleryBlock?.content as {
+      photos: { url: string; caption?: string }[];
+    };
+    // The slot occurrence (with its caption) wins.
+    expect(content.photos[0].caption).toBe("Serial plate");
+  });
+
+  it("skips blank URLs instead of publishing empty strings", () => {
+    const result = buildPagePhotoPublish({
+      photos: [{ url: "  " }, photo(1)],
+      now: NOW,
+    });
+    expect(result.images).toEqual(["https://cdn.example.com/p1.jpg"]);
+    expect(result.galleryBlock).toBeNull();
+  });
+
+  it("stamps the gallery block with the given order and timestamp", () => {
+    const result = buildPagePhotoPublish({
+      photos: [photo(1), photo(2)],
+      order: 5,
+      now: NOW,
+    });
+    expect(result.galleryBlock?.order).toBe(5);
+    expect(result.galleryBlock?.createdAt).toBe(NOW);
   });
 });
