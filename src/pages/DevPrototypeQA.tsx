@@ -69,6 +69,7 @@ type ScenarioId =
   | "wizard-step1"
   | "wizard-step2"
   | "wizard-step3"
+  | "wizard-step3-bath"
   | "wizard-step3-system"
   | "wizard-step3-vision"
   | "wizard-step3-exec"
@@ -87,7 +88,8 @@ const SCENARIOS: { id: ScenarioId; label: string; sublabel: string }[] = [
   { id: "wizard-step1-empty", label: "Wizard 1: Intake (empty)", sublabel: "Screen 1" },
   { id: "wizard-step1", label: "Wizard 1: Intake (findings)", sublabel: "Screens 2 + 4" },
   { id: "wizard-step2", label: "Wizard 2: TOC Proposal", sublabel: "Screens 5-7" },
-  { id: "wizard-step3", label: "Wizard 3: Room (Kitchen)", sublabel: "Screens 8-9" },
+  { id: "wizard-step3", label: "Wizard 3: Room (Kitchen)", sublabel: "Screen 8" },
+  { id: "wizard-step3-bath", label: "Wizard 3: Room (Bath)", sublabel: "Screen 9, vision link" },
   { id: "wizard-step3-system", label: "Wizard 3: System (Furnace)", sublabel: "Screens 10-12" },
   { id: "wizard-step3-vision", label: "Wizard 3: Vision (Bath)", sublabel: "Screens 13-14" },
   { id: "wizard-step3-exec", label: "Wizard 3: Exec Summary", sublabel: "Screen 15" },
@@ -189,6 +191,7 @@ const WIZARD_SCENARIO_SEEDS: Partial<Record<ScenarioId, WizardSeed>> = {
   "wizard-step1": { step: "intake" },
   "wizard-step2": { step: "toc" },
   "wizard-step3": { step: "authoring" },
+  "wizard-step3-bath": { step: "authoring", activePage: "primary-bathroom" },
   "wizard-step3-system": { step: "authoring", activePage: "furnace-main" },
   "wizard-step3-vision": { step: "authoring", activePage: "vision-primary-bath" },
   "wizard-step3-exec": { step: "authoring", activePage: "executive-summary" },

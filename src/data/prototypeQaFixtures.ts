@@ -893,6 +893,25 @@ export const wizardQaStructuredAuthoring: Record<string, PageStructuredData> = {
       linkedVisionProjects: [],
     },
   },
+  // Screen 9 — room with a LINKED VISION PROJECT (select in the editor,
+  // gold callout in the client preview via the publish mapping).
+  "primary-bathroom": {
+    room: {
+      dims: "18 x 20",
+      ceiling: "11ft tray",
+      floorLevel: "Floor 2",
+      observations: [],
+      conditionRating: "Excellent",
+      specs: [],
+      linkedVisionProjects: [
+        {
+          pageKey: "vision-primary-bath",
+          title: "Vision: Primary Bath Spa Conversion",
+          priority: "Year 1-2",
+        },
+      ],
+    },
+  },
   "furnace-main": {
     // Prototype screen 10 slot assignments (Unit / Serial Plate / Install
     // Location) so the Step 3 PHOTOS (REQUIRED) group renders populated.
