@@ -212,3 +212,11 @@ verify_jwt = false
 
 [functions.generate-design-fee-education]
 verify_jwt = false
+
+# NO AUTH via Supabase JWT: hcr-mcp authenticates with its own
+# HCR_MCP_TOKEN bearer secret (constant-time compare in-function),
+# because MCP clients (claude.ai connectors, Claude Code) cannot mint
+# Supabase user JWTs. See docs/mcp/README.md.
+[functions.hcr-mcp]
+verify_jwt = false
+import_map = "./functions/import_map.json"
