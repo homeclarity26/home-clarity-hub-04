@@ -1,4 +1,4 @@
-// hcr-mcp — MCP authoring bridge (Master UX Rebuild Phase 6a).
+// hcr-mcp: MCP authoring bridge (Master UX Rebuild Phase 6a).
 //
 // Streamable-HTTP MCP server, stateless mode: JSON-RPC 2.0 over POST, no
 // SSE, no sessions. Claude (claude.ai custom connector or Claude Code)

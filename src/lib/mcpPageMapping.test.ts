@@ -1,4 +1,4 @@
-// Phase 6 — MCP authoring bridge: shared mapping + schema tests.
+// Phase 6, MCP authoring bridge: shared mapping + schema tests.
 //
 // Three jobs:
 //   1. PARITY: the edge-side port in supabase/functions/_shared must
