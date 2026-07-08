@@ -36,6 +36,33 @@ function qaBlock(
   };
 }
 
+// ─── Phase 4 — QA photo placeholders ─────────────────────────────────────
+// Tiny inline SVG data URIs so the harness renders hero + gallery photo
+// areas with zero network fetches. Named SVG colors only; brand hex stays
+// in src/index.css.
+
+const qaPhotoDataUri = (label: string, bg: string): string =>
+  `data:image/svg+xml;utf8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400">` +
+      `<rect width="640" height="400" fill="${bg}"/>` +
+      `<rect x="16" y="16" width="608" height="368" fill="none" stroke="white" stroke-opacity="0.4" stroke-width="2"/>` +
+      `<text x="32" y="212" font-family="monospace" font-size="30" fill="white">${label}</text>` +
+      `</svg>`,
+  )}`;
+
+// Hero (index 0) + gallery (rest) for the client render check.
+export const kitchenImages: string[] = [
+  qaPhotoDataUri("Kitchen overview", "darkslategray"),
+  qaPhotoDataUri("Range + hood detail", "sienna"),
+  qaPhotoDataUri("Island + pendants", "steelblue"),
+];
+
+export const furnaceImages: string[] = [
+  qaPhotoDataUri("Furnace unit", "midnightblue"),
+  qaPhotoDataUri("Serial plate", "darkolivegreen"),
+  qaPhotoDataUri("Install location", "saddlebrown"),
+];
+
 // ─── Room: Kitchen ───────────────────────────────────────────────────────
 
 export const kitchenGroup: PortalGroup = {
@@ -415,6 +442,7 @@ export const reportHomeProps = {
 
 import type {
   ClientFormData,
+  IntakeFileRef,
   IntakeUploads,
   IntakeFinding,
   PageSeed,
@@ -459,15 +487,28 @@ const qaFile = (
   bucket: "wizard-uploads",
 });
 
+// Phase 4 — shared intake photo refs so the Step 3 photo assignments below
+// point at the same objects the intake Photos card lists (matches the
+// prototype screen 10 slot filenames).
+export const wizardQaPhotoFiles = {
+  furnaceUnit: qaFile("p0", "furnace_main_2026-04-22.jpg", 2.6 * 1024 * 1024, "image/jpeg"),
+  furnaceSerial: qaFile("p1", "furnace_main_serialplate.jpg", 2.1 * 1024 * 1024, "image/jpeg"),
+  kitchenOverview: qaFile("p2", "kitchen_overview.jpg", 1.8 * 1024 * 1024, "image/jpeg"),
+  roofSouth: qaFile("p3", "roof_south_face.jpg", 2.4 * 1024 * 1024, "image/jpeg"),
+  utilityRoom: qaFile("p4", "utility_room_overview.jpg", 2.2 * 1024 * 1024, "image/jpeg"),
+};
+
 export const wizardQaUploads: IntakeUploads = {
   transcript: [
     qaFile("t1", "Caldwell_walkthrough_2026-04-22.txt", 32 * 1024, "text/plain"),
   ],
   site_notes: [qaFile("n1", "caldwell_notes.md", 8 * 1024, "text/markdown")],
   photos: [
-    qaFile("p1", "furnace_main_serialplate.jpg", 2.1 * 1024 * 1024, "image/jpeg"),
-    qaFile("p2", "kitchen_overview.jpg", 1.8 * 1024 * 1024, "image/jpeg"),
-    qaFile("p3", "roof_south_face.jpg", 2.4 * 1024 * 1024, "image/jpeg"),
+    wizardQaPhotoFiles.furnaceUnit,
+    wizardQaPhotoFiles.furnaceSerial,
+    wizardQaPhotoFiles.kitchenOverview,
+    wizardQaPhotoFiles.roofSouth,
+    wizardQaPhotoFiles.utilityRoom,
   ],
   hover: [qaFile("h1", "hover_measurements_3246434.pdf", 4.2 * 1024 * 1024, "application/pdf")],
   iguide: [qaFile("g1", "iguide_caldwell_2847.pdf", 6.8 * 1024 * 1024, "application/pdf")],
@@ -807,6 +848,13 @@ export const wizardQaStructuredAuthoring: Record<string, PageStructuredData> = {
     },
   },
   "furnace-main": {
+    // Prototype screen 10 slot assignments (Unit / Serial Plate / Install
+    // Location) so the Step 3 PHOTOS (REQUIRED) group renders populated.
+    photoSlots: {
+      unit: wizardQaPhotoFiles.furnaceUnit,
+      serialPlate: wizardQaPhotoFiles.furnaceSerial,
+      installLocation: wizardQaPhotoFiles.utilityRoom,
+    },
     system: {
       make: "Lennox",
       model: "SLP99V-090",
@@ -892,4 +940,10 @@ export const wizardQaStructuredAuthoring: Record<string, PageStructuredData> = {
       ].join("\n"),
     },
   },
+};
+
+// Phase 4 — non-slot page photo assignments (PageAuthoring.images) so the
+// Step 3 PHOTOS group renders assigned chips on room pages too.
+export const wizardQaPageImages: Record<string, IntakeFileRef[]> = {
+  kitchen: [wizardQaPhotoFiles.kitchenOverview],
 };
