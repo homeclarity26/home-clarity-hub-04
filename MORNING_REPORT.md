@@ -43,7 +43,12 @@
 - Navy wizard shell, Step 1 upload cards + findings, Step 2 TOC grids, Step 3 split editor + AI Co-Pilot panel, Step 4 sequencing + Gantt, Step 5 publish stats: pixel-verified (qa_wizard_step1..5.png in session scratchpad). Checklist rows 1-20 updated; transient states (analyzing) have no fixture.
 - Behavior preserved; flagged addition: condition segmented control writes pageSeeds.suggested_condition (the value publish already used).
 
-### Phase 5b — Per-type structured editors — IN PROGRESS (re-dispatched Tue 7:35pm; the 4:30am agent died at spawn on a second session-limit hit, no work lost; closes proto_08-15 gaps + Phase 1 missing-fields list). NOTE Tue evening: found and deleted untracked supabase/config.toml.backup in the main checkout containing the FORBIDDEN ref abarpsxwglxuessimrkk (drift landmine); live supabase/config.toml verified on approved ref.
+### Phase 5b — Per-type structured editors ✅ MERGED (Tue ~8:15pm; proto_08-15)
+- Room/System/Vision/Exec editors in Step 3 (ROOM IDENTITY, DIMENSIONS & SPECS, FINISHES, IDENTIFICATION, LIFECYCLE with computed EOL, REPLACEMENT BRIEFING PACKAGE with 3-tier price editor + recommended toggle, INVESTMENT RANGES, WELCOME/TOP THEMES). All flow end to end: state → autosave/resume → publish mapping → real-template live preview. 46/46 tests. Pixel-verified (qa_wizard_step3_*.png).
+- Residual (logged in checklist): room→vision link authoring, PHOTOS group in Step 3, Co-Pilot live RESULT fixture.
+- NOTE Tue evening: found and deleted untracked supabase/config.toml.backup in main checkout containing the FORBIDDEN ref abarpsxwglxuessimrkk (drift landmine); live config verified on approved ref. Hourly revival cron armed at :43 to auto-restart the loop after any session-limit reset.
+
+### Phase 6 — MCP authoring bridge — IN PROGRESS (Tue ~8:20pm; edge function hcr-mcp + shared schema/mapping port + migration + tests + docs/skills; CODE ONLY, deploy runbook for Adam)
 ### Phase 6 — MCP bridge — pending (code overnight; deploy + connector = morning)
 ### Phase 7 — Migration + full QA — pending (live-DB parts blocked on credentials)
 ### Phase 8 — Beyond-prototype backlog — pending
