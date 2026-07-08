@@ -219,22 +219,52 @@ function TierSetEditor({
 
 // ─── Room editor (screens 8-9) ─────────────────────────────────────────────
 
+// One selectable vision page from the Step 2 TOC (plus its authored
+// priority window, when the vision editor has one).
+export interface VisionLinkOption {
+  pageKey: string;
+  title: string;
+  priority?: string;
+}
+
 export function RoomStructuredEditor({
   value,
   onChange,
   roomName,
   onRenameRoom,
+  visionOptions = [],
 }: {
   value: RoomPageContent;
   onChange: (next: RoomPageContent) => void;
   roomName: string;
   onRenameRoom: (next: string) => void;
+  /** Vision pages in the TOC, offered by the LINKED VISION PROJECT select. */
+  visionOptions?: VisionLinkOption[];
 }) {
   const patch = (p: Partial<RoomPageContent>) => onChange({ ...value, ...p });
   const patchFinishes = (p: Partial<RoomFinishes>) =>
     patch({ finishes: { ...(value.finishes ?? {}), ...p } });
   const patchFixtures = (p: Partial<RoomFixtures>) =>
     patch({ fixtures: { ...(value.fixtures ?? {}), ...p } });
+
+  const linkedKey = value.linkedVisionProjects?.[0]?.pageKey ?? "";
+  const setLinkedVision = (pageKey: string) => {
+    if (!pageKey) {
+      patch({ linkedVisionProjects: [] });
+      return;
+    }
+    const option = visionOptions.find((o) => o.pageKey === pageKey);
+    if (!option) return;
+    patch({
+      linkedVisionProjects: [
+        {
+          pageKey: option.pageKey,
+          title: option.title,
+          priority: option.priority,
+        },
+      ],
+    });
+  };
 
   return (
     <>
@@ -328,6 +358,34 @@ export function RoomStructuredEditor({
           />
         </div>
       </FieldGroup>
+
+      {visionOptions.length > 0 && (
+        <FieldGroup label="Linked Vision Project">
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="linked-vision-select"
+              className="text-xs font-sans text-hbc-grey"
+            >
+              Vision page this room points to (renders as a callout on the
+              client page)
+            </Label>
+            <select
+              id="linked-vision-select"
+              value={linkedKey}
+              onChange={(e) => setLinkedVision(e.target.value)}
+              className="w-full rounded-md border border-hbc-border bg-white px-3 text-xs font-sans text-foreground min-h-[44px]"
+            >
+              <option value="">No linked vision project</option>
+              {visionOptions.map((o) => (
+                <option key={o.pageKey} value={o.pageKey}>
+                  {o.title}
+                  {o.priority ? ` (${o.priority})` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        </FieldGroup>
+      )}
     </>
   );
 }

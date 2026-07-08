@@ -25,6 +25,7 @@ import {
   RoomStructuredEditor,
   SystemStructuredEditor,
   VisionStructuredEditor,
+  type VisionLinkOption,
 } from "./StructuredPageEditors";
 import {
   ExecutiveSummaryPreview,
@@ -121,6 +122,27 @@ export function Step3Authoring({ qaMode = false }: Step3AuthoringProps) {
     }
     return out;
   }, [state.tocSections]);
+
+  // Vision pages available to the room editor's LINKED VISION PROJECT
+  // select: every selected TOC page that reads as a vision page, plus its
+  // authored priority window when the vision editor captured one.
+  const visionLinkOptions = useMemo<VisionLinkOption[]>(() => {
+    const out: VisionLinkOption[] = [];
+    for (const section of state.tocSections) {
+      for (const page of section.pages) {
+        if (!page.selected) continue;
+        if (inferPageType(page) !== "vision") continue;
+        const priority =
+          state.authoring[page.page_key]?.structured?.vision?.priorityWindow;
+        out.push({
+          pageKey: page.page_key,
+          title: page.title,
+          priority: priority?.trim() || undefined,
+        });
+      }
+    }
+    return out;
+  }, [state.tocSections, state.authoring]);
 
   // Pick a default active page when none is set, or when the active page
   // is no longer in the selected list.
@@ -698,6 +720,7 @@ export function Step3Authoring({ qaMode = false }: Step3AuthoringProps) {
                       .startsWith("appliance")}
                     structured={activeAuthoring?.structured}
                     onChangeStructured={updateStructured}
+                    visionLinkOptions={visionLinkOptions}
                     pageTitle={activePage.title}
                     onRenamePage={renameActivePage}
                     assignedPhotos={activeAuthoring?.images ?? []}
@@ -799,6 +822,7 @@ interface PageAdminEditorProps {
   isAppliance: boolean;
   structured: PageStructuredData | undefined;
   onChangeStructured: (patch: Partial<PageStructuredData>) => void;
+  visionLinkOptions: VisionLinkOption[];
   pageTitle: string;
   onRenamePage: (title: string) => void;
   assignedPhotos: IntakeFileRef[];
@@ -871,6 +895,7 @@ function PageAdminEditor({
   isAppliance,
   structured,
   onChangeStructured,
+  visionLinkOptions,
   pageTitle,
   onRenamePage,
   assignedPhotos,
@@ -899,6 +924,7 @@ function PageAdminEditor({
           onChange={(room) => onChangeStructured({ room })}
           roomName={pageTitle}
           onRenameRoom={onRenamePage}
+          visionOptions={visionLinkOptions}
         />
       )}
 
