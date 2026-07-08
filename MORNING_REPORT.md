@@ -48,7 +48,13 @@
 - Residual (logged in checklist): room→vision link authoring, PHOTOS group in Step 3, Co-Pilot live RESULT fixture.
 - NOTE Tue evening: found and deleted untracked supabase/config.toml.backup in main checkout containing the FORBIDDEN ref abarpsxwglxuessimrkk (drift landmine); live config verified on approved ref. Hourly revival cron armed at :43 to auto-restart the loop after any session-limit reset.
 
-### Phase 6 — MCP authoring bridge — IN PROGRESS (Tue ~8:20pm; edge function hcr-mcp + shared schema/mapping port + migration + tests + docs/skills; CODE ONLY, deploy runbook for Adam)
+### Phase 6 — MCP authoring bridge ✅ MERGED (Tue ~8:50pm; CODE COMPLETE, deploy awaits your token)
+- `supabase/functions/hcr-mcp/`: MCP streamable-HTTP server, bearer-token auth (HCR_MCP_TOKEN), 12 schema-guarded tools (list/get, upsert room/system/vision/generic pages, set capital plan/services/calendar, run_publish_qa, publish_report gated on QA + literal PUBLISH confirm), every call audited to new mcp_activity table (migration included).
+- Parity is TEST-ENFORCED: MCP mapping produces byte-identical rows/blocks to the wizard publish path. deno test 10/10, vitest 73/73, deno check clean.
+- `docs/mcp/README.md` = architecture + DEPLOY RUNBOOK (db push, secrets set, functions deploy, connector setup for claude.ai and Claude Code). `docs/mcp/skills/` = 5 paste-in skills (hcr-intake, hcr-author-space/system/vision, hcr-publish-qa).
+- Design note for you: MCP publish_report promotes ALL pages (wizard promotes only consultant-marked-complete); documented in README.
+
+### Phase 4 — Photo pipeline — IN PROGRESS (Tue ~8:55pm; Step 3 PHOTOS group w/ REQUIRED slots, assignment picker, suggestion engine, publish mapping to report_pages.images, harness render check)
 ### Phase 6 — MCP bridge — pending (code overnight; deploy + connector = morning)
 ### Phase 7 — Migration + full QA — pending (live-DB parts blocked on credentials)
 ### Phase 8 — Beyond-prototype backlog — pending
