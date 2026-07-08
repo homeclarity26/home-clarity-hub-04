@@ -11,9 +11,11 @@ import {
   type PageAuthoring,
   type PageAuthoringStatus,
   type PageStructuredData,
+  type SystemPhotoSlotKey,
   type TocPage,
   type WizardPhotoSlots,
 } from "@/contexts/WizardContext";
+import { suggestPhotoAssignments } from "@/lib/photoRouting";
 import { useAuth } from "@/contexts/AuthContext";
 import { SideBySideEditor } from "./SideBySideEditor";
 import { AICoPilotPanel } from "./AICoPilotPanel";
@@ -419,6 +421,44 @@ export function Step3Authoring({ qaMode = false }: Step3AuthoringProps) {
     );
   };
 
+  // Phase 4 — "Suggest assignments" in the Step 3 photo picker. Pure
+  // filename-token routing (src/lib/photoRouting); no network calls. Photos
+  // suggested for the ACTIVE page get checked in the picker draft; system
+  // pages also get slot suggestions (first suggestion per slot wins,
+  // existing picks are never overwritten).
+  const suggestForActivePage = (
+    current: Record<string, SystemPhotoSlotKey | null>,
+  ): Record<string, SystemPhotoSlotKey | null> => {
+    if (!activePage) return current;
+    const suggestions = suggestPhotoAssignments(
+      state.intakeUploads.photos.map((f) => ({ url: f.id, filename: f.name })),
+      selectedPages.map((p) => ({
+        page_key: p.page_key,
+        title: p.title,
+        group: p.group,
+      })),
+    );
+    const next = { ...current };
+    const usedSlots = new Set(
+      Object.values(next).filter((s): s is SystemPhotoSlotKey => s !== null),
+    );
+    for (const s of suggestions) {
+      if (s.page_key !== activePage.page_key) continue;
+      const alreadyPicked = s.url in next;
+      if (!alreadyPicked) next[s.url] = null;
+      if (
+        pageType === "system" &&
+        s.slot &&
+        next[s.url] === null &&
+        !usedSlots.has(s.slot)
+      ) {
+        next[s.url] = s.slot;
+        usedSlots.add(s.slot);
+      }
+    }
+    return next;
+  };
+
   const persistNotesForNextVisit = async (notes: string) => {
     if (!state.propertyId || !state.activePageKey || !user) return;
     setSavingNotes(true);
@@ -669,6 +709,7 @@ export function Step3Authoring({ qaMode = false }: Step3AuthoringProps) {
                       updateStructured({ photoSlots })
                     }
                     allIntakePhotos={state.intakeUploads.photos}
+                    onSuggestPhotos={suggestForActivePage}
                     narrative={activeNarrative}
                     observations={activeObservations}
                     onUpdateBlock={updateActiveBlock}
@@ -765,6 +806,9 @@ interface PageAdminEditorProps {
   photoSlots: WizardPhotoSlots | undefined;
   onChangePhotoSlots: (next: WizardPhotoSlots) => void;
   allIntakePhotos: IntakeFileRef[];
+  onSuggestPhotos: (
+    current: Record<string, SystemPhotoSlotKey | null>,
+  ) => Record<string, SystemPhotoSlotKey | null>;
   narrative: string;
   observations: string;
   onUpdateBlock: (type: string, value: string) => void;
@@ -834,6 +878,7 @@ function PageAdminEditor({
   photoSlots,
   onChangePhotoSlots,
   allIntakePhotos,
+  onSuggestPhotos,
   narrative,
   observations,
   onUpdateBlock,
@@ -876,6 +921,7 @@ function PageAdminEditor({
               slots={photoSlots}
               onChangeSlots={onChangePhotoSlots}
               allPhotos={allIntakePhotos}
+              onSuggest={onSuggestPhotos}
             />
           }
         />
@@ -957,6 +1003,7 @@ function PageAdminEditor({
           slots={photoSlots}
           onChangeSlots={onChangePhotoSlots}
           allPhotos={allIntakePhotos}
+          onSuggest={onSuggestPhotos}
         />
       )}
 
