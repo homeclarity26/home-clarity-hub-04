@@ -158,7 +158,7 @@ const InvoiceView = () => {
             {propertyAddress && <p className="text-sm" style={{ color: `${theme["--text-hero"]}88` }}>{propertyAddress}</p>}
             <p className="text-sm" style={{ color: `${theme["--text-hero"]}66` }}>
               {invoice.invoice_number && `${invoice.invoice_number} · `}
-              Issue: {invoice.issue_date ? format(new Date(invoice.issue_date), "MMM d, yyyy") : "—"}
+              Issue: {invoice.issue_date ? format(new Date(invoice.issue_date), "MMM d, yyyy") : "–"}
               {invoice.due_date && ` · Due: ${format(new Date(invoice.due_date), "MMM d, yyyy")}`}
             </p>
           </div>

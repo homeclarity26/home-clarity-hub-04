@@ -152,7 +152,7 @@ const PropertyValueWidget = ({ propertyId, estimatedValue: initialValue }: Prope
       }
     } catch (err) {
       console.error("PropertyValueWidget: refresh failed", err);
-      toast.error("Couldn't load home value — try again later.");
+      toast.error("Couldn't load home value; try again later.");
     } finally {
       setLoading(false);
     }

@@ -173,7 +173,7 @@ const PDFSpacePage = ({ page, groupName, images = [] }: PDFSpacePageProps) => (
         <Text style={sp.sectionLabel}>Recommendations</Text>
         {page.recommendations.map((rec, i) => (
           <View key={i} style={sp.recItem}>
-            <Text style={sp.recBullet}>—</Text>
+            <Text style={sp.recBullet}>–</Text>
             <Text style={sp.recText}>{rec}</Text>
           </View>
         ))}

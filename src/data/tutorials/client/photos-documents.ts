@@ -45,7 +45,7 @@ export const clientPhotosDocuments: Tutorial[] = [
       { title: "Your advisor coordinates", body: "Your advisor will review your equipment registry and report, then coordinate with a trusted vendor on your behalf." },
       { title: "Track the project", body: "If the service becomes a project, it will appear in your Projects tab with status updates as work progresses." },
     ],
-    tip: "You can also ask Bobby to look up details about your equipment before requesting service — just ask 'What brand is my furnace?' or 'When was my AC last serviced?'",
+    tip: "You can also ask Bobby to look up details about your equipment before requesting service; just ask 'What brand is my furnace?' or 'When was my AC last serviced?'",
     keywords: ["service", "request", "vendor", "repair", "maintenance", "help"],
   },
 ];

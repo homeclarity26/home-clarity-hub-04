@@ -198,7 +198,7 @@ const PDFRoadmapPage = ({ page }: PDFRoadmapPageProps) => (
         </Text>
         {page.recommendations.map((rec, i) => (
           <View key={i} style={{ flexDirection: "row", marginBottom: 6, paddingLeft: 4 }}>
-            <Text style={{ fontFamily: "Inter", fontSize: 11, color: colors.gold, width: 16 }}>—</Text>
+            <Text style={{ fontFamily: "Inter", fontSize: 11, color: colors.gold, width: 16 }}>–</Text>
             <Text style={{ fontFamily: "Inter", fontSize: 10, color: colors.navy, flex: 1, lineHeight: 1.5 }}>
               {rec}
             </Text>

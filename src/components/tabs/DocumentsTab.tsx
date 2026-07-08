@@ -58,10 +58,10 @@ const DocumentsTab = ({ propertyId }: DocumentsTabProps) => {
 
     if (propertyId.startsWith("mock-")) {
       setFiles([
-        { id: "doc-1", file_name: "Discovery Call Notes — Johnson.pdf", category: "Discovery Call", storage_path: "", file_type: "pdf", file_size: "245 KB", created_at: "2026-01-05T00:00:00Z" },
+        { id: "doc-1", file_name: "Discovery Call Notes - Johnson.pdf", category: "Discovery Call", storage_path: "", file_type: "pdf", file_size: "245 KB", created_at: "2026-01-05T00:00:00Z" },
         { id: "doc-2", file_name: "Discovery Call Recording.mp3", category: "Discovery Call", storage_path: "", file_type: "audio", file_size: "18.2 MB", created_at: "2026-01-05T00:00:00Z" },
-        { id: "doc-3", file_name: "Exterior — Front Elevation.jpg", category: "Exterior Photos", storage_path: "", file_type: "image", file_size: "3.1 MB", created_at: "2026-01-12T00:00:00Z" },
-        { id: "doc-4", file_name: "Home Clarity Report — Johnson Residence.pdf", category: "General", storage_path: "", file_type: "pdf", file_size: "4.8 MB", created_at: "2026-02-15T00:00:00Z" },
+        { id: "doc-3", file_name: "Exterior - Front Elevation.jpg", category: "Exterior Photos", storage_path: "", file_type: "image", file_size: "3.1 MB", created_at: "2026-01-12T00:00:00Z" },
+        { id: "doc-4", file_name: "Home Clarity Report - Johnson Residence.pdf", category: "General", storage_path: "", file_type: "pdf", file_size: "4.8 MB", created_at: "2026-02-15T00:00:00Z" },
       ]);
       setLoading(false);
       return;

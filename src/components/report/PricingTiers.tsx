@@ -42,7 +42,7 @@ const PricingTiers = ({ tiers, pageTitle, propertyId, onTabChange }: PricingTier
       // Create project
       const { error: projError } = await supabase.from("projects").insert({
         property_id: propertyId,
-        title: `${pageTitle || "Project"} — ${label}`,
+        title: `${pageTitle || "Project"}: ${label}`,
         description: tier.description,
         estimated_cost: cost,
         approved_tier: label,
@@ -54,7 +54,7 @@ const PricingTiers = ({ tiers, pageTitle, propertyId, onTabChange }: PricingTier
       if (cost && cost > 0) {
         await supabase.from("invoices").insert({
           property_id: propertyId,
-          description: `${pageTitle || "Project"} — ${label} Tier`,
+          description: `${pageTitle || "Project"}: ${label} Tier`,
           amount: cost,
           total: cost,
           subtotal: cost,

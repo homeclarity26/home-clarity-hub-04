@@ -184,7 +184,7 @@ export const reportPages: Record<string, ReportPageData> = {
     conditionRating: "Fair",
     narrative: [
       "The roof was last replaced in 2009 with architectural asphalt shingles rated for 25–30 years. At 17 years old, it is past the midpoint of its expected life and entering the monitoring phase where annual inspections become critical.",
-      "Visual inspection reveals granule loss on south-facing slopes — the areas receiving the most UV exposure. Several shingles on the north slope show early curling at edges. Flashing around the chimney appears intact but sealant is showing age-related cracking.",
+      "Visual inspection reveals granule loss on south-facing slopes; the areas receiving the most UV exposure. Several shingles on the north slope show early curling at edges. Flashing around the chimney appears intact but sealant is showing age-related cracking.",
       "The ridge vent system is functioning properly with no visible blockage. Soffit vents are partially obstructed by insulation displacement in two areas, reducing attic ventilation efficiency.",
       "No active leaks were observed, and attic inspection showed no water staining on decking. However, two areas of the decking showed slight waviness suggesting possible moisture exposure in the past.",
     ],
@@ -210,9 +210,9 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "exterior",
     conditionRating: "Good",
     narrative: [
-      "The home is clad in vinyl siding installed during a 2004 renovation. The material is mid-grade quality with a 40-year limited warranty. Overall, the siding is performing well — color retention is acceptable with only modest fading on the south and west exposures.",
+      "The home is clad in vinyl siding installed during a 2004 renovation. The material is mid-grade quality with a 40-year limited warranty. Overall, the siding is performing well; color retention is acceptable with only modest fading on the south and west exposures.",
       "A detailed walk-around inspection identified three areas where siding panels have pulled away from the J-channel, leaving gaps that could allow moisture and insect intrusion behind the envelope. These are simple re-clips that any siding contractor can address in under an hour.",
-      "The trim around windows and soffits is aluminum with a baked-on finish. Minor oxidation is visible on the west-facing fascia boards but no structural deterioration. The band board between the first and second floors shows a slight bow in one 8-foot section — likely a settling deflection rather than structural concern, but worth monitoring.",
+      "The trim around windows and soffits is aluminum with a baked-on finish. Minor oxidation is visible on the west-facing fascia boards but no structural deterioration. The band board between the first and second floors shows a slight bow in one 8-foot section; likely a settling deflection rather than structural concern, but worth monitoring.",
       "Behind the siding, the home has OSB sheathing with house wrap. Where visible at penetrations, the house wrap appears intact. No moisture staining or rot was observed at any accessible point behind the cladding.",
     ],
     healthBar: { label: "Siding Condition", current: 75, total: 100, unit: "%" },
@@ -230,7 +230,7 @@ export const reportPages: Record<string, ReportPageData> = {
     },
     timing: "Year 3–5 (maintenance items immediate)",
     recommendations: [
-      "Re-clip three loose siding panels immediately — prevents moisture intrusion",
+      "Re-clip three loose siding panels immediately; prevents moisture intrusion",
       "Monitor band board bow annually for progression",
       "Consider re-siding when roof is replaced for scaffold efficiency",
     ],
@@ -243,7 +243,7 @@ export const reportPages: Record<string, ReportPageData> = {
     conditionRating: "Fair",
     narrative: [
       "The home has a mix of window types and ages. The majority are original 1987 double-hung aluminum-frame windows with dual-pane glass. These windows were standard for the era but fall well short of modern energy performance standards.",
-      "Several windows on the north and west facades show visible condensation between panes — a telltale sign of seal failure. Once the seal fails, the insulating gas escapes, and the window's thermal performance drops significantly.",
+      "Several windows on the north and west facades show visible condensation between panes; a telltale sign of seal failure. Once the seal fails, the insulating gas escapes, and the window's thermal performance drops significantly.",
       "Window hardware (locks, balances, operators) is functional on most units but several second-floor windows are difficult to operate, creating both a convenience and safety issue (egress in an emergency).",
       "Energy loss through these windows is substantial. Modern low-E, argon-filled windows can reduce heating/cooling costs by 15–25%.",
     ],
@@ -269,9 +269,9 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "exterior",
     conditionRating: "Fair",
     narrative: [
-      "The home has four exterior doors: front entry, rear sliding patio door, side entry to garage, and a basement walkout door. The front entry door is a solid wood 6-panel door, original to the home. It shows signs of weathering — minor warping along the bottom rail and deteriorated weather stripping that allows visible daylight gaps.",
-      "The rear sliding patio door is a 2012 replacement — a double-pane vinyl unit in generally good condition. The track shows some debris accumulation and the rollers occasionally stick, but cleaning and lubrication should restore smooth operation. The screen door is torn in one corner.",
-      "The side entry door to the garage is a hollow-core unit that provides virtually no thermal or security benefit. This door should be upgraded to an insulated, fire-rated door — a code requirement in most jurisdictions for the garage-to-house connection.",
+      "The home has four exterior doors: front entry, rear sliding patio door, side entry to garage, and a basement walkout door. The front entry door is a solid wood 6-panel door, original to the home. It shows signs of weathering; minor warping along the bottom rail and deteriorated weather stripping that allows visible daylight gaps.",
+      "The rear sliding patio door is a 2012 replacement; a double-pane vinyl unit in generally good condition. The track shows some debris accumulation and the rollers occasionally stick, but cleaning and lubrication should restore smooth operation. The screen door is torn in one corner.",
+      "The side entry door to the garage is a hollow-core unit that provides virtually no thermal or security benefit. This door should be upgraded to an insulated, fire-rated door; a code requirement in most jurisdictions for the garage-to-house connection.",
       "The basement walkout door is a steel unit showing surface rust at the bottom where it meets the threshold. Weather stripping is compressed and no longer sealing effectively. Water staining on the interior side suggests past moisture entry during heavy rain.",
     ],
     healthBar: { label: "Door Condition", current: 55, total: 100, unit: "%" },
@@ -288,7 +288,7 @@ export const reportPages: Record<string, ReportPageData> = {
     },
     timing: "Year 1–2",
     recommendations: [
-      "Replace garage-to-house door with fire-rated unit immediately — safety priority",
+      "Replace garage-to-house door with fire-rated unit immediately; safety priority",
       "Address basement door rust and weather stripping before next rain season",
       "Front entry door replacement improves curb appeal significantly",
     ],
@@ -301,8 +301,8 @@ export const reportPages: Record<string, ReportPageData> = {
     conditionRating: "Fair",
     narrative: [
       "The home has 5-inch aluminum K-style gutters installed in 2009 during the roof replacement. The gutter system is generally intact but showing several maintenance needs and one area of concern.",
-      "Downspouts discharge at grade level with no splash blocks or extensions on three of six locations. Water is pooling at the foundation base — a contributing factor to the drainage issues noted in the landscaping section and a potential source of basement moisture.",
-      "Two gutter sections on the north side have pulled away from the fascia, likely from ice loading. The spikes are pulling through the aluminum — a common failure mode. Re-hanging with modern hidden hangers (screwed to rafters) would be a permanent fix.",
+      "Downspouts discharge at grade level with no splash blocks or extensions on three of six locations. Water is pooling at the foundation base; a contributing factor to the drainage issues noted in the landscaping section and a potential source of basement moisture.",
+      "Two gutter sections on the north side have pulled away from the fascia, likely from ice loading. The spikes are pulling through the aluminum; a common failure mode. Re-hanging with modern hidden hangers (screwed to rafters) would be a permanent fix.",
       "Leaf guards are not installed. Given the mature tree canopy, the gutters require cleaning 3–4 times per year to function properly. Gutter guards would reduce this to annual inspections.",
     ],
     healthBar: { label: "Gutter System", current: 60, total: 100, unit: "%" },
@@ -327,8 +327,8 @@ export const reportPages: Record<string, ReportPageData> = {
     conditionRating: "Fair",
     narrative: [
       "The rear deck is a pressure-treated pine structure built in 2005, approximately 320 square feet with a single staircase to grade. The decking boards show moderate weathering with surface checking (splitting along the grain) on approximately 30% of boards. The stain/seal has worn off most of the walking surface.",
-      "Structurally, the ledger board connection to the house was inspected and appears properly flashed and bolted — the most critical detail in deck construction. The posts are set on concrete piers above grade, which is proper technique. No signs of rot at post bases.",
-      "The railing system meets current height requirements (36 inches) but the baluster spacing exceeds the modern 4-inch maximum in two sections — a safety concern if small children use the space. Railing post connections show some wobble, indicating loosening fasteners.",
+      "Structurally, the ledger board connection to the house was inspected and appears properly flashed and bolted; the most critical detail in deck construction. The posts are set on concrete piers above grade, which is proper technique. No signs of rot at post bases.",
+      "The railing system meets current height requirements (36 inches) but the baluster spacing exceeds the modern 4-inch maximum in two sections; a safety concern if small children use the space. Railing post connections show some wobble, indicating loosening fasteners.",
       "The adjacent patio is paver-on-sand construction, approximately 200 square feet. As noted in the landscaping section, tree root heave has displaced several pavers, creating a trip hazard. Overall, the paver material is in good condition and releveling is straightforward.",
     ],
     healthBar: { label: "Deck & Patio Condition", current: 55, total: 100, unit: "%" },
@@ -346,7 +346,7 @@ export const reportPages: Record<string, ReportPageData> = {
     },
     timing: "Year 2–3",
     recommendations: [
-      "Correct baluster spacing immediately — child safety concern",
+      "Correct baluster spacing immediately; child safety concern",
       "Stain/seal deck before winter to prevent further deterioration",
       "Relevel patio pavers to eliminate trip hazard",
     ],
@@ -358,7 +358,7 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "exterior",
     conditionRating: "Good",
     narrative: [
-      "The driveway is poured concrete, approximately 40 feet long and 18 feet wide (two-car width). The original 1987 pour shows typical aging — three hairline control-joint cracks and two areas of surface spalling near the garage apron. No heaving or significant settling was observed.",
+      "The driveway is poured concrete, approximately 40 feet long and 18 feet wide (two-car width). The original 1987 pour shows typical aging; three hairline control-joint cracks and two areas of surface spalling near the garage apron. No heaving or significant settling was observed.",
       "The front walkway from the driveway to the entry is flagstone-on-mortar, added during a 2010 landscaping project. It is in excellent condition with tight mortar joints and proper slope away from the front entry. This is a quality installation that enhances curb appeal.",
       "The side concrete walkway to the rear yard has one area of significant settling (approximately 1.5 inches) where it passes alongside the garage. This creates a trip hazard and a low point where water pools. Mudjacking (slab lifting) is a cost-effective repair option.",
       "Overall, the hardscape infrastructure is solid. The concrete driveway has many years of service remaining with basic sealing and crack repair. The side walkway settling should be addressed for safety.",
@@ -397,7 +397,7 @@ export const reportPages: Record<string, ReportPageData> = {
     },
     timing: "Year 1–2 (drainage is priority)",
     recommendations: [
-      "Address east-side drainage immediately — low cost, high impact",
+      "Address east-side drainage immediately; low cost, high impact",
       "Consult arborist about silver maple root management",
       "Consider landscape lighting for security and aesthetics",
     ],
@@ -412,10 +412,10 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "interior-living",
     conditionRating: "Good",
     narrative: [
-      "The formal living room is a well-proportioned 14×18-foot space at the front of the home with a large picture window providing excellent natural light. The room retains its original hardwood flooring — red oak — which is in remarkably good condition with only minor surface wear in traffic paths.",
+      "The formal living room is a well-proportioned 14×18-foot space at the front of the home with a large picture window providing excellent natural light. The room retains its original hardwood flooring, red oak, which is in remarkably good condition with only minor surface wear in traffic paths.",
       "Crown molding, chair rail, and baseboards are original and in excellent condition, reflecting quality 1987 craftsmanship. These details add character and value that modern homes rarely replicate at this quality level.",
-      "The ceiling shows two fine hairline cracks running parallel to the joists — typical of seasonal expansion and contraction in drywall. These are cosmetic, not structural, and can be addressed with tape and texture during the next paint cycle.",
-      "The room has three duplex outlets on two walls, which is adequate but not generous by modern standards. No USB outlets, no floor outlets for center-room furniture placement. The overhead light is controlled by a single switch — no dimmer capability.",
+      "The ceiling shows two fine hairline cracks running parallel to the joists; typical of seasonal expansion and contraction in drywall. These are cosmetic, not structural, and can be addressed with tape and texture during the next paint cycle.",
+      "The room has three duplex outlets on two walls, which is adequate but not generous by modern standards. No USB outlets, no floor outlets for center-room furniture placement. The overhead light is controlled by a single switch; no dimmer capability.",
     ],
     healthBar: { label: "Living Room Condition", current: 78, total: 100, unit: "%" },
     specs: [
@@ -439,9 +439,9 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "interior-living",
     conditionRating: "Good",
     narrative: [
-      "The formal dining room is 12×14 feet, adjacent to the kitchen and living room — a classic colonial floor plan. The room features the same red oak hardwood as the living room, in slightly better condition due to lighter traffic patterns.",
+      "The formal dining room is 12×14 feet, adjacent to the kitchen and living room; a classic colonial floor plan. The room features the same red oak hardwood as the living room, in slightly better condition due to lighter traffic patterns.",
       "The ceiling has a decorative medallion and chandelier hook centered in the room. The chandelier electrical box is properly rated for fixture weight. Wainscoting or chair rail treatment on three walls adds period-appropriate formality.",
-      "One wall shows a slight outward bow near the floor — approximately 1/4 inch over 8 feet. This is within normal tolerances for a home of this age and shows no signs of progression. A baseline measurement has been recorded for future comparison.",
+      "One wall shows a slight outward bow near the floor; approximately 1/4 inch over 8 feet. This is within normal tolerances for a home of this age and shows no signs of progression. A baseline measurement has been recorded for future comparison.",
       "The room has adequate natural light from two east-facing windows but artificial lighting is limited to the chandelier. Wall sconces or recessed lighting would improve versatility for this space.",
     ],
     healthBar: { label: "Dining Room Condition", current: 80, total: 100, unit: "%" },
@@ -465,10 +465,10 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "interior-living",
     conditionRating: "Good",
     narrative: [
-      "The family room is the largest living space at 16×20 feet, located at the rear of the home with sliding door access to the deck. This is clearly the most-used room in the home, and the wear patterns reflect that — which is exactly as it should be.",
+      "The family room is the largest living space at 16×20 feet, located at the rear of the home with sliding door access to the deck. This is clearly the most-used room in the home, and the wear patterns reflect that; which is exactly as it should be.",
       "The flooring is wall-to-wall carpet, likely installed around 2015 based on condition and style. It shows moderate traffic wear in the main walkway but is generally in fair-to-good condition. Carpet padding appears adequate based on feel.",
-      "The room features a wood-burning fireplace with a brick surround and wood mantel. The firebox interior shows heavy creosote buildup — a professional chimney sweep is overdue. The damper operates but is stiff. The mantel has a minor separation from the wall that could be re-secured with finish nails and caulk.",
-      "This room has the most electrical demand — TV, gaming systems, sound bar, lamps — and it shows. Two power strips are in use, daisy-chained in one case. Additional dedicated circuits and outlets would improve safety and convenience.",
+      "The room features a wood-burning fireplace with a brick surround and wood mantel. The firebox interior shows heavy creosote buildup; a professional chimney sweep is overdue. The damper operates but is stiff. The mantel has a minor separation from the wall that could be re-secured with finish nails and caulk.",
+      "This room has the most electrical demand, TV, gaming systems, sound bar, lamps, and it shows. Two power strips are in use, daisy-chained in one case. Additional dedicated circuits and outlets would improve safety and convenience.",
     ],
     healthBar: { label: "Family Room Condition", current: 68, total: 100, unit: "%" },
     specs: [
@@ -485,8 +485,8 @@ export const reportPages: Record<string, ReportPageData> = {
     },
     timing: "Year 2–4",
     recommendations: [
-      "Schedule chimney sweep immediately — fire safety priority",
-      "Address daisy-chained power strips — electrical hazard",
+      "Schedule chimney sweep immediately; fire safety priority",
+      "Address daisy-chained power strips; electrical hazard",
       "Consider gas fireplace insert for convenience and efficiency",
     ],
   },
@@ -497,9 +497,9 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "interior-living",
     conditionRating: "Good",
     narrative: [
-      "The home office is a converted bedroom (11×12 feet) on the main floor. The conversion was done simply — no structural changes, just repurposed as workspace. The room has two windows providing good natural light and ventilation.",
+      "The home office is a converted bedroom (11×12 feet) on the main floor. The conversion was done simply; no structural changes, just repurposed as workspace. The room has two windows providing good natural light and ventilation.",
       "Flooring is the same red oak hardwood found throughout the main level, in good condition under a large area rug. Walls are in good condition with standard drywall and paint. One wall has been fitted with wall-mounted shelving.",
-      "The room has a single overhead light and two wall outlets — insufficient for a modern home office. A dedicated circuit, additional outlets (including USB-C), and improved lighting would significantly improve functionality.",
+      "The room has a single overhead light and two wall outlets; insufficient for a modern home office. A dedicated circuit, additional outlets (including USB-C), and improved lighting would significantly improve functionality.",
       "Internet connectivity is via Wi-Fi. The room is on the opposite end of the home from the router, and signal strength may be limited. Consider a hardwired ethernet drop or mesh Wi-Fi extender for reliable video conferencing.",
     ],
     healthBar: { label: "Office Condition", current: 75, total: 100, unit: "%" },
@@ -524,9 +524,9 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "interior-living",
     conditionRating: "Good",
     narrative: [
-      "The bonus room above the garage is a 15×20-foot space that serves as a secondary family area. The room was finished as part of the original construction but has the characteristics typical of above-garage spaces — lower insulation value and some temperature differential from the main living areas.",
-      "Flooring is carpet over plywood subfloor. The carpet is older (likely original or first replacement) and showing significant wear. The subfloor has a slight bounce in the center span, suggesting potential need for additional bracing — though this is common in above-garage construction.",
-      "The room has its own HVAC register but temperature consistency is noticeably different from the main house — warmer in summer, cooler in winter. This is primarily an insulation issue. The floor above the unheated garage needs R-30 or better insulation, and the current batts appear to be R-19 at best.",
+      "The bonus room above the garage is a 15×20-foot space that serves as a secondary family area. The room was finished as part of the original construction but has the characteristics typical of above-garage spaces; lower insulation value and some temperature differential from the main living areas.",
+      "Flooring is carpet over plywood subfloor. The carpet is older (likely original or first replacement) and showing significant wear. The subfloor has a slight bounce in the center span, suggesting potential need for additional bracing; though this is common in above-garage construction.",
+      "The room has its own HVAC register but temperature consistency is noticeably different from the main house; warmer in summer, cooler in winter. This is primarily an insulation issue. The floor above the unheated garage needs R-30 or better insulation, and the current batts appear to be R-19 at best.",
       "This is excellent space with good potential. With proper insulation and flooring upgrades, it can function comfortably as a media room, playroom, guest suite, or gym.",
     ],
     healthBar: { label: "Bonus Room Condition", current: 62, total: 100, unit: "%" },
@@ -555,7 +555,7 @@ export const reportPages: Record<string, ReportPageData> = {
     narrative: [
       "The primary bedroom is 14×16 feet with a walk-in closet (5×8 feet) and direct access to the primary bathroom. The room is positioned at the rear of the home for privacy and benefits from morning light through two east-facing windows.",
       "Flooring is wall-to-wall carpet installed approximately 2018 and in good condition. The padding feels adequate. One area near the closet door shows a ripple that could be re-stretched to prevent a trip hazard.",
-      "The ceiling fan is operational but wobbles noticeably at higher speeds — likely a balance or mounting issue. The light kit flickers intermittently, suggesting a wiring connection issue in the canopy. The walk-in closet has a single overhead light and a basic wire shelf system.",
+      "The ceiling fan is operational but wobbles noticeably at higher speeds; likely a balance or mounting issue. The light kit flickers intermittently, suggesting a wiring connection issue in the canopy. The walk-in closet has a single overhead light and a basic wire shelf system.",
       "Two windows have operational locks and balances. The north-facing window has a failed seal (condensation between panes) as noted in the Windows section. Overall, this is a comfortable, well-proportioned primary suite that would benefit from cosmetic updates and closet organization.",
     ],
     healthBar: { label: "Primary Bedroom Condition", current: 74, total: 100, unit: "%" },
@@ -581,9 +581,9 @@ export const reportPages: Record<string, ReportPageData> = {
     conditionRating: "Good",
     narrative: [
       "Bedroom 2 is 11×13 feet, located adjacent to the hall bathroom. Currently used as a child's bedroom. The room has two windows providing good cross-ventilation and adequate natural light.",
-      "Flooring is the original red oak hardwood, hidden under carpet until a recent (within 5 years) carpet removal. The hardwood is in surprisingly good condition — the carpet actually protected it from decades of wear. Minor refinishing would bring it to excellent condition.",
-      "Walls and ceiling are in good condition with standard paint. The closet is a standard reach-in with a single rod and shelf — functional but not optimized. The door is a hollow-core original that transmits sound easily.",
-      "Two outlets serve the room — minimum for current code but light for modern usage with devices, chargers, and lamps. The overhead light is a basic flush-mount fixture.",
+      "Flooring is the original red oak hardwood, hidden under carpet until a recent (within 5 years) carpet removal. The hardwood is in surprisingly good condition; the carpet actually protected it from decades of wear. Minor refinishing would bring it to excellent condition.",
+      "Walls and ceiling are in good condition with standard paint. The closet is a standard reach-in with a single rod and shelf; functional but not optimized. The door is a hollow-core original that transmits sound easily.",
+      "Two outlets serve the room; minimum for current code but light for modern usage with devices, chargers, and lamps. The overhead light is a basic flush-mount fixture.",
     ],
     healthBar: { label: "Bedroom 2 Condition", current: 76, total: 100, unit: "%" },
     specs: [
@@ -606,10 +606,10 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "interior-bedrooms",
     conditionRating: "Good",
     narrative: [
-      "Bedroom 3 is 10×12 feet, the smallest of the upper bedrooms. Currently configured as a guest room. The room has one window — a single double-hung on the south wall providing good light but limited ventilation options.",
-      "Flooring is carpet, likely original or very old, and showing its age — matting, some staining, and compressed padding. Replacement is recommended regardless of other upgrades. The subfloor appears solid based on feel.",
+      "Bedroom 3 is 10×12 feet, the smallest of the upper bedrooms. Currently configured as a guest room. The room has one window; a single double-hung on the south wall providing good light but limited ventilation options.",
+      "Flooring is carpet, likely original or very old, and showing its age; matting, some staining, and compressed padding. Replacement is recommended regardless of other upgrades. The subfloor appears solid based on feel.",
       "The closet is a small reach-in (approximately 2×4 feet) with a bi-fold door that sticks on the upper track. Interior storage is a single shelf and rod. For a guest room this is adequate; if converted to regular use, a closet organizer would maximize the limited space.",
-      "The room is on the south side of the house and tends to run warm in summer — consistent with the window orientation and the HVAC system's limitations in balancing temperatures across zones.",
+      "The room is on the south side of the house and tends to run warm in summer; consistent with the window orientation and the HVAC system's limitations in balancing temperatures across zones.",
     ],
     healthBar: { label: "Bedroom 3 Condition", current: 65, total: 100, unit: "%" },
     specs: [
@@ -634,7 +634,7 @@ export const reportPages: Record<string, ReportPageData> = {
     narrative: [
       "Bedroom 4 is 10×11 feet on the main floor, currently serving as the home office (detailed separately). If converted back to bedroom use, the room meets code requirements for egress (two windows), has a closet, and is properly heated.",
       "The room shares a wall with the family room, and sound transmission is noticeable. If used as a bedroom, sound attenuation measures (insulation in the shared wall, solid-core door) would be worthwhile improvements.",
-      "This room offers flexibility — it can credibly serve as a bedroom, office, nursery, or hobby room. Its main-floor location makes it particularly valuable for aging-in-place scenarios or guests with mobility limitations.",
+      "This room offers flexibility; it can credibly serve as a bedroom, office, nursery, or hobby room. Its main-floor location makes it particularly valuable for aging-in-place scenarios or guests with mobility limitations.",
       "The closet is a standard reach-in with bi-fold doors in good operating condition. The room has adequate lighting and outlets for bedroom use.",
     ],
     healthBar: { label: "Bedroom 4 Condition", current: 75, total: 100, unit: "%" },
@@ -664,7 +664,7 @@ export const reportPages: Record<string, ReportPageData> = {
     narrative: [
       "The primary bathroom retains its original 1987 layout with a combination tub/shower, single vanity, and water closet. The space is functional but dated, and several elements are showing their age.",
       "The tile surround in the tub/shower area shows grout deterioration in multiple areas, particularly along the tub ledge and corners. Compromised grout allows moisture penetration behind the tile, leading to substrate damage and mold growth. Immediate re-grouting is recommended.",
-      "The vanity and countertop are original cultured marble with surface crazing and staining. The faucet shows mineral buildup and occasional dripping. The toilet is a standard 3.5-gallon model — replacing with a 1.28-gallon unit saves approximately 16,000 gallons annually.",
+      "The vanity and countertop are original cultured marble with surface crazing and staining. The faucet shows mineral buildup and occasional dripping. The toilet is a standard 3.5-gallon model; replacing with a 1.28-gallon unit saves approximately 16,000 gallons annually.",
       "Ventilation is provided by a builder-grade exhaust fan that is audibly struggling and likely not moving its rated CFM. Inadequate bathroom ventilation is a leading cause of mold and moisture damage.",
     ],
     healthBar: { label: "Bathroom Condition", current: 45, total: 100, unit: "%" },
@@ -689,8 +689,8 @@ export const reportPages: Record<string, ReportPageData> = {
     conditionRating: "Fair",
     narrative: [
       "The hall bathroom serves Bedrooms 2 and 3 and is the primary bathroom for children and guests. It is a standard 5×8-foot full bath with tub/shower combo, single vanity, and toilet.",
-      "The floor tile is 1-inch hex mosaic, original to the home and in fair condition. Grout is dark and stained but intact. The tile itself has no cracks or loose pieces — a testament to the quality of 1980s tile installation.",
-      "The tub is cast iron with a porcelain finish showing wear marks and minor surface roughness. Re-glazing is an option for 5–7 more years of service; full replacement would be part of a larger renovation. The shower valve is a single-handle unit with inconsistent temperature — the cartridge likely needs replacement.",
+      "The floor tile is 1-inch hex mosaic, original to the home and in fair condition. Grout is dark and stained but intact. The tile itself has no cracks or loose pieces; a testament to the quality of 1980s tile installation.",
+      "The tub is cast iron with a porcelain finish showing wear marks and minor surface roughness. Re-glazing is an option for 5–7 more years of service; full replacement would be part of a larger renovation. The shower valve is a single-handle unit with inconsistent temperature; the cartridge likely needs replacement.",
       "The medicine cabinet above the vanity is surface-mounted with a mirrored door. It's functional but dated. The vanity is a 24-inch builder-grade unit with a cultured marble top. Storage is minimal.",
     ],
     healthBar: { label: "Hall Bath Condition", current: 50, total: 100, unit: "%" },
@@ -716,9 +716,9 @@ export const reportPages: Record<string, ReportPageData> = {
     conditionRating: "Good",
     narrative: [
       "The main-floor powder room is a compact half-bath tucked under the staircase. It contains a pedestal sink and toilet in a 4×5-foot space. While small, it's an essential convenience and the bathroom guests use most frequently.",
-      "The pedestal sink is a classic white porcelain piece in good condition — no chips or cracks. The faucet is a basic chrome two-handle design that functions properly but looks dated. The toilet is a more recent replacement (likely 2010s) with a 1.6 GPF flush.",
+      "The pedestal sink is a classic white porcelain piece in good condition; no chips or cracks. The faucet is a basic chrome two-handle design that functions properly but looks dated. The toilet is a more recent replacement (likely 2010s) with a 1.6 GPF flush.",
       "Flooring is sheet vinyl in a tile pattern. It shows some curling at the edges where it meets the baseboard and a small tear near the toilet base. The subfloor beneath feels solid. A luxury vinyl tile replacement would be a quick, high-impact upgrade.",
-      "The room has a small exhaust fan and a single vanity light. Both function adequately. The wall-mounted mirror is plain glass — a framed mirror would dress the space up considerably.",
+      "The room has a small exhaust fan and a single vanity light. Both function adequately. The wall-mounted mirror is plain glass; a framed mirror would dress the space up considerably.",
     ],
     healthBar: { label: "Powder Room Condition", current: 70, total: 100, unit: "%" },
     specs: [
@@ -747,7 +747,7 @@ export const reportPages: Record<string, ReportPageData> = {
       "The kitchen is the heart of your home, and it shows both the love it's received and the years it has served. The layout is functional with a classic work triangle, but the space doesn't reflect the way modern families use their kitchens.",
       "The cabinetry is original 1987 oak with visible wear. Hardware is dated but functional. Countertops are laminate with minor chips along the front edge near the sink.",
       "Appliances are mixed ages: the refrigerator (2019) and dishwasher (2021) are relatively new. The range/oven (2008) is approaching replacement. The microwave (2015) door seal is weakening.",
-      "Plumbing under the sink shows minor corrosion at supply line connections. Lighting is limited to a single overhead fluorescent — inadequate for modern tasks.",
+      "Plumbing under the sink shows minor corrosion at supply line connections. Lighting is limited to a single overhead fluorescent; inadequate for modern tasks.",
     ],
     healthBar: { label: "Kitchen Overall Condition", current: 55, total: 100, unit: "%" },
     specs: [
@@ -776,9 +776,9 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "interior-utility",
     conditionRating: "Good",
     narrative: [
-      "The laundry room is located on the main floor adjacent to the kitchen — a convenient and desirable layout. The space is 6×8 feet with a front-loading washer and dryer, utility sink, and overhead cabinetry.",
-      "The washer is a Samsung front-loader from 2020, in good condition with no notable issues. The dryer is a matching Samsung unit. The dryer vent runs approximately 12 feet to an exterior wall — within acceptable length. The vent connection at the dryer appears secure, and the exterior flap opens freely.",
-      "The utility sink is a molded composite unit with a standard faucet. Drainage is adequate with no signs of slow drain or leaks. The hot and cold supply lines are braided stainless steel (good — rubber hoses should always be replaced with braided steel).",
+      "The laundry room is located on the main floor adjacent to the kitchen; a convenient and desirable layout. The space is 6×8 feet with a front-loading washer and dryer, utility sink, and overhead cabinetry.",
+      "The washer is a Samsung front-loader from 2020, in good condition with no notable issues. The dryer is a matching Samsung unit. The dryer vent runs approximately 12 feet to an exterior wall; within acceptable length. The vent connection at the dryer appears secure, and the exterior flap opens freely.",
+      "The utility sink is a molded composite unit with a standard faucet. Drainage is adequate with no signs of slow drain or leaks. The hot and cold supply lines are braided stainless steel (good; rubber hoses should always be replaced with braided steel).",
       "The floor is vinyl tile, clean and in good condition. A floor drain is present in one corner. The walls show no signs of moisture damage. Overall, this is a well-functioning laundry space that requires minimal investment.",
     ],
     healthBar: { label: "Laundry Room Condition", current: 82, total: 100, unit: "%" },
@@ -804,7 +804,7 @@ export const reportPages: Record<string, ReportPageData> = {
     conditionRating: "Good",
     narrative: [
       "The front entry foyer is 6×8 feet with the original ceramic tile floor and a coat closet. The tile is in good condition with intact grout. The front door threshold shows minor wear. The closet has a single rod and shelf.",
-      "There is no formal mudroom — the side entry from the garage leads directly into the kitchen area. A mudroom zone with hooks, bench, and storage would be a significant quality-of-life improvement for this floor plan.",
+      "There is no formal mudroom; the side entry from the garage leads directly into the kitchen area. A mudroom zone with hooks, bench, and storage would be a significant quality-of-life improvement for this floor plan.",
       "The entry ceiling has a flush-mount light that provides adequate but uninspiring illumination. A pendant or semi-flush fixture would make a stronger first impression. The stair railing at the entry is solid oak, matching the original millwork throughout the home.",
       "The side entry from the garage could be converted into a functional mudroom within the existing footprint by adding built-in bench seating, hooks, and cubbies along the 6-foot wall between the garage door and the kitchen.",
     ],
@@ -829,10 +829,10 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "interior-utility",
     conditionRating: "Good",
     narrative: [
-      "The kitchen pantry is a reach-in closet with five fixed wire shelves. It's functional but not optimized — shelf spacing doesn't accommodate taller items, and the wire shelves allow small items to fall through and create instability.",
+      "The kitchen pantry is a reach-in closet with five fixed wire shelves. It's functional but not optimized; shelf spacing doesn't accommodate taller items, and the wire shelves allow small items to fall through and create instability.",
       "The home has adequate general storage with closets in each bedroom, a coat closet at the entry, a linen closet in the upstairs hallway, and significant unfinished basement storage space. The basement storage area is dry with no signs of moisture issues.",
       "The linen closet (2×3 feet) has three fixed shelves and is well-organized. The hallway location is convenient for serving the upstairs bedrooms and bathrooms.",
-      "A pull-out pantry system or custom shelving would dramatically improve the kitchen pantry's capacity and usability — a relatively small investment with daily quality-of-life impact.",
+      "A pull-out pantry system or custom shelving would dramatically improve the kitchen pantry's capacity and usability; a relatively small investment with daily quality-of-life impact.",
     ],
     healthBar: { label: "Storage Adequacy", current: 68, total: 100, unit: "%" },
     specs: [
@@ -856,9 +856,9 @@ export const reportPages: Record<string, ReportPageData> = {
     conditionRating: "Good",
     narrative: [
       "The main staircase connects the entry foyer to the second-floor hallway. The oak railing and balusters are original, well-crafted, and in good condition. The railing feels solid with no movement. One baluster near the top of the stairs has a slight wobble and should be re-secured.",
-      "The stair treads are carpeted over the original hardwood. The carpet shows wear on the nose of each tread — the area of highest impact. The carpet runner is held in place by rods at the base of each riser. Removing the carpet would reveal oak treads that could be refinished to match the main-floor hardwood.",
-      "The upstairs hallway is 3.5 feet wide and approximately 18 feet long, connecting all bedrooms and the hall bathroom. Flooring is the same carpet as the bedrooms. Lighting is a single ceiling fixture at center — dark at the ends.",
-      "The basement stairs are more utilitarian — open-riser pine construction with a simple handrail. They're structurally sound but the open risers are a safety concern if small children are present. Adding riser boards is a simple safety improvement.",
+      "The stair treads are carpeted over the original hardwood. The carpet shows wear on the nose of each tread; the area of highest impact. The carpet runner is held in place by rods at the base of each riser. Removing the carpet would reveal oak treads that could be refinished to match the main-floor hardwood.",
+      "The upstairs hallway is 3.5 feet wide and approximately 18 feet long, connecting all bedrooms and the hall bathroom. Flooring is the same carpet as the bedrooms. Lighting is a single ceiling fixture at center; dark at the ends.",
+      "The basement stairs are more utilitarian; open-riser pine construction with a simple handrail. They're structurally sound but the open risers are a safety concern if small children are present. Adding riser boards is a simple safety improvement.",
     ],
     healthBar: { label: "Stairway Condition", current: 74, total: 100, unit: "%" },
     specs: [
@@ -884,9 +884,9 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "interior-unfinished",
     conditionRating: "Good",
     narrative: [
-      "The basement is a full, unfinished space of approximately 1,100 square feet — the same footprint as the main floor. The concrete floor is in good condition with no significant cracks beyond typical control-joint cracking. No active moisture, efflorescence, or water staining was observed.",
-      "The foundation walls are poured concrete, 8 inches thick. No horizontal or stair-step cracking was observed. Two minor vertical hairline cracks were noted on the east wall — these are typical shrinkage cracks and not structural concerns. They have been stable (per the homeowner) for over a decade.",
-      "The space currently houses the furnace, water heater, electrical panel, and laundry area, with the remainder used for storage. Ceiling height is 7 feet 8 inches — adequate for finishing if desired. A sump pit is present in the northwest corner but no pump is installed; the homeowner reports no water issues.",
+      "The basement is a full, unfinished space of approximately 1,100 square feet; the same footprint as the main floor. The concrete floor is in good condition with no significant cracks beyond typical control-joint cracking. No active moisture, efflorescence, or water staining was observed.",
+      "The foundation walls are poured concrete, 8 inches thick. No horizontal or stair-step cracking was observed. Two minor vertical hairline cracks were noted on the east wall; these are typical shrinkage cracks and not structural concerns. They have been stable (per the homeowner) for over a decade.",
+      "The space currently houses the furnace, water heater, electrical panel, and laundry area, with the remainder used for storage. Ceiling height is 7 feet 8 inches; adequate for finishing if desired. A sump pit is present in the northwest corner but no pump is installed; the homeowner reports no water issues.",
       "This space represents significant potential: a finished basement could add 800+ square feet of livable area to the home. The mechanicals would need to be consolidated, and egress windows added for any bedroom use. A bathroom rough-in would be valuable but requires breaking concrete.",
     ],
     healthBar: { label: "Basement Condition", current: 78, total: 100, unit: "%" },
@@ -914,8 +914,8 @@ export const reportPages: Record<string, ReportPageData> = {
     narrative: [
       "The attic is accessed via a pull-down ladder in the upstairs hallway ceiling. The space is unfinished with exposed roof trusses, plywood walkway over insulation, and a single light bulb at the access point.",
       "Insulation is blown-in fiberglass at approximately R-30 depth over the ceiling joists. This meets 1987 code but falls below current R-49 recommendations for this climate zone. Adding insulation is one of the most cost-effective energy improvements available.",
-      "Ventilation consists of continuous soffit vents and a ridge vent. The system appears to be functioning — attic temperature was within acceptable range during inspection and no moisture condensation was observed on the underside of the roof sheathing.",
-      "No signs of pest activity, water intrusion, or rot were observed. The roof sheathing is plywood in good condition (consistent with the Roof System findings). Electrical wiring in the attic is NM-B (Romex) properly stapled to framing — no knob-and-tube or other legacy wiring.",
+      "Ventilation consists of continuous soffit vents and a ridge vent. The system appears to be functioning; attic temperature was within acceptable range during inspection and no moisture condensation was observed on the underside of the roof sheathing.",
+      "No signs of pest activity, water intrusion, or rot were observed. The roof sheathing is plywood in good condition (consistent with the Roof System findings). Electrical wiring in the attic is NM-B (Romex) properly stapled to framing; no knob-and-tube or other legacy wiring.",
     ],
     healthBar: { label: "Attic Condition", current: 76, total: 100, unit: "%" },
     specs: [
@@ -946,8 +946,8 @@ export const reportPages: Record<string, ReportPageData> = {
     narrative: [
       "The attached two-car garage is 20×22 feet with a 16-foot double garage door and a 3-foot man door on the side. The concrete floor is in good condition with typical surface wear and one control-joint crack. No heaving or significant settling.",
       "The garage door is a 2014 insulated steel unit with an automatic opener (Chamberlain, belt-drive). Both function well. The safety auto-reverse mechanism tested properly. The door seals are in good condition with no visible daylight gaps at bottom or sides.",
-      "The ceiling and walls are unfinished — exposed studs and roof trusses. The shared wall with the house is drywalled and fire-taped (code requirement). Insulating and finishing the garage walls and ceiling would improve temperature regulation and appear more finished.",
-      "Electrical service includes two 20-amp circuits serving four duplex outlets and one overhead fluorescent fixture. This is adequate for standard garage use but insufficient for a workshop setup. No 240V outlet is present — needed for EV charging or heavy equipment.",
+      "The ceiling and walls are unfinished; exposed studs and roof trusses. The shared wall with the house is drywalled and fire-taped (code requirement). Insulating and finishing the garage walls and ceiling would improve temperature regulation and appear more finished.",
+      "Electrical service includes two 20-amp circuits serving four duplex outlets and one overhead fluorescent fixture. This is adequate for standard garage use but insufficient for a workshop setup. No 240V outlet is present; needed for EV charging or heavy equipment.",
     ],
     healthBar: { label: "Garage Condition", current: 74, total: 100, unit: "%" },
     specs: [
@@ -964,7 +964,7 @@ export const reportPages: Record<string, ReportPageData> = {
     },
     timing: "Year 2–4",
     recommendations: [
-      "Add 240V outlet for future EV charging — do during electrical panel upgrade",
+      "Add 240V outlet for future EV charging; do during electrical panel upgrade",
       "Insulate garage walls if bonus room above has comfort issues",
       "Epoxy floor coating protects concrete and looks great",
     ],
@@ -979,10 +979,10 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "systems-hvac",
     conditionRating: "Poor",
     narrative: [
-      "The primary furnace is the original 1987 unit — a Carrier 58SX gas furnace that has provided 39 years of service, well beyond the typical 15–20 year lifespan. While it continues to operate, it is running on borrowed time.",
+      "The primary furnace is the original 1987 unit; a Carrier 58SX gas furnace that has provided 39 years of service, well beyond the typical 15–20 year lifespan. While it continues to operate, it is running on borrowed time.",
       "The unit's AFUE rating is approximately 80%, meaning 20 cents of every heating dollar is lost. Modern high-efficiency furnaces achieve 95–98% AFUE, representing significant energy savings.",
-      "The heat exchanger was visually inspected and no cracks were observed, but at this age, annual inspection is critical — a cracked heat exchanger poses carbon monoxide risks. The blower motor runs louder than normal, suggesting bearing wear.",
-      "This is the highest priority replacement in your home. Failure during winter is not just an inconvenience — it's an emergency. Proactive replacement allows you to choose the right system and avoid emergency pricing.",
+      "The heat exchanger was visually inspected and no cracks were observed, but at this age, annual inspection is critical; a cracked heat exchanger poses carbon monoxide risks. The blower motor runs louder than normal, suggesting bearing wear.",
+      "This is the highest priority replacement in your home. Failure during winter is not just an inconvenience; it's an emergency. Proactive replacement allows you to choose the right system and avoid emergency pricing.",
     ],
     healthBar: { label: "Furnace Lifespan", current: 39, total: 20, unit: "years" },
     specs: [
@@ -999,7 +999,7 @@ export const reportPages: Record<string, ReportPageData> = {
       enhanced: { price: "$7,000 – $10,000", description: "High-efficiency (95%+ AFUE), variable-speed blower, smart thermostat, extended warranty." },
       signature: { price: "$12,000 – $18,000", description: "Premium modulating furnace (98% AFUE), zoned heating, whole-home air quality system, smart controls." },
     },
-    timing: "Immediate — Before Next Heating Season",
+    timing: "Immediate; Before Next Heating Season",
     recommendations: [
       "Schedule replacement before September for best pricing",
       "Combine with AC evaluation for system matching",
@@ -1013,9 +1013,9 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "systems-hvac",
     conditionRating: "Fair",
     narrative: [
-      "The central air conditioning is served by a Lennox split-system condenser unit installed in 2010, paired with the existing furnace's evaporator coil and blower. The condenser unit is 16 years old — approaching the end of its typical 15–20 year lifespan but still performing adequately.",
+      "The central air conditioning is served by a Lennox split-system condenser unit installed in 2010, paired with the existing furnace's evaporator coil and blower. The condenser unit is 16 years old; approaching the end of its typical 15–20 year lifespan but still performing adequately.",
       "The condenser unit is a 3-ton, 13 SEER unit. While it was efficient for 2010 installation standards, current minimum efficiency is 15 SEER, and high-efficiency units reach 20+ SEER. An upgrade would reduce cooling costs by 15–35%.",
-      "The refrigerant is R-410A, which is the current standard (not the old R-22 that is being phased out). This is positive — any replacement will use the same refrigerant platform. The line set from condenser to evaporator is in good condition.",
+      "The refrigerant is R-410A, which is the current standard (not the old R-22 that is being phased out). This is positive; any replacement will use the same refrigerant platform. The line set from condenser to evaporator is in good condition.",
       "When the furnace is replaced, the AC system should be evaluated as a matched set. Mismatched furnace/AC components reduce efficiency and can cause premature failures. Replacing both simultaneously is more cost-effective than two separate projects.",
     ],
     healthBar: { label: "AC System Lifespan", current: 16, total: 18, unit: "years" },
@@ -1032,10 +1032,10 @@ export const reportPages: Record<string, ReportPageData> = {
       enhanced: { price: "$6,000 – $9,000", description: "New 16 SEER condenser matched to new furnace, new evaporator coil, programmable thermostat." },
       signature: { price: "$10,000 – $16,000", description: "Premium 20+ SEER variable-speed system, matched to new furnace, smart thermostat, zoned cooling, UV air purifier." },
     },
-    timing: "Year 1 — coordinate with furnace replacement",
+    timing: "Year 1; coordinate with furnace replacement",
     recommendations: [
       "Replace condenser when furnace is replaced for matched system",
-      "Current unit can continue if budget requires phasing — but efficiency suffers",
+      "Current unit can continue if budget requires phasing; but efficiency suffers",
       "Consider heat pump option for both heating and cooling",
     ],
   },
@@ -1048,15 +1048,15 @@ export const reportPages: Record<string, ReportPageData> = {
     narrative: [
       "The home's thermal envelope is a mix of original 1987 insulation and incremental improvements. Attic insulation is blown fiberglass at R-30 (below current R-49 recommendation). Wall insulation is fiberglass batts at R-11 to R-13 (below current R-20 standard for this climate zone).",
       "Air sealing is the most critical and cost-effective improvement. Common leakage points were identified: recessed lights (IC-rated but not air-sealed), electrical outlets on exterior walls, plumbing and wiring penetrations through the top plates, and the attic hatch itself.",
-      "The basement rim joist area — where the wood frame sits on the foundation — is uninsulated. This is one of the largest sources of heat loss in homes of this era and one of the easiest to address with spray foam application.",
-      "Bathroom ventilation exhausts to the exterior through properly installed ductwork. The kitchen range hood exhausts through the wall above the range. The dryer vent is properly routed to the exterior. No exhaust systems were found terminating in the attic — a common and problematic deficiency.",
+      "The basement rim joist area, where the wood frame sits on the foundation, is uninsulated. This is one of the largest sources of heat loss in homes of this era and one of the easiest to address with spray foam application.",
+      "Bathroom ventilation exhausts to the exterior through properly installed ductwork. The kitchen range hood exhausts through the wall above the range. The dryer vent is properly routed to the exterior. No exhaust systems were found terminating in the attic; a common and problematic deficiency.",
     ],
     healthBar: { label: "Envelope Performance", current: 55, total: 100, unit: "%" },
     specs: [
       { label: "Attic Insulation", value: "R-30 (target: R-49)" },
       { label: "Wall Insulation", value: "R-11 to R-13 (target: R-20)" },
       { label: "Rim Joist", value: "Uninsulated" },
-      { label: "Air Sealing", value: "Minimal — multiple leak points" },
+      { label: "Air Sealing", value: "Minimal; multiple leak points" },
       { label: "Bath Exhaust", value: "To exterior (proper)" },
     ],
     tiers: {
@@ -1064,11 +1064,11 @@ export const reportPages: Record<string, ReportPageData> = {
       enhanced: { price: "$5,000 – $9,000", description: "All essential items plus dense-pack cellulose in walls, seal recessed lights, insulate attic hatch, energy audit." },
       signature: { price: "$12,000 – $20,000", description: "Comprehensive envelope upgrade: spray foam throughout, wall insulation, new attic insulation, blower door testing, thermal imaging verification." },
     },
-    timing: "Year 1 — highest ROI energy improvement",
+    timing: "Year 1; highest ROI energy improvement",
     recommendations: [
-      "Start with attic air sealing + insulation — fastest payback",
-      "Insulate rim joists with spray foam — easy, high-impact",
-      "Schedule before new HVAC — properly insulated home may need smaller equipment",
+      "Start with attic air sealing + insulation; fastest payback",
+      "Insulate rim joists with spray foam; easy, high-impact",
+      "Schedule before new HVAC; properly insulated home may need smaller equipment",
     ],
   },
 
@@ -1081,10 +1081,10 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "systems-mechanical",
     conditionRating: "Fair",
     narrative: [
-      "The main electrical panel is the original 1987 installation — a 150-amp Square D QO series panel. While the QO series is quality, the panel's age and capacity present safety and practical concerns.",
+      "The main electrical panel is the original 1987 installation; a 150-amp Square D QO series panel. While the QO series is quality, the panel's age and capacity present safety and practical concerns.",
       "At 150 amps, this panel was adequate for 1987 but is undersized for modern usage. Any significant renovation will require a panel upgrade to 200 amps.",
-      "The panel is full — all breaker slots are occupied with no room for additional circuits. Several breakers show signs of frequent tripping, suggesting overloading.",
-      "No AFCI or GFCI breakers are present. Modern code requires AFCI protection in most living spaces — a significant safety upgrade that protects against electrical fires.",
+      "The panel is full; all breaker slots are occupied with no room for additional circuits. Several breakers show signs of frequent tripping, suggesting overloading.",
+      "No AFCI or GFCI breakers are present. Modern code requires AFCI protection in most living spaces; a significant safety upgrade that protects against electrical fires.",
     ],
     healthBar: { label: "Panel Service Life", current: 39, total: 40, unit: "years" },
     specs: [
@@ -1099,7 +1099,7 @@ export const reportPages: Record<string, ReportPageData> = {
       enhanced: { price: "$5,000 – $8,000", description: "200-amp upgrade, AFCI/GFCI breakers, surge protection, proper labeling, grounding inspection." },
       signature: { price: "$10,000 – $15,000", description: "200-amp service upgrade, smart panel with monitoring, whole-home surge protection, sub-panel, EV charger prep." },
     },
-    timing: "Year 1 — Before Major Renovations",
+    timing: "Year 1; Before Major Renovations",
     recommendations: [
       "Upgrade before kitchen or HVAC projects",
       "Add whole-home surge protection regardless",
@@ -1113,10 +1113,10 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "systems-mechanical",
     conditionRating: "Fair",
     narrative: [
-      "The home's plumbing supply is copper throughout — original 1987 installation. Copper is an excellent material with a 50+ year lifespan, and the supply piping is performing well. No pinhole leaks, greenish corrosion deposits, or pressure issues were observed.",
-      "Drain, waste, and vent (DWV) piping is a mix of cast iron (main stack and horizontal basement runs) and PVC (branch drains added during renovations). The cast iron is 39 years old — within its 50–75 year lifespan but approaching the age where interior scaling and corrosion can cause slow drains.",
-      "Water pressure tested at 58 PSI at the kitchen faucet — within the acceptable 40–80 PSI range. No pressure-reducing valve (PRV) is installed; if municipal pressure increases above 80 PSI, one should be added to prevent fixture damage.",
-      "The main shutoff valve is a gate valve in the basement near the meter. It turns but is stiff — a common issue with gate valves of this age. Recommend exercising annually to prevent seizing. If it fails to shut off completely, replacement with a modern ball valve is advisable.",
+      "The home's plumbing supply is copper throughout; original 1987 installation. Copper is an excellent material with a 50+ year lifespan, and the supply piping is performing well. No pinhole leaks, greenish corrosion deposits, or pressure issues were observed.",
+      "Drain, waste, and vent (DWV) piping is a mix of cast iron (main stack and horizontal basement runs) and PVC (branch drains added during renovations). The cast iron is 39 years old; within its 50–75 year lifespan but approaching the age where interior scaling and corrosion can cause slow drains.",
+      "Water pressure tested at 58 PSI at the kitchen faucet; within the acceptable 40–80 PSI range. No pressure-reducing valve (PRV) is installed; if municipal pressure increases above 80 PSI, one should be added to prevent fixture damage.",
+      "The main shutoff valve is a gate valve in the basement near the meter. It turns but is stiff; a common issue with gate valves of this age. Recommend exercising annually to prevent seizing. If it fails to shut off completely, replacement with a modern ball valve is advisable.",
     ],
     healthBar: { label: "Plumbing System", current: 65, total: 100, unit: "%" },
     specs: [
@@ -1133,8 +1133,8 @@ export const reportPages: Record<string, ReportPageData> = {
     },
     timing: "Year 1–2 (maintenance items), Year 3–5 (major upgrades)",
     recommendations: [
-      "Camera inspect sewer line — know what you're working with before it fails",
-      "Replace main shutoff valve — critical in an emergency",
+      "Camera inspect sewer line; know what you're working with before it fails",
+      "Replace main shutoff valve; critical in an emergency",
       "Monitor cast iron drain performance for slow drain development",
     ],
   },
@@ -1145,10 +1145,10 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "systems-mechanical",
     conditionRating: "Fair",
     narrative: [
-      "The water heater is a 50-gallon Rheem gas unit installed in 2014. At 12 years old, it is within its expected 8–12 year lifespan but approaching the end. The unit is performing adequately — hot water delivery to fixtures is consistent and recovery time appears normal.",
-      "The T&P (temperature and pressure) relief valve has a discharge pipe properly routed to within 6 inches of the floor — a safety requirement. The valve appears original to the unit and has not been tested recently. Annual testing is recommended.",
-      "The anode rod — the sacrificial component that prevents tank corrosion — has likely never been inspected or replaced. On a 12-year-old tank, the anode rod is probably depleted. Without anode protection, tank corrosion accelerates significantly.",
-      "The gas connection and venting are properly installed. The single-wall vent connector rises vertically before entering the chimney flue — proper draft configuration. No signs of backdrafting (melted plastic, soot) at the draft hood.",
+      "The water heater is a 50-gallon Rheem gas unit installed in 2014. At 12 years old, it is within its expected 8–12 year lifespan but approaching the end. The unit is performing adequately; hot water delivery to fixtures is consistent and recovery time appears normal.",
+      "The T&P (temperature and pressure) relief valve has a discharge pipe properly routed to within 6 inches of the floor; a safety requirement. The valve appears original to the unit and has not been tested recently. Annual testing is recommended.",
+      "The anode rod, the sacrificial component that prevents tank corrosion, has likely never been inspected or replaced. On a 12-year-old tank, the anode rod is probably depleted. Without anode protection, tank corrosion accelerates significantly.",
+      "The gas connection and venting are properly installed. The single-wall vent connector rises vertically before entering the chimney flue; proper draft configuration. No signs of backdrafting (melted plastic, soot) at the draft hood.",
     ],
     healthBar: { label: "Water Heater Lifespan", current: 12, total: 12, unit: "years" },
     specs: [
@@ -1164,9 +1164,9 @@ export const reportPages: Record<string, ReportPageData> = {
       enhanced: { price: "$2,500 – $4,000", description: "High-efficiency power-vent or direct-vent tank water heater. Better energy factor, flexible venting, longer warranty." },
       signature: { price: "$4,500 – $7,000", description: "Tankless gas water heater (Rinnai/Navien). Unlimited hot water, 20-year lifespan, 30%+ energy savings, space recovery." },
     },
-    timing: "Year 1 — end of expected lifespan",
+    timing: "Year 1; end of expected lifespan",
     recommendations: [
-      "Plan replacement proactively — water heater failure causes water damage",
+      "Plan replacement proactively; water heater failure causes water damage",
       "Consider tankless if furnace is also being replaced (shared venting opportunity)",
       "If keeping tank, replace anode rod now to extend remaining life",
     ],
@@ -1178,9 +1178,9 @@ export const reportPages: Record<string, ReportPageData> = {
     group: "systems-mechanical",
     conditionRating: "Fair",
     narrative: [
-      "The home has a single wood-burning fireplace in the family room with a masonry chimney extending through the roof. The firebox is lined with firebrick that shows normal wear — some surface spalling but no deep cracks or missing bricks.",
+      "The home has a single wood-burning fireplace in the family room with a masonry chimney extending through the roof. The firebox is lined with firebrick that shows normal wear; some surface spalling but no deep cracks or missing bricks.",
       "The chimney exterior shows tuckpointing needs in the upper 4 feet where mortar joints have weathered. The chimney cap is a basic concrete wash with no spark arrestor or rain cap. A proper stainless steel cap with mesh screen is recommended for weather protection and fire safety.",
-      "The damper operates but is stiff and does not seal tightly when closed. When the fireplace is not in use, an open or poorly sealing damper allows conditioned air to escape — essentially an open window in your living room. A top-sealing damper would address this.",
+      "The damper operates but is stiff and does not seal tightly when closed. When the fireplace is not in use, an open or poorly sealing damper allows conditioned air to escape; essentially an open window in your living room. A top-sealing damper would address this.",
       "Heavy creosote buildup was observed on the smoke shelf and flue walls. A Level 2 chimney inspection and professional cleaning are needed before the next use. Creosote buildup is the leading cause of chimney fires.",
     ],
     healthBar: { label: "Chimney Condition", current: 55, total: 100, unit: "%" },
@@ -1196,9 +1196,9 @@ export const reportPages: Record<string, ReportPageData> = {
       enhanced: { price: "$2,000 – $4,000", description: "All essential items plus tuckpointing, top-sealing damper, new firebox firebrick, hearth pad refresh." },
       signature: { price: "$5,000 – $9,000", description: "Gas fireplace insert conversion: eliminates creosote risk, improves efficiency, thermostat control, no wood storage needed." },
     },
-    timing: "Year 1 — before next use",
+    timing: "Year 1; before next use",
     recommendations: [
-      "Do not use fireplace until inspected and cleaned — fire risk",
+      "Do not use fireplace until inspected and cleaned; fire risk",
       "Gas insert conversion eliminates ongoing maintenance and creosote risk",
       "Tuckpointing prevents water intrusion and chimney deterioration",
     ],
@@ -1211,8 +1211,8 @@ export const reportPages: Record<string, ReportPageData> = {
     conditionRating: "Good",
     narrative: [
       "The foundation is poured concrete, 8 inches thick, with a full basement. This is the preferred foundation type for this region and era of construction. Overall, the foundation is in good condition and shows no signs of significant structural distress.",
-      "Two vertical hairline cracks were noted on the east wall. Vertical cracks in poured concrete foundations are typically shrinkage cracks from the original curing process — they are not structural concerns. These cracks have been stable for over a decade per the homeowner and show no signs of moisture intrusion.",
-      "No horizontal cracking, inward bowing, or stair-step cracking patterns were observed — these would indicate structural loading concerns. The floor-to-wall joint is dry with no efflorescence (white mineral deposits that indicate moisture movement).",
+      "Two vertical hairline cracks were noted on the east wall. Vertical cracks in poured concrete foundations are typically shrinkage cracks from the original curing process; they are not structural concerns. These cracks have been stable for over a decade per the homeowner and show no signs of moisture intrusion.",
+      "No horizontal cracking, inward bowing, or stair-step cracking patterns were observed; these would indicate structural loading concerns. The floor-to-wall joint is dry with no efflorescence (white mineral deposits that indicate moisture movement).",
       "The foundation drain (exterior weeping tile) is assumed to be original 1987 perforated pipe. While not directly inspectable, the absence of basement water issues suggests it is functioning. The grading and drainage improvements noted in the Landscaping section will further protect the foundation long-term.",
     ],
     healthBar: { label: "Foundation Integrity", current: 88, total: 100, unit: "%" },
@@ -1230,7 +1230,7 @@ export const reportPages: Record<string, ReportPageData> = {
     },
     timing: "Year 2–3 (monitoring, address if needed)",
     recommendations: [
-      "Monitor existing cracks annually — mark ends with pencil and date",
+      "Monitor existing cracks annually; mark ends with pencil and date",
       "Address exterior drainage before interior waterproofing (cause vs. symptom)",
       "Install sump pump in existing pit as preventive measure",
     ],

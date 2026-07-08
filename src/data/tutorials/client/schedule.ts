@@ -26,7 +26,7 @@ export const clientSchedule: Tutorial[] = [
     steps: [
       { title: "Send a message", body: "Go to the Messages tab and send a message to your advisor requesting a consultation." },
       { title: "Include your preferred times", body: "Mention 2-3 time slots that work for you so your advisor can find a match quickly." },
-      { title: "Describe the topic", body: "Let your advisor know what you'd like to discuss — a specific project, your annual review, a new concern, etc." },
+      { title: "Describe the topic", body: "Let your advisor know what you'd like to discuss; a specific project, your annual review, a new concern, etc." },
       { title: "Confirmation", body: "Your advisor will confirm the meeting and it will appear on your Schedule calendar." },
     ],
     tip: "For urgent matters like emergency repairs or critical equipment failures, include the word 'URGENT' at the start of your message so your advisor sees it right away.",

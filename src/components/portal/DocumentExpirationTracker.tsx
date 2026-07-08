@@ -25,9 +25,9 @@ const DocumentExpirationTracker = ({ propertyId }: DocumentExpirationTrackerProp
       // Demo data
       const now = new Date();
       setItems([
-        { id: "1", name: "HVAC Warranty — Carrier 24ACC636", type: "warranty", expiryDate: addDays(now, -30), status: "expired", category: "HVAC" },
+        { id: "1", name: "HVAC Warranty: Carrier 24ACC636", type: "warranty", expiryDate: addDays(now, -30), status: "expired", category: "HVAC" },
         { id: "2", name: "Water Heater Warranty", type: "warranty", expiryDate: addDays(now, 45), status: "expiring_soon", category: "Plumbing" },
-        { id: "3", name: "Roof Warranty — GAF Timberline", type: "warranty", expiryDate: addDays(now, 365), status: "active", category: "Roof" },
+        { id: "3", name: "Roof Warranty: GAF Timberline", type: "warranty", expiryDate: addDays(now, 365), status: "active", category: "Roof" },
         { id: "4", name: "Annual HVAC Service", type: "service", expiryDate: addDays(now, 15), status: "expiring_soon", category: "HVAC" },
         { id: "5", name: "Electrical Panel Inspection", type: "service", expiryDate: addDays(now, 200), status: "active", category: "Electrical" },
       ]);

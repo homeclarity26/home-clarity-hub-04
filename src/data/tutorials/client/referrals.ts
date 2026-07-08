@@ -13,7 +13,7 @@ export const clientReferrals: Tutorial[] = [
       { title: "View your referrals", body: "The Referrals page shows all your referrals with their status: Pending (they haven't signed up yet), Converted (they joined), or Expired." },
       { title: "Track your credits", body: "See how much credit you've earned and how it applies to your next billing cycle." },
     ],
-    tip: "The best referrals come from sharing your own experience. Tell friends about a specific way HBC has helped your home — that personal touch is more convincing than any sales pitch.",
+    tip: "The best referrals come from sharing your own experience. Tell friends about a specific way HBC has helped your home; that personal touch is more convincing than any sales pitch.",
     keywords: ["referral", "program", "credit", "earn", "reward", "refer"],
   },
   {

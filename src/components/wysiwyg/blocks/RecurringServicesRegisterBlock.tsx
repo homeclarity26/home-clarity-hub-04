@@ -496,7 +496,7 @@ const RegisterEditor = ({
                                   placeholder="vendor"
                                 />
                               ) : (
-                                s.vendorName ?? "—"
+                                s.vendorName ?? "–"
                               )}
                             </Td>
                             <Td muted>
@@ -531,7 +531,7 @@ const RegisterEditor = ({
                                   }}
                                 />
                               ) : (
-                                s.nextDueDate ?? "—"
+                                s.nextDueDate ?? "–"
                               )}
                             </Td>
                             <Td align="right">
@@ -552,7 +552,7 @@ const RegisterEditor = ({
                               ) : s.monthlyCost ? (
                                 fmtMoney(s.monthlyCost)
                               ) : (
-                                "—"
+                                "–"
                               )}
                             </Td>
                             {showIfManaged && (
@@ -573,7 +573,7 @@ const RegisterEditor = ({
                                 ) : s.hbcManaged ? (
                                   "HBC handles"
                                 ) : (
-                                  "—"
+                                  "–"
                                 )}
                               </Td>
                             )}

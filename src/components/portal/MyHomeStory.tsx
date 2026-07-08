@@ -93,7 +93,7 @@ const MyHomeStory = ({ propertyId, propertyName = "Your Home" }: Props) => {
       });
 
       if (error) throw error;
-      toast.success(`Document processed — ${data.items_created} new records added to your home's knowledge base`);
+      toast.success(`Document processed; ${data.items_created} new records added to your home's knowledge base`);
       qc.invalidateQueries({ queryKey: ["home-story-counts", propertyId] });
       qc.invalidateQueries({ queryKey: ["home-story-timeline", propertyId] });
       qc.invalidateQueries({ queryKey: ["home-story-warranties", propertyId] });

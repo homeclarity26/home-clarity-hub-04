@@ -39,7 +39,7 @@ export function getClientInviteEmailHtml({
               </h2>
               <p style="margin:0 0 20px;color:#4a5568;font-size:15px;line-height:1.7;">
                 Your personal Home Clarity Report is ready. This comprehensive document is your
-                guide to understanding, maintaining, and improving your home — organized by every
+                guide to understanding, maintaining, and improving your home, organized by every
                 major system and space.
               </p>
 
@@ -76,7 +76,7 @@ export function getClientInviteEmailHtml({
                 built-in messaging system.
               </p>
               <p style="margin:16px 0 0;color:#1B2B4D;font-size:14px;font-weight:500;">
-                — ${advisorName}
+                – ${advisorName}
               </p>
             </td>
           </tr>

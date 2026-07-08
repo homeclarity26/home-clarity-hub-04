@@ -38,7 +38,7 @@ const generateICS = (events: ScheduleEvent[], propertyAddress: string) => {
     'PRODID:-//Home Clarity Hub//HCH//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    `X-WR-CALNAME:${propertyAddress} — HBC Schedule`,
+    `X-WR-CALNAME:${propertyAddress} - HBC Schedule`,
   ];
   for (const ev of events) {
     const start = new Date(ev.event_date);
@@ -134,7 +134,7 @@ const ScheduleTab = ({ propertyId, propertyAddress, onTabChange }: ScheduleTabPr
         { id: "1", title: "Furnace replacement consultation", description: "Review vendor bids with Adam", event_date: d(2), event_type: "appointment", status: "scheduled" },
         { id: "2", title: "Electrical panel inspection", description: "Licensed electrician evaluating panel upgrade options", event_date: d(18), event_type: "inspection", status: "scheduled" },
         { id: "3", title: "Spring exterior walkthrough", description: "Seasonal assessment of roof, gutters, and landscaping", event_date: d(45), event_type: "milestone", status: "scheduled" },
-        { id: "4", title: "HVAC filter replacement", description: "Changed all MERV 11 filters — next change in 90 days", event_date: d(-30), event_type: "task", status: "completed" },
+        { id: "4", title: "HVAC filter replacement", description: "Changed all MERV 11 filters; next change in 90 days", event_date: d(-30), event_type: "task", status: "completed" },
         { id: "5", title: "Roof inspection", description: "Pre-winter assessment completed", event_date: d(-90), event_type: "inspection", status: "completed" },
       ]);
       setLoading(false);

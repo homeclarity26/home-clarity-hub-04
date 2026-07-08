@@ -37,10 +37,10 @@ const EditableSpecs = ({ specs, onSave }: EditableSpecsProps) => {
   };
 
   const addRow = () => {
-    const updated = [...specs, { label: "New Spec", value: "—" }];
+    const updated = [...specs, { label: "New Spec", value: "Not yet documented" }];
     onSave(updated);
     setEditingIndex(updated.length - 1);
-    setDraft({ label: "New Spec", value: "—" });
+    setDraft({ label: "New Spec", value: "Not yet documented" });
   };
 
   const removeRow = (index: number) => {
