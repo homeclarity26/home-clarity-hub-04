@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import ReportHome from "@/components/portal/report/ReportHome";
 import { PortalHome } from "@/components/portal/home/PortalHome";
 import ConciergeBar from "@/components/portal/concierge/ConciergeBar";
+import ConciergePanel from "@/components/portal/concierge/ConciergePanel";
 import RoomTemplatePage from "@/components/report/templates/RoomTemplatePage";
 import SystemTemplatePage from "@/components/report/templates/SystemTemplatePage";
 import VisionTemplatePage from "@/components/report/templates/VisionTemplatePage";
@@ -26,6 +27,8 @@ import {
   roadmapBlocks,
   reportHomeProps,
   portalHomeQaProps,
+  bobbyPanelQaThread,
+  bobbyPanelQaHomeLabel,
   wizardQaClient,
   wizardQaUploads,
   wizardQaHoverUrl,
@@ -55,6 +58,7 @@ import { WizardShell } from "@/components/admin/wizard/WizardShell";
 
 type ScenarioId =
   | "portal-home"
+  | "bobby-panel"
   | "report-home"
   | "room-kitchen"
   | "system-furnace"
@@ -73,6 +77,7 @@ type ScenarioId =
 
 const SCENARIOS: { id: ScenarioId; label: string; sublabel: string }[] = [
   { id: "portal-home", label: "Portal Home", sublabel: "Hero + media cards" },
+  { id: "bobby-panel", label: "Bobby Panel", sublabel: "Prompt chips + reply" },
   { id: "report-home", label: "Report Home", sublabel: "Chapter navigation" },
   { id: "room-kitchen", label: "Room: Kitchen", sublabel: "Evolving record example" },
   { id: "system-furnace", label: "System: Furnace", sublabel: "With Replacement Briefing" },
@@ -259,6 +264,16 @@ const DevPrototypeQA = () => {
               />
             </div>
             <ConciergeBar />
+          </div>
+        )}
+        {active === "bobby-panel" && (
+          <div className="min-h-screen bg-background">
+            <ConciergePanel
+              open
+              onOpenChange={noop}
+              homeLabel={bobbyPanelQaHomeLabel}
+              qaThread={bobbyPanelQaThread}
+            />
           </div>
         )}
         {active === "report-home" && (

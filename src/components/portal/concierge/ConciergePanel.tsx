@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { X, Loader2, Send } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBobbyThread } from "@/hooks/useBobbyThread";
 import ConciergeTranscript from "./ConciergeTranscript";
@@ -9,25 +9,56 @@ interface ConciergePanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   propertyId?: string;
+  /**
+   * Cormorant heading under the gold eyebrow. Defaults to the generic
+   * label; pass e.g. "Trained on the Caldwell home" when the family
+   * name is known (prototype screen 33).
+   */
+  homeLabel?: string;
+  /**
+   * Dev-only fixture thread for /dev/prototype-qa. When provided the
+   * panel renders these messages instead of the live Bobby thread and
+   * never touches the network.
+   */
+  qaThread?: { sender: "user" | "bobby" | "adam"; content: string }[];
 }
 
+// Prototype screen 33 demo prompts. Rendered as quoted chips; the list
+// stays visible above the thread so the client always has a starting point.
 const SUGGESTED_PROMPTS = [
-  "Schedule the chimney sweep",
-  "What paint is in the dining room?",
-  "Pull up the furnace serial plate",
-  "When is my next service visit?",
-  "What should I do before winter?",
+  "Schedule the chimney sweep this fall",
+  "Pay the AK Renovations draw invoice that came in",
+  "What paint is on the dining room walls?",
+  "Pull up the photo of the furnace serial plate",
+  "Tell Adam I want to start planning the basement gym",
 ];
 
-const NAVY = "#0A1628";
-const GOLD = "#B87333";
-const CREAM = "#EDE9E1";
+interface DisplayMessage {
+  id: string;
+  sender: "user" | "bobby" | "adam";
+  content: string;
+}
 
-const ConciergePanel = ({ open, onOpenChange, propertyId }: ConciergePanelProps) => {
-  const { messages, isLoading, sendMessage } = useBobbyThread(propertyId);
+// White slide-over panel per prototype screens 33-34: gold mono eyebrow +
+// Cormorant heading, intro line, quoted prompt chips, then the thread
+// (user echoes on cream, Bobby replies on a navy card). Bobby naming is
+// locked; internal paths keep concierge/ for code organization only.
+const ConciergePanel = ({
+  open,
+  onOpenChange,
+  propertyId,
+  homeLabel,
+  qaThread,
+}: ConciergePanelProps) => {
+  const thread = useBobbyThread(qaThread ? undefined : propertyId);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const messages: DisplayMessage[] = qaThread
+    ? qaThread.map((m, i) => ({ id: `qa-${i}`, ...m }))
+    : thread.messages;
+  const isLoading = qaThread ? false : thread.isLoading;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -48,10 +79,10 @@ const ConciergePanel = ({ open, onOpenChange, propertyId }: ConciergePanelProps)
 
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || sending) return;
+    if (!text || sending || qaThread) return;
     setInput("");
     setSending(true);
-    await sendMessage(text);
+    await thread.sendMessage(text);
     setSending(false);
   };
 
@@ -66,158 +97,93 @@ const ConciergePanel = ({ open, onOpenChange, propertyId }: ConciergePanelProps)
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-md p-0 flex flex-col"
-        style={{ background: NAVY, color: CREAM, border: `1px solid ${GOLD}33` }}
+        className="w-full sm:max-w-md p-0 flex flex-col bg-card text-foreground border-l border-border"
       >
-        {/* Header */}
-        <div
-          className="px-4 py-3 flex items-center justify-between gap-2 border-b"
-          style={{ borderColor: GOLD + "33" }}
-        >
-          <div className="flex items-center gap-2">
-            <span
-              className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-              style={{ background: GOLD }}
-            >
-              <span className="font-display text-xs font-bold" style={{ color: NAVY }}>B</span>
-            </span>
-            <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.15em]" style={{ color: GOLD }}>
-                Ask Bobby
-              </div>
-              <div className="text-sm" style={{ color: CREAM }}>
-                Trained on your home
-              </div>
-            </div>
+        {/* Header — SheetContent renders its own close X top-right */}
+        <div className="px-5 py-4 border-b border-border">
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-hbc-gold-readable">
+            Ask Bobby
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-            className="hover:bg-white/10"
-            style={{ color: CREAM }}
-          >
-            <X className="w-4 h-4" />
-          </Button>
+          <div className="font-display text-xl text-primary leading-snug mt-0.5">
+            {homeLabel ?? "Trained on your home"}
+          </div>
         </div>
 
-        {/* Message thread */}
+        {/* Thread */}
         <ConciergeTranscript>
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-5 h-5 animate-spin" style={{ color: GOLD }} />
+                <Loader2 className="w-5 h-5 animate-spin text-accent" />
               </div>
-            ) : messages.length === 0 ? (
-              <div className="space-y-4 py-6">
-                <p className="text-sm text-center" style={{ color: CREAM + "99" }}>
-                  Ask me anything about your home. I have access to your full report.
+            ) : (
+              <>
+                <p className="text-sm font-sans text-foreground/80 leading-relaxed">
+                  I know everything in your HCR. I can answer questions, pull up
+                  records, and take action. Try one of these:
                 </p>
-                <div className="flex flex-wrap gap-2 justify-center">
+                <div className="space-y-2">
                   {SUGGESTED_PROMPTS.map((prompt) => (
                     <button
                       key={prompt}
                       type="button"
-                      onClick={() => {
-                        setInput(prompt);
-                      }}
-                      className="text-xs px-3 py-1.5 rounded-full border transition-colors"
-                      style={{
-                        borderColor: GOLD + "55",
-                        background: GOLD + "15",
-                        color: CREAM,
-                      }}
+                      onClick={() => setInput(prompt)}
+                      className="w-full text-left rounded-md border border-border bg-card px-3.5 py-2.5 text-sm font-sans text-foreground min-h-[44px] transition-colors hover:border-accent/60 hover:bg-secondary"
                     >
-                      {prompt}
+                      &ldquo;{prompt}&rdquo;
                     </button>
                   ))}
                 </div>
-              </div>
-            ) : (
-              messages.map((msg) => {
-                if (msg.sender === "user") {
-                  return (
-                    <div key={msg.id} className="flex justify-end">
+                {messages.map((msg) => {
+                  if (msg.sender === "user") {
+                    return (
                       <div
-                        className="max-w-[80%] rounded-lg px-3 py-2 text-sm"
-                        style={{ background: CREAM + "22", color: CREAM }}
+                        key={msg.id}
+                        className="rounded-md bg-secondary px-3.5 py-2.5 text-sm font-sans italic text-foreground/90"
                       >
-                        {msg.content}
+                        You: &ldquo;{msg.content}&rdquo;
                       </div>
+                    );
+                  }
+                  return (
+                    <div key={msg.id} className="rounded-md bg-primary p-4">
+                      <span className="block font-mono text-[9px] uppercase tracking-[0.18em] text-hbc-gold mb-1.5">
+                        {msg.sender === "adam" ? "From Adam" : "Bobby"}
+                      </span>
+                      <p className="text-sm font-sans text-primary-foreground/95 leading-relaxed whitespace-pre-line">
+                        {msg.content}
+                      </p>
                     </div>
                   );
-                }
-                if (msg.sender === "adam") {
-                  return (
-                    <div key={msg.id} className="flex justify-start">
-                      <div
-                        className="max-w-[80%] rounded-lg px-3 py-2 text-sm border-l-2"
-                        style={{
-                          background: "#ffffff11",
-                          color: CREAM,
-                          borderLeftColor: NAVY === "#0A1628" ? "#1a2d4a" : NAVY,
-                        }}
-                      >
-                        <span
-                          className="block font-mono text-[9px] uppercase tracking-[0.15em] mb-1"
-                          style={{ color: GOLD }}
-                        >
-                          From Adam
-                        </span>
-                        {msg.content}
-                      </div>
-                    </div>
-                  );
-                }
-                // bobby
-                return (
-                  <div key={msg.id} className="flex justify-start">
-                    <div
-                      className="max-w-[80%] rounded-lg px-3 py-2 text-sm"
-                      style={{ background: "#ffffff11", color: CREAM }}
-                    >
-                      {msg.content}
-                    </div>
-                  </div>
-                );
-              })
+                })}
+              </>
             )}
             {sending && (
-              <div className="flex justify-start">
-                <div
-                  className="rounded-lg px-3 py-2 flex items-center gap-2"
-                  style={{ background: "#ffffff11" }}
-                >
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: GOLD }} />
-                  <span className="text-xs" style={{ color: CREAM + "88" }}>Bobby is thinking...</span>
-                </div>
+              <div className="rounded-md bg-primary/5 border border-border px-3.5 py-2.5 flex items-center gap-2">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+                <span className="text-xs font-sans text-muted-foreground">
+                  Bobby is thinking...
+                </span>
               </div>
             )}
           </div>
 
           {/* Input */}
-          <div
-            className="px-4 py-3 border-t flex gap-2"
-            style={{ borderColor: GOLD + "33" }}
-          >
+          <div className="px-5 py-4 border-t border-border flex gap-2">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask Bobby anything..."
-              className="flex-1 bg-transparent border rounded-lg px-3 py-2 text-sm outline-none min-h-[44px]"
-              style={{
-                borderColor: GOLD + "44",
-                color: CREAM,
-              }}
+              className="flex-1 bg-card border border-input rounded-md px-3 py-2 text-sm font-sans text-foreground outline-none min-h-[44px] focus:border-accent"
             />
             <Button
               size="sm"
               disabled={!input.trim() || sending}
               onClick={() => void handleSend()}
-              className="min-h-[44px] min-w-[44px] p-0 flex items-center justify-center shrink-0"
-              style={{ background: GOLD, color: NAVY }}
+              aria-label="Send message to Bobby"
+              className="min-h-[44px] min-w-[44px] p-0 flex items-center justify-center shrink-0 bg-accent text-white hover:bg-accent/90"
             >
               <Send className="w-4 h-4" />
             </Button>

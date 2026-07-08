@@ -451,6 +451,25 @@ const portalHomeHeroDataUri = `data:image/svg+xml;utf8,${encodeURIComponent(
     `</svg>`,
 )}`;
 
+// ─── Bobby panel (screens 33-34) ─────────────────────────────────────────
+// Fixture thread for the ConciergePanel QA scenario: one demo prompt echo
+// plus the navy Bobby reply per prototype screen 34 (em-dash replaced per
+// client-copy ban; "Concierge" naming replaced with Bobby per lock).
+
+export const bobbyPanelQaHomeLabel = "Trained on the Caldwell home";
+
+export const bobbyPanelQaThread: {
+  sender: "user" | "bobby" | "adam";
+  content: string;
+}[] = [
+  { sender: "user", content: "Schedule the chimney sweep this fall" },
+  {
+    sender: "bobby",
+    content:
+      "I'll book Brooks Chimney for the second week of September; they're your usual provider. I'll add it to your calendar, send you a reminder 7 days out, and bill it through your HBC Concierge subscription. Confirm?",
+  },
+];
+
 export const portalHomeQaProps = {
   propertyName: "The Caldwell Residence",
   propertyAddress: "2847 Stoneybrook Lane · Hudson, OH",
