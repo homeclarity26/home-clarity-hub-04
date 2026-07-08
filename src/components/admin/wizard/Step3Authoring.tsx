@@ -7,10 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import {
   useWizard,
+  type IntakeFileRef,
   type PageAuthoring,
   type PageAuthoringStatus,
   type PageStructuredData,
   type TocPage,
+  type WizardPhotoSlots,
 } from "@/contexts/WizardContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { SideBySideEditor } from "./SideBySideEditor";
@@ -26,6 +28,7 @@ import {
   ExecutiveSummaryPreview,
   StructuredPagePreview,
 } from "./StructuredPagePreview";
+import { PhotosFieldGroup } from "./PhotosFieldGroup";
 import { seedStructuredForType } from "@/lib/wizardStructuredSeeds";
 
 // "Mark and Jennifer Caldwell" → "Caldwell" for the exec-summary hero.
@@ -657,6 +660,15 @@ export function Step3Authoring({ qaMode = false }: Step3AuthoringProps) {
                     onChangeStructured={updateStructured}
                     pageTitle={activePage.title}
                     onRenamePage={renameActivePage}
+                    assignedPhotos={activeAuthoring?.images ?? []}
+                    onChangeAssignedPhotos={(images) =>
+                      updateAuthoring({ images })
+                    }
+                    photoSlots={activeAuthoring?.structured?.photoSlots}
+                    onChangePhotoSlots={(photoSlots) =>
+                      updateStructured({ photoSlots })
+                    }
+                    allIntakePhotos={state.intakeUploads.photos}
                     narrative={activeNarrative}
                     observations={activeObservations}
                     onUpdateBlock={updateActiveBlock}
@@ -748,6 +760,11 @@ interface PageAdminEditorProps {
   onChangeStructured: (patch: Partial<PageStructuredData>) => void;
   pageTitle: string;
   onRenamePage: (title: string) => void;
+  assignedPhotos: IntakeFileRef[];
+  onChangeAssignedPhotos: (next: IntakeFileRef[]) => void;
+  photoSlots: WizardPhotoSlots | undefined;
+  onChangePhotoSlots: (next: WizardPhotoSlots) => void;
+  allIntakePhotos: IntakeFileRef[];
   narrative: string;
   observations: string;
   onUpdateBlock: (type: string, value: string) => void;
@@ -812,6 +829,11 @@ function PageAdminEditor({
   onChangeStructured,
   pageTitle,
   onRenamePage,
+  assignedPhotos,
+  onChangeAssignedPhotos,
+  photoSlots,
+  onChangePhotoSlots,
+  allIntakePhotos,
   narrative,
   observations,
   onUpdateBlock,
@@ -844,6 +866,16 @@ function PageAdminEditor({
             <ConditionControl
               condition={condition}
               onChangeCondition={onChangeCondition}
+            />
+          }
+          photosGroup={
+            <PhotosFieldGroup
+              isSystem
+              assigned={assignedPhotos}
+              onChangeAssigned={onChangeAssignedPhotos}
+              slots={photoSlots}
+              onChangeSlots={onChangePhotoSlots}
+              allPhotos={allIntakePhotos}
             />
           }
         />
@@ -915,6 +947,17 @@ function PageAdminEditor({
             onChangeCondition={onChangeCondition}
           />
         </FieldGroup>
+      )}
+
+      {!isExec && pageType !== "system" && (
+        <PhotosFieldGroup
+          isSystem={false}
+          assigned={assignedPhotos}
+          onChangeAssigned={onChangeAssignedPhotos}
+          slots={photoSlots}
+          onChangeSlots={onChangePhotoSlots}
+          allPhotos={allIntakePhotos}
+        />
       )}
 
       <FieldGroup label="Admin Notes (Hidden From Client)">
