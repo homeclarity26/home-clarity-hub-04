@@ -158,6 +158,52 @@ describe("buildStructuredPagePayload — room structured fields", () => {
     ]);
     expect(payload!.columns.condition_rating).toBe("Excellent");
   });
+
+  it("publishes authored room→vision links onto the room_record block", () => {
+    const linked = buildStructuredPagePayload({
+      page: {
+        page_key: "primary-bathroom",
+        title: "Primary Bathroom",
+        group: "Spaces",
+      },
+      sectionKey: "spaces",
+      sectionLabel: "Primary Suite",
+      authoring: authoringWith(
+        {
+          room: {
+            observations: [],
+            specs: [],
+            linkedVisionProjects: [
+              {
+                pageKey: "vision-primary-bath",
+                title: "Vision: Primary Bath Spa Conversion",
+                priority: "Year 1-2",
+              },
+              // Blank title rows are editor scaffolding; never published.
+              { pageKey: "vision-empty", title: " ", priority: "" },
+            ],
+          },
+        },
+        [{ type: "narrative", value: "Room in good overall condition." }],
+      ),
+      now: NOW,
+    });
+    expect(linked).not.toBeNull();
+    const block = linked!.blocks[0];
+    expect(block.type).toBe("room_record");
+    expect(block.content.linkedVisionProjects).toEqual([
+      {
+        id: "vision-primary-bath",
+        title: "Vision: Primary Bath Spa Conversion",
+        priority: "Year 1-2",
+      },
+    ]);
+  });
+
+  it("publishes an empty link list when no vision link was authored", () => {
+    const block = payload!.blocks[0];
+    expect(block.content.linkedVisionProjects).toEqual([]);
+  });
 });
 
 describe("buildStructuredPagePayload — system structured fields", () => {

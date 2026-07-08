@@ -352,6 +352,17 @@ export function buildStructuredPagePayload(
       doors: cleanString(room.fixtures?.doors),
     };
 
+    // Room → vision links authored in Step 3 (LINKED VISION PROJECT
+    // select). Only links with a real title survive; the room template's
+    // callout renders title + priority window.
+    const linkedVisionProjects = (room.linkedVisionProjects ?? [])
+      .map((vp) => ({
+        pageKey: cleanString(vp.pageKey),
+        title: cleanString(vp.title) ?? "",
+        priority: cleanString(vp.priority),
+      }))
+      .filter((vp) => vp.title.length > 0);
+
     // Metadata-strip specs derive from the structured dims when present
     // (Dimensions / Floor Area / Ceiling / Level, matching the room
     // template's plain-value strip); otherwise the AI seed specs stand.
@@ -377,7 +388,7 @@ export function buildStructuredPagePayload(
       conditionRating:
         normalizeConditionRating(room.conditionRating) ?? conditionRating,
       specs,
-      linkedVisionProjects: [],
+      linkedVisionProjects,
     });
     const observationsHtml = observationsToHtml(narrativeParagraphs, bullets);
     const blocks: ReportBlock[] = [
@@ -401,7 +412,13 @@ export function buildStructuredPagePayload(
           doors: content.fixtures?.doors,
           conditionRating: content.conditionRating,
           observationsHtml: observationsHtml || undefined,
-          linkedVisionProjects: [],
+          // Block rows carry pageKey as the row id so the portal can
+          // deep-link to the vision page later.
+          linkedVisionProjects: content.linkedVisionProjects.map((vp) => ({
+            id: vp.pageKey,
+            title: vp.title,
+            priority: vp.priority,
+          })),
         },
         now,
       ),
