@@ -289,6 +289,8 @@ export interface VisionProjectContent {
   // Optional bottom-of-block Concierge CTA
   conciergeActionLabel?: string;
   conciergeActionPrompt?: string;
+  // Button text for the CTA above; defaults to "Start design".
+  conciergeActionButtonLabel?: string;
 }
 
 // ── Recurring Services Register (B6) ────────────────────────────────────
@@ -478,6 +480,13 @@ export interface RoomRecordContent {
 
   // Linked vision project chips (small references, not full vision content)
   linkedVisionProjects?: RoomLinkedVisionProject[];
+
+  // Optional viewer-only extras (both default to the existing behavior).
+  // conciergeAction replaces the generic bottom-of-page Concierge Action
+  // line with a page-specific one; omitEmptyFinishes drops blank finish
+  // rows (used for exterior pages that have no paint or flooring).
+  conciergeAction?: { title: string; body?: string; prompt: string };
+  omitEmptyFinishes?: boolean;
 }
 
 // ── Capital Plan (B7) ───────────────────────────────────────────────────

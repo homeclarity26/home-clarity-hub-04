@@ -1,4 +1,5 @@
 import type { ConditionRating, RoomRecordContent, RoomLinkedVisionProject } from "../types";
+import { usePortalActions } from "@/contexts/PortalActionsContext";
 
 // Locked palette for the inline ConditionDot — same source-of-truth as
 // ConditionRatingBlock (see that file's RATING_COLORS comment for why these
@@ -114,6 +115,23 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
 
   const rating = content.conditionRating ?? "Good";
   const ratingColor = RATING_COLORS[rating];
+
+  // Optional action wiring (null in the live portal; see PortalActionsContext).
+  const actions = usePortalActions();
+  const conciergeAction = content.conciergeAction;
+
+  // Viewer-only: exterior pages (roof, driveway) have no paint or flooring,
+  // so the builder can ask for blank finish rows to be omitted instead of
+  // reading "Not yet documented". Default behavior is unchanged.
+  const finishRows: { label: string; value?: string }[] = [
+    { label: "Wall Paint", value: content.wallPaint },
+    { label: "Trim Paint", value: content.trimPaint },
+    { label: "Ceiling Paint", value: content.ceilingPaint },
+    { label: "Flooring", value: content.flooring },
+  ];
+  const visibleFinishRows = content.omitEmptyFinishes
+    ? finishRows.filter((r) => !!r.value)
+    : finishRows;
 
   // Viewer mode renders flat on the page background — RoomTemplatePage owns
   // the page header (eyebrow, title, metadata strip, condition dot), so the
@@ -254,6 +272,7 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
       {/* Body */}
       <div className={editable ? "px-6 sm:px-8 py-6 space-y-6" : "space-y-6"}>
         {/* Finishes */}
+        {(editable || visibleFinishRows.length > 0) && (
         <section>
           <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3 text-accent">
             Finishes
@@ -267,13 +286,13 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <SpecRow label="Wall Paint" value={content.wallPaint} />
-              <SpecRow label="Trim Paint" value={content.trimPaint} />
-              <SpecRow label="Ceiling Paint" value={content.ceilingPaint} />
-              <SpecRow label="Flooring" value={content.flooring} />
+              {visibleFinishRows.map((r) => (
+                <SpecRow key={r.label} label={r.label} value={r.value} />
+              ))}
             </div>
           )}
         </section>
+        )}
 
         {/* Fixtures & Power — viewer omits rows with no data (prototype
             screen 24 shows only documented rows in this section) */}
@@ -375,7 +394,7 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
                         <div className="text-xs text-muted-foreground mt-1">{vp.priority} priority</div>
                       )
                     )}
-                    {!editable && (
+                    {!editable && (!actions || (vp.id && actions.hasPage(vp.id))) && (
                       <button
                         type="button"
                         className="mt-2 text-xs font-medium min-h-[44px] sm:min-h-0"
@@ -383,6 +402,8 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
                         onClick={() => {
                           // Cross-page navigation to the vision page wires up
                           // in the portal shell; visual link per prototype.
+                          // When portal actions are mounted the link is live.
+                          if (actions && vp.id) actions.navigateToPage(vp.id);
                         }}
                       >
                         View Vision Project →
@@ -437,10 +458,22 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
               style={{ color: "hsl(var(--hbc-navy))" }}
               onClick={() => {
                 // Wires to the Bobby/Concierge panel in the portal shell.
+                // When portal actions are mounted the callout opens Bobby.
+                actions?.openBobby(
+                  conciergeAction?.prompt ??
+                    `I'd like to update the record for the ${content.roomName}.`,
+                );
               }}
             >
-              + Update finishes, log a touch-up, or schedule cleaning
+              {conciergeAction?.title
+                ? `+ ${conciergeAction.title}`
+                : "+ Update finishes, log a touch-up, or schedule cleaning"}
             </button>
+            {conciergeAction?.body && (
+              <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                {conciergeAction.body}
+              </p>
+            )}
           </section>
         )}
       </div>

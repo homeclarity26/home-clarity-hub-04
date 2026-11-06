@@ -4,6 +4,7 @@ import type { PortalGroup } from "@/hooks/useClientPortal";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
 import { CHAPTERS } from "./ReportChapterNav";
 import HCRLogo from "@/components/brand/HCRLogo";
+import { usePortalActions } from "@/contexts/PortalActionsContext";
 
 const CHAPTER_DESCRIPTIONS: Record<string, string> = {
   "information": "Welcome letter, executive summary, top priorities, vision inventory, at-a-glance specs",
@@ -148,17 +149,23 @@ interface ChapterCardProps {
   onClick: () => void;
 }
 
-const ChapterCard = ({ num, title, description, pageCount, onClick }: ChapterCardProps) => (
+const ChapterCard = ({ num, title, description, pageCount, onClick }: ChapterCardProps) => {
+  // Public sample report only: cards in a row stretch to equal height with
+  // their content pinned to the top. Live portal keeps its current layout.
+  const equalHeight = usePortalActions()?.demoMode === true;
+  return (
   <button
     onClick={onClick}
-    className="bg-white rounded-[10px] p-6 border border-border text-left cursor-pointer hover:border-accent/40 transition-colors w-full"
+    className={`bg-white rounded-[10px] p-6 border border-border text-left cursor-pointer hover:border-accent/40 transition-colors w-full ${
+      equalHeight ? "h-full flex flex-col" : ""
+    }`}
   >
     <div className="font-mono uppercase text-[10px] tracking-[0.12em] text-accent mb-1">
       Section {num}
     </div>
     <h2 className="font-display text-[24px] sm:text-[26px] text-primary mb-2">{title}</h2>
     <p className="text-[13px] text-muted-foreground leading-relaxed mb-4">{description}</p>
-    <div className="flex justify-between items-center">
+    <div className={`flex justify-between items-center ${equalHeight ? "mt-auto w-full" : ""}`}>
       <span className="text-[11px] text-muted-foreground">
         {pageCount} {pageCount === 1 ? "page" : "pages"}
       </span>
@@ -167,6 +174,7 @@ const ChapterCard = ({ num, title, description, pageCount, onClick }: ChapterCar
       </span>
     </div>
   </button>
-);
+  );
+};
 
 export default ReportOverview;

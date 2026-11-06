@@ -16,6 +16,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { X, GripVertical, ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePortalActions } from "@/contexts/PortalActionsContext";
 
 interface ImageGridProps {
   images: string[];
@@ -35,6 +36,8 @@ interface SortableImageProps {
   editable: boolean;
   onRemove?: (index: number) => void;
   onClickImage: (index: number) => void;
+  /** Optional caption (viewer mode only). */
+  caption?: string;
 }
 
 const SortableImage = ({
@@ -46,6 +49,7 @@ const SortableImage = ({
   editable,
   onRemove,
   onClickImage,
+  caption,
 }: SortableImageProps) => {
   const {
     attributes,
@@ -76,7 +80,7 @@ const SortableImage = ({
     >
       <img
         src={src}
-        alt={`Image ${index + 1}`}
+        alt={caption ?? `Image ${index + 1}`}
         className="w-full h-full object-cover transition-transform group-hover:scale-105"
         loading="lazy"
       />
@@ -107,6 +111,11 @@ const SortableImage = ({
           <ZoomIn className="w-6 h-6 text-white drop-shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
       )}
+      {!editable && caption && (
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pt-6 pb-2 pointer-events-none">
+          <p className="font-sans text-xs text-white leading-snug">{caption}</p>
+        </div>
+      )}
     </div>
   );
 };
@@ -115,6 +124,10 @@ const SortableImage = ({
 
 const ImageGrid = ({ images, onRemove, onReorder, editable = false }: ImageGridProps) => {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  // Captions are supplied only where portal actions are mounted (the public
+  // sample report); in the live portal this is null and nothing changes.
+  const portalActions = usePortalActions();
+  const captionFor = (src: string) => portalActions?.captionFor(src);
 
   // Sensors for dnd-kit
   const sensors = useSensors(
@@ -131,13 +144,13 @@ const ImageGrid = ({ images, onRemove, onReorder, editable = false }: ImageGridP
   // Grid layout config based on photo count
   const gridClass = useMemo(() => {
     const count = images.length;
-    if (count === 1) return "grid-cols-1";
+    if (count === 1) return portalActions?.demoMode ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1";
     if (count === 2) return "grid-cols-2";
     if (count === 3) return "grid-cols-2";
     if (count === 4) return "grid-cols-2";
     if (count === 5) return "grid-cols-2";
     return "grid-cols-3"; // 6+
-  }, [images.length]);
+  }, [images.length, portalActions?.demoMode]);
 
   // Per-image aspect + span classes
   const getImageClasses = useCallback(
@@ -218,6 +231,7 @@ const ImageGrid = ({ images, onRemove, onReorder, editable = false }: ImageGridP
         editable={editable}
         onRemove={onRemove}
         onClickImage={(i) => setLightboxIndex(i)}
+        caption={editable ? undefined : captionFor(src)}
       />
     );
   });
@@ -271,7 +285,10 @@ const ImageGrid = ({ images, onRemove, onReorder, editable = false }: ImageGridP
             onClick={(e) => e.stopPropagation()}
           />
 
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm font-sans">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm font-sans text-center px-4">
+            {captionFor(images[lightboxIndex]) && (
+              <span className="block text-white/90 mb-1">{captionFor(images[lightboxIndex])}</span>
+            )}
             {lightboxIndex + 1} / {images.length}
           </div>
         </div>

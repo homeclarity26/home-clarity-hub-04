@@ -4,6 +4,7 @@ import type {
   ReplacementBriefingPhoto,
   ReplacementBriefingCta,
 } from "../types";
+import { usePortalActions } from "@/contexts/PortalActionsContext";
 
 // Locked HCR palette per Master Spec 5.1.2 — the navy block IS the brand
 // signature for the Replacement Briefing Package per [v1.13]. Inline
@@ -305,6 +306,8 @@ const PhotoThumb = ({ photo, editable, onChange, onRemove }: {
 
 const ReplacementBriefingBlock = ({ content, editable, onChange }: ReplacementBriefingBlockProps) => {
   const update = (patch: Partial<ReplacementBriefingContent>) => onChange?.({ ...content, ...patch });
+  // Optional action wiring (null in the live portal; see PortalActionsContext).
+  const actions = usePortalActions();
 
   const tiers = content.tiers ?? [];
   const photos = content.photos ?? [];
@@ -513,7 +516,9 @@ const ReplacementBriefingBlock = ({ content, editable, onChange }: ReplacementBr
                     onClick={() => {
                       // Wire-up to ConciergePanel happens in C1. For now this
                       // is a no-op visual button so the briefing renders
-                      // correctly in the report.
+                      // correctly in the report. When portal actions are
+                      // mounted the CTA opens Bobby with its prompt.
+                      actions?.openBobby(fillPrompt(cta.prompt, content.systemType) ?? cta.label);
                     }}
                   >
                     {cta.label}

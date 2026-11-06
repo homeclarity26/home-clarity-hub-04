@@ -26,6 +26,7 @@ import PropertyValueWidget from "@/components/portal/PropertyValueWidget";
 import ClientReferralPortal from "@/components/portal/ClientReferralPortal";
 import SeasonalChecklist from "@/components/portal/SeasonalChecklist";
 import DocumentExpirationTracker from "@/components/portal/DocumentExpirationTracker";
+import { usePortalActions } from "@/contexts/PortalActionsContext";
 
 interface PortalHomeProps {
   onNavigate: (tab: string, pageId?: string) => void;
@@ -47,6 +48,18 @@ interface PortalHomeProps {
   hoverMeta?: string | null;
   /** Optional meta line under the iGUIDE card title (e.g. panoramic stop count). */
   iguideMeta?: string | null;
+  /**
+   * Public sample report only. Supplies still images for the two media
+   * cards and local open handlers (a dialog, never a navigation), and
+   * trims the page to the sections that work without a signed-in
+   * property. Omitted everywhere else, so the live portal is unchanged.
+   */
+  demo?: {
+    hoverImageUrl?: string;
+    iguideImageUrl?: string;
+    onOpenHover: () => void;
+    onOpenIguide: () => void;
+  };
 }
 
 const fadeUp = {
@@ -110,6 +123,8 @@ function MediaTourCard({
   url,
   cta,
   emptyLabel,
+  imageUrl,
+  onOpen,
 }: {
   badge: string;
   title: string;
@@ -117,10 +132,22 @@ function MediaTourCard({
   url?: string | null;
   cta: string;
   emptyLabel: string;
+  /** Optional still image for the thumbnail band. */
+  imageUrl?: string;
+  /** Optional local handler; when set the CTA is a button, not a link. */
+  onOpen?: () => void;
 }) {
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden flex flex-col">
       <div className="relative aspect-[16/9] bg-gradient-to-b from-primary/80 via-primary/50 to-primary/20">
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt={title}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+          />
+        )}
         <span className="absolute top-3 left-3 rounded bg-primary px-2 py-1 font-mono text-[9px] uppercase tracking-[0.18em] text-primary-foreground">
           {badge}
         </span>
@@ -128,7 +155,15 @@ function MediaTourCard({
       <div className="p-5 space-y-1.5">
         <p className="font-sans text-base font-semibold text-foreground">{title}</p>
         <p className="font-sans text-xs text-muted-foreground">{meta}</p>
-        {url ? (
+        {onOpen ? (
+          <button
+            type="button"
+            onClick={onOpen}
+            className="inline-flex items-center min-h-[44px] mt-2 px-4 rounded-md bg-accent text-white font-sans text-sm font-medium transition-opacity hover:opacity-90"
+          >
+            {cta} ↗
+          </button>
+        ) : url ? (
           <a
             href={url}
             target="_blank"
@@ -164,6 +199,7 @@ export function PortalHome({
   clientFirstName,
   hoverMeta,
   iguideMeta,
+  demo,
 }: PortalHomeProps) {
   const { user } = useAuth();
   const [customization, setCustomization] = useState<{
@@ -213,7 +249,14 @@ export function PortalHome({
     if (welcomeVideoUrl) window.open(welcomeVideoUrl, "_blank", "noopener,noreferrer");
   };
 
+  // Null in the live portal; mounted only by the public sample report.
+  const portalActions = usePortalActions();
+
   const openConcierge = (prompt: string) => {
+    if (portalActions) {
+      portalActions.openBobby(prompt);
+      return;
+    }
     window.dispatchEvent(
       new CustomEvent("concierge:open", { detail: { prompt } })
     );
@@ -253,6 +296,8 @@ export function PortalHome({
               url={hoverUrl}
               cta="Open 3D model"
               emptyLabel="Hover scan not yet uploaded"
+              imageUrl={demo?.hoverImageUrl}
+              onOpen={demo?.onOpenHover}
             />
             <MediaTourCard
               badge="360"
@@ -261,11 +306,14 @@ export function PortalHome({
               url={iguideUrl}
               cta="Open tour"
               emptyLabel="iGUIDE tour not yet uploaded"
+              imageUrl={demo?.iguideImageUrl}
+              onOpen={demo?.onOpenIguide}
             />
           </div>
         </motion.section>
 
         {/* 2. Document cards — floor plans, Hover report PDF, welcome video */}
+        {!demo && (
         <motion.section variants={fadeUp} className="space-y-4">
           <div className="flex items-baseline justify-between">
             <h2 className="font-display text-xl text-foreground">Documents</h2>
@@ -297,6 +345,7 @@ export function PortalHome({
             />
           </div>
         </motion.section>
+        )}
 
         {/* 3. Today's Brief — pulls from daily_briefs */}
         {propertyId && (
@@ -331,12 +380,21 @@ export function PortalHome({
               )
             }
           />
-          <QuickLinkCard
-            label="Active projects"
-            helper="See what's in flight"
-            icon={Hammer}
-            onClick={() => onNavigate("projects")}
-          />
+          {demo ? (
+            <QuickLinkCard
+              label="Open your report"
+              helper="Every room, system and plan"
+              icon={FileText}
+              onClick={() => onNavigate("report")}
+            />
+          ) : (
+            <QuickLinkCard
+              label="Active projects"
+              helper="See what's in flight"
+              icon={Hammer}
+              onClick={() => onNavigate("projects")}
+            />
+          )}
           <QuickLinkCard
             label="Refer a friend"
             helper="Share HBC with someone you trust"
@@ -350,6 +408,7 @@ export function PortalHome({
         </motion.section>
 
         {/* Explore more — secondary widgets, kept behind an accordion */}
+        {!demo && (
         <motion.section variants={fadeUp}>
           <Collapsible>
             <CollapsibleTrigger className="group w-full flex items-center justify-between text-left bg-card rounded-lg border border-border px-5 py-4 hover:border-accent/40 transition-colors [&[data-state=open]>svg]:rotate-180">
@@ -394,6 +453,7 @@ export function PortalHome({
             </CollapsibleContent>
           </Collapsible>
         </motion.section>
+        )}
       </motion.div>
     </div>
   );

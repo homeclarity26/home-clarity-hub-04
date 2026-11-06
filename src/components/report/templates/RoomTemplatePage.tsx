@@ -5,6 +5,7 @@ import SharedBlockRenderer from "@/components/wysiwyg/SharedBlockRenderer";
 import ImageGrid from "@/components/editor/ImageGrid";
 import { AttachedDocuments } from "@/components/report/AttachedDocuments";
 import { ArrowLeft, ChevronRight } from "lucide-react";
+import { usePortalActions } from "@/contexts/PortalActionsContext";
 
 const RATING_COLORS: Record<string, string> = {
   Excellent: "#2F6E40",
@@ -44,6 +45,8 @@ const RoomTemplatePage = ({
   reportId,
 }: RoomTemplatePageProps) => {
   const heroImage = images[0];
+  // Captions exist only where portal actions are mounted (sample report).
+  const heroCaption = usePortalActions()?.captionFor(heroImage ?? "");
   const galleryImages = images.length > 1 ? images.slice(1) : [];
   const rating = page.conditionRating;
   const ratingColor = rating ? RATING_COLORS[rating] : undefined;
@@ -65,6 +68,11 @@ const RoomTemplatePage = ({
               background: "linear-gradient(180deg, transparent 40%, rgba(10,22,40,0.5) 100%)",
             }}
           />
+          {heroCaption && (
+            <p className="absolute left-4 right-4 bottom-3 font-sans text-xs text-white/90 leading-snug">
+              {heroCaption}
+            </p>
+          )}
         </div>
       )}
 

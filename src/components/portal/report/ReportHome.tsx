@@ -4,6 +4,7 @@ import { TwinView } from "@/components/portal/report/TwinView";
 import type { ReportPageData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
 import type { PDFReportData } from "@/features/pdf/PDFReport";
+import { usePortalActions } from "@/contexts/PortalActionsContext";
 
 interface ReportHomeProps {
   groups: PortalGroup[];
@@ -35,9 +36,12 @@ export function ReportHome({
   ...overviewProps
 }: ReportHomeProps) {
   const [view, setView] = useState<"cover" | "twin">("cover");
+  // The public sample report shows the cover view only (no view toggle).
+  const coverOnly = usePortalActions()?.demoMode === true;
 
   return (
     <div>
+      {!coverOnly && (
       <div className="flex items-center justify-center gap-1 mb-6">
         <button
           onClick={() => setView("cover")}
@@ -60,6 +64,7 @@ export function ReportHome({
           Twin view
         </button>
       </div>
+      )}
 
       {view === "cover" ? (
         <ReportOverview

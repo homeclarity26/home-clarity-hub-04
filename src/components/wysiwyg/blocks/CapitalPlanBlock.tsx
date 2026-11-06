@@ -18,6 +18,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { usePortalActions } from "@/contexts/PortalActionsContext";
 import type {
   CapitalPlanContent,
   CapitalPlanItem,
@@ -287,6 +288,10 @@ const CapitalPlanViewer = ({ content }: { content: CapitalPlanContent }) => {
   const phaseCards = content.phaseCards ?? [];
   const phaseFooter = content.phaseFooter ?? [];
   const gridTemplate = `44px repeat(${HORIZON_YEARS}, 1fr)`;
+  // Public sample report only: let a bar's label run across the bar's own
+  // cells instead of clipping at the first year. Live portal unchanged.
+  const fullLabels = usePortalActions()?.demoMode === true;
+  const lastYear = years[years.length - 1];
 
   return (
     <div className="space-y-7" data-block-type="capital_plan">
@@ -357,8 +362,19 @@ const CapitalPlanViewer = ({ content }: { content: CapitalPlanContent }) => {
                       key={y}
                       className={`h-8 rounded relative ${inSpan ? "bg-hbc-gold" : "bg-card"}`}
                     >
-                      {isStart && (
+                      {isStart && !fullLabels && (
                         <div className="absolute inset-0 flex items-center pl-2 text-[10px] font-medium text-white whitespace-nowrap overflow-hidden">
+                          {item.projectName}
+                        </div>
+                      )}
+                      {isStart && fullLabels && (
+                        <div
+                          className="absolute inset-y-0 left-0 z-10 flex items-center px-2 rounded bg-hbc-gold text-[10px] font-medium text-white whitespace-nowrap overflow-hidden"
+                          style={{
+                            minWidth: "100%",
+                            maxWidth: `calc(${Math.min(item.yearEnd, lastYear) - item.yearStart + 1} * 100% + ${(Math.min(item.yearEnd, lastYear) - item.yearStart) * 6}px)`,
+                          }}
+                        >
                           {item.projectName}
                         </div>
                       )}

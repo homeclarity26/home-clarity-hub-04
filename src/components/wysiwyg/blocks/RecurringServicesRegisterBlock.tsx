@@ -4,6 +4,7 @@ import type {
   RecurringServiceRow,
   ConciergeTier,
 } from "../types";
+import { usePortalActions } from "@/contexts/PortalActionsContext";
 
 // HCR palette anchors used inline (tailwind tokens are HSL-based; these
 // exact hex values are the v2-locked brand signature).
@@ -98,6 +99,8 @@ const RegisterViewer = ({ content }: { content: RecurringServicesRegisterContent
   const totalMonthly = services.reduce((s, x) => s + (x.monthlyCost ?? 0), 0);
   const overdueCount = services.filter((s) => s.status === "overdue").length;
   const onTrackCount = services.length - overdueCount;
+  // Optional action wiring (null in the live portal; see PortalActionsContext).
+  const actions = usePortalActions();
 
   return (
     <div className="space-y-5" data-block-type="recurring_services_register">
@@ -137,6 +140,7 @@ const RegisterViewer = ({ content }: { content: RecurringServicesRegisterContent
         <button
           type="button"
           className="bg-hbc-gold text-white text-[13px] font-medium rounded-md px-4 min-h-[44px] inline-flex items-center"
+          onClick={() => actions?.openBobby("Tell me about the HBC Concierge plans.")}
         >
           {content.conciergeCtaLabel ?? DEFAULT_CONCIERGE_CTA}
         </button>

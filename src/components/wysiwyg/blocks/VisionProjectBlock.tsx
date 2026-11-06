@@ -1,4 +1,5 @@
 import type { VisionProjectContent, ReplacementBriefingTier } from "../types";
+import { usePortalActions } from "@/contexts/PortalActionsContext";
 
 // HCR palette per Master Spec 5.2 — vision project hero is navy gradient,
 // section dividers + eyebrows are gold, body copy on cream-light cards.
@@ -146,6 +147,8 @@ const SectionEyebrow = ({ children }: { children: React.ReactNode }) => (
 const VisionProjectBlock = ({ content, editable, onChange }: VisionProjectBlockProps) => {
   const update = (patch: Partial<VisionProjectContent>) => onChange?.({ ...content, ...patch });
   const tiers = content.tiers ?? [];
+  // Optional action wiring (null in the live portal; see PortalActionsContext).
+  const actions = usePortalActions();
 
   // Hardcoded execution-path default text WITH AKR disclosure baked in.
   const defaultExecutionPath =
@@ -493,9 +496,11 @@ const VisionProjectBlock = ({ content, editable, onChange }: VisionProjectBlockP
                 title={content.conciergeActionPrompt}
                 onClick={() => {
                   // C1 wires this to ConciergePanel; for now no-op visual button.
+                  // When portal actions are mounted the CTA opens Bobby.
+                  actions?.openBobby(content.conciergeActionPrompt);
                 }}
               >
-                Start design
+                {content.conciergeActionButtonLabel ?? "Start design"}
               </button>
             )}
           </section>

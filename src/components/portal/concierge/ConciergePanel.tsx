@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBobbyThread } from "@/hooks/useBobbyThread";
@@ -20,7 +20,18 @@ interface ConciergePanelProps {
    * panel renders these messages instead of the live Bobby thread and
    * never touches the network.
    */
-  qaThread?: { sender: "user" | "bobby" | "adam"; content: string }[];
+  qaThread?: { sender: "user" | "bobby" | "adam"; content: string; imageUrl?: string }[];
+  /**
+   * Scripted mode (public sample report). Only used together with
+   * `qaThread`: instead of ignoring input, the panel hands every sent
+   * message and every tapped prompt chip to this callback, and the owner
+   * appends the scripted exchange to `qaThread`. Still no network.
+   */
+  onQaSend?: (text: string) => void;
+  /** Scripted mode: show the "Bobby is thinking" row. */
+  qaPending?: boolean;
+  /** Override the prompt chips (defaults to the prototype's five). */
+  suggestedPrompts?: string[];
 }
 
 // Prototype screen 33 demo prompts. Rendered as quoted chips; the list
@@ -37,6 +48,7 @@ interface DisplayMessage {
   id: string;
   sender: "user" | "bobby" | "adam";
   content: string;
+  imageUrl?: string;
 }
 
 // White slide-over panel per prototype screens 33-34: gold mono eyebrow +
@@ -49,6 +61,9 @@ const ConciergePanel = ({
   propertyId,
   homeLabel,
   qaThread,
+  onQaSend,
+  qaPending,
+  suggestedPrompts,
 }: ConciergePanelProps) => {
   const thread = useBobbyThread(qaThread ? undefined : propertyId);
   const [input, setInput] = useState("");
@@ -59,18 +74,24 @@ const ConciergePanel = ({
     ? qaThread.map((m, i) => ({ id: `qa-${i}`, ...m }))
     : thread.messages;
   const isLoading = qaThread ? false : thread.isLoading;
+  const prompts = suggestedPrompts ?? SUGGESTED_PROMPTS;
+  const scripted = !!qaThread && !!onQaSend;
+  const onQaSendRef = useRef(onQaSend);
+  onQaSendRef.current = onQaSend;
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, qaPending, open]);
 
   useEffect(() => {
     const onPrefill = (e: Event) => {
       const detail = (e as CustomEvent<{ prompt?: string }>).detail;
       if (detail?.prompt) {
-        setInput(detail.prompt);
+        // Scripted mode asks the prompt straight away; live mode prefills.
+        if (onQaSendRef.current) onQaSendRef.current(detail.prompt);
+        else setInput(detail.prompt);
       }
     };
     window.addEventListener("concierge:prefill", onPrefill as EventListener);
@@ -79,6 +100,11 @@ const ConciergePanel = ({
 
   const handleSend = async () => {
     const text = input.trim();
+    if (text && scripted && !qaPending) {
+      setInput("");
+      onQaSend?.(text);
+      return;
+    }
     if (!text || sending || qaThread) return;
     setInput("");
     setSending(true);
@@ -104,9 +130,14 @@ const ConciergePanel = ({
           <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-hbc-gold-readable">
             Ask Bobby
           </div>
-          <div className="font-display text-xl text-primary leading-snug mt-0.5">
+          {/* SheetTitle/Description give the dialog its accessible name
+              (Radix logs a console error without a title). Same visuals. */}
+          <SheetTitle className="font-display text-xl font-normal tracking-normal text-primary leading-snug mt-0.5">
             {homeLabel ?? "Trained on your home"}
-          </div>
+          </SheetTitle>
+          <SheetDescription className="sr-only">
+            Ask Bobby a question about your home.
+          </SheetDescription>
         </div>
 
         {/* Thread */}
@@ -123,11 +154,11 @@ const ConciergePanel = ({
                   records, and take action. Try one of these:
                 </p>
                 <div className="space-y-2">
-                  {SUGGESTED_PROMPTS.map((prompt) => (
+                  {prompts.map((prompt) => (
                     <button
                       key={prompt}
                       type="button"
-                      onClick={() => setInput(prompt)}
+                      onClick={() => (scripted ? onQaSend?.(prompt) : setInput(prompt))}
                       className="w-full text-left rounded-md border border-border bg-card px-3.5 py-2.5 text-sm font-sans text-foreground min-h-[44px] transition-colors hover:border-accent/60 hover:bg-secondary"
                     >
                       &ldquo;{prompt}&rdquo;
@@ -153,12 +184,19 @@ const ConciergePanel = ({
                       <p className="text-sm font-sans text-primary-foreground/95 leading-relaxed whitespace-pre-line">
                         {msg.content}
                       </p>
+                      {msg.imageUrl && (
+                        <img
+                          src={msg.imageUrl}
+                          alt=""
+                          className="mt-3 w-full rounded-md border border-primary-foreground/20"
+                        />
+                      )}
                     </div>
                   );
                 })}
               </>
             )}
-            {sending && (
+            {(sending || qaPending) && (
               <div className="rounded-md bg-primary/5 border border-border px-3.5 py-2.5 flex items-center gap-2">
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
                 <span className="text-xs font-sans text-muted-foreground">

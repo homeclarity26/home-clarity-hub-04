@@ -5,6 +5,7 @@ import SharedBlockRenderer from "@/components/wysiwyg/SharedBlockRenderer";
 import ImageGrid from "@/components/editor/ImageGrid";
 import { AttachedDocuments } from "@/components/report/AttachedDocuments";
 import { ArrowLeft, ChevronRight } from "lucide-react";
+import { usePortalActions } from "@/contexts/PortalActionsContext";
 
 const RATING_COLORS: Record<string, string> = {
   Excellent: "#2F6E40",
@@ -73,6 +74,8 @@ const SystemTemplatePage = ({
   simplified = false,
 }: SystemTemplatePageProps) => {
   const heroImage = images[0];
+  // Captions exist only where portal actions are mounted (sample report).
+  const heroCaption = usePortalActions()?.captionFor(heroImage ?? "");
   const galleryImages = images.length > 1 ? images.slice(1) : [];
   const rating = page.conditionRating;
   const ratingColor = rating ? RATING_COLORS[rating] : undefined;
@@ -95,7 +98,14 @@ const SystemTemplatePage = ({
   const fillPct = currentAge && lifespanYears && lifespanYears > 0
     ? Math.min((currentAge / lifespanYears) * 100, 100)
     : 0;
-  const urgencyPillLabel = showLifespan ? URGENCY_PILL_LABEL[urgency] : undefined;
+  // Optional page flag: a system can sit past 70% of its typical lifespan
+  // and still be assessed healthy with no Replacement Briefing on the page
+  // (a 40-year electrical panel at year 28). The flag keeps the timeline
+  // bar but drops the end-of-life pill and the alert that points at a
+  // briefing. Unset (every live page today) keeps the derived behavior.
+  const hideLifecycleAlert = ext.hide_lifecycle_alert === true;
+  const urgencyPillLabel =
+    showLifespan && !hideLifecycleAlert ? URGENCY_PILL_LABEL[urgency] : undefined;
 
   // Lifecycle timeline endpoints (derived: install year and EOL year)
   const currentYear = new Date().getFullYear();
@@ -124,6 +134,11 @@ const SystemTemplatePage = ({
               background: "linear-gradient(180deg, transparent 50%, rgba(10,22,40,0.5) 100%)",
             }}
           />
+          {heroCaption && (
+            <p className="absolute left-4 right-4 bottom-3 font-sans text-xs text-white/90 leading-snug">
+              {heroCaption}
+            </p>
+          )}
         </div>
       )}
 
