@@ -280,7 +280,7 @@ export const caldwellInteriorRooms: DemoRoom[] = [
       doors: "1 swing",
       conditionRating: "Fair",
       observationsHtml:
-        "The room itself is in good order: tile floor, a utility sink, upper cabinets, and the 2019 Miele washer and dryer, both running well. The rating is Fair for one reason, the dryer vent. It's overdue for its annual cleaning, there's lint packed at the exterior hood, and Jennifer mentioned loads are taking longer to dry. A clogged vent makes the dryer work harder and is a known fire risk, so this is the first thing we'd book; once it's cleaned, this room goes back to Good.",
+        "The room itself is in good order: tile floor, a utility sink, upper cabinets, and the 2019 Electrolux washer and dryer, both running well. The rating is Fair for one reason, the dryer vent. It's overdue for its annual cleaning, there's lint packed at the exterior hood, and Jennifer mentioned loads are taking longer to dry. A clogged vent makes the dryer work harder and is a known fire risk, so this is the first thing we'd book; once it's cleaned, this room goes back to Good.",
     },
     conciergeAction: {
       title: "Book the dryer vent cleaning",
