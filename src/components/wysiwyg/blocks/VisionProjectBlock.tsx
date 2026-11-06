@@ -262,7 +262,9 @@ const VisionProjectBlock = ({ content, editable, onChange }: VisionProjectBlockP
           className="rounded-lg p-5"
           style={{ background: CREAM_LIGHT, borderLeft: `3px solid ${GOLD}` }}
         >
-          <SectionEyebrow>Why Design Matters First</SectionEyebrow>
+          <SectionEyebrow>
+            {(!editable && content.designSectionTitle) || "Why Design Matters First"}
+          </SectionEyebrow>
           {editable ? (
             <>
               <textarea
@@ -332,7 +334,7 @@ const VisionProjectBlock = ({ content, editable, onChange }: VisionProjectBlockP
               />
             ) : (
               <div
-                className="text-sm leading-relaxed text-foreground"
+                className="text-sm leading-relaxed text-foreground [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1.5 [&_li]:pl-1 [&_li::marker]:text-accent"
                 dangerouslySetInnerHTML={{ __html: content.scopeOfWorkHtml ?? "" }}
               />
             )}
@@ -491,7 +493,7 @@ const VisionProjectBlock = ({ content, editable, onChange }: VisionProjectBlockP
             {!editable && (
               <button
                 type="button"
-                className="rounded-md px-4 py-2 font-mono text-xs uppercase tracking-[0.15em]"
+                className="rounded-md px-4 py-2 min-h-[44px] font-mono text-xs uppercase tracking-[0.15em]"
                 style={{ background: GOLD, color: NAVY }}
                 title={content.conciergeActionPrompt}
                 onClick={() => {

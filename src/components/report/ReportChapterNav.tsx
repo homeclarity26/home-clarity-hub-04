@@ -145,7 +145,7 @@ const ReportChapterNav = ({
             {/* Contents button — single TOC entry point */}
             <button
               onClick={() => setTocOpen(true)}
-              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:text-accent hover:border-accent/40 transition-all font-sans text-[10px] uppercase tracking-wider ml-2 min-h-[36px]"
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:text-accent hover:border-accent/40 transition-all font-sans text-[10px] uppercase tracking-wider ml-2 min-h-[44px] min-w-[44px] justify-center"
             >
               <List className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Contents</span>

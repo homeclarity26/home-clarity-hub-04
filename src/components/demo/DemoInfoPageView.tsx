@@ -18,9 +18,16 @@ const DemoInfoPageView = ({ info, prev, next, onNavigate }: DemoInfoPageViewProp
   const stats = info.stats ?? [];
   const sections = info.sections ?? [];
   const numbered = info.numbered ?? [];
+  // Pick a column count that leaves no orphan tile in the last row.
   const statCols =
-    stats.length >= 4 ? "grid-cols-2 md:grid-cols-4" : stats.length === 3 ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-2";
-  const statColsSix = stats.length > 4 ? "grid-cols-2 sm:grid-cols-3" : statCols;
+    stats.length % 4 === 0
+      ? "grid-cols-2 xl:grid-cols-4"
+      : stats.length % 3 === 0
+        ? "grid-cols-2 sm:grid-cols-3"
+        : stats.length % 2 === 0
+          ? "grid-cols-2"
+          : "grid-cols-2 sm:grid-cols-3";
+  const longValues = stats.some((s) => s.value.length > 10);
 
   return (
     <div className="max-w-[1040px] mx-auto px-5 sm:px-8 md:px-10 py-8">
@@ -42,13 +49,17 @@ const DemoInfoPageView = ({ info, prev, next, onNavigate }: DemoInfoPageViewProp
       <div className="space-y-9">
         {/* Stat tiles */}
         {stats.length > 0 && (
-          <div className={`grid gap-3 sm:gap-4 ${statColsSix}`}>
+          <div className={`grid gap-3 sm:gap-4 ${statCols}`}>
             {stats.map((s) => (
               <div key={s.label} className="bg-white border border-border rounded-lg p-4 sm:p-5">
                 <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-accent mb-2">
                   {s.label}
                 </div>
-                <div className="font-display text-[28px] sm:text-[32px] leading-none text-primary break-words">
+                <div
+                  className={`font-display leading-none text-primary break-words ${
+                    longValues ? "text-[24px] sm:text-[28px]" : "text-[28px] sm:text-[32px]"
+                  }`}
+                >
                   {s.value}
                 </div>
                 {s.subtitle && (

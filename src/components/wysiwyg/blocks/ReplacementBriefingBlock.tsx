@@ -510,7 +510,7 @@ const ReplacementBriefingBlock = ({ content, editable, onChange }: ReplacementBr
                 ) : (
                   <button
                     type="button"
-                    className="w-full rounded-md py-3 px-4 font-mono text-xs uppercase tracking-[0.15em]"
+                    className="w-full rounded-md py-3 px-4 min-h-[44px] font-mono text-xs uppercase tracking-[0.15em]"
                     style={ctaButtonClass(cta.style)}
                     title={fillPrompt(cta.prompt, content.systemType)}
                     onClick={() => {

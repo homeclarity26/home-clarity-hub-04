@@ -334,7 +334,16 @@ function buildRoomPage(
           body: room.conciergeAction.body,
           prompt: room.conciergeAction.prompt,
         }
-      : r.conciergeAction,
+      : r.conciergeAction ??
+        // The block's stock line talks about finishes and cleaning, which
+        // does not fit a roof or a driveway. Exterior pages with no
+        // authored action get an outdoor-appropriate one.
+        (EXTERIOR_GROUPS.has(groupId)
+          ? {
+              title: "Log a repair, add a photo, or schedule service",
+              prompt: `I'd like to update the record for ${room.title}.`,
+            }
+          : undefined),
   };
 
   // Metadata strip under the title: plain values, in this order.
@@ -369,10 +378,11 @@ function buildSystemPage(
   const isAppliance = groupId === "appliances" || !!r.isAppliance;
 
   // The System template derives its end-of-life pill and alert from
-  // age / lifespan (70% and up). A system assessed healthy with no
-  // Replacement Briefing must not show an alert that points at one.
+  // age / lifespan (70% and up). A system we assessed as healthy (the
+  // 40-year electrical panel at year 28) must not be labeled "Approaching
+  // End-of-Life" by arithmetic alone, so the authored status wins.
   const lateLife = !!lifespan && lifespan > 0 && sys.ageYears / lifespan >= 0.7;
-  const hideAlert = lateLife && !hasBriefing && !END_OF_LIFE_STATUS.test(r.status ?? "");
+  const hideAlert = lateLife && !END_OF_LIFE_STATUS.test(r.status ?? "");
   const pillShows = !isAppliance && lateLife && !hideAlert;
 
   const specs: { label: string; value: string }[] = [];
@@ -415,7 +425,7 @@ function buildSystemPage(
     const briefing: ReplacementBriefingContent = {
       systemType,
       headline: "Pre-scoped, pre-priced, ready when you are",
-      intro: `When you're ready to replace this ${lower}, tap below. We'll send ${partner} a complete briefing: your model, capacity, install location photos and every connection detail on this page. They arrive with everything they need to install. No site visit. No re-measuring. No surprise change orders.`,
+      intro: `When you're ready to replace this ${lower}, tap below. We'll send ${partner} a complete briefing: your model, serial, ${briefingPhotos.length > 0 ? "install location photos" : "specifications"} and every connection detail on this page. They arrive with everything they need to install. No site visit. No re-measuring. No surprise change orders.`,
       tiers: sys.briefingTiers as ReplacementBriefingTier[],
       photos: briefingPhotos,
       ctas: [
@@ -457,19 +467,23 @@ const TRADE_LED_PLANNING_HTML =
 
 function buildVisionPage(v: DemoVision): DemoReportPage {
   const p = v.project;
-  const hasDesignPhase =
-    !!p.designFeeEducationHtml || p.designFeeLow != null || p.designFeeHigh != null;
+  // A priced design phase (AK Renovations projects) versus a trade-led
+  // project that starts with a planning visit (HVAC, driveway, roof).
+  const hasDesignFee = p.designFeeLow != null || p.designFeeHigh != null;
 
   const content: VisionProjectContent = {
     ...p,
     projectTitle: p.projectTitle || v.title,
     // The viewer always draws the design callout; never leave it empty.
-    designFeeEducationHtml: hasDesignPhase ? p.designFeeEducationHtml : TRADE_LED_PLANNING_HTML,
+    designFeeEducationHtml:
+      p.designFeeEducationHtml || (hasDesignFee ? undefined : TRADE_LED_PLANNING_HTML),
+    designSectionTitle:
+      p.designSectionTitle ?? (hasDesignFee ? undefined : "How This Project Starts"),
     conciergeActionLabel: p.conciergeActionLabel ?? "Ready to talk this project through?",
     conciergeActionPrompt:
       p.conciergeActionPrompt ?? `Tell Adam I want to start planning: ${p.projectTitle || v.title}.`,
     conciergeActionButtonLabel:
-      p.conciergeActionButtonLabel ?? (hasDesignPhase ? "Start design" : "Start planning"),
+      p.conciergeActionButtonLabel ?? (hasDesignFee ? "Start design" : "Start planning"),
   };
 
   const tier = (id: string) => {

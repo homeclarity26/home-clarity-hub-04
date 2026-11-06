@@ -41,14 +41,21 @@ function allStrings(value: unknown, out: string[] = []): string[] {
 const CHAPTER_GROUP_IDS = new Set(CHAPTERS.flatMap((c) => c.groupIds));
 const BIBLE_GROUP_IDS = new Set(DEMO_GROUPS.map((g) => g.id as string));
 
-// Runs against whatever caldwellDemo.ts is wired to (sample today, the full
-// 81-page data once it is rewired), so the checks carry over unchanged.
+// Runs against what /demo actually ships: caldwellDemo.ts, wired to the
+// full 81-page data.
 describe("caldwellDemo (as wired)", () => {
   const demo = caldwellDemo;
   const pageKeys = Object.keys(demo.pages);
 
   it("builds without data warnings", () => {
     expect(demo.warnings).toEqual([]);
+  });
+
+  it("has all 81 bible pages, each in its bible group and order", () => {
+    expect(pageKeys).toHaveLength(81);
+    expect(demo.groups.map((g) => ({ id: g.id, title: g.title, pages: g.pages }))).toEqual(
+      DEMO_GROUPS.map((g) => ({ id: g.id, title: g.title, pages: g.pages })),
+    );
   });
 
   it("has pages, and every grouped page exists exactly once", () => {
@@ -99,7 +106,7 @@ describe("caldwellDemo (as wired)", () => {
         expect(types[0], page.id).toBe("system_record");
         expect(page.current_age_years, page.id).toBeTypeOf("number");
         expect(page.key_observations?.length ?? 0, page.id).toBeGreaterThan(0);
-      } else if (page.id.startsWith("vision-")) {
+      } else if (page.group === "strategy" && page.id.startsWith("vision-")) {
         expect(types, page.id).toEqual(["vision_project"]);
         expect(page.tiers?.enhanced.price, page.id).toMatch(/^\$[\d,]+ - \$[\d,]+$/);
         expect(page.timing, page.id).toBeTruthy();
@@ -205,7 +212,7 @@ describe("buildCaldwellDemo (sample input)", () => {
     expect(kitchen.linkedVisionProjects[0].id).toBeUndefined();
   });
 
-  it("hides the end-of-life alert on a healthy late-life system with no briefing", () => {
+  it("hides the end-of-life alert on a late-life system that was assessed healthy", () => {
     const panel = buildCaldwellDemo({
       ...sampleInput,
       systems: [

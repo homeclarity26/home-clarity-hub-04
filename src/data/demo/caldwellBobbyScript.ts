@@ -82,7 +82,7 @@ function diningPaintReply(demo: CaldwellDemo): DemoBobbyReply {
   const trim = str(room?.trimPaint) ?? "Benjamin Moore Simply White OC-117";
   const ceiling = str(room?.ceilingPaint) ?? "flat white";
   return {
-    content: `Dining room walls: ${walls}. Wainscot and trim: ${trim}. Ceiling: ${ceiling}. It's all on your Dining Room page. Want me to add a touch-up quart to your next painter visit?`,
+    content: `Here is the dining room. Walls: ${walls}. Trim: ${trim}. Ceiling: ${ceiling}. It is all on your Dining Room page. Want me to add a touch-up quart to your next painter visit?`,
   };
 }
 

@@ -265,6 +265,9 @@ export interface VisionProjectContent {
 
   // Why design matters first — per [v1.18] / Master Spec Section 3
   designFeeEducationHtml?: string;
+  // Heading for that callout; defaults to "Why Design Matters First".
+  // Trade-led projects with no design phase can name it differently.
+  designSectionTitle?: string;
   designFeeLow?: number;          // dollars
   designFeeHigh?: number;
 

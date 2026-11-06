@@ -222,6 +222,18 @@ const DemoPortal = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    // The report nav rows scroll sideways (28 rooms do not fit). Bring the
+    // active chapter tab and the active page chip into view.
+    const frame = window.requestAnimationFrame(() => {
+      document
+        .querySelectorAll<HTMLElement>(".demo-portal .sticky.top-\\[80px\\] button.border-accent")
+        .forEach((el) => {
+          const scroller = el.parentElement;
+          if (!scroller || scroller.scrollWidth <= scroller.clientWidth) return;
+          scroller.scrollLeft = el.offsetLeft - scroller.offsetLeft - (scroller.clientWidth - el.offsetWidth) / 2;
+        });
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [view, pageKey]);
 
   useEffect(() => {
