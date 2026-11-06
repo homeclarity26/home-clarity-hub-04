@@ -184,12 +184,15 @@ What the photos show (so the words match them):
 | whole-home-generator | Whole-Home Generator | Generac | Guardian 22kW | G2021-87332 | 2021-07 | 25 | 5 | Healthy |
 | radon-mitigation | Radon Mitigation System | RadonAway | RP265 | RA2018-3318 | 2018-11 | 20 | 8 | Healthy |
 
-Furnace replacement tiers (locked, both zones use the same numbers):
-Essential $8,500 - $11,500 (like-for-like, single-stage 80%, standard
-10-year parts warranty); Enhanced, recommended, $13,500 - $17,500 (two-stage
-96%, variable-speed blower, smart thermostat, quieter, more even
-temperatures); Signature $22,000 - $28,000 (modulating gas valve, MERV 13
-whole-home filtration, room sensors, 12-year parts and labor warranty).
+Furnace replacement tiers (prices locked, both zones use the same numbers):
+Essential $8,500 - $11,500 (single-stage 96% condensing furnace on the
+existing venting, standard 10-year parts warranty); Enhanced, recommended,
+$13,500 - $17,500 (two-stage 97%, variable-speed blower, smart thermostat,
+quieter, more even temperatures); Signature $22,000 - $28,000 (modulating
+99% matching the current units, MERV 13 whole-home filtration, room sensors,
+12-year parts and labor warranty). The HVAC vision project covers the two
+2009 furnaces, duct sealing and zoning; the 2014 AC condensers stay in
+service and are matched to the new furnaces.
 
 Furnace briefing detail: 90,000 BTU input, 120V available with 240V on an
 adjacent circuit, 3/4" black iron gas line in place, condensate routes to a
@@ -202,20 +205,20 @@ All `groupId: "appliances"`, `isAppliance: true`, status Healthy unless noted.
 
 | Key | Title | Room | Make | Model | Serial | Installed | Lifespan | Age |
 |---|---|---|---|---|---|---|---|---|
-| refrigerator | Refrigerator | Kitchen | Sub-Zero | BI-48S/O | SZ-2017-44291 | 2017-04 | 20 | 9 |
+| refrigerator | Refrigerator | Kitchen | Sub-Zero | BI-48SD/O | SZ-2017-44291 | 2017-04 | 20 | 9 |
 | range | Range | Kitchen | Wolf | DF486G | WF-2017-22841 | 2017-04 | 20 | 9 |
 | wall-oven | Built-In Wall Oven | Kitchen | Wolf | DO30PE | WF-2017-22842 | 2017-04 | 20 | 9 |
 | dishwasher | Dishwasher | Kitchen | Cove | DW2450 | CV-2017-1187 | 2017-04 | 12 | 9 |
 | microwave-drawer | Microwave Drawer | Kitchen | Sharp | SMD2470AS | SH-2017-77231 | 2017-04 | 10 | 9 |
-| range-hood | Range Hood | Kitchen | Wolf | PW362210 | WF-2017-99812 | 2017-04 | 20 | 9 |
+| range-hood | Range Hood | Kitchen | Wolf | PW482210 | WF-2017-99812 | 2017-04 | 20 | 9 |
 | wine-fridge | Wine Refrigerator | Kitchen | Sub-Zero | 424G | SZ-2017-44292 | 2017-04 | 15 | 9 |
 | kitchen-ice-maker | Ice Maker: Kitchen | Kitchen | Sub-Zero | UC-15I | SZ-2017-44293 | 2017-04 | 12 | 9 |
-| washer | Washer | Laundry Room | Miele | W1 WXF660 | ML-2019-66421 | 2019-09 | 15 | 7 |
-| dryer | Dryer | Laundry Room | Miele | T1 TXR860 | ML-2019-66422 | 2019-09 | 15 | 7 |
-| beverage-center | Beverage Center | Wet Bar | Sub-Zero | 424FS | SZ-2017-44294 | 2017-04 | 15 | 9 |
+| washer | Washer | Laundry Room | Electrolux | EFLS627UTT | EL-2019-66421 | 2019-09 | 12 | 7 |
+| dryer | Dryer | Laundry Room | Electrolux | EFME627UTT (vented electric) | EL-2019-66422 | 2019-09 | 13 | 7 |
+| beverage-center | Beverage Center | Wet Bar | Sub-Zero | UC-24BG/S | SZ-2017-44294 | 2017-04 | 15 | 9 |
 | bar-ice-maker | Ice Maker: Wet Bar | Wet Bar | U-Line | ULN-CLR1215 | UL-2018-22817 | 2018-03 | 12 | 8 |
 | built-in-grill | Built-In Grill | Outdoor Kitchen | Wolf | OG36 | WF-2020-77821 | 2020-05 | 18 | 6 |
-| outdoor-refrigerator | Outdoor Refrigerator | Outdoor Kitchen | Sub-Zero | 424G/O | SZ-2020-77822 | 2020-05 | 12 | 6 |
+| outdoor-refrigerator | Outdoor Refrigerator | Outdoor Kitchen | Sub-Zero | UC-24RO/S | SZ-2020-77822 | 2020-05 | 12 | 6 |
 | outdoor-sink | Outdoor Sink | Outdoor Kitchen | Bull | 32500 | BL-2020-77823 | 2020-05 | 20 | 6 |
 | hot-tub | Hot Tub | Hot Tub Patio | Sundance Spas | Optima | SS-2021-39922 | 2021-06 | 18 | 5 |
 | infrared-sauna | Infrared Sauna | Home Gym | Clearlight | Sanctuary 3 | CL-2022-88134 | 2022-04 | 25 | 4 |
@@ -223,6 +226,13 @@ All `groupId: "appliances"`, `isAppliance: true`, status Healthy unless noted.
 The microwave drawer (9 of 10 years) and dishwasher (9 of 12) are the two
 appliances nearing end of life. The refrigerator's water dispenser is
 intermittent and has a service visit pending through Bobby.
+
+Layout facts fixed by the interior rooms: the main zone furnace is in the
+lower-level mechanical room; the upper zone furnace is in a conditioned attic
+mechanical closet off the upper hallway. The family room has a brick
+wood-burning fireplace (Brooks Chimney sweeps it). One failed window seal
+exists, in the guest bedroom. Lower-level windows are egress casements; the
+lower level is not a walkout. The garage has three bays.
 
 ## Vision projects (locked names and prices)
 
@@ -305,11 +315,11 @@ locked; vendors are fictional local-sounding names.
 | 13 | Window Cleaning | ClearView Window Co. | Twice per year | 65 | |
 | 14 | Gutter Cleaning | ClearFlow Exteriors | Twice per year | 50 | yes |
 | 15 | Dryer Vent Cleaning | Self-managed | Annual | 8 | yes |
-| 16 | Duct Cleaning | Hudson Air Duct | Every 3-5 years | 18 | |
+| 16 | Duct Cleaning | Hudson Air Duct | Every 3-5 years | 18 | yes |
 | 17 | Hot Tub Service | Sundance Service | Quarterly | 95 | |
 | 18 | Generator Annual Service | PowerGuard Standby | Annual | 35 | |
 | 19 | Power Washing (deck, patio, walks) | Self-managed | Annual | 25 | yes |
-| 20 | Annual Home Walk-Through | Hometown Builders Club | Annual | 20 | yes |
+| 20 | Annual Home Walk-Through | Hometown Builders Club | Annual | 20 | |
 
 Because the report is dated November 2026, overdue items carry
 `nextDueDate` values between June and October 2026 and on-track items carry
