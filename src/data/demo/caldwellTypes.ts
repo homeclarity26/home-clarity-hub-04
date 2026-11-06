@@ -89,11 +89,26 @@ export interface DemoVision {
   project: VisionProjectContent;
 }
 
-/** Information chapter page: headed prose sections. */
+/**
+ * Information chapter page. These are the first pages a reader opens, so
+ * they are designed pages, not prose dumps: a short lede, optional stat
+ * tiles, short headed sections (paragraphs and/or bullets), an optional
+ * numbered list, an optional callout and an optional signature.
+ */
 export interface DemoInfoPage {
   key: string;
   title: string;
-  sections: { heading?: string; paragraphs: string[] }[];
+  /** One or two sentences under the title. */
+  lede?: string;
+  /** Stat tiles, e.g. { label: "Built", value: "1998" }. */
+  stats?: { label: string; value: string; subtitle?: string }[];
+  sections?: { heading?: string; paragraphs?: string[]; bullets?: string[] }[];
+  /** Numbered items, e.g. the five themes or the top priorities. */
+  numbered?: { title: string; body: string; tag?: string }[];
+  /** Highlighted box, e.g. "How this report stays alive". */
+  callout?: { label: string; body: string };
+  /** e.g. "Adam Kilgore, founder, Hometown Builders Club" */
+  signature?: string;
 }
 
 /** Standing Strategy pages. */
