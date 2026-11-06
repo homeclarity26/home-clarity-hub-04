@@ -184,12 +184,15 @@ What the photos show (so the words match them):
 | whole-home-generator | Whole-Home Generator | Generac | Guardian 22kW | G2021-87332 | 2021-07 | 25 | 5 | Healthy |
 | radon-mitigation | Radon Mitigation System | RadonAway | RP265 | RA2018-3318 | 2018-11 | 20 | 8 | Healthy |
 
-Furnace replacement tiers (locked, both zones use the same numbers):
-Essential $8,500 - $11,500 (like-for-like, single-stage 80%, standard
-10-year parts warranty); Enhanced, recommended, $13,500 - $17,500 (two-stage
-96%, variable-speed blower, smart thermostat, quieter, more even
-temperatures); Signature $22,000 - $28,000 (modulating gas valve, MERV 13
-whole-home filtration, room sensors, 12-year parts and labor warranty).
+Furnace replacement tiers (prices locked, both zones use the same numbers):
+Essential $8,500 - $11,500 (single-stage 96% condensing furnace on the
+existing venting, standard 10-year parts warranty); Enhanced, recommended,
+$13,500 - $17,500 (two-stage 97%, variable-speed blower, smart thermostat,
+quieter, more even temperatures); Signature $22,000 - $28,000 (modulating
+99% matching the current units, MERV 13 whole-home filtration, room sensors,
+12-year parts and labor warranty). The HVAC vision project covers the two
+2009 furnaces, duct sealing and zoning; the 2014 AC condensers stay in
+service and are matched to the new furnaces.
 
 Furnace briefing detail: 90,000 BTU input, 120V available with 240V on an
 adjacent circuit, 3/4" black iron gas line in place, condensate routes to a

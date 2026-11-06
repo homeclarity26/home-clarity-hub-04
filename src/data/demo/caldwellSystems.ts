@@ -52,17 +52,17 @@ const furnaceTiers = (): ReplacementBriefingTier[] =>
     [
       8500,
       11500,
-      "Like-for-like replacement with a single-stage 80% furnace and a standard 10-year parts warranty.",
+      "Single-stage 96% condensing furnace on the existing venting and gas line, with a standard 10-year parts warranty.",
     ],
     [
       13500,
       17500,
-      "Two-stage 96% furnace with a variable-speed blower and smart thermostat: quieter, with more even temperatures.",
+      "Two-stage 97% furnace with a variable-speed blower and smart thermostat: quieter, with more even temperatures.",
     ],
     [
       22000,
       28000,
-      "Modulating gas valve, MERV 13 whole-home filtration, room sensors, and a 12-year parts and labor warranty.",
+      "Modulating 99% furnace matching what you have today, plus MERV 13 whole-home filtration, room sensors, and a 12-year parts and labor warranty.",
     ],
   );
 
