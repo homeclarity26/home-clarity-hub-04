@@ -320,11 +320,11 @@ export const caldwellStrategy: DemoStrategy = {
     { id: "svc-13", category: "cleaning", serviceName: "Window Cleaning", vendorName: "ClearView Window Co.", frequency: "Twice per year", nextDueDate: "2027-04-22", monthlyCost: 65, status: "current" },
     { id: "svc-14", category: "roof_gutters", serviceName: "Gutter Cleaning", vendorName: "ClearFlow Exteriors", frequency: "Twice per year", nextDueDate: "2026-10-20", monthlyCost: 50, status: "overdue" },
     { id: "svc-15", category: "hvac", serviceName: "Dryer Vent Cleaning", vendorName: "Self-managed", frequency: "Annual", nextDueDate: "2026-08-15", monthlyCost: 8, status: "overdue" },
-    { id: "svc-16", category: "hvac", serviceName: "Duct Cleaning", vendorName: "Hudson Air Duct", frequency: "Every 3-5 years", nextDueDate: "2028-05-01", monthlyCost: 18, status: "current" },
+    { id: "svc-16", category: "hvac", serviceName: "Duct Cleaning", vendorName: "Hudson Air Duct", frequency: "Every 3-5 years", nextDueDate: "2026-09-30", monthlyCost: 18, status: "overdue" },
     { id: "svc-17", category: "other", serviceName: "Hot Tub Service", vendorName: "Sundance Service", frequency: "Quarterly", nextDueDate: "2026-12-16", monthlyCost: 95, status: "current" },
     { id: "svc-18", category: "electrical", serviceName: "Generator Annual Service", vendorName: "PowerGuard Standby", frequency: "Annual", nextDueDate: "2027-07-12", monthlyCost: 35, status: "current" },
     { id: "svc-19", category: "cleaning", serviceName: "Power Washing (deck, patio, walks)", vendorName: "Self-managed", frequency: "Annual", nextDueDate: "2026-06-30", monthlyCost: 25, status: "overdue" },
-    { id: "svc-20", category: "other", serviceName: "Annual Home Walk-Through", vendorName: "Hometown Builders Club", frequency: "Annual", nextDueDate: "2026-10-01", monthlyCost: 20, status: "overdue" },
+    { id: "svc-20", category: "other", serviceName: "Annual Home Walk-Through", vendorName: "Hometown Builders Club", frequency: "Annual", nextDueDate: "2027-10-15", monthlyCost: 20, status: "current" },
   ],
 
   conciergeTier: "tier_600",
