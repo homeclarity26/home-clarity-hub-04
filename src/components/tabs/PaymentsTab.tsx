@@ -341,12 +341,12 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Issue Date</p>
-              <p className="font-sans text-sm mt-1">{inv.issue_date ? format(new Date(inv.issue_date), "MMM d, yyyy") : "—"}</p>
+              <p className="font-sans text-sm mt-1">{inv.issue_date ? format(new Date(inv.issue_date), "MMM d, yyyy") : "–"}</p>
             </div>
             <div>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Due Date</p>
               <p className={`font-sans text-sm mt-1 ${inv.due_date && isPast(new Date(inv.due_date)) && Number(inv.balance_due) > 0 ? "text-[#B5450B] font-medium" : ""}`}>
-                {inv.due_date ? format(new Date(inv.due_date), "MMM d, yyyy") : "—"}
+                {inv.due_date ? format(new Date(inv.due_date), "MMM d, yyyy") : "–"}
               </p>
             </div>
           </div>
@@ -642,7 +642,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
                             </div>
                           </td>
                           <td className="text-sm text-muted-foreground py-5 border-b border-border hidden sm:table-cell">
-                            {inv.due_date ? format(new Date(inv.due_date), "MMM d, yyyy") : "—"}
+                            {inv.due_date ? format(new Date(inv.due_date), "MMM d, yyyy") : "–"}
                           </td>
                           <td className={`text-sm py-5 border-b border-border text-right font-medium ${isOverdue ? "text-[#B5450B]" : Number(inv.balance_due) > 0 ? "text-foreground" : "text-green-700"}`}>
                             {fmt(Number(inv.balance_due))}
@@ -786,7 +786,7 @@ const PaymentsTab = ({ propertyId, onTabChange }: PaymentsTabProps) => {
               <div className={`${cardBase} cursor-default`}>
                 <CreditCard className="w-5 h-5 text-accent" />
                 <h2 className="font-display text-xl text-foreground mb-1">Make a Payment</h2>
-                <p className="font-sans text-sm text-muted-foreground">{fmt(Number(nextPayment.balance_due))} due on {nextPayment.due_date ? format(new Date(nextPayment.due_date), "MMM d") : "—"}</p>
+                <p className="font-sans text-sm text-muted-foreground">{fmt(Number(nextPayment.balance_due))} due on {nextPayment.due_date ? format(new Date(nextPayment.due_date), "MMM d") : "–"}</p>
                 <PayNowButton invoice={nextPayment} fullWidth />
               </div>
             ) : (

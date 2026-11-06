@@ -21,7 +21,7 @@ export function TwinView({ groups, pages, onPageSelect }: TwinViewProps) {
   );
 
   const allRoomPages = roomGroups.flatMap((g) =>
-    g.pageIds
+    g.pages
       .map((id) => pages[id])
       .filter((p): p is ReportPageData => p != null),
   );

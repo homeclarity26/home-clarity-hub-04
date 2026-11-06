@@ -5,6 +5,7 @@ import SharedBlockRenderer from "@/components/wysiwyg/SharedBlockRenderer";
 import ImageGrid from "@/components/editor/ImageGrid";
 import { AttachedDocuments } from "@/components/report/AttachedDocuments";
 import { ArrowLeft, ChevronRight } from "lucide-react";
+import { usePortalActions } from "@/contexts/PortalActionsContext";
 
 const RATING_COLORS: Record<string, string> = {
   Excellent: "#2F6E40",
@@ -44,6 +45,8 @@ const RoomTemplatePage = ({
   reportId,
 }: RoomTemplatePageProps) => {
   const heroImage = images[0];
+  // Captions exist only where portal actions are mounted (sample report).
+  const heroCaption = usePortalActions()?.captionFor(heroImage ?? "");
   const galleryImages = images.length > 1 ? images.slice(1) : [];
   const rating = page.conditionRating;
   const ratingColor = rating ? RATING_COLORS[rating] : undefined;
@@ -65,6 +68,11 @@ const RoomTemplatePage = ({
               background: "linear-gradient(180deg, transparent 40%, rgba(10,22,40,0.5) 100%)",
             }}
           />
+          {heroCaption && (
+            <p className="absolute left-4 right-4 bottom-3 font-sans text-xs text-white/90 leading-snug">
+              {heroCaption}
+            </p>
+          )}
         </div>
       )}
 
@@ -76,14 +84,11 @@ const RoomTemplatePage = ({
         {page.title}
       </h1>
 
-      {/* Metadata strip */}
+      {/* Metadata strip — plain values per prototype (18 × 22 · 396 sqft · 10ft · Floor 1) */}
       {(specs && specs.length > 0) && (
-        <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground mb-4">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mb-4">
           {specs.map((s) => (
-            <span key={s.label}>
-              <span className="font-mono text-[9px] uppercase tracking-[0.12em]">{s.label}:</span>{" "}
-              {s.value}
-            </span>
+            <span key={s.label}>{s.value}</span>
           ))}
         </div>
       )}
@@ -92,7 +97,7 @@ const RoomTemplatePage = ({
       {rating && (
         <div className="flex items-center gap-2 mb-6">
           <span
-            className="w-2.5 h-2.5 rounded-full inline-block"
+            className="w-2 h-2 rounded-full inline-block"
             style={{ background: ratingColor }}
           />
           <span

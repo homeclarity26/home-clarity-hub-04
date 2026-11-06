@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Eye, Pencil } from "lucide-react";
 
-// Side-by-side admin / client view used inside Step3Authoring. Slider
-// persists to localStorage as `hcr_editor_split_pct` per W3.
+// Side-by-side admin / client view used inside Step3Authoring, prototype
+// screens 8-15. Left pane carries the "ADMIN VIEW" gold mono eyebrow +
+// helper line + gold "AI CO-PILOT ACTIVE" chip; right pane carries
+// "CLIENT PREVIEW" + "SYNCED LIVE" mono tag. Slider persists to
+// localStorage as `hcr_editor_split_pct` per W3.
 //
 // On mobile the layout collapses to a vertical stack with a "view as client"
 // toggle button; the slider hides.
@@ -16,6 +18,42 @@ const MAX_PCT = 80;
 interface SideBySideEditorProps {
   admin: React.ReactNode;
   preview: React.ReactNode;
+}
+
+function AdminPaneHeader() {
+  return (
+    <div className="flex items-start justify-between gap-3 mb-4">
+      <div>
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-hbc-gold-readable">
+          Admin View
+        </div>
+        <p className="text-[11px] font-sans text-hbc-grey mt-1">
+          Edit fields · accept AI suggestions · use Co-Pilot for help
+        </p>
+      </div>
+      <span className="inline-flex shrink-0 items-center rounded-sm bg-hbc-gold px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-white">
+        AI Co-Pilot Active
+      </span>
+    </div>
+  );
+}
+
+function PreviewPaneHeader() {
+  return (
+    <div className="flex items-start justify-between gap-3 mb-4">
+      <div>
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-hbc-gold-readable">
+          Client Preview
+        </div>
+        <p className="text-[11px] font-sans text-hbc-grey mt-1">
+          Live render · this is what the client will see
+        </p>
+      </div>
+      <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-hbc-grey">
+        Synced Live
+      </span>
+    </div>
+  );
 }
 
 export function SideBySideEditor({ admin, preview }: SideBySideEditorProps) {
@@ -86,22 +124,28 @@ export function SideBySideEditor({ admin, preview }: SideBySideEditorProps) {
       {/* Mobile single-pane stack */}
       <div className="md:hidden">
         {mobileView === "admin" ? (
-          <Card className="p-4">{admin}</Card>
+          <div>
+            <AdminPaneHeader />
+            {admin}
+          </div>
         ) : (
-          <Card className="p-4 bg-muted/20">{preview}</Card>
+          <div>
+            <PreviewPaneHeader />
+            {preview}
+          </div>
         )}
       </div>
 
       {/* Desktop split */}
       <div
         ref={containerRef}
-        className="hidden md:flex relative items-stretch gap-0 rounded-md border border-border overflow-hidden"
+        className="hidden md:flex relative items-stretch gap-0"
       >
-        <div
-          className="bg-background overflow-auto"
-          style={{ flexBasis: `${pct}%` }}
-        >
-          <div className="p-4">{admin}</div>
+        <div className="min-w-0" style={{ flexBasis: `${pct}%` }}>
+          <div className="pr-5">
+            <AdminPaneHeader />
+            {admin}
+          </div>
         </div>
         <div
           role="separator"
@@ -110,7 +154,7 @@ export function SideBySideEditor({ admin, preview }: SideBySideEditorProps) {
           aria-valuemax={MAX_PCT}
           aria-valuenow={pct}
           tabIndex={0}
-          className="w-1 bg-border hover:bg-primary/40 cursor-col-resize shrink-0"
+          className="w-1 bg-[hsl(var(--hbc-border))] hover:bg-hbc-gold/60 cursor-col-resize shrink-0 rounded-full"
           onPointerDown={(e) => {
             e.preventDefault();
             setDragging(true);
@@ -123,11 +167,11 @@ export function SideBySideEditor({ admin, preview }: SideBySideEditorProps) {
             }
           }}
         />
-        <div
-          className="bg-muted/20 overflow-auto"
-          style={{ flexBasis: `${100 - pct}%` }}
-        >
-          <div className="p-4">{preview}</div>
+        <div className="min-w-0" style={{ flexBasis: `${100 - pct}%` }}>
+          <div className="pl-5">
+            <PreviewPaneHeader />
+            {preview}
+          </div>
         </div>
       </div>
     </div>

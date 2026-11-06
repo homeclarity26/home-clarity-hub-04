@@ -1,6 +1,6 @@
 import type { ReportPageData, TierData } from "@/data/reportContent";
 import type { PortalGroup } from "@/hooks/useClientPortal";
-import type { ReportBlock } from "@/components/wysiwyg/types";
+import type { ReportBlock, VisionProjectContent } from "@/components/wysiwyg/types";
 import SharedBlockRenderer from "@/components/wysiwyg/SharedBlockRenderer";
 import ImageGrid from "@/components/editor/ImageGrid";
 import { ArrowLeft, ChevronRight } from "lucide-react";
@@ -83,81 +83,149 @@ const VisionTemplatePage = ({
   const tiers = page.tiers;
   const chapterLabel = group?.title ?? "Strategy";
 
+  // The vision_project block carries the hero identity (category, priority,
+  // optional hero image). The template owns the page header: navy hero with
+  // eyebrow, Cormorant title, and pills per prototype screens 27-28. The
+  // block then contributes only its unique body sections.
+  const visionBlock = blocks.find((b) => b.type === "vision_project");
+  const vision = visionBlock
+    ? (visionBlock.content as unknown as VisionProjectContent)
+    : undefined;
+  const heroImageUrl = vision?.imageUrl || heroImage;
+
   return (
-    <div className="max-w-[1040px] mx-auto px-5 sm:px-8 md:px-10 py-8">
-      {/* Aspirational hero image */}
-      {heroImage && (
+    <div>
+      {vision ? (
+        /* Navy hero — full-width band with eyebrow, title, pills */
         <div
-          className="relative w-full h-[260px] sm:h-[340px] rounded-lg overflow-hidden mb-8 bg-cover bg-center"
-          style={{ backgroundImage: `url(${heroImage})` }}
+          className="relative flex flex-col justify-end min-h-[220px] sm:min-h-[280px] px-5 sm:px-8 md:px-10 py-8 sm:py-10"
+          style={{
+            background: heroImageUrl
+              ? `url(${heroImageUrl}) center/cover`
+              : "linear-gradient(135deg, hsl(var(--hbc-navy)) 0%, hsl(var(--hbc-navy) / 0.88) 100%)",
+          }}
         >
-          <div
-            className="absolute inset-0"
-            style={{
-              background: "linear-gradient(180deg, transparent 40%, rgba(10,22,40,0.55) 100%)",
-            }}
-          />
-        </div>
-      )}
-
-      {/* Eyebrow + title */}
-      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent mb-2">
-        Strategy · {chapterLabel}
-      </div>
-      <h1 className="font-display text-[28px] sm:text-[34px] text-primary leading-tight mb-3">
-        {page.title}
-      </h1>
-
-      {page.timing && (
-        <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground mb-6">
-          Timeline: {page.timing}
-        </div>
-      )}
-
-      <hr className="border-border mb-8" />
-
-      {/* Narrative blocks */}
-      {blocks.length > 0 && (
-        <div className="space-y-6 mb-10">
-          {blocks.map((block) => (
-            <SharedBlockRenderer
-              key={block.id}
-              block={block}
-              editable={false}
-              propertyAddress={propertyAddress}
-              propertyId={propertyId}
-              reportId={reportId}
+          {heroImageUrl && (
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(180deg, hsl(var(--hbc-navy) / 0.2) 0%, hsl(var(--hbc-navy) / 0.85) 100%)",
+              }}
             />
-          ))}
+          )}
+          <div className="relative max-w-[1040px] mx-auto w-full">
+            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">
+              Vision Project{vision.priority ? ` · ${vision.priority}` : ""}
+            </div>
+            <h1
+              className="font-display text-[28px] sm:text-[34px] leading-tight mt-2"
+              style={{ color: "hsl(var(--hbc-cream))" }}
+            >
+              {vision.projectTitle || page.title}
+            </h1>
+            <div className="mt-3 flex gap-2.5 flex-wrap">
+              {vision.category && (
+                <span
+                  className="font-mono text-[10px] uppercase tracking-[0.14em] px-2.5 py-[3px] rounded-[3px] whitespace-nowrap text-white"
+                  style={{ background: "hsl(var(--hbc-gold))" }}
+                >
+                  {vision.category}
+                </span>
+              )}
+              {vision.priority && (
+                <span
+                  className="font-mono text-[10px] uppercase tracking-[0.14em] px-2.5 py-[3px] rounded-[3px] whitespace-nowrap border"
+                  style={{
+                    color: "hsl(var(--hbc-cream))",
+                    borderColor: "hsl(var(--hbc-cream) / 0.4)",
+                  }}
+                >
+                  {vision.priority}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
-      )}
+      ) : null}
 
-      {/* 3 Tier cards — always 3, side-by-side on desktop */}
-      <div className="mb-10">
-        <h3 className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent mb-4">
-          Investment Tiers
-        </h3>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <TierCard
-            label="Essential"
-            sublabel="Good"
-            tier={tiers?.essential}
-            recommended={false}
-          />
-          <TierCard
-            label="Enhanced"
-            sublabel="Better"
-            tier={tiers?.enhanced}
-            recommended={true}
-          />
-          <TierCard
-            label="Signature"
-            sublabel="Best"
-            tier={tiers?.signature}
-            recommended={false}
-          />
-        </div>
-      </div>
+      <div className="max-w-[1040px] mx-auto px-5 sm:px-8 md:px-10 py-8">
+        {/* Fallback header for vision pages without a vision_project block */}
+        {!vision && (
+          <>
+            {heroImage && (
+              <div
+                className="relative w-full h-[260px] sm:h-[340px] rounded-lg overflow-hidden mb-8 bg-cover bg-center"
+                style={{ backgroundImage: `url(${heroImage})` }}
+              >
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: "linear-gradient(180deg, transparent 40%, rgba(10,22,40,0.55) 100%)",
+                  }}
+                />
+              </div>
+            )}
+            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent mb-2">
+              Strategy · {chapterLabel}
+            </div>
+            <h1 className="font-display text-[28px] sm:text-[34px] text-primary leading-tight mb-3">
+              {page.title}
+            </h1>
+            {page.timing && (
+              <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground mb-6">
+                Timeline: {page.timing}
+              </div>
+            )}
+            <hr className="border-border mb-8" />
+          </>
+        )}
+
+        {/* Narrative blocks */}
+        {blocks.length > 0 && (
+          <div className="space-y-6 mb-10">
+            {blocks.map((block) => (
+              <SharedBlockRenderer
+                key={block.id}
+                block={block}
+                editable={false}
+                propertyAddress={propertyAddress}
+                propertyId={propertyId}
+                reportId={reportId}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Page-level tier cards — only when no vision_project block owns
+            the Investment Ranges section */}
+        {!vision && (
+          <div className="mb-10">
+            <h3 className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent mb-4">
+              Investment Tiers
+            </h3>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <TierCard
+                label="Essential"
+                sublabel="Good"
+                tier={tiers?.essential}
+                recommended={false}
+              />
+              <TierCard
+                label="Enhanced"
+                sublabel="Better"
+                tier={tiers?.enhanced}
+                recommended={true}
+              />
+              <TierCard
+                label="Signature"
+                sublabel="Best"
+                tier={tiers?.signature}
+                recommended={false}
+              />
+            </div>
+          </div>
+        )}
 
       {/* Photo gallery */}
       {galleryImages.length > 0 && (
@@ -210,6 +278,7 @@ const VisionTemplatePage = ({
           )}
         </div>
       )}
+      </div>
     </div>
   );
 };

@@ -76,7 +76,7 @@ const ClientReferralPortal = ({ propertyId }: Props) => {
       try {
         await navigator.share({
           title: "Home Clarity Hub",
-          text: `I use Home Clarity Hub to manage my home — check it out and we both benefit!`,
+          text: `I use Home Clarity Hub to manage my home; check it out and we both benefit!`,
           url,
         });
       } catch { /* cancelled */ }

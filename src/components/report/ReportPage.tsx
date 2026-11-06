@@ -66,7 +66,7 @@ const ShareSectionButton = ({ pageSlug }: { pageSlug: string }) => {
     const url = `${window.location.origin}${window.location.pathname}?page=${pageSlug}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
-    toast.success("Link copied — share it with anyone!");
+    toast.success("Link copied; share it with anyone!");
     setTimeout(() => setCopied(false), 2000);
   };
   return (
@@ -130,7 +130,7 @@ const ReportPage = ({ page, onNavigate, dbPageId, images: propImages, pdfData, r
       if (data.key_observations?.length) (updates as Record<string, unknown>).key_observations = data.key_observations;
 
       updatePageData(updates);
-      toast.success("Draft generated — review and edit as needed.");
+      toast.success("Draft generated; review and edit as needed.");
 
       supabase.from("learning_events").insert({
         event_type: "draft_narrative_generated",

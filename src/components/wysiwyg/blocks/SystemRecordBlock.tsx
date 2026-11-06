@@ -152,10 +152,14 @@ const SystemRecordBlock = ({ content, editable, onChange }: SystemRecordBlockPro
       ? Math.min((age / lifespan) * 100, 100)
       : 0;
 
+  // Viewer mode renders flat on the page background — SystemTemplatePage
+  // owns the page header, spec grid, lifecycle timeline, and proactive
+  // alert, so the block contributes only content the template doesn't:
+  // free-form specifications, photos, routine care, and the maintenance log.
   return (
-    <div className="bg-card border border-border rounded-lg overflow-hidden">
-      {/* Hero strip */}
-      {content.imageUrl && (
+    <div className={editable ? "bg-card border border-border rounded-lg overflow-hidden" : ""}>
+      {/* Hero strip — editable mode only; the page template owns the hero */}
+      {editable && content.imageUrl && (
         <div
           className="h-44 sm:h-52 bg-cover bg-center relative"
           style={{ backgroundImage: `url(${content.imageUrl})` }}
@@ -169,9 +173,10 @@ const SystemRecordBlock = ({ content, editable, onChange }: SystemRecordBlockPro
         </div>
       )}
 
-      {/* Header */}
+      {/* Header — editable mode only */}
+      {editable && (
       <div className="px-6 sm:px-8 pt-6 pb-4 border-b border-border">
-        <div className="font-mono text-[10px] uppercase tracking-[0.15em]" style={{ color: "var(--hbc-gold, #B87333)" }}>
+        <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-accent">
           {editable ? (
             <span className="inline-flex gap-2 items-center">
               <input
@@ -254,39 +259,32 @@ const SystemRecordBlock = ({ content, editable, onChange }: SystemRecordBlockPro
           )}
         </div>
       </div>
+      )}
 
       {/* Body */}
-      <div className="px-6 sm:px-8 py-6 space-y-6">
-        {/* Identification grid */}
+      <div className={editable ? "px-6 sm:px-8 py-6 space-y-6" : "space-y-6"}>
+        {/* Identification grid — editable mode only; SystemTemplatePage
+            renders the client-facing spec grid from page.specs */}
+        {editable && (
         <section>
-          {editable ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <FieldEditor label="Make" value={content.make} onChange={(v) => update({ make: v })} />
-              <FieldEditor label="Model" value={content.model} onChange={(v) => update({ model: v })} />
-              <FieldEditor label="Serial Number" value={content.serial} onChange={(v) => update({ serial: v })} />
-              <FieldEditor label="Install Date" value={content.installDate} onChange={(v) => update({ installDate: v })} placeholder="YYYY-MM-DD or YYYY" />
-              <FieldEditor label="Installer" value={content.installer} onChange={(v) => update({ installer: v })} />
-              <FieldEditor label="Warranty Status" value={content.warrantyStatus} onChange={(v) => update({ warrantyStatus: v })} />
-              <FieldEditor label="Typical Lifespan (years)" type="number" value={content.typicalLifespanYears ?? ""} onChange={(v) => update({ typicalLifespanYears: v ? Number(v) : undefined })} />
-              <FieldEditor label="Expected EOL Year" type="number" value={content.expectedEolYear ?? ""} onChange={(v) => update({ expectedEolYear: v ? Number(v) : undefined })} />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <SpecRow label="Make" value={content.make} />
-              <SpecRow label="Model" value={content.model} />
-              <SpecRow label="Serial" value={content.serial} />
-              <SpecRow label="Installed" value={content.installDate} />
-              <SpecRow label="Installer" value={content.installer} />
-              <SpecRow label="Warranty" value={content.warrantyStatus} />
-              <SpecRow label="Typical Lifespan" value={lifespan ? `${lifespan} years` : undefined} />
-              <SpecRow label="Current Age" value={age != null ? `${age} years` : undefined} />
-            </div>
-          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <FieldEditor label="Make" value={content.make} onChange={(v) => update({ make: v })} />
+            <FieldEditor label="Model" value={content.model} onChange={(v) => update({ model: v })} />
+            <FieldEditor label="Serial Number" value={content.serial} onChange={(v) => update({ serial: v })} />
+            <FieldEditor label="Install Date" value={content.installDate} onChange={(v) => update({ installDate: v })} placeholder="YYYY-MM-DD or YYYY" />
+            <FieldEditor label="Installer" value={content.installer} onChange={(v) => update({ installer: v })} />
+            <FieldEditor label="Warranty Status" value={content.warrantyStatus} onChange={(v) => update({ warrantyStatus: v })} />
+            <FieldEditor label="Typical Lifespan (years)" type="number" value={content.typicalLifespanYears ?? ""} onChange={(v) => update({ typicalLifespanYears: v ? Number(v) : undefined })} />
+            <FieldEditor label="Expected EOL Year" type="number" value={content.expectedEolYear ?? ""} onChange={(v) => update({ expectedEolYear: v ? Number(v) : undefined })} />
+          </div>
         </section>
+        )}
 
-        {/* Lifecycle Timeline */}
+        {/* Lifecycle Timeline — editable mode only; SystemTemplatePage owns
+            the client-facing gradient bar + proactive alert */}
+        {editable && (
         <section>
-          <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3" style={{ color: "var(--hbc-gold, #B87333)" }}>
+          <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3 text-accent">
             Lifecycle Timeline
           </h3>
           <div
@@ -324,11 +322,12 @@ const SystemRecordBlock = ({ content, editable, onChange }: SystemRecordBlockPro
             </div>
           )}
         </section>
+        )}
 
         {/* Specifications (free-form rows) */}
         {(editable || (content.specifications && content.specifications.length > 0)) && (
           <section>
-            <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3" style={{ color: "var(--hbc-gold, #B87333)" }}>
+            <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3 text-accent">
               Specifications
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -377,23 +376,37 @@ const SystemRecordBlock = ({ content, editable, onChange }: SystemRecordBlockPro
           </section>
         )}
 
-        {/* Photos — always render the four slots; URL fills them when present */}
-        <section>
-          <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3" style={{ color: "var(--hbc-gold, #B87333)" }}>
-            Photos {editable && <span className="text-muted-foreground normal-case tracking-normal text-[10px]">(paste URLs to fill slots)</span>}
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <PhotoSlot role="unit" label="Unit" url={content.photos?.unit} editable={!!editable} onChange={(u) => updatePhotos("unit", u)} />
-            <PhotoSlot role="serialPlate" label="Serial Plate" url={content.photos?.serialPlate} editable={!!editable} onChange={(u) => updatePhotos("serialPlate", u)} />
-            <PhotoSlot role="installLocation" label="Install Location" url={content.photos?.installLocation} editable={!!editable} onChange={(u) => updatePhotos("installLocation", u)} />
-            <PhotoSlot role="failureSignal" label="Failure Signal (optional)" url={content.photos?.failureSignal} editable={!!editable} onChange={(u) => updatePhotos("failureSignal", u)} />
-          </div>
-        </section>
+        {/* Photos — editable mode always shows the four slots so the admin
+            sees what's missing; viewer mode shows only filled slots (and
+            hides the section entirely when no photos exist) */}
+        {(editable ||
+          content.photos?.unit || content.photos?.serialPlate ||
+          content.photos?.installLocation || content.photos?.failureSignal) && (
+          <section>
+            <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3 text-accent">
+              Photos {editable && <span className="text-muted-foreground normal-case tracking-normal text-[10px]">(paste URLs to fill slots)</span>}
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {(editable || content.photos?.unit) && (
+                <PhotoSlot role="unit" label="Unit" url={content.photos?.unit} editable={!!editable} onChange={(u) => updatePhotos("unit", u)} />
+              )}
+              {(editable || content.photos?.serialPlate) && (
+                <PhotoSlot role="serialPlate" label="Serial Plate" url={content.photos?.serialPlate} editable={!!editable} onChange={(u) => updatePhotos("serialPlate", u)} />
+              )}
+              {(editable || content.photos?.installLocation) && (
+                <PhotoSlot role="installLocation" label="Install Location" url={content.photos?.installLocation} editable={!!editable} onChange={(u) => updatePhotos("installLocation", u)} />
+              )}
+              {(editable || content.photos?.failureSignal) && (
+                <PhotoSlot role="failureSignal" label="Failure Signal (optional)" url={content.photos?.failureSignal} editable={!!editable} onChange={(u) => updatePhotos("failureSignal", u)} />
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Routine care items */}
         {(editable || (content.routineCareItems && content.routineCareItems.length > 0)) && (
           <section>
-            <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3" style={{ color: "var(--hbc-gold, #B87333)" }}>
+            <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3 text-accent">
               Routine Care
             </h3>
             <div className="space-y-2">
@@ -468,7 +481,7 @@ const SystemRecordBlock = ({ content, editable, onChange }: SystemRecordBlockPro
         {/* Maintenance log (history) */}
         {(editable || (content.maintenanceLog && content.maintenanceLog.length > 0)) && (
           <section>
-            <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3" style={{ color: "var(--hbc-gold, #B87333)" }}>
+            <h3 className="font-mono text-[10px] uppercase tracking-[0.15em] mb-3 text-accent">
               Maintenance Log
             </h3>
             <div className="space-y-2">

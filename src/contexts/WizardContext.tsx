@@ -11,6 +11,11 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ReportBlock } from "@/components/wysiwyg/types";
+import type {
+  RoomPageContent,
+  SystemPageContent,
+  VisionPageContent,
+} from "@/lib/reportPageSchemas";
 import { buildDefaultFieldChecklist } from "@/components/admin/wizard/field-checklist-defaults";
 
 // ─── Wizard state shape (covers all 5 steps) ─────────────────────────────
@@ -153,6 +158,42 @@ export interface TocSection {
 // W3 — Authoring state per page.
 export type PageAuthoringStatus = "draft" | "reviewed" | "complete";
 
+// Executive Summary structured fields (prototype screen 15). The welcome
+// personal note lives in the shared narrative content row; the themes are
+// wizard-only structured state until publish maps them into blocks.
+export interface ExecutiveSummaryStructured {
+  personalNote?: string;
+  topThemes?: string;
+}
+
+// Phase 4 — labeled photo slots for system pages (prototype screens 10-11:
+// Unit Photo / Serial Plate / Install Location). Each slot holds a reference
+// to an intake-uploaded photo; publish resolves the reference to the
+// migrated public URL and orders the slots first in report_pages.images
+// (unit photo becomes the hero).
+export type SystemPhotoSlotKey = "unit" | "serialPlate" | "installLocation";
+
+export type WizardPhotoSlots = Partial<
+  Record<SystemPhotoSlotKey, IntakeFileRef>
+>;
+
+// Phase 5b — optional per-page structured payload. Exactly one branch is
+// populated, matching the inferred page type. Room / system / vision reuse
+// the Phase 1 schema-inferred types from src/lib/reportPageSchemas (never
+// redefined here); publish validates through the same schemas. Values may
+// hold empty strings mid-edit — publish strips those to `undefined` so an
+// untouched field always means "Not yet documented".
+export interface PageStructuredData {
+  room?: RoomPageContent;
+  system?: SystemPageContent;
+  vision?: VisionPageContent;
+  executiveSummary?: ExecutiveSummaryStructured;
+  // System-page photo slots (Phase 4). Lives alongside `system` in the
+  // structured payload; wizard-only shape (never sent through the zod
+  // page schemas), resolved to URLs by Step 5 publish.
+  photoSlots?: WizardPhotoSlots;
+}
+
 export interface PageAuthoring {
   page_key: string;
   status: PageAuthoringStatus;
@@ -160,6 +201,13 @@ export interface PageAuthoring {
   // arbitrary blocks shape (rendered by SharedBlockRenderer downstream)
   content: unknown[];
   notes_for_next_visit?: string;
+  // Phase 5b structured fields — persisted through the same draft
+  // envelope as the rest of `authoring` (save + resume round-trip).
+  structured?: PageStructuredData;
+  // Phase 4 — intake photos assigned to this page (beyond any system photo
+  // slots). Order matters: publish writes these to report_pages.images in
+  // this order, after the slots. Rides the same draft envelope.
+  images?: IntakeFileRef[];
 }
 
 // W4 — Strategy (light wrapper; child blocks own deep state).

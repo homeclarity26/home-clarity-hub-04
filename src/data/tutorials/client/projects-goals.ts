@@ -30,7 +30,7 @@ export const clientProjectsGoals: Tutorial[] = [
       { title: "Submit", body: "Your advisor will see the goal and can discuss it with you, estimate costs, and incorporate it into your home's plan." },
       { title: "Track progress", body: "As work progresses toward your goal, your advisor updates the progress percentage so you can see how close you are." },
     ],
-    tip: "Don't hold back on wishlist items — even long-term dreams help your advisor plan a roadmap that accounts for everything you want to accomplish.",
+    tip: "Don't hold back on wishlist items; even long-term dreams help your advisor plan a roadmap that accounts for everything you want to accomplish.",
     keywords: ["goal", "wishlist", "add", "dream", "plan", "want", "future"],
   },
   {

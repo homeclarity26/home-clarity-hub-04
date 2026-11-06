@@ -22,6 +22,8 @@ import Index from "./pages/Index";
 // Everything else lazy-loads to cut the initial bundle for mobile clients.
 const Landing = lazy(() => import("./pages/Landing"));
 const DevPortalQA = lazy(() => import("./pages/DevPortalQA"));
+const DevPrototypeQA = lazy(() => import("./pages/DevPrototypeQA"));
+const DemoPortal = lazy(() => import("./pages/DemoPortal"));
 const ProposalView = lazy(() => import("./pages/ProposalView"));
 const InvoiceView = lazy(() => import("./pages/InvoiceView"));
 const Privacy = lazy(() => import("./pages/Privacy"));
@@ -249,6 +251,12 @@ const AppRoutes = () => {
 
         {/* Developer-only QA page for HCR portal shell pieces */}
         <Route path="/dev/portal-qa" element={<DevPortalQA />} />
+
+        {/* Developer-only visual QA harness — real report templates + Caldwell fixtures */}
+        <Route path="/dev/prototype-qa" element={<DevPrototypeQA />} />
+
+        {/* Public sample report: no auth, static Caldwell data, no network */}
+        <Route path="/demo" element={<DemoPortal />} />
 
         {/* Auth routes */}
         <Route

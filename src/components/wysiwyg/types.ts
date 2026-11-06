@@ -265,6 +265,9 @@ export interface VisionProjectContent {
 
   // Why design matters first — per [v1.18] / Master Spec Section 3
   designFeeEducationHtml?: string;
+  // Heading for that callout; defaults to "Why Design Matters First".
+  // Trade-led projects with no design phase can name it differently.
+  designSectionTitle?: string;
   designFeeLow?: number;          // dollars
   designFeeHigh?: number;
 
@@ -289,6 +292,8 @@ export interface VisionProjectContent {
   // Optional bottom-of-block Concierge CTA
   conciergeActionLabel?: string;
   conciergeActionPrompt?: string;
+  // Button text for the CTA above; defaults to "Start design".
+  conciergeActionButtonLabel?: string;
 }
 
 // ── Recurring Services Register (B6) ────────────────────────────────────
@@ -337,6 +342,13 @@ export interface RecurringServicesRegisterContent {
   // Override for the Concierge pitch — defaults to locked HONEST framing
   // (saves time/frustration, NOT money) per [v2.38]
   conciergePitchHtml?: string;
+
+  // Client-viewer overrides (prototype screens 29-30). All optional; the
+  // flat viewer falls back to the locked prototype copy. The pitch body
+  // must NEVER claim Concierge saves money — time/coordination only.
+  conciergeHeading?: string;    // default "Let us run all of this for you"
+  conciergeBodyHtml?: string;   // default honest-framing body copy
+  conciergeCtaLabel?: string;   // default "See Concierge plans →"
 }
 
 // ── Field Checklist (B12) ───────────────────────────────────────────────
@@ -471,6 +483,13 @@ export interface RoomRecordContent {
 
   // Linked vision project chips (small references, not full vision content)
   linkedVisionProjects?: RoomLinkedVisionProject[];
+
+  // Optional viewer-only extras (both default to the existing behavior).
+  // conciergeAction replaces the generic bottom-of-page Concierge Action
+  // line with a page-specific one; omitEmptyFinishes drops blank finish
+  // rows (used for exterior pages that have no paint or flooring).
+  conciergeAction?: { title: string; body?: string; prompt: string };
+  omitEmptyFinishes?: boolean;
 }
 
 // ── Capital Plan (B7) ───────────────────────────────────────────────────
@@ -506,6 +525,23 @@ export interface CapitalPlanItem {
   sourcePageId?: string;  // optional backlink to source vision/replacement page
 }
 
+// Client-viewer additions (prototype screens 31-32). The flat viewer shows
+// three phase cards (Defense / Offense / Expansion, colored top borders)
+// above the Gantt, and a phase cost-range footer row below it. Costs are
+// per-phase ranges ONLY — the plan is never summed to a grand total.
+
+export interface CapitalPlanPhaseCard {
+  phase: CapitalPlanPhase;
+  yearLabel: string;            // e.g. "Year 1", "Year 1-3", "Year 2-5"
+  title: string;                // e.g. "Defense"
+  bullets: string[];
+}
+
+export interface CapitalPlanFooterCell {
+  label: string;                // e.g. "Offense Phase Range"
+  value: string;                // e.g. "$148K - $196K mid-tier"
+}
+
 export interface CapitalPlanContent {
   // Optional eyebrow + title (renderer falls back to defaults)
   eyebrow?: string;             // default "Strategic Roadmap"
@@ -518,6 +554,11 @@ export interface CapitalPlanContent {
   // each year by displayOrder. Drag-drop mutates year_start/year_end and/or
   // displayOrder and persists back to capital_plan_items.
   items: CapitalPlanItem[];
+
+  // Flat client-viewer sections (screens 31-32); all optional.
+  phaseCards?: CapitalPlanPhaseCard[];
+  ganttHeading?: string;        // default "Capital plan"
+  phaseFooter?: CapitalPlanFooterCell[];
 }
 
 // ─── Block templates for the "Add Block" picker ──────────────────

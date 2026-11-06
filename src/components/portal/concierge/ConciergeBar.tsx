@@ -1,9 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
 import ConciergePanel from "./ConciergePanel";
 
 interface ConciergeBarProps {
   /** Property the Concierge is contextual to (drives the agent's prompt enrichment). */
   propertyId?: string;
+  /**
+   * Overrides the sticky offset classes. The live portal keeps the default
+   * (clears the mobile bottom nav); the public sample report has no bottom
+   * nav and pins the bar to the very bottom.
+   */
+  stickyClassName?: string;
+  /** Extra props for the panel (scripted thread for the sample report). */
+  panelProps?: Partial<
+    Pick<
+      ComponentProps<typeof ConciergePanel>,
+      "homeLabel" | "qaThread" | "onQaSend" | "qaPending" | "suggestedPrompts"
+    >
+  >;
 }
 
 const NAVY = "#0A1628";
@@ -13,7 +26,7 @@ const CREAM = "#EDE9E1";
 // C1 — Per [v1.23] this is sticky-positioned (not fixed), so it sits at
 // the bottom of the portal scroll container without overlapping content.
 // Tap opens ConciergePanel as a sheet/drawer.
-const ConciergeBar = ({ propertyId }: ConciergeBarProps) => {
+const ConciergeBar = ({ propertyId, stickyClassName, panelProps }: ConciergeBarProps) => {
   const [open, setOpen] = useState(false);
 
   // C8 — Other portal surfaces (HomeTab "Schedule a Consultation" card,
@@ -40,7 +53,8 @@ const ConciergeBar = ({ propertyId }: ConciergeBarProps) => {
   return (
     <>
       <div
-        className="sticky bottom-14 md:bottom-0 z-30 backdrop-blur"
+        className={`sticky ${stickyClassName ?? "bottom-14 md:bottom-0"} z-30 backdrop-blur`}
+        data-bobby-bar=""
         style={{
           background: NAVY + "ee",
           borderTop: `1px solid ${GOLD}33`,
@@ -70,7 +84,7 @@ const ConciergeBar = ({ propertyId }: ConciergeBarProps) => {
         </button>
       </div>
 
-      <ConciergePanel open={open} onOpenChange={setOpen} propertyId={propertyId} />
+      <ConciergePanel open={open} onOpenChange={setOpen} propertyId={propertyId} {...panelProps} />
     </>
   );
 };

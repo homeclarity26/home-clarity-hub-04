@@ -4,6 +4,7 @@ import type {
   ReplacementBriefingPhoto,
   ReplacementBriefingCta,
 } from "../types";
+import { usePortalActions } from "@/contexts/PortalActionsContext";
 
 // Locked HCR palette per Master Spec 5.1.2 — the navy block IS the brand
 // signature for the Replacement Briefing Package per [v1.13]. Inline
@@ -25,12 +26,12 @@ interface ReplacementBriefingBlockProps {
   onChange?: (content: ReplacementBriefingContent) => void;
 }
 
-// Format a price range for display. Avoids em-dash (use plain "to") per
-// repo-wide tone discipline. Handles missing low or high gracefully.
+// Format a price range for display. Hyphen-formatted ("$14,000 - $18,000")
+// per locked copy discipline — never the word "to", never an em-dash.
 function formatPriceRange(low?: number, high?: number): string {
   if (low == null && high == null) return "Pricing pending";
   const fmt = (n: number) => "$" + n.toLocaleString();
-  if (low != null && high != null) return `${fmt(low)} to ${fmt(high)}`;
+  if (low != null && high != null) return `${fmt(low)} - ${fmt(high)}`;
   if (low != null) return `from ${fmt(low)}`;
   return `up to ${fmt(high!)}`;
 }
@@ -125,7 +126,7 @@ const TierCard = ({ tier, editable, onChange, onRemove }: TierCardProps) => {
           />
         </div>
       ) : (
-        <div className="mt-2 text-sm font-medium" style={{ color: CREAM }}>
+        <div className="mt-2 font-display text-lg" style={{ color: CREAM }}>
           {formatPriceRange(tier.priceLow, tier.priceHigh)}
         </div>
       )}
@@ -305,6 +306,8 @@ const PhotoThumb = ({ photo, editable, onChange, onRemove }: {
 
 const ReplacementBriefingBlock = ({ content, editable, onChange }: ReplacementBriefingBlockProps) => {
   const update = (patch: Partial<ReplacementBriefingContent>) => onChange?.({ ...content, ...patch });
+  // Optional action wiring (null in the live portal; see PortalActionsContext).
+  const actions = usePortalActions();
 
   const tiers = content.tiers ?? [];
   const photos = content.photos ?? [];
@@ -342,7 +345,7 @@ const ReplacementBriefingBlock = ({ content, editable, onChange }: ReplacementBr
             onChange={(e) => update({ headline: e.target.value })}
           />
         ) : (
-          <h4 className="font-display text-lg sm:text-xl mb-2" style={{ color: CREAM }}>
+          <h4 className="font-display text-xl sm:text-2xl mb-2" style={{ color: CREAM }}>
             {headline}
           </h4>
         )}
@@ -507,13 +510,15 @@ const ReplacementBriefingBlock = ({ content, editable, onChange }: ReplacementBr
                 ) : (
                   <button
                     type="button"
-                    className="w-full rounded-md py-3 px-4 font-mono text-xs uppercase tracking-[0.15em]"
+                    className="w-full rounded-md py-3 px-4 min-h-[44px] font-mono text-xs uppercase tracking-[0.15em]"
                     style={ctaButtonClass(cta.style)}
                     title={fillPrompt(cta.prompt, content.systemType)}
                     onClick={() => {
                       // Wire-up to ConciergePanel happens in C1. For now this
                       // is a no-op visual button so the briefing renders
-                      // correctly in the report.
+                      // correctly in the report. When portal actions are
+                      // mounted the CTA opens Bobby with its prompt.
+                      actions?.openBobby(fillPrompt(cta.prompt, content.systemType) ?? cta.label);
                     }}
                   >
                     {cta.label}

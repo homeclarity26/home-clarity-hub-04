@@ -73,7 +73,7 @@ function aggregateRating(analyses: PhotoAnalysis[]): { rating: string; note: str
   const note =
     valid.length === 1
       ? `${valid[0].confidence_score}% confidence`
-      : `Based on ${valid.length} photos — ${breakdown}. Showing most conservative rating.`;
+      : `Based on ${valid.length} photos: ${breakdown}. Showing most conservative rating.`;
 
   return { rating, note };
 }

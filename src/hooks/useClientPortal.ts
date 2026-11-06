@@ -2,6 +2,9 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { reportPages as staticPages, reportGroups as staticGroups, type ReportPageData } from "@/data/reportContent";
+import { BLOCK_TEMPLATES, type ReportBlock } from "@/components/wysiwyg/types";
+import { normalizeConditionRating } from "@/lib/reportPageSchemas";
+import { paragraphsToHtml } from "@/lib/wizardPublishMapping";
 
 export interface PortalGroup {
   id: string;
@@ -63,6 +66,156 @@ interface DbPage {
   replacement_cost_today: number | null;
   findings: unknown;
   is_complete: boolean | null;
+}
+
+// ─── Legacy narrative auto-upgrade (Phase 1, commit 4) ─────────────────────
+// Pre-rebuild rows carry `report_pages.narrative` as a bare `string[]` of
+// paragraphs. When such a page also has empty structured fields it would
+// fall through to the legacy renderer as a wall of bare <p> tags. At read
+// time (never in the DB) we upgrade those pages: the paragraphs become the
+// observations array and a typed block (room_record / system_record /
+// vision_project) so ReportTab routes them through the styled templates.
+
+type LegacyUpgradeTemplate = "room" | "system" | "appliance" | "vision" | null;
+
+function inferLegacyTemplate(
+  groupName: string,
+  pageKey: string,
+): LegacyUpgradeTemplate {
+  const gid = (groupName || "").toLowerCase().replace(/\s+/g, "-");
+  const k = (pageKey || "").toLowerCase();
+  if (gid === "appliances" || gid.includes("appliance")) return "appliance";
+  if (
+    gid.startsWith("systems-") ||
+    gid === "systems-and-appliances" ||
+    gid.includes("system") ||
+    gid.includes("hvac") ||
+    gid.includes("mechanical") ||
+    gid.includes("safety")
+  ) {
+    return "system";
+  }
+  if (gid === "strategy") {
+    return k.includes("vision") || k.includes("project") ? "vision" : null;
+  }
+  if (k.includes("vision")) return "vision";
+  if (
+    gid === "spaces" ||
+    gid.startsWith("interior") ||
+    gid.startsWith("exterior") ||
+    gid.includes("bedroom") ||
+    gid.includes("bathroom") ||
+    gid.includes("living") ||
+    gid.includes("space")
+  ) {
+    return "room";
+  }
+  return null;
+}
+
+function templateDefault(type: ReportBlock["type"]): Record<string, unknown> {
+  const template = BLOCK_TEMPLATES.find((t) => t.type === type);
+  return template
+    ? (JSON.parse(JSON.stringify(template.defaultContent)) as Record<
+        string,
+        unknown
+      >)
+    : {};
+}
+
+function makeLegacyBlock(
+  type: ReportBlock["type"],
+  pageKey: string,
+  content: Record<string, unknown>,
+): ReportBlock {
+  const now = new Date().toISOString();
+  return {
+    id: `legacy-upgrade-${pageKey}`,
+    type,
+    content,
+    colSpan: 12,
+    order: 0,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+function buildLegacyUpgradeBlocks(
+  template: Exclude<LegacyUpgradeTemplate, null>,
+  page: DbPage,
+  paragraphs: string[],
+): ReportBlock[] {
+  const conditionRating = normalizeConditionRating(page.condition_rating);
+  if (template === "room") {
+    return [
+      makeLegacyBlock("room_record", page.page_key, {
+        roomName: page.title,
+        conditionRating,
+        observationsHtml: paragraphsToHtml(paragraphs) || undefined,
+        linkedVisionProjects: [],
+      }),
+    ];
+  }
+  if (template === "system" || template === "appliance") {
+    // Prose lands in key_observations (rendered as the template's
+    // Observations section); the record block carries identity + condition.
+    return [
+      makeLegacyBlock("system_record", page.page_key, {
+        systemName: page.title,
+        isAppliance: template === "appliance",
+        conditionRating,
+        specifications: [],
+        maintenanceLog: [],
+        routineCareItems: [],
+        photos: {},
+      }),
+    ];
+  }
+  // Vision: locked AKR-disclosure execution language + unpriced tier
+  // scaffolding come from the canonical block template.
+  const defaults = templateDefault("vision_project");
+  return [
+    makeLegacyBlock("vision_project", page.page_key, {
+      projectTitle: page.title,
+      visionNarrativeHtml: paragraphsToHtml(paragraphs) || undefined,
+      tiers: defaults.tiers ?? [],
+      executionPathHtml: defaults.executionPathHtml,
+      akrDisclosed: true,
+    }),
+  ];
+}
+
+// Mutation-free upgrade: returns replacement narrative blocks plus the
+// observations array, or null when the page should stay on its current path.
+function upgradeLegacyPage(
+  page: DbPage,
+): { blocks: ReportBlock[]; observations: string[] } | null {
+  const narrativeVal = page.narrative;
+  const isLegacyStringNarrative =
+    Array.isArray(narrativeVal) &&
+    narrativeVal.length > 0 &&
+    typeof narrativeVal[0] === "string";
+  if (!isLegacyStringNarrative) return null;
+
+  const hasStructured =
+    (Array.isArray(page.key_observations) && page.key_observations.length > 0) ||
+    (Array.isArray(page.specs) && page.specs.length > 0) ||
+    (page.tiers != null && typeof page.tiers === "object");
+  if (hasStructured) return null;
+
+  const template = inferLegacyTemplate(page.group_name, page.page_key);
+  if (!template) return null;
+
+  const paragraphs = (narrativeVal as unknown[])
+    .filter((x): x is string => typeof x === "string")
+    .map((x) => x.trim())
+    .filter((x) => x.length > 0);
+  if (paragraphs.length === 0) return null;
+
+  return {
+    blocks: buildLegacyUpgradeBlocks(template, page, paragraphs),
+    observations: template === "vision" ? [] : paragraphs,
+  };
 }
 
 export function useClientPortal(propertyId?: string) {
@@ -259,17 +412,29 @@ export function useClientPortal(propertyId?: string) {
     if (!hasDbData) return isDemoMock ? staticPages : {};
     const map: Record<string, ReportPageData> = {};
     for (const p of dbPages) {
+      // Read-time upgrade for legacy string[] narratives with no structured
+      // fields: paragraphs become the observations array and a typed block
+      // so the page renders through the styled templates, never bare <p>
+      // walls. The DB row is not modified.
+      const upgrade = upgradeLegacyPage(p);
+      const narrative = upgrade
+        ? (upgrade.blocks as unknown as string[])
+        : (p.narrative as string[]) || [];
+      const keyObservations =
+        upgrade && upgrade.observations.length > 0
+          ? upgrade.observations
+          : (p.key_observations as string[]) || undefined;
       map[p.page_key] = {
         id: p.page_key,
         title: p.title,
         group: p.group_name,
         conditionRating: p.condition_rating as ReportPageData["conditionRating"],
-        narrative: (p.narrative as string[]) || [],
+        narrative,
         specs: (p.specs as { label: string; value: string }[]) || undefined,
         tiers: p.tiers as ReportPageData["tiers"],
         timing: p.timing || undefined,
         recommendations: (p.recommendations as string[]) || undefined,
-        key_observations: (p.key_observations as string[]) || undefined,
+        key_observations: keyObservations,
         risks: (p.risks as string[]) || undefined,
         dependencies: (p.dependencies as { pageKey: string; title: string; type: "before" | "after" }[]) || undefined,
         maintenance: (p.maintenance as { frequency?: string; tasks: string[] }) || undefined,

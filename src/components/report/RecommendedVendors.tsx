@@ -120,7 +120,7 @@ const RecommendedVendors = ({ propertyId, pageSlug }: RecommendedVendorsProps) =
             {unassignedVendors.map((v) => (
               <option key={v.id} value={v.id}>
                 {v.title}
-                {v.specialty ? ` — ${v.specialty}` : ""}
+                {v.specialty ? ` · ${v.specialty}` : ""}
               </option>
             ))}
           </select>

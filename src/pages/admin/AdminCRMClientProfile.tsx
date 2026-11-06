@@ -150,8 +150,8 @@ const AdminCRMClientProfile = () => {
             <CRMDocumentsTab propertyId={propertyId} />
           </TabsContent>
           <TabsContent value="referrals">
-            {propertyId && client?.client_user_id ? (
-              <ClientReferralsTab propertyId={propertyId} clientId={client.client_user_id} />
+            {propertyId && client?.clientUserId ? (
+              <ClientReferralsTab propertyId={propertyId} clientId={client.clientUserId} />
             ) : (
               <EmptySection label="No property / client linked yet" />
             )}

@@ -6,6 +6,12 @@
       "runtimeExecutable": "/Users/adamkilgore/.bun/bin/bun",
       "runtimeArgs": ["run", "dev", "--port", "8080"],
       "port": 8080
+    },
+    {
+      "name": "prototype-qa",
+      "runtimeExecutable": "/Users/adamkilgore/.bun/bin/bun",
+      "runtimeArgs": ["run", "dev", "--port", "8083", "--strictPort"],
+      "port": 8083
     }
   ]
 }

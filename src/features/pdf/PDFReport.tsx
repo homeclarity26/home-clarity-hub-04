@@ -36,7 +36,7 @@ const PDFReport = ({ data }: { data: PDFReportData }) => {
   const brand = data.brand || DEFAULT_BRAND;
   return (
   <Document
-    title={`Home Clarity Report — ${data.propertyName}`}
+    title={`Home Clarity Report: ${data.propertyName}`}
     author={brand.companyName}
     subject="Home Clarity Report"
     creator={brand.companyName}

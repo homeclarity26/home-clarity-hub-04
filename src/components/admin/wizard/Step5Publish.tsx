@@ -5,14 +5,30 @@ import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { pageAuthoringToBlocks, useWizard } from "@/contexts/WizardContext";
+import {
+  pageAuthoringToBlocks,
+  useWizard,
+  type IntakeFileRef,
+} from "@/contexts/WizardContext";
 import type { ReportBlock } from "@/components/wysiwyg/types";
-import { WizardNavigation } from "./WizardNavigation";
+import {
+  buildExecutiveSummaryBlocks,
+  buildPagePhotoPublish,
+  buildStructuredPagePayload,
+  type PublishPagePhoto,
+  type StructuredPageColumns,
+} from "@/lib/wizardPublishMapping";
+import type { Database } from "@/integrations/supabase/types";
+
+type ReportPageInsert = Database["public"]["Tables"]["report_pages"]["Insert"];
 import { AIQualityGate } from "./AIQualityGate";
 import { IntakeUploadCard } from "./IntakeUploadCard";
+import { WizardStepHeader } from "./WizardShell";
 
-// Step 5 — Publish. Renders summary, the AI quality gate, and the publish
-// CTA.
+// Step 5 — Publish, prototype screen 20. Renders three stat cards
+// (pages authored / vision projects / systems documented), the AI quality
+// gate, the "Final preview before publish" band with the rust publish CTA
+// named after the client, and the "What happens when you publish" inset.
 //
 // W2.5 publish sequence:
 //   1. Materialize each authored page's content into a ReportBlock[] and
@@ -29,7 +45,12 @@ import { IntakeUploadCard } from "./IntakeUploadCard";
 // Pre-W2.5 the publish handler skipped step 1 entirely, which is why
 // brand-new wizard reports landed in the portal as empty.
 
-export function Step5Publish() {
+interface Step5PublishProps {
+  /** Dev-only (QA harness): suppress the quality gate's on-mount AI call. */
+  qaMode?: boolean;
+}
+
+export function Step5Publish({ qaMode = false }: Step5PublishProps) {
   const navigate = useNavigate();
   const { state, goToStep, markPublished, setIntakeUploads } = useWizard();
   const [highsOk, setHighsOk] = useState(false);
@@ -44,8 +65,9 @@ export function Step5Publish() {
     for (const page of allPages) {
       const status = state.authoring[page.page_key]?.status ?? "draft";
       counts[status] = (counts[status] ?? 0) + 1;
-      const content = state.authoring[page.page_key]?.content ?? [];
-      const hasImage = content.some(
+      const authoring = state.authoring[page.page_key];
+      const content = authoring?.content ?? [];
+      const hasImageBlock = content.some(
         (b: unknown) =>
           b != null &&
           typeof b === "object" &&
@@ -53,13 +75,44 @@ export function Step5Publish() {
           ((b as { type: string }).type === "image" ||
             (b as { type: string }).type === "photo_grid"),
       );
-      if (!hasImage) missingPhotos++;
+      // Phase 4 — Step 3 photo assignments (page images + system slots)
+      // count as photos too.
+      const hasAssignedPhotos =
+        (authoring?.images?.length ?? 0) > 0 ||
+        Object.values(authoring?.structured?.photoSlots ?? {}).some(Boolean);
+      if (!hasImageBlock && !hasAssignedPhotos) missingPhotos++;
     }
     const featured = allPages.filter(
       (p) => p.is_featured || state.authoring[p.page_key]?.is_featured,
     );
-    return { totalPages: allPages.length, counts, featured, missingPhotos };
+    // Prototype-screen-20 stat cards: vision projects (any selected page
+    // whose key reads as a vision/project page) + systems documented
+    // (selected pages in the systems_appliances section).
+    const visionProjects = allPages.filter(
+      (p) =>
+        p.page_key.toLowerCase().includes("vision") ||
+        p.page_key.toLowerCase().includes("project"),
+    ).length;
+    const systemsDocumented = state.tocSections
+      .filter((s) => s.key === "systems_appliances")
+      .flatMap((s) => s.pages.filter((p) => p.selected)).length;
+    return {
+      totalPages: allPages.length,
+      counts,
+      featured,
+      missingPhotos,
+      visionProjects,
+      systemsDocumented,
+    };
   }, [state.tocSections, state.authoring]);
+
+  // "Publish to the Caldwells"-style CTA using the real client's family
+  // name (last word of the full name). Falls back to a plain label.
+  const familyName = state.client.fullName.trim().split(/\s+/).pop() ?? "";
+  const publishLabel = familyName
+    ? `Publish to the ${familyName}${familyName.toLowerCase().endsWith("s") ? "" : "s"}`
+    : "Publish report";
+  const clientLabel = familyName ? `The ${familyName}s` : "Your client";
 
   const canPublish =
     !publishing &&
@@ -84,6 +137,96 @@ export function Step5Publish() {
       const reportBlocks: ReportBlock[] = [];
       let blockOrder = 0;
 
+      // Phase 4 — migrate intake files (photos, Hover/iGUIDE PDFs) from the
+      // private wizard-uploads bucket into the public report-images bucket +
+      // client_files BEFORE the page loop, so the photos the consultant
+      // assigned to pages in Step 3 resolve to public URLs and publish into
+      // report_pages.images below. Per-file failures are non-blocking.
+      const publicUrlByFileId: Record<string, string> = {};
+      const photoUrlEntries: { fileId: string; url: string }[] = [];
+      if (state.propertyId) {
+        const allIntakeFiles = [
+          ...state.intakeUploads.photos,
+          ...state.intakeUploads.hover,
+          ...state.intakeUploads.iguide,
+        ].filter((f) => f.storage_path && f.bucket);
+
+        for (const file of allIntakeFiles) {
+          try {
+            const { data: blob, error: dlErr } = await supabase.storage
+              .from(file.bucket!)
+              .download(file.storage_path!);
+            if (dlErr || !blob) continue;
+
+            const newPath = `${state.propertyId}/documents/${Date.now()}-${file.name}`;
+            const { error: upErr } = await supabase.storage
+              .from("report-images")
+              .upload(newPath, blob, {
+                contentType: file.mime,
+                upsert: false,
+              });
+            if (upErr) continue;
+
+            // Track public URLs for photos: manual Step 3 assignments
+            // resolve through publicUrlByFileId; anything unassigned goes
+            // to the AI auto-router after publish.
+            if (file.mime.startsWith("image/")) {
+              const { data: urlData } = supabase.storage
+                .from("report-images")
+                .getPublicUrl(newPath);
+              if (urlData?.publicUrl) {
+                publicUrlByFileId[file.id] = urlData.publicUrl;
+                photoUrlEntries.push({ fileId: file.id, url: urlData.publicUrl });
+              }
+            }
+
+            const lcName = file.name.toLowerCase();
+            let category = "General";
+            if (lcName.includes("hover")) category = "hover.to";
+            else if (lcName.includes("iguide")) category = "iGUIDE";
+            else if (file.mime.startsWith("image/")) category = "Interior Photos";
+
+            const fileType = file.mime.startsWith("image/")
+              ? "image"
+              : file.mime.startsWith("audio/")
+                ? "audio"
+                : file.mime === "application/pdf"
+                  ? "pdf"
+                  : "document";
+
+            const sizeStr =
+              file.size < 1024
+                ? `${file.size} B`
+                : file.size < 1048576
+                  ? `${(file.size / 1024).toFixed(1)} KB`
+                  : `${(file.size / 1048576).toFixed(1)} MB`;
+
+            await supabase.from("client_files").insert({
+              property_id: state.propertyId,
+              file_name: file.name,
+              category,
+              storage_path: newPath,
+              file_type: fileType,
+              file_size: sizeStr,
+            });
+          } catch (err) {
+            console.warn("[Step5Publish] intake file migration failed for", file.name, err);
+          }
+        }
+      }
+
+      // Photos explicitly assigned in Step 3 (page images + system slots).
+      // The AI auto-router only ever touches photos outside this set, and
+      // never overwrites a page that carries manual assignments.
+      const assignedFileIds = new Set<string>();
+      for (const a of Object.values(state.authoring)) {
+        for (const ref of a.images ?? []) assignedFileIds.add(ref.id);
+        for (const ref of Object.values(a.structured?.photoSlots ?? {})) {
+          if (ref) assignedFileIds.add(ref.id);
+        }
+      }
+      const manuallyAssignedPageKeys = new Set<string>();
+
       // Walk every selected page in TOC order. For each, build the per-page
       // ReportBlock array, upsert the report_pages row, and append the
       // page's blocks (with a heading break) to the whole-report union.
@@ -103,7 +246,37 @@ export function Step5Publish() {
               is_featured: false,
               content: [],
             };
-          const pageBlocks = pageAuthoringToBlocks(authoring);
+          const pageSeed = state.pageSeeds.find(
+            (s) => s.page_key === page.page_key,
+          );
+
+          // Phase 1 structured contract: room / system / appliance / vision
+          // pages publish typed blocks (room_record, system_record +
+          // replacement_briefing, vision_project) plus structured columns,
+          // validated through src/lib/reportPageSchemas. Generic pages
+          // (information + strategy standing pages) keep the block path.
+          const structuredPayload = buildStructuredPagePayload({
+            page,
+            sectionKey: section.key,
+            sectionLabel: section.label,
+            authoring,
+            seed: pageSeed,
+            now,
+          });
+          const structured: StructuredPageColumns | null =
+            structuredPayload?.columns ?? null;
+          // Executive Summary (generic type) still publishes structured
+          // content: welcome note paragraphs + ordered top-themes list
+          // from the Step 3 exec editor (Phase 5b).
+          const execBlocks =
+            page.page_key === "executive-summary"
+              ? buildExecutiveSummaryBlocks(authoring, now)
+              : null;
+          const pageBlocks = structuredPayload
+            ? structuredPayload.blocks
+            : execBlocks && execBlocks.length > 0
+              ? execBlocks
+              : pageAuthoringToBlocks(authoring);
 
           // Inject structured strategy blocks for matching pages
           const makeId = () =>
@@ -181,39 +354,98 @@ export function Step5Publish() {
             });
           }
 
+          // Phase 4 — page-assigned photos → ordered images (hero first;
+          // unit photo for systems) + a photo_gallery block when 2+.
+          const toPublishPhoto = (
+            ref: IntakeFileRef | undefined,
+          ): PublishPagePhoto | undefined => {
+            const url = ref ? publicUrlByFileId[ref.id] : undefined;
+            return url ? { url } : undefined;
+          };
+          const slotRefs = authoring.structured?.photoSlots;
+          const photoPublish = buildPagePhotoPublish({
+            photos: (authoring.images ?? [])
+              .map((ref) => toPublishPhoto(ref))
+              .filter((p): p is PublishPagePhoto => Boolean(p)),
+            slots: slotRefs
+              ? {
+                  unit: toPublishPhoto(slotRefs.unit),
+                  serialPlate: toPublishPhoto(slotRefs.serialPlate),
+                  installLocation: toPublishPhoto(slotRefs.installLocation),
+                }
+              : undefined,
+            order: pageBlocks.length,
+            now,
+          });
+          if (photoPublish.galleryBlock) {
+            pageBlocks.push(photoPublish.galleryBlock);
+          }
+          if (photoPublish.images.length > 0) {
+            manuallyAssignedPageKeys.add(page.page_key);
+          }
+
           const sortOrder = sectionIndex * 100 + pageIndex;
 
-          // Pull structured data from page seeds (AI-generated during intake)
-          const seed = state.pageSeeds.find((s) => s.page_key === page.page_key);
-          const conditionRating = seed?.suggested_condition || null;
-          const specs = seed?.specs_seed && seed.specs_seed.length > 0
-            ? seed.specs_seed
-            : null;
-          const keyObservations = seed?.key_observations && seed.key_observations.length > 0
-            ? seed.key_observations
-            : null;
+          // Column values: structured pages come from the validated payload;
+          // generic pages fall back to the raw AI seed hints as before.
+          const conditionRating = structured
+            ? structured.condition_rating
+            : pageSeed?.suggested_condition || null;
+          const specs = structured
+            ? structured.specs
+            : pageSeed?.specs_seed && pageSeed.specs_seed.length > 0
+              ? pageSeed.specs_seed
+              : null;
+          const keyObservations = structured
+            ? structured.key_observations
+            : pageSeed?.key_observations && pageSeed.key_observations.length > 0
+              ? pageSeed.key_observations
+              : null;
 
           // Step 1 — upsert the row. onConflict on (report_id, page_key)
           // means re-publishing the same wizard run updates in place.
+          // Optional structured columns (tiers, lifecycle, maintenance,
+          // images) are only written when the wizard actually captured
+          // them so a republish never wipes data filled by other flows
+          // (e.g. photo auto-routing writes images after this).
+          const upsertRow: ReportPageInsert = {
+            report_id: state.reportId,
+            page_key: page.page_key,
+            title: page.title,
+            group_name: section.label,
+            narrative: pageBlocks as never,
+            condition_rating: conditionRating,
+            specs: specs as never,
+            key_observations: keyObservations as never,
+            status: authoring.status,
+            sort_order: sortOrder,
+            is_complete: authoring.status === "complete",
+            updated_at: now,
+          };
+          if (structured) {
+            if (structured.tiers) upsertRow.tiers = structured.tiers as never;
+            if (structured.current_age_years !== null) {
+              upsertRow.current_age_years = structured.current_age_years;
+            }
+            if (structured.expected_lifespan_years !== null) {
+              upsertRow.expected_lifespan_years =
+                structured.expected_lifespan_years;
+            }
+            if (structured.maintenance) {
+              upsertRow.maintenance = structured.maintenance as never;
+            }
+            if (structured.images) {
+              upsertRow.images = structured.images as never;
+            }
+          }
+          // Manual Step 3 photo assignments always win over anything the
+          // structured payload carried.
+          if (photoPublish.images.length > 0) {
+            upsertRow.images = photoPublish.images as never;
+          }
           const { error: upErr } = await supabase
             .from("report_pages")
-            .upsert(
-              {
-                report_id: state.reportId,
-                page_key: page.page_key,
-                title: page.title,
-                group_name: section.label,
-                narrative: pageBlocks as never,
-                condition_rating: conditionRating,
-                specs: specs as never,
-                key_observations: keyObservations as never,
-                status: authoring.status,
-                sort_order: sortOrder,
-                is_complete: authoring.status === "complete",
-                updated_at: now,
-              },
-              { onConflict: "report_id,page_key" },
-            );
+            .upsert(upsertRow, { onConflict: "report_id,page_key" });
           if (upErr) throw upErr;
 
           // Step 2 (running) — append a chapter_header + the page's blocks
@@ -295,79 +527,15 @@ export function Step5Publish() {
         if (urlErr) console.warn("[Step5Publish] hover/iguide URL persist failed", urlErr);
       }
 
-      // Migrate intake files (Hover/iGUIDE PDFs, photos) from the private
-      // wizard-uploads bucket into the public report-images bucket +
-      // client_files table. Track photo public URLs for auto-routing.
-      const photoPublicUrls: string[] = [];
-      if (state.propertyId) {
-        const allIntakeFiles = [
-          ...state.intakeUploads.photos,
-          ...state.intakeUploads.hover,
-          ...state.intakeUploads.iguide,
-        ].filter((f) => f.storage_path && f.bucket);
-
-        for (const file of allIntakeFiles) {
-          try {
-            const { data: blob, error: dlErr } = await supabase.storage
-              .from(file.bucket!)
-              .download(file.storage_path!);
-            if (dlErr || !blob) continue;
-
-            const newPath = `${state.propertyId}/documents/${Date.now()}-${file.name}`;
-            const { error: upErr } = await supabase.storage
-              .from("report-images")
-              .upload(newPath, blob, {
-                contentType: file.mime,
-                upsert: false,
-              });
-            if (upErr) continue;
-
-            // Collect public URLs for photos (used for auto-routing below)
-            if (file.mime.startsWith("image/")) {
-              const { data: urlData } = supabase.storage
-                .from("report-images")
-                .getPublicUrl(newPath);
-              if (urlData?.publicUrl) photoPublicUrls.push(urlData.publicUrl);
-            }
-
-            const lcName = file.name.toLowerCase();
-            let category = "General";
-            if (lcName.includes("hover")) category = "hover.to";
-            else if (lcName.includes("iguide")) category = "iGUIDE";
-            else if (file.mime.startsWith("image/")) category = "Interior Photos";
-
-            const fileType = file.mime.startsWith("image/")
-              ? "image"
-              : file.mime.startsWith("audio/")
-                ? "audio"
-                : file.mime === "application/pdf"
-                  ? "pdf"
-                  : "document";
-
-            const sizeStr =
-              file.size < 1024
-                ? `${file.size} B`
-                : file.size < 1048576
-                  ? `${(file.size / 1024).toFixed(1)} KB`
-                  : `${(file.size / 1048576).toFixed(1)} MB`;
-
-            await supabase.from("client_files").insert({
-              property_id: state.propertyId,
-              file_name: file.name,
-              category,
-              storage_path: newPath,
-              file_type: fileType,
-              file_size: sizeStr,
-            });
-          } catch (err) {
-            console.warn("[Step5Publish] intake file migration failed for", file.name, err);
-          }
-        }
-      }
-
       // W7 — Auto-route photos to report pages via AI categorization.
-      // Non-blocking: failures are logged but don't prevent publish.
-      if (photoPublicUrls.length > 0 && state.reportId) {
+      // Phase 4: only photos the consultant did NOT assign in Step 3 are
+      // eligible, and pages that carry manual assignments are never
+      // overwritten. Non-blocking: failures are logged but don't prevent
+      // publish.
+      const unassignedPhotoUrls = photoUrlEntries
+        .filter((e) => !assignedFileIds.has(e.fileId))
+        .map((e) => e.url);
+      if (unassignedPhotoUrls.length > 0 && state.reportId) {
         try {
           const availablePages = state.tocSections
             .flatMap((s) => s.pages.filter((p) => p.selected))
@@ -375,8 +543,8 @@ export function Step5Publish() {
 
           const assignments: Record<string, string[]> = {};
           const PHOTO_BATCH = 3;
-          for (let i = 0; i < photoPublicUrls.length; i += PHOTO_BATCH) {
-            const batch = photoPublicUrls.slice(i, i + PHOTO_BATCH);
+          for (let i = 0; i < unassignedPhotoUrls.length; i += PHOTO_BATCH) {
+            const batch = unassignedPhotoUrls.slice(i, i + PHOTO_BATCH);
             const results = await Promise.allSettled(
               batch.map((url) =>
                 supabase.functions.invoke("categorize-photo", {
@@ -393,8 +561,9 @@ export function Step5Publish() {
             }
           }
 
-          // Write images to report_pages
+          // Write images to report_pages, skipping manually-assigned pages.
           for (const [pageKey, urls] of Object.entries(assignments)) {
+            if (manuallyAssignedPageKeys.has(pageKey)) continue;
             await supabase
               .from("report_pages")
               .update({ images: urls as never })
@@ -460,38 +629,49 @@ export function Step5Publish() {
   };
 
   return (
-    <div className="space-y-5">
-      <Card className="p-6 space-y-3">
-        <div>
-          <h3 className="text-base font-sans font-semibold text-foreground">
-            Final review and publish
-          </h3>
-          <p className="text-xs font-sans text-muted-foreground mt-1">
-            Confirm the AI quality gate clears, then publish. The client gets
-            a magic-link email after publish.
-          </p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
-          <SummaryStat label="Pages" value={String(summary.totalPages)} />
-          <SummaryStat label="Complete" value={String(summary.counts.complete ?? 0)} />
-          <SummaryStat label="Reviewed" value={String(summary.counts.reviewed ?? 0)} />
-          <SummaryStat label="Draft" value={String(summary.counts.draft ?? 0)} />
-        </div>
-        {summary.featured.length > 0 && (
-          <div>
-            <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-              Featured
-            </div>
-            <ul className="text-xs font-sans text-foreground mt-1 space-y-0.5">
-              {summary.featured.map((p) => (
-                <li key={p.page_key}>• {p.title}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </Card>
+    <div className="space-y-6">
+      <WizardStepHeader
+        step={5}
+        title="Review & Publish"
+        description="Last step. Preview the full client experience, confirm the AI quality gate clears, then publish. The client gets a magic-link email after publish."
+      />
 
-      <AIQualityGate onAllHighsAcknowledged={setHighsOk} />
+      {/* Stat cards, prototype screen 20 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <SummaryStat
+          label="Pages Authored"
+          value={String(summary.totalPages)}
+          caption={`${(summary.counts.reviewed ?? 0) + (summary.counts.complete ?? 0)} of ${summary.totalPages} reviewed`}
+        />
+        <SummaryStat
+          label="Vision Projects"
+          value={String(summary.visionProjects)}
+          caption="from the strategy pages"
+        />
+        <SummaryStat
+          label="Systems Documented"
+          value={String(summary.systemsDocumented)}
+          caption="systems & appliances pages"
+        />
+      </div>
+
+      {summary.featured.length > 0 && (
+        <div className="rounded-lg border border-hbc-border bg-white p-5">
+          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-hbc-gold-readable">
+            Featured
+          </div>
+          <ul className="text-xs font-sans text-foreground mt-2 space-y-1">
+            {summary.featured.map((p) => (
+              <li key={p.page_key} className="flex gap-2">
+                <span aria-hidden className="text-hbc-gold-readable">·</span>
+                <span>{p.title}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <AIQualityGate onAllHighsAcknowledged={setHighsOk} qaMode={qaMode} />
 
       {!publishedAt && (
         <IntakeUploadCard
@@ -550,31 +730,74 @@ export function Step5Publish() {
           </div>
         </Card>
       ) : (
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            onClick={handlePublish}
-            disabled={!canPublish}
-            className="min-h-[44px]"
-          >
-            {publishing ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden />
-            ) : null}
-            Publish report
-          </Button>
+        <div className="rounded-lg border border-hbc-border bg-white p-6 space-y-4">
+          <h3 className="font-display text-2xl text-hbc-navy">
+            Final preview before publish
+          </h3>
+          <p className="text-sm font-sans text-hbc-grey">
+            Open the client portal preview to walk through exactly what{" "}
+            {clientLabel.toLowerCase() === "your client"
+              ? "your client"
+              : clientLabel.replace(/^The/, "the")}{" "}
+            will see. When you're satisfied, come back here and publish.
+          </p>
+          <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => goToStep("strategy")}
+              className="min-h-[44px] border-hbc-border bg-white text-hbc-navy"
+            >
+              ← Back to Strategy
+            </Button>
+            <Button
+              type="button"
+              onClick={handlePublish}
+              disabled={!canPublish}
+              className="min-h-[44px] bg-hbc-rust text-white hover:bg-[hsl(var(--hbc-rust)/0.92)]"
+            >
+              {publishing ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden />
+              ) : null}
+              {publishLabel}
+            </Button>
+          </div>
+          {!highsOk && (
+            <p className="text-xs font-sans text-hbc-grey">
+              Resolve all blocking pre-publish questions to enable Publish.
+            </p>
+          )}
         </div>
       )}
 
-      <WizardNavigation
-        onBack={() => goToStep("strategy")}
-        helperText={
-          publishedAt
-            ? "Report is live. You can leave this page."
-            : !highsOk
-              ? "Resolve all blocking pre-publish questions to enable Publish."
-              : null
-        }
-      />
+      {/* What happens when you publish — honest list matching the actual
+          publish sequence in handlePublish. */}
+      <div className="rounded-lg bg-hbc-surface p-6">
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-hbc-gold-readable">
+          What Happens When You Publish
+        </div>
+        <ol className="mt-3 space-y-1.5 text-sm font-sans text-foreground list-decimal list-inside">
+          <li>
+            The report flips to published and every page becomes visible in
+            the client portal
+          </li>
+          <li>{clientLabel} receive an email with their portal link</li>
+          <li>
+            Uploaded photos and documents are routed to their matching
+            report pages
+          </li>
+          <li>
+            Hover and iGUIDE links attach to the property so the 3D tours
+            render in the portal
+          </li>
+        </ol>
+      </div>
+
+      {publishedAt && (
+        <p className="text-xs font-sans text-hbc-grey">
+          Report is live. You can leave this page.
+        </p>
+      )}
     </div>
   );
 }
@@ -582,15 +805,21 @@ export function Step5Publish() {
 interface SummaryStatProps {
   label: string;
   value: string;
+  caption?: string;
 }
 
-function SummaryStat({ label, value }: SummaryStatProps) {
+function SummaryStat({ label, value, caption }: SummaryStatProps) {
   return (
-    <div className="rounded-md border border-border bg-background p-3">
-      <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+    <div className="rounded-lg border border-hbc-border bg-white p-5">
+      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-hbc-gold-readable">
         {label}
       </div>
-      <div className="text-xl font-display text-foreground">{value}</div>
+      <div className="font-display text-5xl text-hbc-navy mt-2 leading-none">
+        {value}
+      </div>
+      {caption && (
+        <div className="text-[11px] font-sans text-hbc-grey mt-2">{caption}</div>
+      )}
     </div>
   );
 }
