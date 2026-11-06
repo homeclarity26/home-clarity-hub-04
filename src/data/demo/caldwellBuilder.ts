@@ -682,7 +682,11 @@ export function buildCaldwellDemo(rawInput: CaldwellDemoInput): CaldwellDemo {
     if (!pages[key]) continue;
     const usable = list.filter((p) => !!p.src);
     if (usable.length === 0) continue;
-    pageImages[key] = usable.map((p) => p.src);
+    // Pages with a Replacement Briefing already show every photo in the
+    // briefing's photo strip, so the page keeps only its hero. Without this
+    // the serial plate appears twice on the furnace page.
+    const hasBriefing = pages[key].narrative.some((b) => b.type === "replacement_briefing");
+    pageImages[key] = (hasBriefing ? usable.slice(0, 1) : usable).map((p) => p.src);
     const captions: Record<string, string> = {};
     for (const p of usable) if (p.caption) captions[p.src] = p.caption;
     photoCaptions[key] = captions;

@@ -149,12 +149,12 @@ const RegisterViewer = ({ content }: { content: RecurringServicesRegisterContent
       {/* Flat services table */}
       <div className="bg-white border border-border rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse min-w-[640px]">
+          <table className="w-full border-collapse sm:min-w-[640px]">
             <thead>
               <tr className="bg-card border-b border-border">
                 <ViewerTh>Service</ViewerTh>
-                <ViewerTh>Vendor</ViewerTh>
-                <ViewerTh>Frequency</ViewerTh>
+                <ViewerTh className="hidden sm:table-cell">Vendor</ViewerTh>
+                <ViewerTh className="hidden sm:table-cell">Frequency</ViewerTh>
                 <ViewerTh>Next Due</ViewerTh>
                 <ViewerTh align="right">$/mo</ViewerTh>
               </tr>
@@ -170,11 +170,14 @@ const RegisterViewer = ({ content }: { content: RecurringServicesRegisterContent
                       }`}
                     >
                       {s.serviceName}
+                      <span className="sm:hidden block mt-0.5 text-[11px] font-normal text-muted-foreground no-underline">
+                        {s.vendorName ?? "Not on file"}
+                      </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                    <td className="hidden sm:table-cell px-4 py-3 text-xs text-muted-foreground">
                       {s.vendorName ?? "Not on file"}
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                    <td className="hidden sm:table-cell px-4 py-3 text-xs text-muted-foreground">
                       {FREQUENCY_LABELS[s.frequency] ?? s.frequency}
                     </td>
                     <td
@@ -223,11 +226,19 @@ const ViewerStatCard = ({
   </div>
 );
 
-const ViewerTh = ({ children, align }: { children: React.ReactNode; align?: "left" | "right" }) => (
+const ViewerTh = ({
+  children,
+  align,
+  className = "",
+}: {
+  children: React.ReactNode;
+  align?: "left" | "right";
+  className?: string;
+}) => (
   <th
     className={`px-4 py-3 font-mono text-[10px] uppercase tracking-[0.15em] font-normal text-muted-foreground ${
       align === "right" ? "text-right" : "text-left"
-    }`}
+    } ${className}`}
   >
     {children}
   </th>

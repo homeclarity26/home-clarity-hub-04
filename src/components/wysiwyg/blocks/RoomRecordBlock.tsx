@@ -450,7 +450,7 @@ const RoomRecordBlock = ({ content, editable, onChange }: RoomRecordBlockProps) 
             style={{ background: "var(--hbc-cream-light, #F5F2EE)" }}
           >
             <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-accent">
-              Concierge Action
+              Bobby Action
             </div>
             <button
               type="button"
