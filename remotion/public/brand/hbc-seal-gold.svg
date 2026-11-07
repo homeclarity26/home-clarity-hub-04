@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+  <rect width="1000" height="1000" fill="#0A1628" />
+  <circle cx="500.0" cy="500.0" r="464" fill="none" stroke="#FFFFFF" stroke-width="2" />
+  <circle cx="500.0" cy="500.0" r="460" fill="none" stroke="#B87333" stroke-width="3" />
+  <circle cx="500.0" cy="500.0" r="443.9" fill="none" stroke="#B87333" stroke-width="3" />
+  <polygon points="500.0,48.74000000000002 507.36,56.10000000000002 500.0,63.46000000000002 492.64,56.10000000000002" fill="#B87333" />
+  <polygon points="943.9,492.64 951.26,500.0 943.9,507.36 936.54,500.0" fill="#B87333" />
+  <polygon points="500.0,936.54 507.36,943.9 500.0,951.26 492.64,943.9" fill="#B87333" />
+  <polygon points="56.10000000000002,492.64 63.46000000000002,500.0 56.10000000000002,507.36 48.74000000000002,500.0" fill="#B87333" />
+  <text x="500.0" y="584.56" font-family="Cormorant Garamond, Garamond, serif" font-weight="600" font-size="302" fill="#B87333" text-anchor="middle">HBC</text>
+  <line x1="182.89999999999998" y1="620.8" x2="817.1" y2="620.8" stroke="#B87333" stroke-width="10.57" stroke-linecap="round" />
+</svg>
